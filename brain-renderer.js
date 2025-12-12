@@ -247,8 +247,9 @@ export class BrainRenderer {
                 cullMode: 'none'
             },
             depthStencil: {
-                depthWriteEnabled: true,
-                depthCompare: 'less',
+                // For debugging: disable depth testing to ensure geometry is visible
+                depthWriteEnabled: false,
+                depthCompare: 'always',
                 format: 'depth24plus'
             }
         });
