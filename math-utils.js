@@ -9,15 +9,15 @@ export class Mat4 {
         ]);
     }
     
+    // Corrected for WebGPU depth range [0, 1]
     static perspective(fov, aspect, near, far) {
         const f = 1.0 / Math.tan(fov / 2);
-        const nf = 1 / (near - far);
-        
+        // WebGPU uses a 0..1 clip space for Z. This matrix maps depth accordingly.
         return new Float32Array([
             f / aspect, 0, 0, 0,
             0, f, 0, 0,
-            0, 0, (far + near) * nf, -1,
-            0, 0, 2 * far * near * nf, 0
+            0, 0, far / (near - far), -1,
+            0, 0, (far * near) / (near - far), 0
         ]);
     }
     
