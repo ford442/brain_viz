@@ -126,8 +126,9 @@ export class BrainRenderer {
         this.device.queue.writeBuffer(this.tensorBuffer, 0, initialData);
         
         // Create uniform buffer
+        // Adjusted to 160 bytes to match WGSL padding/alignment requirements
         this.uniformBuffer = this.device.createBuffer({
-            size: 144, // mat4x4 (64) + mat4x4 (64) + f32 (4) + vec3 (12)
+            size: 160, // padded to 16-byte multiple: 2 mat4x4 (128) + f32 + vec3 + padding
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
         
@@ -282,7 +283,7 @@ export class BrainRenderer {
         const mvp = Mat4.multiply(viewProj, model);
         
         // Update uniform buffer
-        const uniformData = new Float32Array(36);
+        const uniformData = new Float32Array(40); // 40 * 4 = 160 bytes
         uniformData.set(mvp, 0);
         uniformData.set(model, 16);
         uniformData[32] = this.time;
