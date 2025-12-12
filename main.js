@@ -56,8 +56,14 @@ async function init() {
             styleSelect.addEventListener('change', (e) => {
                 const val = parseFloat(e.target.value);
                 renderer.setParams({ style: val });
-                if (val === 1) {
-                    // Cyber preset
+if (val === 2) { // Connectome Preset
+        renderer.setParams({ frequency: 8.0, smoothing: 0.2, amplitude: 1.5 });
+        inputs.frequency.value = 8.0;
+        inputs.smoothing.value = 0.2;
+        inputs.amplitude.value = 1.5;
+        updateParam('frequency', 8.0); // Helper from previous code
+        // ... update other labels
+} else if (val === 1) {    // Cyber preset
                     inputs.frequency.value = 5.0;
                     inputs.smoothing.value = 0.5;
                     updateParam('frequency', 5.0);
