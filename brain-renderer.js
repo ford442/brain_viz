@@ -22,7 +22,8 @@ export class BrainRenderer {
             frequency: 2.0,
             amplitude: 0.5,
             spikeThreshold: 0.8,
-            smoothing: 0.9
+            smoothing: 0.9,
+            style: 0.0
         };
         
         this.setupInputHandlers();
@@ -287,6 +288,7 @@ export class BrainRenderer {
         uniformData.set(mvp, 0);
         uniformData.set(model, 16);
         uniformData[32] = this.time;
+        uniformData[33] = this.params.style;
         
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformData);
         
@@ -300,7 +302,7 @@ export class BrainRenderer {
         dv.setFloat32(12, this.params.amplitude, true);
         dv.setFloat32(16, this.params.spikeThreshold, true);
         dv.setFloat32(20, this.params.smoothing, true);
-        dv.setFloat32(24, 0.0, true); // padding
+        dv.setFloat32(24, this.params.style, true); // style
         dv.setFloat32(28, 0.0, true); // padding
         this.device.queue.writeBuffer(this.computeUniformBuffer, 0, computeBuffer);
     }

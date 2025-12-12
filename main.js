@@ -11,6 +11,7 @@ async function init() {
         amplitude: document.getElementById('amp'),
         spikeThreshold: document.getElementById('thresh'),
         smoothing: document.getElementById('smooth')
+        , style: document.getElementById('style-mode')
     };
     
     const labels = {
@@ -48,6 +49,28 @@ async function init() {
                 updateParam(key, e.target.value);
             });
         });
+
+        // Style dropdown separate listener (change event)
+        const styleSelect = document.getElementById('style-mode');
+        if (styleSelect) {
+            styleSelect.addEventListener('change', (e) => {
+                const val = parseFloat(e.target.value);
+                renderer.setParams({ style: val });
+                if (val === 1) {
+                    // Cyber preset
+                    inputs.frequency.value = 5.0;
+                    inputs.smoothing.value = 0.5;
+                    updateParam('frequency', 5.0);
+                    updateParam('smoothing', 0.5);
+                } else {
+                    // Organic preset
+                    inputs.frequency.value = 2.0;
+                    inputs.smoothing.value = 0.9;
+                    updateParam('frequency', 2.0);
+                    updateParam('smoothing', 0.9);
+                }
+            });
+        }
 
         renderer.start();
         
