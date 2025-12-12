@@ -318,18 +318,19 @@ export class BrainRenderer {
         
         const rotX = Mat4.rotateX(this.rotation.x);
         const rotY = Mat4.rotateY(this.rotation.y);
-        const model = Mat4.multiply(rotY, rotX);
+        // Correct multiply order for Col-Major matrices to achieve Ry * Rx is multiply(rotX, rotY)
+        const model = Mat4.multiply(rotX, rotY);
         
-        const viewProj = Mat4.multiply(projection, view);
-        const mvp = Mat4.multiply(viewProj, model);
+        // Correct multiply order for Col-Major matrices to achieve P * V * M is:
+        // multiply(M, multiply(V, P))
+        const viewProj = Mat4.multiply(view, projection);
+        const mvp = Mat4.multiply(model, viewProj);
         
         // Update uniform buffer
-        // Transpose the matrices for WGSL column-major layout
-        const mvpT = Mat4.transpose(mvp);
-        const modelT = Mat4.transpose(model);
+        // Matrices are already in Column-Major layout (WebGPU standard), so no transpose needed.
         const uniformData = new Float32Array(40); // 40 * 4 = 160 bytes
-        uniformData.set(mvpT, 0);
-        uniformData.set(modelT, 16);
+        uniformData.set(mvp, 0);
+        uniformData.set(model, 16);
         uniformData[32] = this.time;
         uniformData[33] = this.params.style;
         
