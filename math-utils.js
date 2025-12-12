@@ -12,7 +12,18 @@ export class Mat4 {
     // Corrected for WebGPU depth range [0, 1]
     static perspective(fov, aspect, near, far) {
         const f = 1.0 / Math.tan(fov / 2);
-        // WebGPU uses a 0..1 clip space for Z. This matrix maps depth accordingly.
+        // WebGPU uses a 0..1 clip space for Z.
+        // Column-Major:
+        // f/aspect  0    0       0
+        // 0         f    0       0
+        // 0         0    A      -1
+        // 0         0    B       0
+        // where A = f/(n-f), B = nf/(n-f)
+        // Array Indices (Col-Major):
+        // Col 0: 0..3
+        // Col 1: 4..7
+        // Col 2: 8..11 -> [0, 0, A, -1]
+        // Col 3: 12..15 -> [0, 0, B, 0]
         return new Float32Array([
             f / aspect, 0, 0, 0,
             0, f, 0, 0,
@@ -30,6 +41,12 @@ export class Mat4 {
         const x = normalize(cross(up, z));
         const y = cross(z, x);
         
+        // Column-Major View Matrix:
+        // Col 0: [x.x, y.x, z.x, 0]
+        // Col 1: [x.y, y.y, z.y, 0]
+        // Col 2: [x.z, y.z, z.z, 0]
+        // Col 3: [-dot(x,e), -dot(y,e), -dot(z,e), 1]
+
         return new Float32Array([
             x[0], y[0], z[0], 0,
             x[1], y[1], z[1], 0,
@@ -67,10 +84,16 @@ export class Mat4 {
         const c = Math.cos(angle);
         const s = Math.sin(angle);
         
+        // Column-Major (Transpose of standard):
+        // Col 0: [c, 0, -s, 0]
+        // Col 1: [0, 1, 0, 0]
+        // Col 2: [s, 0, c, 0]
+        // Col 3: [0, 0, 0, 1]
+
         return new Float32Array([
-            c, 0, s, 0,
+            c, 0, -s, 0,
             0, 1, 0, 0,
-            -s, 0, c, 0,
+            s, 0, c, 0,
             0, 0, 0, 1
         ]);
     }
@@ -79,10 +102,16 @@ export class Mat4 {
         const c = Math.cos(angle);
         const s = Math.sin(angle);
         
+        // Column-Major (Transpose of standard):
+        // Col 0: [1, 0, 0, 0]
+        // Col 1: [0, c, s, 0]
+        // Col 2: [0, -s, c, 0]
+        // Col 3: [0, 0, 0, 1]
+
         return new Float32Array([
             1, 0, 0, 0,
-            0, c, -s, 0,
-            0, s, c, 0,
+            0, c, s, 0,
+            0, -s, c, 0,
             0, 0, 0, 1
         ]);
     }
