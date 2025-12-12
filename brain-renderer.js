@@ -209,8 +209,21 @@ export class BrainRenderer {
                 if (m.type === 'error') console.error('WGSL error:', m.message);
                 else if (m.type === 'warning') console.warn('WGSL warning:', m.message);
             });
+            const hasErrors = vertInfo.messages.concat(fragInfo.messages).concat(compInfo.messages).some(m => m.type === 'error');
+            const statusEl = typeof document !== 'undefined' ? document.getElementById('status') : null;
+            if (statusEl) {
+                statusEl.style.display = 'block';
+                statusEl.style.color = hasErrors ? '#f00' : '#0f0';
+                statusEl.textContent = hasErrors ? 'WGSL compilation errors (check console)' : 'Shaders OK';
+            }
         } catch (err) {
             console.warn('Shader compilation info not available:', err);
+            const statusEl = typeof document !== 'undefined' ? document.getElementById('status') : null;
+            if (statusEl) {
+                statusEl.style.display = 'block';
+                statusEl.style.color = '#ff0';
+                statusEl.textContent = 'Shader status unknown';
+            }
         }
 
         this.pipeline = this.device.createRenderPipeline({
@@ -267,6 +280,12 @@ export class BrainRenderer {
             }
         });
         console.log('Render and compute pipelines created');
+        const statusEl2 = typeof document !== 'undefined' ? document.getElementById('status') : null;
+        if (statusEl2) {
+            statusEl2.style.display = 'block';
+            statusEl2.style.color = '#0f0';
+            statusEl2.textContent = 'Pipelines created';
+        }
         
         // Create depth texture
         this.depthTexture = this.device.createTexture({
