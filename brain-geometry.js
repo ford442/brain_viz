@@ -1,18 +1,19 @@
-// Brain geometry generation
+// brain-geometry.js
 export class BrainGeometry {
     constructor() {
         this.vertices = [];
         this.indices = [];
         this.normals = [];
+        this.fiberVertices = []; // New buffer for lines
     }
     
-    // Generate a brain-like geometry using UV sphere with deformations
-    generate(segments = 32, rings = 16) {
+    generate(segments = 64, rings = 32) { // Increased density for better looking fibers
         this.vertices = [];
         this.indices = [];
         this.normals = [];
+        this.fiberVertices = [];
         
-        // Create UV sphere as base
+        // 1. Generate Base Sphere with Deformations
         for (let ring = 0; ring <= rings; ring++) {
             const theta = (ring / rings) * Math.PI;
             const sinTheta = Math.sin(theta);
@@ -23,59 +24,52 @@ export class BrainGeometry {
                 const sinPhi = Math.sin(phi);
                 const cosPhi = Math.cos(phi);
                 
-                // Base sphere coordinates
                 let x = cosPhi * sinTheta;
                 let y = cosTheta;
                 let z = sinPhi * sinTheta;
                 
-                // Add brain-like deformations (bumpy surface)
+                // Brain deformations
                 const deform1 = Math.sin(phi * 3 + theta * 2) * 0.15;
                 const deform2 = Math.cos(phi * 5 - theta * 3) * 0.1;
                 const deform3 = Math.sin(phi * 7 + theta * 5) * 0.08;
-                
                 const radius = 1.0 + deform1 + deform2 + deform3;
                 
                 x *= radius;
                 y *= radius;
                 z *= radius;
                 
-                // Store vertex position
                 this.vertices.push(x, y, z);
+                this.normals.push(x, y, z); // Approximate normal is just position for sphere-likes
                 
-                // Store normal (will be normalized in shader)
-                this.normals.push(x, y, z);
+                // 2. Generate Fibers (Lines)
+                // For every vertex, we create a "hair" sticking out
+                // We store 2 points per fiber: Root (on surface) and Tip (in air)
+                // We'll calculate the Tip position in the shader to animate it
+                
+                // Root vertex (same as surface)
+                this.fiberVertices.push(x, y, z);
+                // Tip vertex (duplicate pos, we will identify it by index in shader)
+                this.fiberVertices.push(x, y, z);
             }
         }
         
-        // Generate indices for triangle strips
+        // Generate indices for the solid mesh
         for (let ring = 0; ring < rings; ring++) {
             for (let segment = 0; segment < segments; segment++) {
                 const first = ring * (segments + 1) + segment;
                 const second = first + segments + 1;
-                
                 this.indices.push(first, second, first + 1);
                 this.indices.push(second, second + 1, first + 1);
             }
         }
     }
     
-    getVertexData() {
-        return new Float32Array(this.vertices);
-    }
+    getVertexData() { return new Float32Array(this.vertices); }
+    getNormalData() { return new Float32Array(this.normals); }
+    getIndexData() { return new Uint32Array(this.indices); }
+    getFiberData() { return new Float32Array(this.fiberVertices); } // New export
     
-    getNormalData() {
-        return new Float32Array(this.normals);
-    }
-    
-    getIndexData() {
-        return new Uint32Array(this.indices);
-    }
-    
-    getVertexCount() {
-        return this.vertices.length / 3;
-    }
-    
-    getIndexCount() {
-        return this.indices.length;
-    }
+    getVertexCount() { return this.vertices.length / 3; }
+    getIndexCount() { return this.indices.length; }
+    getFiberVertexCount() { return this.fiberVertices.length / 3; } // Count of individual points
 }
