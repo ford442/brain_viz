@@ -195,10 +195,28 @@ export class BrainRenderer {
             bindGroupLayouts: [bindGroupLayout]
         });
         
+        // Create shader modules and log any compilation errors/warnings
+        const vertexModule = this.device.createShaderModule({ code: vertexShader });
+        const fragmentModule = this.device.createShaderModule({ code: fragmentShader });
+        const computeModule = this.device.createShaderModule({ code: computeShader });
+
+        // Check shader compilation info
+        try {
+            const vertInfo = await vertexModule.compilationInfo();
+            const fragInfo = await fragmentModule.compilationInfo();
+            const compInfo = await computeModule.compilationInfo();
+            vertInfo.messages.concat(fragInfo.messages).concat(compInfo.messages).forEach(m => {
+                if (m.type === 'error') console.error('WGSL error:', m.message);
+                else if (m.type === 'warning') console.warn('WGSL warning:', m.message);
+            });
+        } catch (err) {
+            console.warn('Shader compilation info not available:', err);
+        }
+
         this.pipeline = this.device.createRenderPipeline({
             layout: pipelineLayout,
             vertex: {
-                module: this.device.createShaderModule({ code: vertexShader }),
+                module: vertexModule,
                 entryPoint: 'main',
                 buffers: [
                     {
@@ -220,7 +238,7 @@ export class BrainRenderer {
                 ]
             },
             fragment: {
-                module: this.device.createShaderModule({ code: fragmentShader }),
+                module: fragmentModule,
                 entryPoint: 'main',
                 targets: [{ format: format }]
             },
@@ -243,10 +261,11 @@ export class BrainRenderer {
         this.computePipeline = this.device.createComputePipeline({
             layout: computePipelineLayout,
             compute: {
-                module: this.device.createShaderModule({ code: computeShader }),
+                module: computeModule,
                 entryPoint: 'main'
             }
         });
+        console.log('Render and compute pipelines created');
         
         // Create depth texture
         this.depthTexture = this.device.createTexture({
