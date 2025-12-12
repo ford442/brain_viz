@@ -11,7 +11,7 @@ USERNAME = "ford442"
 
 # --- Project Configuration ---
 # The local directory to upload from.
-LOCAL_DIRECTORY = "build"
+LOCAL_DIRECTORY = "dist"
 # The directory on the server where the files should go (e.g., 'public_html/wasm-game').
 REMOTE_DIRECTORY = "test.1ink.us/brain-viz"
 
