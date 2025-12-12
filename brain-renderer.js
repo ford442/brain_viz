@@ -111,6 +111,7 @@ export class BrainRenderer {
         });
         this.device.queue.writeBuffer(this.indexBuffer, 0, geometry.getIndexData());
         this.indexCount = geometry.getIndexCount();
+        console.log(`Generated geometry: vertices=${geometry.getVertexCount()}, indices=${this.indexCount}`);
         
         // Create tensor data buffer
         const dataSize = geometry.getVertexCount();
@@ -284,9 +285,12 @@ export class BrainRenderer {
         const mvp = Mat4.multiply(viewProj, model);
         
         // Update uniform buffer
+        // Transpose the matrices for WGSL column-major layout
+        const mvpT = Mat4.transpose(mvp);
+        const modelT = Mat4.transpose(model);
         const uniformData = new Float32Array(40); // 40 * 4 = 160 bytes
-        uniformData.set(mvp, 0);
-        uniformData.set(model, 16);
+        uniformData.set(mvpT, 0);
+        uniformData.set(modelT, 16);
         uniformData[32] = this.time;
         uniformData[33] = this.params.style;
         
