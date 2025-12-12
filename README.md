@@ -21,6 +21,17 @@ A 3D brain visualization with animated tensor data driven by WebGPU compute shad
 3. Scroll to zoom in/out
 4. Watch the tensor field animate the brain surface
 
+## Controls
+- Use the top-right sliders to change **Frequency**, **Amplitude**, **Spike Threshold**, and **Smoothing (Trails)** in real-time.
+
+### Running locally (recommended)
+Install dependencies and run the dev server:
+```
+npm install
+npm run dev
+```
+Open the URL shown by Vite in a WebGPU-compatible browser.
+
 ## Technology
 - **WebGPU**: Modern GPU API for rendering and compute
 - **WGSL**: WebGPU Shading Language for compute and rendering shaders

@@ -17,6 +17,13 @@ export class BrainRenderer {
         
         this.time = 0;
         this.isRunning = false;
+        // Default shader params (can be updated via UI)
+        this.params = {
+            frequency: 2.0,
+            amplitude: 0.5,
+            spikeThreshold: 0.8,
+            smoothing: 0.9
+        };
         
         this.setupInputHandlers();
     }
@@ -126,7 +133,7 @@ export class BrainRenderer {
         
         // Create compute uniform buffer
         this.computeUniformBuffer = this.device.createBuffer({
-            size: 16, // time (4) + dataSize (4) + frequency (4) + amplitude (4)
+            size: 32, // time (4) + dataSize (4) + frequency (4) + amplitude (4) + spikeThreshold (4) + smoothing (4) + padding
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
         
@@ -247,6 +254,11 @@ export class BrainRenderer {
         
         this.dataSize = dataSize;
     }
+
+    // Update params from UI/controls
+    setParams(newParams) {
+        this.params = { ...this.params, ...newParams };
+    }
     
     updateUniforms() {
         // Smooth rotation
@@ -278,13 +290,18 @@ export class BrainRenderer {
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformData);
         
         // Update compute uniforms
-        const computeData = new Float32Array([
-            this.time,
-            this.dataSize,
-            2.0, // frequency
-            0.5  // amplitude
-        ]);
-        this.device.queue.writeBuffer(this.computeUniformBuffer, 0, computeData);
+        // Build a mixed-type buffer (float32 + uint32) using DataView for correct types
+        const computeBuffer = new ArrayBuffer(32);
+        const dv = new DataView(computeBuffer);
+        dv.setFloat32(0, this.time, true); // time at offset 0
+        dv.setUint32(4, this.dataSize, true); // dataSize as u32 at offset 4
+        dv.setFloat32(8, this.params.frequency, true);
+        dv.setFloat32(12, this.params.amplitude, true);
+        dv.setFloat32(16, this.params.spikeThreshold, true);
+        dv.setFloat32(20, this.params.smoothing, true);
+        dv.setFloat32(24, 0.0, true); // padding
+        dv.setFloat32(28, 0.0, true); // padding
+        this.device.queue.writeBuffer(this.computeUniformBuffer, 0, computeBuffer);
     }
     
     render() {
