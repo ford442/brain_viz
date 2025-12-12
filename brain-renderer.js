@@ -28,7 +28,6 @@ export class BrainRenderer {
         this.setupInputHandlers();
     }
     
-    // ... setupInputHandlers() ... (Same as before)
     setupInputHandlers() {
         let isDragging = false;
         let lastX = 0;
@@ -60,7 +59,7 @@ export class BrainRenderer {
         
         // Geometry
         const geometry = new BrainGeometry();
-        geometry.generate(80, 50); // High density for good fibers
+        geometry.generate(80, 50); 
         
         // 1. Solid Mesh Buffers
         this.vertexBuffer = this.createBuffer(geometry.getVertexData(), GPUBufferUsage.VERTEX);
@@ -121,22 +120,29 @@ export class BrainRenderer {
             layout: this.device.createPipelineLayout({ bindGroupLayouts: [renderBindGroupLayout] }),
             vertex: {
                 module: this.device.createShaderModule({ code: vertexShader }),
-                entryPoint: 'main', // Uses same shader, logic inside handles style
+                entryPoint: 'main', 
                 buffers: [
-                    // Only 1 buffer for fibers (Position), we calc normal in shader or assume spherical
-                    { arrayStride: 12, attributes: [{ shaderLocation: 0, offset: 0, format: 'float32x3' }] } 
+                    { 
+                        arrayStride: 12, 
+                        attributes: [
+                            // FIX: We must provide BOTH Location 0 and 1 because the shader expects them.
+                            // We map both to the same buffer offset. The fiber logic ignores 'normal' anyway.
+                            { shaderLocation: 0, offset: 0, format: 'float32x3' }, // Position
+                            { shaderLocation: 1, offset: 0, format: 'float32x3' }  // Dummy Normal
+                        ] 
+                    } 
                 ]
             },
             fragment: {
                 module: this.device.createShaderModule({ code: fragmentShader }),
                 entryPoint: 'main',
-                targets: [{ format: format, blend: { color: { srcFactor: 'src-alpha', dstFactor: 'one', operation: 'add' }, alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' } } }] // Additive blend for glow
+                targets: [{ format: format, blend: { color: { srcFactor: 'src-alpha', dstFactor: 'one', operation: 'add' }, alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' } } }] 
             },
-            primitive: { topology: 'line-list' }, // Crucial for drawing lines
-            depthStencil: { depthWriteEnabled: false, depthCompare: 'less', format: 'depth24plus' } // Disable depth write for transparent glow
+            primitive: { topology: 'line-list' }, 
+            depthStencil: { depthWriteEnabled: false, depthCompare: 'less', format: 'depth24plus' } 
         });
 
-        // Compute Pipeline (Same as before)
+        // Compute Pipeline
         const computeLayout = this.device.createBindGroupLayout({
              entries: [{ binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
                        { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } }]
@@ -191,7 +197,6 @@ export class BrainRenderer {
     render() {
         if (!this.isRunning) return;
         
-        // Resize check... (omitted for brevity, same as before)
         const width = this.canvas.clientWidth;
         const height = this.canvas.clientHeight;
         if (this.canvas.width !== width || this.canvas.height !== height) {
@@ -205,18 +210,16 @@ export class BrainRenderer {
         
         const commandEncoder = this.device.createCommandEncoder();
         
-        // Compute Pass
         const computePass = commandEncoder.beginComputePass();
         computePass.setPipeline(this.computePipeline);
         computePass.setBindGroup(0, this.computeBindGroup);
         computePass.dispatchWorkgroups(Math.ceil(this.dataSize / 64));
         computePass.end();
         
-        // Render Pass
         const renderPass = commandEncoder.beginRenderPass({
             colorAttachments: [{
                 view: this.context.getCurrentTexture().createView(),
-                clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 }, // Back to black background
+                clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
                 loadOp: 'clear', storeOp: 'store'
             }],
             depthStencilAttachment: { view: this.depthTexture.createView(), depthClearValue: 1.0, depthLoadOp: 'clear', depthStoreOp: 'store' }
@@ -228,8 +231,8 @@ export class BrainRenderer {
         if (this.params.style >= 2.0) {
             // --- CONNECTOME MODE (FIBERS) ---
             renderPass.setPipeline(this.fiberPipeline);
-            renderPass.setVertexBuffer(0, this.fiberBuffer);
-            // Draw lines (2 vertices per fiber)
+            // We set slot 0. The pipeline is configured to pull both Loc 0 and Loc 1 from this same slot.
+            renderPass.setVertexBuffer(0, this.fiberBuffer); 
             renderPass.draw(this.fiberVertexCount); 
         } else {
             // --- SOLID MODES (ORGANIC / CYBER) ---
