@@ -225,7 +225,7 @@ export class BrainRenderer {
             },
             primitive: {
                 topology: 'triangle-list',
-                cullMode: 'back'
+                cullMode: 'none'
             },
             depthStencil: {
                 depthWriteEnabled: true,
@@ -346,7 +346,8 @@ export class BrainRenderer {
         const renderPass = commandEncoder.beginRenderPass({
             colorAttachments: [{
                 view: this.context.getCurrentTexture().createView(),
-                clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
+                // DEBUG: Set clear color to Dark Grey (0.1) instead of Black so we can see if GPU is alive
+                clearValue: { r: 0.1, g: 0.1, b: 0.1, a: 1.0 },
                 loadOp: 'clear',
                 storeOp: 'store'
             }],
