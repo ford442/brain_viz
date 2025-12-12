@@ -145,7 +145,7 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     // Invert threshold logic: Lower slider = More spikes
     let effectiveThresh = 2.0 - (params.spikeThreshold * 2.0); 
     
-    let spike = 0.0;
+    var spike = 0.0;
     if (triggerVal > effectiveThresh) {
         spike = 1.0 * params.amplitude;
     }
