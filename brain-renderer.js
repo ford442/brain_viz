@@ -112,7 +112,7 @@ export class BrainRenderer {
                 targets: [{ format: format, blend: { color: { srcFactor: 'src-alpha', dstFactor: 'one-minus-src-alpha', operation: 'add' }, alpha: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha', operation: 'add' } } }]
             },
             primitive: { topology: 'triangle-list', cullMode: 'none' },
-            depthStencil: { depthWriteEnabled: true, depthCompare: 'less', format: 'depth24plus' }
+            depthStencil: { depthWriteEnabled: false, depthCompare: 'less', format: 'depth24plus' } // Disable depth write for transparency
         });
 
         // --- PIPELINE 2: FIBERS (Line List) ---
