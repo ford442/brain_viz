@@ -4,60 +4,112 @@ export class BrainGeometry {
         this.vertices = [];
         this.indices = [];
         this.normals = [];
-        this.fiberVertices = []; // New buffer for lines
+        this.fiberVertices = [];
     }
     
-    generate(segments = 64, rings = 32) { // Increased density for better looking fibers
+    // Helper to calculate position from spherical coordinates with deformations
+    getPosition(theta, phi) {
+        const sinTheta = Math.sin(theta);
+        const cosTheta = Math.cos(theta);
+        const sinPhi = Math.sin(phi);
+        const cosPhi = Math.cos(phi);
+
+        // Base Sphere
+        let x = cosPhi * sinTheta;
+        let y = cosTheta;
+        let z = sinPhi * sinTheta;
+
+        // --- Brain Shape Morphing ---
+        // 1. General Scaling (Ellipsoid)
+        x *= 0.85;
+        z *= 1.1;
+
+        // 2. Longitudinal Fissure
+        const fissureWidth = 5.0;
+        const fissureDepth = 0.2;
+        let fissureEffect = Math.exp(-Math.pow(x * fissureWidth, 2));
+
+        // 3. Radius Modulation
+        let radius = 1.0;
+        radius -= fissureEffect * fissureDepth * Math.max(0.0, y + 0.5);
+
+        // 4. Gyri/Sulci (Wrinkles)
+        const noiseFreq = 10.0;
+        const noiseAmp = 0.03;
+        const wrinkle = Math.sin(x * noiseFreq) * Math.cos(y * noiseFreq) * Math.sin(z * noiseFreq * 0.8);
+        const wrinkle2 = Math.cos(x * 15.0 + y) * 0.01;
+
+        radius += wrinkle * noiseAmp + wrinkle2;
+
+        return {
+            x: x * radius,
+            y: y * radius,
+            z: z * radius
+        };
+    }
+
+    generate(segments = 80, rings = 50) {
         this.vertices = [];
         this.indices = [];
         this.normals = [];
         this.fiberVertices = [];
         
-        // 1. Generate Base Sphere with Deformations
         for (let ring = 0; ring <= rings; ring++) {
             const theta = (ring / rings) * Math.PI;
-            const sinTheta = Math.sin(theta);
-            const cosTheta = Math.cos(theta);
             
             for (let segment = 0; segment <= segments; segment++) {
                 const phi = (segment / segments) * 2 * Math.PI;
-                const sinPhi = Math.sin(phi);
-                const cosPhi = Math.cos(phi);
                 
-                let x = cosPhi * sinTheta;
-                let y = cosTheta;
-                let z = sinPhi * sinTheta;
+                // Get current point
+                const p = this.getPosition(theta, phi);
                 
-                // Brain deformations
-                const deform1 = Math.sin(phi * 3 + theta * 2) * 0.15;
-                const deform2 = Math.cos(phi * 5 - theta * 3) * 0.1;
-                const deform3 = Math.sin(phi * 7 + theta * 5) * 0.08;
-                const radius = 1.0 + deform1 + deform2 + deform3;
+                // Calculate Normal using derivatives (tangents)
+                // We need slightly offset points to calculate the tangent plane
+                const delta = 0.01;
+                const p_theta = this.getPosition(theta + delta, phi);
+                const p_phi = this.getPosition(theta, phi + delta);
                 
-                x *= radius;
-                y *= radius;
-                z *= radius;
+                // Tangent vectors
+                const tx = p_theta.x - p.x;
+                const ty = p_theta.y - p.y;
+                const tz = p_theta.z - p.z;
                 
-                this.vertices.push(x, y, z);
-                this.normals.push(x, y, z); // Approximate normal is just position for sphere-likes
+                const px = p_phi.x - p.x;
+                const py = p_phi.y - p.y;
+                const pz = p_phi.z - p.z;
                 
-                // 2. Generate Fibers (Lines)
-                // For every vertex, we create a "hair" sticking out
-                // We store 2 points per fiber: Root (on surface) and Tip (in air)
-                // We'll calculate the Tip position in the shader to animate it
+                // Cross product for normal
+                // Normal = TangentTheta x TangentPhi (or vice versa depending on winding)
+                // Standard sphere winding: Theta moves South, Phi moves East.
+                // TangentTheta is "down", TangentPhi is "right". Cross(Down, Right) = Out.
+                let nx = ty * pz - tz * py;
+                let ny = tz * px - tx * pz;
+                let nz = tx * py - ty * px;
                 
-                // Root vertex (same as surface)
-                this.fiberVertices.push(x, y, z);
-                // Tip vertex (duplicate pos, we will identify it by index in shader)
-                this.fiberVertices.push(x, y, z);
+                // Normalize
+                const len = Math.sqrt(nx*nx + ny*ny + nz*nz);
+                if (len > 0.0001) {
+                    nx /= len; ny /= len; nz /= len;
+                } else {
+                    // Fallback for poles
+                    nx = p.x; ny = p.y; nz = p.z;
+                }
+
+                this.vertices.push(p.x, p.y, p.z);
+                this.normals.push(nx, ny, nz);
+
+                // Fiber points
+                this.fiberVertices.push(p.x, p.y, p.z);
+                this.fiberVertices.push(p.x, p.y, p.z);
             }
         }
         
-        // Generate indices for the solid mesh
+        // Indices
         for (let ring = 0; ring < rings; ring++) {
             for (let segment = 0; segment < segments; segment++) {
                 const first = ring * (segments + 1) + segment;
                 const second = first + segments + 1;
+
                 this.indices.push(first, second, first + 1);
                 this.indices.push(second, second + 1, first + 1);
             }
@@ -67,9 +119,9 @@ export class BrainGeometry {
     getVertexData() { return new Float32Array(this.vertices); }
     getNormalData() { return new Float32Array(this.normals); }
     getIndexData() { return new Uint32Array(this.indices); }
-    getFiberData() { return new Float32Array(this.fiberVertices); } // New export
+    getFiberData() { return new Float32Array(this.fiberVertices); }
     
     getVertexCount() { return this.vertices.length / 3; }
     getIndexCount() { return this.indices.length; }
-    getFiberVertexCount() { return this.fiberVertices.length / 3; } // Count of individual points
+    getFiberVertexCount() { return this.fiberVertices.length / 3; }
 }
