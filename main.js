@@ -78,7 +78,9 @@ if (val === 2) { // Connectome Preset
             });
         }
 
+        console.log('Starting renderer...');
         renderer.start();
+        console.log('Renderer started');
         
     } catch (error) {
         console.error('Failed to initialize:', error);
