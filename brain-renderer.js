@@ -254,4 +254,5 @@ export class BrainRenderer {
 
     start() { this.isRunning = true; this.render(); }
     stop() { this.isRunning = false; }
+}
 *** End of File**
