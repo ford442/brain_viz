@@ -176,8 +176,15 @@ export class BrainRenderer {
         const aspect = this.canvas.width / this.canvas.height;
         const projection = Mat4.perspective(Math.PI / 4, aspect, 0.1, 100.0);
         const view = Mat4.lookAt([0, 0, this.zoom], [0, 0, 0], [0, 1, 0]);
-        const model = Mat4.multiply(Mat4.rotateY(this.rotation.y), Mat4.rotateX(this.rotation.x));
-        const mvp = Mat4.multiply(Mat4.multiply(projection, view), model);
+        // Rotate X then Y (orbit behavior)
+        const model = Mat4.multiply(Mat4.rotateX(this.rotation.x), Mat4.rotateY(this.rotation.y));
+
+        // P * V * M
+        // With multiply(A,B) = B*A:
+        // multiply(view, projection) -> P * V
+        // multiply(model, pv) -> P * V * M
+        const pv = Mat4.multiply(view, projection);
+        const mvp = Mat4.multiply(model, pv);
         
         const uData = new Float32Array(40);
         uData.set(mvp, 0); uData.set(model, 16);
