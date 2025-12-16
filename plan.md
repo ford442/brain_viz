@@ -155,10 +155,18 @@ These are all implementable without ML and are great for building compelling, re
 
 ---
 
-If you'd like, I can:
+# Implementation Progress
 
-- add example code snippets that show uploading a `Float32Array` to GPU and rendering it, or
-- add an example WebAssembly/JS preprocessor and a small ONNX Web inference snippet.
+## Implemented
 
---
-Generated with the EEG + WebGPU checklist provided.
+- **Tensor Class** (`tensor-utils.js`):
+  - Wraps `Float32Array` with shape metadata.
+  - Supports `reshape(newShape)` for dimension manipulation (e.g., `[B, C, T]` -> `[B, 1, C, T]`).
+  - Supports `normalize(min, max)` for scaling data (useful for visualization color mapping).
+  - Validated with unit tests.
+
+## Next Steps
+
+- Implement `RingBuffer` logic for streaming EEG data.
+- Integrate `Tensor` class with `onnxruntime-web` once models are introduced.
+- Connect tensor data to WebGPU buffers.
