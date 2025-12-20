@@ -29,32 +29,13 @@ export class BrainGeometry {
                 let y = Math.cos(phi);
                 let z = Math.sin(phi) * Math.sin(theta);
 
-                // Apply Brain Deformations
-                // A. Longitudinal Fissure (separate hemispheres)
-                // Push x inwards when close to 0
-                const fissureStrength = Math.exp(-Math.abs(x) * 5.0);
-                // Not strictly correct but visually approximate:
-                // We want to pull X towards 0 slightly less? No, we want a gap or a dip.
-                // Let's simple indent the Y/Z radius when X is small.
-                const fissureIndent = 1.0 - (fissureStrength * 0.4);
+                const p = this.applyBrainDeformation(x, y, z);
 
-                // B. Gyri/Sulci (Folds)
-                // Use sine waves based on position
-                const noise = Math.sin(x * 10) * Math.cos(y * 10) * Math.sin(z * 10);
-                const foldHeight = 1.0 + (noise * 0.05);
-
-                const radius = 1.5 * fissureIndent * foldHeight;
-
-                x *= radius;
-                y *= radius;
-                z *= radius;
-
-                this.vertices.push(x, y, z);
+                this.vertices.push(p.x, p.y, p.z);
 
                 // Normals (Approximation: from center)
-                // Ideally should be computed from derivatives, but normalized pos is okay for procedural blob
-                const len = Math.sqrt(x*x + y*y + z*z);
-                this.normals.push(x/len, y/len, z/len);
+                const len = Math.sqrt(p.x*p.x + p.y*p.y + p.z*p.z);
+                this.normals.push(p.x/len, p.y/len, p.z/len);
             }
         }
 
@@ -69,57 +50,99 @@ export class BrainGeometry {
             }
         }
 
-        // 2. Generate Fibers (Connectome lines)
-        // Just random lines inside the volume for now
-        // Or connect random vertices
-        const fiberCount = 500;
-        for (let i = 0; i < fiberCount; i++) {
-            // Pick two random points inside the sphere
-            // We can pick existing vertices to ensure they touch the surface
-            const idx1 = Math.floor(Math.random() * (this.vertices.length / 3));
-            const idx2 = Math.floor(Math.random() * (this.vertices.length / 3));
+        // 2. Generate Structured Circuit Grid
+        this.generateCircuitGrid();
+    }
 
-            const p1x = this.vertices[idx1*3];
-            const p1y = this.vertices[idx1*3+1];
-            const p1z = this.vertices[idx1*3+2];
+    applyBrainDeformation(x, y, z) {
+        // A. Longitudinal Fissure (separate hemispheres)
+        const fissureStrength = Math.exp(-Math.abs(x) * 5.0);
+        const fissureIndent = 1.0 - (fissureStrength * 0.4);
 
-            const p2x = this.vertices[idx2*3];
-            const p2y = this.vertices[idx2*3+1];
-            const p2z = this.vertices[idx2*3+2];
+        // B. Gyri/Sulci (Folds)
+        const noise = Math.sin(x * 10) * Math.cos(y * 10) * Math.sin(z * 10);
+        const foldHeight = 1.0 + (noise * 0.05);
 
-            // Push pairs for line-list
-            this.fibers.push(p1x, p1y, p1z);
-            this.fibers.push(p2x, p2y, p2z);
+        const radius = 1.5 * fissureIndent * foldHeight;
+
+        return { x: x * radius, y: y * radius, z: z * radius };
+    }
+
+    isInsideBrain(x, y, z) {
+        // Inverse deformation check (approximate)
+        // We normalize the point and check if it's within the radius defined by our deformation function
+        const len = Math.sqrt(x*x + y*y + z*z);
+        if (len === 0) return true;
+
+        const nx = x / len;
+        const ny = y / len;
+        const nz = z / len;
+
+        // Calculate expected radius at this angle
+        // (Re-using deformation logic without 'foldHeight' noise for a slightly safer margin,
+        //  or include it if we want to fill the folds)
+
+        // A. Fissure
+        const fissureStrength = Math.exp(-Math.abs(nx) * 5.0);
+        const fissureIndent = 1.0 - (fissureStrength * 0.4);
+
+        // Base radius is 1.5 * fissureIndent
+        // We leave a small margin (0.9) so fibers don't poke out
+        const maxRadius = 1.5 * fissureIndent * 0.9;
+
+        return len < maxRadius;
+    }
+
+    generateCircuitGrid() {
+        const step = 0.15; // Grid spacing
+        const range = 1.5; // Bounding box half-size
+
+        // We will generate segments along axes
+        // To make it look like a flow/circuit, we scan the grid
+
+        for (let x = -range; x <= range; x += step) {
+            for (let y = -range; y <= range; y += step) {
+                for (let z = -range; z <= range; z += step) {
+
+                    if (!this.isInsideBrain(x, y, z)) continue;
+
+                    // Try to connect to neighbors (+X, +Y, +Z)
+                    // We only connect 'forward' to avoid duplicates
+
+                    // Connect X+1
+                    if (this.isInsideBrain(x + step, y, z)) {
+                         // Random chance to skip connection (sparse circuit look)
+                        if (Math.random() > 0.3) {
+                            this.fibers.push(x, y, z);
+                            this.fibers.push(x + step, y, z);
+                        }
+                    }
+
+                    // Connect Y+1
+                    if (this.isInsideBrain(x, y + step, z)) {
+                        if (Math.random() > 0.3) {
+                            this.fibers.push(x, y, z);
+                            this.fibers.push(x, y + step, z);
+                        }
+                    }
+
+                    // Connect Z+1
+                    if (this.isInsideBrain(x, y, z + step)) {
+                        if (Math.random() > 0.3) {
+                            this.fibers.push(x, y, z);
+                            this.fibers.push(x, y, z + step);
+                        }
+                    }
+                }
+            }
         }
     }
 
-    getVertexData() {
-        return new Float32Array(this.vertices);
-    }
-
-    getNormalData() {
-        return new Float32Array(this.normals);
-    }
-
-    getIndexData() {
-        return new Uint32Array(this.indices);
-    }
-
-    getIndexCount() {
-        return this.indices.length;
-    }
-
-    // Returns the buffer for fiber rendering
-    // Expected to contain pairs of vertices for LINE_LIST
-    getFiberData() {
-        return new Float32Array(this.fibers);
-    }
-
-    getFiberVertexCount() {
-        return this.fibers.length / 3;
-    }
-
-    getVertexCount() {
-        return this.vertices.length / 3;
-    }
+    getVertexData() { return new Float32Array(this.vertices); }
+    getNormalData() { return new Float32Array(this.normals); }
+    getIndexData() { return new Uint32Array(this.indices); }
+    getIndexCount() { return this.indices.length; }
+    getFiberData() { return new Float32Array(this.fibers); }
+    getFiberVertexCount() { return this.fibers.length / 3; }
+    getVertexCount() { return this.vertices.length / 3; }
 }

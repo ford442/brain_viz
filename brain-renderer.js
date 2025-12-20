@@ -122,7 +122,12 @@ export class BrainRenderer {
         this.fiberVertexCount = geometry.getFiberVertexCount();
         
         // Tensor Data
-        this.dataSize = geometry.getVertexCount();
+        // Ensure dataSize covers both surface vertices and circuit segments
+        const fiberSegments = geometry.getFiberVertexCount() / 2;
+        this.dataSize = Math.max(geometry.getVertexCount(), Math.ceil(fiberSegments));
+        // Align to multiple of 64 for compute workgroups comfort
+        this.dataSize = Math.ceil(this.dataSize / 64) * 64;
+
         this.tensorBuffer = this.device.createBuffer({ size: this.dataSize * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
         
         // Uniforms
