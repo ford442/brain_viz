@@ -55,7 +55,7 @@ export class BrainRenderer {
 
 
   //  add WebGPU extensions
-        const requiredFeatures: GPUFeatureName[] = [];
+        const requiredFeatures = [];
         if (adapter.features.has('float32-filterable')) {
             requiredFeatures.push('float32-filterable');
         } else {
@@ -97,7 +97,7 @@ export class BrainRenderer {
             console.log("Device does not support 'shader-f16'.");
         }
         
-        const device = await adapter.requestDevice({
+        this.device = await adapter.requestDevice({
             requiredFeatures,
         });
         
