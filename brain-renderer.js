@@ -55,7 +55,7 @@ export class BrainRenderer {
 
 
   //  add WebGPU extensions
-        let requiredFeatures: GPUFeatureName[] = [];
+        let requiredFeatures = [];
         if (adapter.features.has('float32-filterable')) {
             requiredFeatures.push('float32-filterable');
         } else {
