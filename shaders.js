@@ -181,7 +181,7 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
         // 2. Multiple independent packet streams
         // Stream A
         let packetPosA = (t * speed) % f32(params.dataSize);
-        let distA = abs(fi - packetPosA);
+        var distA = abs(fi - packetPosA);
         // Handle wrap-around distance for smooth looping (optional, but good for array)
         let sizeF = f32(params.dataSize);
         if (distA > sizeF * 0.5) { distA = sizeF - distA; }
