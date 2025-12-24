@@ -2,7 +2,13 @@ from playwright.sync_api import sync_playwright
 
 def verify_brain_renderer():
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        browser = p.chromium.launch(
+            headless=True,
+            args=[
+                "--enable-unsafe-webgpu",
+                "--use-gl=swiftshader"
+            ]
+        )
         page = browser.new_page()
         try:
             # Navigate to the local dev server

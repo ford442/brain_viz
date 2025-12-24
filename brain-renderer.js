@@ -97,7 +97,7 @@ export class BrainRenderer {
             console.log("Device does not support 'shader-f16'.");
         }
         
-        const device = await adapter.requestDevice({
+        this.device = await adapter.requestDevice({
             requiredFeatures,
         });
         
