@@ -1,5 +1,6 @@
 node_modules/
 dist/
+emsdk
 .env
 .DS_Store
 npm-debug.log*
