@@ -1,6 +1,6 @@
 // brain-renderer.js
 import { BrainGeometry } from './brain-geometry.js';
-import { vertexShader, fragmentShader, computeShader } from './shaders.js';
+import { vertexShader, fragmentShader, computeShader, sphereVertexShader, sphereFragmentShader } from './shaders.js';
 import { Mat4 } from './math-utils.js';
 
 export class BrainRenderer {
@@ -8,8 +8,11 @@ export class BrainRenderer {
         this.canvas = canvas;
         this.device = null;
         this.context = null;
-        this.pipeline = null;      // For Solid Mesh
-        this.fiberPipeline = null; // For Lines
+
+        // Pipelines
+        this.pipeline = null;      // Solid Mesh
+        this.fiberPipeline = null; // Lines
+        this.spherePipeline = null;// Instanced Spheres (Somas)
         
         this.rotation = { x: 0, y: 0 };
         this.targetRotation = { x: 0.3, y: 0 };
@@ -22,7 +25,18 @@ export class BrainRenderer {
             amplitude: 0.5,
             spikeThreshold: 0.8,
             smoothing: 0.9,
-            style: 0.0 // 0=Organic, 1=Cyber, 2=Connectome
+            style: 0.0, // 0=Organic, 1=Cyber, 2=Connectome, 3=Heatmap
+            clipZ: 2.0  // Slice plane Z value (Starts outside bounds)
+        };
+
+        // Voxel Grid Settings
+        this.voxelDim = 32;
+        this.voxelCount = this.voxelDim * this.voxelDim * this.voxelDim;
+
+        // Stimulus State
+        this.stimulus = {
+            pos: [0, 0, 0],
+            active: 0.0
         };
         
         this.setupInputHandlers();
@@ -52,59 +66,22 @@ export class BrainRenderer {
         const adapter = await navigator.gpu.requestAdapter();
         if (!adapter) throw new Error('No GPU');
         
-
-
-  //  add WebGPU extensions
         const requiredFeatures = [];
-        if (adapter.features.has('float32-filterable')) {
-            requiredFeatures.push('float32-filterable');
-        } else {
-            console.log("Device does not support 'float32-filterable'");
-        }
-        if (adapter.features.has('float32-blendable')) {
-            requiredFeatures.push('float32-blendable');
-        } else {
-            console.log("Device does not support 'float32-blendable'.");
-        }
-        if (adapter.features.has('clip-distances')) {
-            requiredFeatures.push('clip-distances');
-        } else {
-            console.log("Device does not support 'clip-distances'.");
-        }
-        if (adapter.features.has('depth32float-stencil8')) {
-            requiredFeatures.push('depth32float-stencil8');
-        } else {
-            console.log("Device does not support 'depth32float-stencil8'.");
-        }
-        if (adapter.features.has('dual-source-blending')) {
-            requiredFeatures.push('dual-source-blending');
-        } else {
-            console.log("Device does not support 'dual-source-blending'.");
-        }
-        if (adapter.features.has('subgroups')) {
-            requiredFeatures.push('subgroups');
-        } else {
-            console.log("Device does not support 'subgroups'.");
-        }
-        if (adapter.features.has('texture-component-swizzle')) {
-            requiredFeatures.push('texture-component-swizzle');
-        } else {
-            console.log("Device does not support 'texture-component-swizzle'.");
-        }
-        if (adapter.features.has('shader-f16')) {
-            requiredFeatures.push('shader-f16');
-        } else {
-            console.log("Device does not support 'shader-f16'.");
+        const featuresToCheck = [
+            'float32-filterable', 'float32-blendable', 'clip-distances',
+            'depth32float-stencil8', 'dual-source-blending', 'subgroups',
+            'texture-component-swizzle', 'shader-f16'
+        ];
+        
+        for (const feature of featuresToCheck) {
+            if (adapter.features.has(feature)) {
+                requiredFeatures.push(feature);
+            }
         }
         
-        this.device = await adapter.requestDevice({
-            requiredFeatures,
-        });
-        
+        this.device = await adapter.requestDevice({ requiredFeatures });
         this.context = this.canvas.getContext('webgpu');
-        
         const format = navigator.gpu.getPreferredCanvasFormat();
-        
         this.context.configure({ device: this.device, format: format, alphaMode: 'opaque' });
         
         // Geometry
@@ -121,18 +98,54 @@ export class BrainRenderer {
         this.fiberBuffer = this.createBuffer(geometry.getFiberData(), GPUBufferUsage.VERTEX);
         this.fiberVertexCount = geometry.getFiberVertexCount();
         
-        // Tensor Data
-        // Ensure dataSize covers both surface vertices and circuit segments
-        const fiberSegments = geometry.getFiberVertexCount() / 2;
-        this.dataSize = Math.max(geometry.getVertexCount(), Math.ceil(fiberSegments));
-        // Align to multiple of 64 for compute workgroups comfort
-        this.dataSize = Math.ceil(this.dataSize / 64) * 64;
+        // 3. Soma (Sphere) Instancing
+        // Use intersections of grid as soma positions
+        // We can reuse fiber data (every 2nd point is a node?) or generate grid points.
+        // Let's grab the unique points from the fiber buffer or just re-generate a grid in geometry.
+        // For simplicity: We will use the fiber start points as soma locations (approximate nodes).
+        const fiberData = geometry.getFiberData();
+        const somaPositions = [];
+        // Stride 6 (2 vertices per segment * 3 floats), take first vertex
+        for (let i = 0; i < fiberData.length; i += 6) {
+             // Only some nodes
+             if (i % 12 === 0) {
+                 somaPositions.push(fiberData[i], fiberData[i+1], fiberData[i+2]);
+             }
+        }
+        this.somaInstanceBuffer = this.createBuffer(new Float32Array(somaPositions), GPUBufferUsage.VERTEX);
+        this.somaInstanceCount = somaPositions.length / 3;
 
-        this.tensorBuffer = this.device.createBuffer({ size: this.dataSize * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+        // Create a simple low-poly sphere for the instance geometry
+        // Just an Icosahedron or similar. Here: a simple cube or tetrahedron for performance is fine,
+        // or a small procedural sphere. Let's make a tiny cube for now (8 verts).
+        const cubeVerts = new Float32Array([
+            -1,-1,-1,  1,-1,-1,  1, 1,-1, -1, 1,-1,
+            -1,-1, 1,  1,-1, 1,  1, 1, 1, -1, 1, 1
+        ]);
+        const cubeIndices = new Uint16Array([
+            0,1,2, 0,2,3, 4,5,6, 4,6,7,
+            0,4,7, 0,7,3, 1,5,6, 1,6,2,
+            0,1,5, 0,5,4, 3,2,6, 3,6,7
+        ]);
+        this.sphereVertexBuffer = this.createBuffer(cubeVerts, GPUBufferUsage.VERTEX);
+        this.sphereIndexBuffer = this.createBuffer(cubeIndices, GPUBufferUsage.INDEX);
+        this.sphereIndexCount = cubeIndices.length;
+
+
+        // VOXEL DATA
+        this.dataSize = this.voxelCount;
+        this.tensorBuffer = this.device.createBuffer({
+            size: this.dataSize * 4,
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+        });
+
+        // Uniforms (Size increased for ClipPlane)
+        // 40 floats (160 bytes) previously.
+        // Add clipPlane (vec4) -> 176 bytes.
+        // Align to 16 bytes.
+        this.uniformBuffer = this.device.createBuffer({ size: 192, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
         
-        // Uniforms
-        this.uniformBuffer = this.device.createBuffer({ size: 160, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
-        this.computeUniformBuffer = this.device.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+        this.computeUniformBuffer = this.device.createBuffer({ size: 48, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
         
         // Bind Groups Layouts
         const renderBindGroupLayout = this.device.createBindGroupLayout({
@@ -150,7 +163,7 @@ export class BrainRenderer {
             ]
         });
         
-        // --- PIPELINE 1: SOLID MESH (Triangle List) ---
+        // --- PIPELINE 1: SOLID MESH ---
         this.pipeline = this.device.createRenderPipeline({
             layout: this.device.createPipelineLayout({ bindGroupLayouts: [renderBindGroupLayout] }),
             vertex: {
@@ -170,24 +183,15 @@ export class BrainRenderer {
             depthStencil: { depthWriteEnabled: true, depthCompare: 'less', format: 'depth24plus' }
         });
 
-        // --- PIPELINE 2: FIBERS (Line List) ---
+        // --- PIPELINE 2: FIBERS ---
         this.fiberPipeline = this.device.createRenderPipeline({
             layout: this.device.createPipelineLayout({ bindGroupLayouts: [renderBindGroupLayout] }),
             vertex: {
                 module: this.device.createShaderModule({ code: vertexShader }),
                 entryPoint: 'main', 
                 buffers: [
-                    // Buffer Slot 0: Provides Position (Location 0)
-                    { 
-                        arrayStride: 12, 
-                        attributes: [{ shaderLocation: 0, offset: 0, format: 'float32x3' }]
-                    },
-                    // Buffer Slot 1: Provides Dummy Normal (Location 1)
-                    // We define this as a separate buffer input so WebGPU sees "Location 1" is covered.
-                    { 
-                        arrayStride: 12, 
-                        attributes: [{ shaderLocation: 1, offset: 0, format: 'float32x3' }]
-                    }
+                    { arrayStride: 12, attributes: [{ shaderLocation: 0, offset: 0, format: 'float32x3' }] },
+                    { arrayStride: 12, attributes: [{ shaderLocation: 1, offset: 0, format: 'float32x3' }] }
                 ]
             },
             fragment: {
@@ -198,6 +202,29 @@ export class BrainRenderer {
             primitive: { topology: 'line-list' }, 
             depthStencil: { depthWriteEnabled: false, depthCompare: 'less', format: 'depth24plus' } 
         });
+
+        // --- PIPELINE 3: INSTANCED SPHERES ---
+        this.spherePipeline = this.device.createRenderPipeline({
+            layout: this.device.createPipelineLayout({ bindGroupLayouts: [renderBindGroupLayout] }),
+            vertex: {
+                module: this.device.createShaderModule({ code: sphereVertexShader }),
+                entryPoint: 'main',
+                buffers: [
+                    // 1. Mesh Geometry (Cube/Sphere)
+                    { arrayStride: 12, attributes: [{ shaderLocation: 0, offset: 0, format: 'float32x3' }] },
+                    // 2. Instance Data (Positions)
+                    { arrayStride: 12, stepMode: 'instance', attributes: [{ shaderLocation: 1, offset: 0, format: 'float32x3' }] }
+                ]
+            },
+            fragment: {
+                module: this.device.createShaderModule({ code: sphereFragmentShader }),
+                entryPoint: 'main',
+                targets: [{ format: format, blend: { color: { srcFactor: 'src-alpha', dstFactor: 'one', operation: 'add' }, alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' } } }]
+            },
+            primitive: { topology: 'triangle-list', cullMode: 'back' },
+            depthStencil: { depthWriteEnabled: true, depthCompare: 'less', format: 'depth24plus' }
+        });
+
 
         // Compute Pipeline
         const computeLayout = this.device.createBindGroupLayout({
@@ -224,6 +251,11 @@ export class BrainRenderer {
 
     setParams(newParams) { this.params = { ...this.params, ...newParams }; }
 
+    injectStimulus(x, y, z, strength) {
+        this.stimulus.pos = [x, y, z];
+        this.stimulus.active = strength;
+    }
+
     updateUniforms() {
         this.rotation.x += (this.targetRotation.x - this.rotation.x) * 0.1;
         this.rotation.y += (this.targetRotation.y - this.rotation.y) * 0.1;
@@ -231,31 +263,48 @@ export class BrainRenderer {
         const aspect = this.canvas.width / this.canvas.height;
         const projection = Mat4.perspective(Math.PI / 4, aspect, 0.1, 100.0);
         const view = Mat4.lookAt([0, 0, this.zoom], [0, 0, 0], [0, 1, 0]);
-        // Rotate X then Y (orbit behavior)
         const model = Mat4.multiply(Mat4.rotateX(this.rotation.x), Mat4.rotateY(this.rotation.y));
 
-        // P * V * M
-        // With multiply(A,B) = B*A:
-        // multiply(view, projection) -> P * V
-        // multiply(model, pv) -> P * V * M
         const pv = Mat4.multiply(view, projection);
         const mvp = Mat4.multiply(model, pv);
         
-        const uData = new Float32Array(40);
-        uData.set(mvp, 0); uData.set(model, 16);
-        uData[32] = this.time; uData[33] = this.params.style;
+        // Uniform Buffer Size 192 bytes
+        const uData = new Float32Array(48); // 48 * 4 = 192 bytes
+        uData.set(mvp, 0);       // 0-15
+        uData.set(model, 16);    // 16-31
+        uData[32] = this.time;
+        uData[33] = this.params.style;
+
+        // Clip Plane: Vec4 (Normal X, Y, Z, Distance)
+        // We want to clip if dot(pos, N) + D < 0
+        // Simple Z clip plane: Normal (0,0,1), D = -clipZ
+        uData[36] = 0.0; // Px
+        uData[37] = 0.0; // Py
+        uData[38] = 1.0; // Pz (Normal pointing forward)
+        uData[39] = -this.params.clipZ; // Distance
+
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         
-        const cBuf = new ArrayBuffer(32);
+        // Compute Uniforms (48 bytes)
+        const cBuf = new ArrayBuffer(48);
         const dv = new DataView(cBuf);
         dv.setFloat32(0, this.time, true);
-        dv.setUint32(4, this.dataSize, true);
+        dv.setUint32(4, this.voxelDim, true);
         dv.setFloat32(8, this.params.frequency, true);
         dv.setFloat32(12, this.params.amplitude, true);
         dv.setFloat32(16, this.params.spikeThreshold, true);
         dv.setFloat32(20, this.params.smoothing, true);
         dv.setFloat32(24, this.params.style, true);
+        dv.setFloat32(28, 0.0, true);
+
+        dv.setFloat32(32, this.stimulus.pos[0], true);
+        dv.setFloat32(36, this.stimulus.pos[1], true);
+        dv.setFloat32(40, this.stimulus.pos[2], true);
+        dv.setFloat32(44, this.stimulus.active, true);
+
         this.device.queue.writeBuffer(this.computeUniformBuffer, 0, cBuf);
+
+        this.stimulus.active = 0.0;
     }
 
     render() {
@@ -291,17 +340,23 @@ export class BrainRenderer {
         
         renderPass.setBindGroup(0, this.bindGroup);
         
-        // SWITCH RENDER MODE
-        if (this.params.style >= 2.0) {
-            // --- CONNECTOME MODE (FIBERS) ---
+        if (this.params.style >= 2.0 && this.params.style < 3.0) {
+            // --- CONNECTOME MODE ---
+
+            // 1. Draw Fibers
             renderPass.setPipeline(this.fiberPipeline);
-            // Bind Fiber Buffer to Slot 0 (for Position)
             renderPass.setVertexBuffer(0, this.fiberBuffer);
-            // Bind Fiber Buffer to Slot 1 (for Dummy Normals)
             renderPass.setVertexBuffer(1, this.fiberBuffer); 
             renderPass.draw(this.fiberVertexCount); 
+
+            // 2. Draw Instanced Neurons (Somas)
+            renderPass.setPipeline(this.spherePipeline);
+            renderPass.setVertexBuffer(0, this.sphereVertexBuffer); // Mesh
+            renderPass.setVertexBuffer(1, this.somaInstanceBuffer); // Positions
+            renderPass.setIndexBuffer(this.sphereIndexBuffer, 'uint16');
+            renderPass.drawIndexed(this.sphereIndexCount, this.somaInstanceCount);
+
         } else {
-            // --- SOLID MODES (ORGANIC / CYBER) ---
             renderPass.setPipeline(this.pipeline);
             renderPass.setVertexBuffer(0, this.vertexBuffer);
             renderPass.setVertexBuffer(1, this.normalBuffer);

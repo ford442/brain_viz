@@ -55,6 +55,25 @@
             cursor: pointer;
         }
 
+        .stimulus-group {
+            border-top: 1px solid #555;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+        .stimulus-btn {
+            background: #444;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            margin: 2px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            width: 30%;
+        }
+        .stimulus-btn:hover { background: #666; }
+        .stimulus-btn:active { background: #08f; }
+
         #error {
             position: absolute;
             top: 50%;
@@ -93,13 +112,32 @@
             <label>Smoothing (Trails) <span id="val-smooth">0.9</span></label>
             <input type="range" id="smooth" min="0.0" max="0.99" step="0.01" value="0.9">
         </div>
+
+        <div class="control-group">
+            <label>Clip Plane Z <span id="val-clip">2.0</span></label>
+            <input type="range" id="clip" min="-2.0" max="2.0" step="0.1" value="2.0">
+        </div>
+
         <div class="control-group">
             <label>Visual Style</label>
             <select id="style-mode" style="width: 100%; padding: 5px; background: #333; color: #fff; border: 1px solid #555; border-radius: 4px;">
                 <option value="0">Organic (Biological)</option>
                 <option value="1">Cyber (Holographic)</option>
                 <option value="2">Connectome (Fibers)</option>
+                <option value="3">Heatmap (Volumetric)</option>
             </select>
+        </div>
+
+        <div class="stimulus-group">
+            <label style="color:#0bf; font-weight:bold;">Inject Stimulus</label>
+            <div style="display:flex; justify-content:space-between; flex-wrap:wrap;">
+                <button class="stimulus-btn" id="stim-frontal">Frontal</button>
+                <button class="stimulus-btn" id="stim-parietal">Parietal</button>
+                <button class="stimulus-btn" id="stim-occipital">Occipital</button>
+                <button class="stimulus-btn" id="stim-temporal">Temporal</button>
+                <button class="stimulus-btn" id="stim-deep">Deep</button>
+                <button class="stimulus-btn" id="stim-random">Random</button>
+            </div>
         </div>
     </div>
     <div id="status" style="position:absolute; bottom:10px; left:10px; color:#0f0; background:rgba(0,0,0,0.6); padding:6px; border-radius:4px; font-size:12px; display:none;">OK</div>

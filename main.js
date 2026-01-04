@@ -10,15 +10,17 @@ async function init() {
         frequency: document.getElementById('freq'),
         amplitude: document.getElementById('amp'),
         spikeThreshold: document.getElementById('thresh'),
-        smoothing: document.getElementById('smooth')
-        , style: document.getElementById('style-mode')
+        smoothing: document.getElementById('smooth'),
+        clipZ: document.getElementById('clip'),
+        style: document.getElementById('style-mode')
     };
     
     const labels = {
         frequency: document.getElementById('val-freq'),
         amplitude: document.getElementById('val-amp'),
         spikeThreshold: document.getElementById('val-thresh'),
-        smoothing: document.getElementById('val-smooth')
+        smoothing: document.getElementById('val-smooth'),
+        clipZ: document.getElementById('val-clip')
     };
     
     if (!navigator.gpu) {
@@ -42,34 +44,49 @@ async function init() {
         Object.keys(inputs).forEach(key => {
             const input = inputs[key];
             if (!input) return;
+
             // Set initial value
             updateParam(key, input.value);
             
+            // Special handling for style dropdown which isn't range
+            if (input.tagName === 'SELECT') return;
+
             input.addEventListener('input', (e) => {
                 updateParam(key, e.target.value);
             });
         });
 
-        // Style dropdown separate listener (change event)
+        // Style dropdown listener
         const styleSelect = document.getElementById('style-mode');
         if (styleSelect) {
             styleSelect.addEventListener('change', (e) => {
                 const val = parseFloat(e.target.value);
                 renderer.setParams({ style: val });
-if (val === 2) { // Connectome Preset
-        renderer.setParams({ frequency: 8.0, smoothing: 0.2, amplitude: 1.5 });
-        inputs.frequency.value = 8.0;
-        inputs.smoothing.value = 0.2;
-        inputs.amplitude.value = 1.5;
-        updateParam('frequency', 8.0); // Helper from previous code
-        // ... update other labels
-} else if (val === 1) {    // Cyber preset
+
+                // Style Presets
+                if (val === 3) { // Heatmap
+                    renderer.setParams({ amplitude: 1.0, smoothing: 0.95 });
+                    inputs.amplitude.value = 1.0;
+                    inputs.smoothing.value = 0.95;
+                    updateParam('amplitude', 1.0);
+                    updateParam('smoothing', 0.95);
+                }
+                else if (val === 2) { // Connectome Preset
+                    renderer.setParams({ frequency: 8.0, smoothing: 0.2, amplitude: 1.5 });
+                    inputs.frequency.value = 8.0;
+                    inputs.smoothing.value = 0.2;
+                    inputs.amplitude.value = 1.5;
+                    updateParam('frequency', 8.0);
+                    updateParam('smoothing', 0.2);
+                    updateParam('amplitude', 1.5);
+                } else if (val === 1) { // Cyber preset
+                    renderer.setParams({ frequency: 5.0, smoothing: 0.5 });
                     inputs.frequency.value = 5.0;
                     inputs.smoothing.value = 0.5;
                     updateParam('frequency', 5.0);
                     updateParam('smoothing', 0.5);
-                } else {
-                    // Organic preset
+                } else { // Organic preset
+                    renderer.setParams({ frequency: 2.0, smoothing: 0.9 });
                     inputs.frequency.value = 2.0;
                     inputs.smoothing.value = 0.9;
                     updateParam('frequency', 2.0);
@@ -77,6 +94,33 @@ if (val === 2) { // Connectome Preset
                 }
             });
         }
+
+        // --- STIMULUS BUTTONS ---
+        const stimBtns = {
+            'stim-frontal': [0, 0, 1.2],
+            'stim-occipital': [0, 0, -1.2],
+            'stim-parietal': [0, 1.0, 0],
+            'stim-temporal': [1.0, 0, 0],
+            'stim-deep': [0, 0, 0],
+        };
+
+        Object.keys(stimBtns).forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    const pos = stimBtns[id];
+                    // Strong pulse
+                    renderer.injectStimulus(pos[0], pos[1], pos[2], 1.0);
+                });
+            }
+        });
+
+        document.getElementById('stim-random').addEventListener('click', () => {
+             const x = (Math.random() - 0.5) * 2.0;
+             const y = (Math.random() - 0.5) * 2.0;
+             const z = (Math.random() - 0.5) * 2.0;
+             renderer.injectStimulus(x, y, z, 1.0);
+        });
 
         console.log('Starting renderer...');
         renderer.start();
