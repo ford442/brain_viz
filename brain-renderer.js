@@ -1,4 +1,5 @@
 // brain-renderer.js
+// Neuro-Weaver V2 Implementation
 import { BrainGeometry } from './brain-geometry.js';
 import { vertexShader, fragmentShader, computeShader, sphereVertexShader, sphereFragmentShader } from './shaders.js';
 import { Mat4 } from './math-utils.js';
@@ -69,8 +70,7 @@ export class BrainRenderer {
         const requiredFeatures = [];
         const featuresToCheck = [
             'float32-filterable', 'float32-blendable', 'clip-distances',
-            'depth32float-stencil8', 'dual-source-blending', 'subgroups',
-            'texture-component-swizzle', 'shader-f16'
+            'depth32float-stencil8', 'texture-component-swizzle'
         ];
         
         for (const feature of featuresToCheck) {
@@ -251,7 +251,7 @@ export class BrainRenderer {
 
     setParams(newParams) { this.params = { ...this.params, ...newParams }; }
 
-    injectStimulus(x, y, z, strength) {
+    triggerStimulus(x, y, z, strength) {
         this.stimulus.pos = [x, y, z];
         this.stimulus.active = strength;
     }

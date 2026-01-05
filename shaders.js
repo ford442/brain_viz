@@ -57,7 +57,21 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
         finalPos = input.position;
         let baseColor = vec3<f32>(0.05, 0.1, 0.15);
         let pulseColor = vec3<f32>(0.0, 0.8, 1.0);
-        finalColor = mix(baseColor, pulseColor, activity);
+
+        // Traveling Pulse Logic
+        // We use the vertexIndex to simulate flow direction along the grid generation order.
+        let flowSpeed = 8.0;
+        let flowScale = 0.0005;
+        let pulseWave = sin(f32(vertexIndex) * flowScale - uniforms.time * flowSpeed);
+
+        // Sharp peaks
+        let pulse = smoothstep(0.8, 1.0, pulseWave);
+
+        // Combine with volumetric activity
+        let activeGlow = mix(baseColor, pulseColor * 0.5, activity);
+        let activePulse = pulseColor * pulse * activity; // Pulse only visible where active
+
+        finalColor = activeGlow + activePulse;
         finalNormal = vec3<f32>(0.0, 1.0, 0.0);
     }
     // --- HEATMAP MODE ---
@@ -271,7 +285,7 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     let avg = neighborSum / max(1.0, neighborCount);
     val = mix(val, avg, 0.1); // Slow diffusion
 
-    // Stimulus
+    // Stimulus (Region Logic handled via coordinates)
     if (params.stimulusActive > 0.0) {
         let range = 1.6;
         let pos = vec3<f32>(f32(x), f32(y), f32(z)) / f32(dim);

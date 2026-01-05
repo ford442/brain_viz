@@ -1,4 +1,5 @@
 // Main application entry point
+// Neuro-Weaver V2 Implementation
 import { BrainRenderer } from './brain-renderer.js';
 
 async function init() {
@@ -110,7 +111,7 @@ async function init() {
                 btn.addEventListener('click', () => {
                     const pos = stimBtns[id];
                     // Strong pulse
-                    renderer.injectStimulus(pos[0], pos[1], pos[2], 1.0);
+                    renderer.triggerStimulus(pos[0], pos[1], pos[2], 1.0);
                 });
             }
         });
@@ -119,10 +120,10 @@ async function init() {
              const x = (Math.random() - 0.5) * 2.0;
              const y = (Math.random() - 0.5) * 2.0;
              const z = (Math.random() - 0.5) * 2.0;
-             renderer.injectStimulus(x, y, z, 1.0);
+             renderer.triggerStimulus(x, y, z, 1.0);
         });
 
-        console.log('Starting renderer...');
+        console.log('Starting renderer... V2 Active');
         renderer.start();
         console.log('Renderer started');
         
