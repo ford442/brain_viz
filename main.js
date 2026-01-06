@@ -50,8 +50,9 @@ async function init() {
             aiToggle.textContent = aiMode ? 'Disable AI Mode' : 'Enable AI "Dreaming"';
             aiToggle.style.background = aiMode ? '#626' : '#424';
         };
-        document.getElementById('controls').appendChild(document.createElement('hr'));
-        document.getElementById('controls').appendChild(aiToggle);
+        const controls = document.getElementById('controls');
+        controls.appendChild(document.createElement('hr'));
+        controls.appendChild(aiToggle);
 
         // Helper to update renderer and label
         const updateParam = (key, value) => {
@@ -145,7 +146,6 @@ async function init() {
         console.log('Starting renderer... V2 Active');
 
         // --- AI LOOP ---
-        // Map 1000 classes to random 3D positions in the brain
         const classMap = new Float32Array(1000 * 3);
         for(let i=0; i<3000; i++) {
             classMap[i] = (Math.random() - 0.5) * 2.0;
@@ -157,8 +157,7 @@ async function init() {
                 if (topK) {
                     topK.forEach(item => {
                         const idx = item.index;
-                        // Use value strength
-                        const strength = item.value * 0.5; // Scale down a bit
+                        const strength = item.value * 0.5;
                         const x = classMap[idx*3];
                         const y = classMap[idx*3+1];
                         const z = classMap[idx*3+2];
@@ -166,11 +165,9 @@ async function init() {
                     });
                 }
             }
-            // Run every 100ms
             setTimeout(runAI, 100);
         };
         runAI();
-
 
         renderer.start();
         console.log('Renderer started');

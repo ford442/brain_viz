@@ -1,7 +1,7 @@
 // inference-engine.js
 import * as ort from 'onnxruntime-web';
 
-// Configure ONNX Runtime to look for .wasm files in the public directory (root)
+// Point to WASM files in public/
 ort.env.wasm.wasmPaths = "./";
 
 export class InferenceEngine {
@@ -21,10 +21,8 @@ export class InferenceEngine {
 
             this.inputName = this.session.inputNames[0];
             this.outputName = this.session.outputNames[0];
-
-            console.log('Model loaded. Input:', this.inputName, 'Output:', this.outputName);
-
             this.isRunning = true;
+            console.log('Model loaded successfully');
             return true;
         } catch (e) {
             console.error('Failed to init inference engine:', e);
@@ -33,11 +31,9 @@ export class InferenceEngine {
     }
 
     createDummyInput() {
-        // SqueezeNet expects 1x3x224x224
+        // SqueezeNet: 1x3x224x224
         const size = 1 * 3 * 224 * 224;
         const data = new Float32Array(size);
-        // Generate Perlin-ish noise or simple drifting noise would be better,
-        // but random is fine for "dreaming".
         for (let i = 0; i < size; i++) {
             data[i] = Math.random();
         }
@@ -62,11 +58,8 @@ export class InferenceEngine {
     }
 
     getTopK(data, k) {
-        // Create an array of indices [0, 1, ..., N]
         const indices = Array.from(data.keys());
-        // Sort indices based on data values
         indices.sort((a, b) => data[b] - data[a]);
-        // Return top k
         return indices.slice(0, k).map(idx => ({
             index: idx,
             value: data[idx]
