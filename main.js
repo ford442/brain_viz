@@ -1,6 +1,7 @@
 // Main application entry point
 // Neuro-Weaver V2 Implementation
 import { BrainRenderer } from './brain-renderer.js';
+import { InferenceEngine } from './inference-engine.js';
 
 async function init() {
     const canvas = document.getElementById('canvas');
@@ -34,6 +35,25 @@ async function init() {
         const renderer = new BrainRenderer(canvas);
         await renderer.initialize();
         
+        const inferenceEngine = new InferenceEngine();
+        const aiEnabled = await inferenceEngine.initialize();
+        let aiMode = false;
+
+        // Add AI toggle button
+        const aiToggle = document.createElement('button');
+        aiToggle.textContent = 'Enable AI "Dreaming"';
+        aiToggle.style.background = '#424';
+        aiToggle.style.borderColor = '#d0d';
+        aiToggle.style.color = '#eaffea';
+        aiToggle.onclick = () => {
+            aiMode = !aiMode;
+            aiToggle.textContent = aiMode ? 'Disable AI Mode' : 'Enable AI "Dreaming"';
+            aiToggle.style.background = aiMode ? '#626' : '#424';
+        };
+        const controls = document.getElementById('controls');
+        controls.appendChild(document.createElement('hr'));
+        controls.appendChild(aiToggle);
+
         // Helper to update renderer and label
         const updateParam = (key, value) => {
             const numVal = parseFloat(value);
@@ -124,6 +144,31 @@ async function init() {
         });
 
         console.log('Starting renderer... V2 Active');
+
+        // --- AI LOOP ---
+        const classMap = new Float32Array(1000 * 3);
+        for(let i=0; i<3000; i++) {
+            classMap[i] = (Math.random() - 0.5) * 2.0;
+        }
+
+        const runAI = async () => {
+            if (aiMode && aiEnabled) {
+                const topK = await inferenceEngine.runInference();
+                if (topK) {
+                    topK.forEach(item => {
+                        const idx = item.index;
+                        const strength = item.value * 0.5;
+                        const x = classMap[idx*3];
+                        const y = classMap[idx*3+1];
+                        const z = classMap[idx*3+2];
+                        renderer.triggerStimulus(x, y, z, strength);
+                    });
+                }
+            }
+            setTimeout(runAI, 100);
+        };
+        runAI();
+
         renderer.start();
         console.log('Renderer started');
         
