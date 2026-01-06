@@ -115,21 +115,27 @@ export class BrainRenderer {
         this.somaInstanceBuffer = this.createBuffer(new Float32Array(somaPositions), GPUBufferUsage.VERTEX);
         this.somaInstanceCount = somaPositions.length / 3;
 
-        // Create a simple low-poly sphere for the instance geometry
-        // Just an Icosahedron or similar. Here: a simple cube or tetrahedron for performance is fine,
-        // or a small procedural sphere. Let's make a tiny cube for now (8 verts).
-        const cubeVerts = new Float32Array([
-            -1,-1,-1,  1,-1,-1,  1, 1,-1, -1, 1,-1,
-            -1,-1, 1,  1,-1, 1,  1, 1, 1, -1, 1, 1
+        // Create a simple low-poly sphere (Icosahedron) for the instance geometry
+        const X = 0.525731112119133606;
+        const Z = 0.850650808352039932;
+        const N = 0.0;
+
+        const icoVerts = new Float32Array([
+            -X,N,Z, X,N,Z, -X,N,-Z, X,N,-Z,
+            N,Z,X, N,Z,-X, N,-Z,X, N,-Z,-X,
+            Z,X,N, -Z,X,N, Z,-X,N, -Z,-X,N
         ]);
-        const cubeIndices = new Uint16Array([
-            0,1,2, 0,2,3, 4,5,6, 4,6,7,
-            0,4,7, 0,7,3, 1,5,6, 1,6,2,
-            0,1,5, 0,5,4, 3,2,6, 3,6,7
+
+        const icoIndices = new Uint16Array([
+            0,4,1, 0,9,4, 9,5,4, 4,5,8, 4,8,1,
+            8,10,1, 8,3,10, 5,3,8, 5,2,3, 2,7,3,
+            7,10,3, 7,6,10, 7,11,6, 11,0,6, 0,1,6,
+            6,1,10, 9,0,11, 9,11,2, 9,2,5, 7,2,11
         ]);
-        this.sphereVertexBuffer = this.createBuffer(cubeVerts, GPUBufferUsage.VERTEX);
-        this.sphereIndexBuffer = this.createBuffer(cubeIndices, GPUBufferUsage.INDEX);
-        this.sphereIndexCount = cubeIndices.length;
+
+        this.sphereVertexBuffer = this.createBuffer(icoVerts, GPUBufferUsage.VERTEX);
+        this.sphereIndexBuffer = this.createBuffer(icoIndices, GPUBufferUsage.INDEX);
+        this.sphereIndexCount = icoIndices.length;
 
 
         // VOXEL DATA
