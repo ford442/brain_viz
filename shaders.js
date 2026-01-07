@@ -59,10 +59,16 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
         let pulseColor = vec3<f32>(0.0, 0.8, 1.0);
 
         // Traveling Pulse Logic
-        // We use the vertexIndex to simulate flow direction along the grid generation order.
+        // Combine vertexIndex (local connectivity) with spatial position (global flow)
         let flowSpeed = 8.0;
         let flowScale = 0.0005;
-        let pulseWave = sin(f32(vertexIndex) * flowScale - uniforms.time * flowSpeed);
+        // Add spatial bias: Flow from Front (Z > 0) to Back, or Center Outwards
+        // Let's try Center Outwards: radius
+        let radius = length(worldPos);
+        let spatialPhase = radius * 4.0;
+
+        // Primary wave driven by index (path), modulated by spatial phase
+        let pulseWave = sin(f32(vertexIndex) * flowScale + spatialPhase - uniforms.time * flowSpeed);
 
         // Sharp peaks
         let pulse = smoothstep(0.8, 1.0, pulseWave);
@@ -272,6 +278,26 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
 
     var val = voxelGrid[index];
 
+    // Calculate World Pos for Region Logic
+    let range = 1.6;
+    let normPos = vec3<f32>(f32(x), f32(y), f32(z)) / f32(dim);
+    let worldPos = (normPos * 2.0 - 1.0) * range;
+
+    // Region definitions
+    // 0: General, 1: Frontal (Z > 0.5), 2: Occipital (Z < -0.5), 3: Temporal (|X| > 0.8)
+    var regionDecay = 0.96;
+    var diffusionRate = 0.1;
+
+    if (worldPos.z > 0.5) { // Frontal
+        regionDecay = 0.98; // Lingers longer
+        diffusionRate = 0.15; // Spreads faster
+    } else if (worldPos.z < -0.5) { // Occipital
+        regionDecay = 0.92; // Fades fast (Visual cortex flashes)
+        diffusionRate = 0.05; // Tighter focus
+    } else if (abs(worldPos.x) > 0.8) { // Temporal
+        regionDecay = 0.95;
+    }
+
     // Diffusion
     var neighborSum = 0.0;
     var neighborCount = 0.0;
@@ -283,22 +309,21 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     if (z < dim - 1u) { neighborSum += voxelGrid[getIndex(x, y, z + 1u)]; neighborCount += 1.0; }
 
     let avg = neighborSum / max(1.0, neighborCount);
-    val = mix(val, avg, 0.1); // Slow diffusion
+    val = mix(val, avg, diffusionRate);
 
-    // Stimulus (Region Logic handled via coordinates)
+    // Stimulus
     if (params.stimulusActive > 0.0) {
-        let range = 1.6;
-        let pos = vec3<f32>(f32(x), f32(y), f32(z)) / f32(dim);
-        let worldPos = (pos * 2.0 - 1.0) * range;
-
         let dist = distance(worldPos, params.stimulusPos);
+        // If stimulus is near, add it.
+        // We can also allow "Region Stimulus" if stimulusPos is huge?
+        // For now, rely on coordinate-based injection which targets regions naturally.
         if (dist < 0.4) {
             val += params.stimulusActive * (1.0 - dist / 0.4);
         }
     }
 
     // Decay
-    val *= 0.96;
+    val *= regionDecay;
 
     voxelGrid[index] = clamp(val, 0.0, 1.0);
 }
