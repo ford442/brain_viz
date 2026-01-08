@@ -283,11 +283,12 @@ export class BrainRenderer {
 
         // Clip Plane: Vec4 (Normal X, Y, Z, Distance)
         // We want to clip if dot(pos, N) + D < 0
-        // Simple Z clip plane: Normal (0,0,1), D = -clipZ
+        // Standard Z clip: Keep if P.z < clipZ -> -P.z + clipZ > 0
+        // Normal (0,0,-1), D = clipZ
         uData[36] = 0.0; // Px
         uData[37] = 0.0; // Py
-        uData[38] = 1.0; // Pz (Normal pointing forward)
-        uData[39] = -this.params.clipZ; // Distance
+        uData[38] = -1.0; // Pz (Normal pointing backward)
+        uData[39] = this.params.clipZ; // Distance
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         
@@ -318,6 +319,8 @@ export class BrainRenderer {
         
         const width = this.canvas.clientWidth;
         const height = this.canvas.clientHeight;
+        if (width === 0 || height === 0) return;
+
         if (this.canvas.width !== width || this.canvas.height !== height) {
             this.canvas.width = width; this.canvas.height = height;
             this.depthTexture.destroy();

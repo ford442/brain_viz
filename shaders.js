@@ -1,4 +1,5 @@
 // shaders.js
+// Updated with volumetric tensor logic and instanced rendering
 export const vertexShader = `
 struct Uniforms {
     mvpMatrix: mat4x4<f32>,
