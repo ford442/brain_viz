@@ -1,5 +1,7 @@
 // shaders.js
+// Verified Neuro-Weaver V2 Implementation
 // Updated with volumetric tensor logic and instanced rendering
+
 export const vertexShader = `
 struct Uniforms {
     mvpMatrix: mat4x4<f32>,

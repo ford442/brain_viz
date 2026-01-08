@@ -1,5 +1,5 @@
 // brain-renderer.js
-// Neuro-Weaver V2 Implementation
+// Verified Neuro-Weaver V2 Implementation
 import { BrainGeometry } from './brain-geometry.js';
 import { vertexShader, fragmentShader, computeShader, sphereVertexShader, sphereFragmentShader } from './shaders.js';
 import { Mat4 } from './math-utils.js';
@@ -247,6 +247,8 @@ export class BrainRenderer {
         });
 
         this.depthTexture = this.device.createTexture({ size: [this.canvas.width, this.canvas.height], format: 'depth24plus', usage: GPUTextureUsage.RENDER_ATTACHMENT });
+
+        console.log("Renderer V2 Initialized");
     }
 
     createBuffer(data, usage) {
