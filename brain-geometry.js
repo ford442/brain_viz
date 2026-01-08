@@ -1,4 +1,5 @@
 // brain-geometry.js
+// Procedural Brain Generation with Circuit Grid
 
 export class BrainGeometry {
     constructor() {
