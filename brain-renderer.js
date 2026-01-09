@@ -99,20 +99,9 @@ export class BrainRenderer {
         this.fiberVertexCount = geometry.getFiberVertexCount();
         
         // 3. Soma (Sphere) Instancing
-        // Use intersections of grid as soma positions
-        // We can reuse fiber data (every 2nd point is a node?) or generate grid points.
-        // Let's grab the unique points from the fiber buffer or just re-generate a grid in geometry.
-        // For simplicity: We will use the fiber start points as soma locations (approximate nodes).
-        const fiberData = geometry.getFiberData();
-        const somaPositions = [];
-        // Stride 6 (2 vertices per segment * 3 floats), take first vertex
-        for (let i = 0; i < fiberData.length; i += 6) {
-             // Only some nodes
-             if (i % 12 === 0) {
-                 somaPositions.push(fiberData[i], fiberData[i+1], fiberData[i+2]);
-             }
-        }
-        this.somaInstanceBuffer = this.createBuffer(new Float32Array(somaPositions), GPUBufferUsage.VERTEX);
+        // Use explicit grid intersections from geometry
+        const somaPositions = geometry.getSomaPositions();
+        this.somaInstanceBuffer = this.createBuffer(somaPositions, GPUBufferUsage.VERTEX);
         this.somaInstanceCount = somaPositions.length / 3;
 
         // Create a simple low-poly sphere (Icosahedron) for the instance geometry
@@ -259,9 +248,27 @@ export class BrainRenderer {
 
     setParams(newParams) { this.params = { ...this.params, ...newParams }; }
 
-    triggerStimulus(x, y, z, strength) {
+    injectStimulus(x, y, z, strength) {
         this.stimulus.pos = [x, y, z];
         this.stimulus.active = strength;
+    }
+
+    // Alias for backward compatibility if needed, but we will update main.js
+    triggerStimulus(x, y, z, strength) {
+        this.injectStimulus(x, y, z, strength);
+    }
+
+    calmState() {
+        // Clear all activity
+        this.params.amplitude = 0.0;
+        this.params.frequency = 0.0;
+        // We could also zero out the buffer if we had a clear shader,
+        // but setting amplitude to 0 stops new waves.
+        // To really calm it, we can increase decay in compute shader or just let it fade.
+        // Let's just reset params to a "Calm" preset.
+        this.params.amplitude = 0.1;
+        this.params.frequency = 0.5;
+        this.params.smoothing = 0.98; // High smoothing = slow change
     }
 
     updateUniforms() {

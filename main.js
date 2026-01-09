@@ -111,7 +111,7 @@ async function init() {
                 btn.addEventListener('click', () => {
                     const pos = stimBtns[id];
                     // Strong pulse
-                    renderer.triggerStimulus(pos[0], pos[1], pos[2], 1.0);
+                    renderer.injectStimulus(pos[0], pos[1], pos[2], 1.0);
                 });
             }
         });
@@ -120,8 +120,23 @@ async function init() {
              const x = (Math.random() - 0.5) * 2.0;
              const y = (Math.random() - 0.5) * 2.0;
              const z = (Math.random() - 0.5) * 2.0;
-             renderer.triggerStimulus(x, y, z, 1.0);
+             renderer.injectStimulus(x, y, z, 1.0);
         });
+
+        // Calm State Button
+        const calmBtn = document.getElementById('stim-calm');
+        if (calmBtn) {
+            calmBtn.addEventListener('click', () => {
+                renderer.calmState();
+                // Update UI sliders to reflect calm state
+                inputs.amplitude.value = renderer.params.amplitude;
+                inputs.frequency.value = renderer.params.frequency;
+                inputs.smoothing.value = renderer.params.smoothing;
+                updateParam('amplitude', renderer.params.amplitude);
+                updateParam('frequency', renderer.params.frequency);
+                updateParam('smoothing', renderer.params.smoothing);
+            });
+        }
 
         console.log('Starting renderer... V2.0.1 Active');
         renderer.start();
