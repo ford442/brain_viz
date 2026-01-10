@@ -1,5 +1,5 @@
 // brain-renderer.js
-// Verified Neuro-Weaver V2 Implementation
+// Verified Neuro-Weaver V2.1 Implementation
 import { BrainGeometry } from './brain-geometry.js';
 import { vertexShader, fragmentShader, computeShader, sphereVertexShader, sphereFragmentShader } from './shaders.js';
 import { Mat4 } from './math-utils.js';
@@ -31,6 +31,7 @@ export class BrainRenderer {
         };
 
         // Voxel Grid Settings
+        // 32x32x32 flattened buffer
         this.voxelDim = 32;
         this.voxelCount = this.voxelDim * this.voxelDim * this.voxelDim;
 
@@ -135,9 +136,9 @@ export class BrainRenderer {
         });
 
         // Uniforms (Size increased for ClipPlane)
-        // 40 floats (160 bytes) previously.
-        // Add clipPlane (vec4) -> 176 bytes.
-        // Align to 16 bytes.
+        // 48 floats (192 bytes)
+        // Layout:
+        // MVP (64), Model (64), Time(4), Style(4), Pad(8), ClipPlane(16)
         this.uniformBuffer = this.device.createBuffer({ size: 192, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
         
         this.computeUniformBuffer = this.device.createBuffer({ size: 48, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
@@ -237,7 +238,7 @@ export class BrainRenderer {
 
         this.depthTexture = this.device.createTexture({ size: [this.canvas.width, this.canvas.height], format: 'depth24plus', usage: GPUTextureUsage.RENDER_ATTACHMENT });
 
-        console.log("Renderer V2 Initialized");
+        console.log("Renderer V2.1 Initialized");
     }
 
     createBuffer(data, usage) {
@@ -251,11 +252,6 @@ export class BrainRenderer {
     injectStimulus(x, y, z, strength) {
         this.stimulus.pos = [x, y, z];
         this.stimulus.active = strength;
-    }
-
-    // Alias for backward compatibility if needed, but we will update main.js
-    triggerStimulus(x, y, z, strength) {
-        this.injectStimulus(x, y, z, strength);
     }
 
     calmState() {
