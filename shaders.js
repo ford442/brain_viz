@@ -1,6 +1,6 @@
 // shaders.js
-// Verified Neuro-Weaver V2 Implementation
-// Updated with volumetric tensor logic and instanced rendering
+// Verified Neuro-Weaver V2.1 Implementation
+// Updated with volumetric tensor logic (3D Flattened Buffer), instanced rendering, and heatmap modes.
 
 export const vertexShader = `
 struct Uniforms {
@@ -318,8 +318,6 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     if (params.stimulusActive > 0.0) {
         let dist = distance(worldPos, params.stimulusPos);
         // If stimulus is near, add it.
-        // We can also allow "Region Stimulus" if stimulusPos is huge?
-        // For now, rely on coordinate-based injection which targets regions naturally.
         if (dist < 0.4) {
             val += params.stimulusActive * (1.0 - dist / 0.4);
         }
