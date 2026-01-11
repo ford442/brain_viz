@@ -1,8 +1,30 @@
 // shaders.js
 // Verified Neuro-Weaver V2.1 Implementation
 // Updated with volumetric tensor logic (3D Flattened Buffer), instanced rendering, and heatmap modes.
+// Refactored constants and Gaussian Pulse logic.
+
+// --- SHARED CONSTANTS ---
+// These are interpolated into the shader strings.
+const CONSTANTS = `
+    const BRAIN_RANGE: f32 = 1.6;
+    const VOXEL_DIM: u32 = 32u;
+    const FLOW_SPEED: f32 = 8.0;
+    const FLOW_SCALE: f32 = 0.0005;
+    const CLIP_PLANE_NORMAL: vec3<f32> = vec3<f32>(0.0, 0.0, -1.0);
+`;
+
+// --- HELPER FUNCTIONS ---
+const HELPERS = `
+    // Gaussian Pulse for smoother stimulus
+    fn gaussian_pulse(dist: f32, width: f32) -> f32 {
+        let k = 4.0 / (width * width);
+        return exp(-k * dist * dist);
+    }
+`;
 
 export const vertexShader = `
+${CONSTANTS}
+
 struct Uniforms {
     mvpMatrix: mat4x4<f32>,
     modelMatrix: mat4x4<f32>,
@@ -10,7 +32,7 @@ struct Uniforms {
     style: f32,
     padding1: f32,
     padding2: f32,
-    clipPlane: vec4<f32>, // New Uniform
+    clipPlane: vec4<f32>,
 }
 
 struct VertexInput {
@@ -24,22 +46,21 @@ struct VertexOutput {
     @location(1) normal: vec3<f32>,
     @location(2) color: vec3<f32>,
     @location(3) activity: f32,
-    @location(4) clipDist: f32, // New output for clipping
+    @location(4) clipDist: f32,
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var<storage, read> voxelGrid: array<f32>;
 
-// Helper to sample voxel grid
 fn getVoxelValue(worldPos: vec3<f32>) -> f32 {
-    let range = 1.6;
-    let normPos = (worldPos / range) * 0.5 + 0.5;
+    let normPos = (worldPos / BRAIN_RANGE) * 0.5 + 0.5;
     if (any(normPos < vec3<f32>(0.0)) || any(normPos > vec3<f32>(1.0))) { return 0.0; }
-    let dim = 32u;
-    let x = u32(normPos.x * f32(dim));
-    let y = u32(normPos.y * f32(dim));
-    let z = u32(normPos.z * f32(dim));
-    let index = min(z, dim-1u) * dim * dim + min(y, dim-1u) * dim + min(x, dim-1u);
+
+    let x = u32(normPos.x * f32(VOXEL_DIM));
+    let y = u32(normPos.y * f32(VOXEL_DIM));
+    let z = u32(normPos.z * f32(VOXEL_DIM));
+
+    let index = min(z, VOXEL_DIM-1u) * VOXEL_DIM * VOXEL_DIM + min(y, VOXEL_DIM-1u) * VOXEL_DIM + min(x, VOXEL_DIM-1u);
     return voxelGrid[index];
 }
 
@@ -52,7 +73,6 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     
     let activity = getVoxelValue(input.position);
 
-    // Calculate World Pos
     let worldPos = (uniforms.modelMatrix * vec4<f32>(finalPos, 1.0)).xyz;
 
     // --- CONNECTOME MODE ---
@@ -61,24 +81,14 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
         let baseColor = vec3<f32>(0.05, 0.1, 0.15);
         let pulseColor = vec3<f32>(0.0, 0.8, 1.0);
 
-        // Traveling Pulse Logic
-        // Combine vertexIndex (local connectivity) with spatial position (global flow)
-        let flowSpeed = 8.0;
-        let flowScale = 0.0005;
-        // Add spatial bias: Flow from Front (Z > 0) to Back, or Center Outwards
-        // Let's try Center Outwards: radius
         let radius = length(worldPos);
         let spatialPhase = radius * 4.0;
 
-        // Primary wave driven by index (path), modulated by spatial phase
-        let pulseWave = sin(f32(vertexIndex) * flowScale + spatialPhase - uniforms.time * flowSpeed);
-
-        // Sharp peaks
+        let pulseWave = sin(f32(vertexIndex) * FLOW_SCALE + spatialPhase - uniforms.time * FLOW_SPEED);
         let pulse = smoothstep(0.8, 1.0, pulseWave);
 
-        // Combine with volumetric activity
         let activeGlow = mix(baseColor, pulseColor * 0.5, activity);
-        let activePulse = pulseColor * pulse * activity; // Pulse only visible where active
+        let activePulse = pulseColor * pulse * activity;
 
         finalColor = activeGlow + activePulse;
         finalNormal = vec3<f32>(0.0, 1.0, 0.0);
@@ -105,12 +115,6 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     output.normal = normalize((uniforms.modelMatrix * vec4<f32>(finalNormal, 0.0)).xyz);
     output.color = finalColor;
     output.activity = activity;
-
-    // Clip Distance Calculation
-    // Plane equation: dot(P, N) + D
-    // We want positive values to be kept.
-    // If we want to clip "front", we define plane such that front is negative.
-    // worldPos is roughly -1.5 to 1.5.
     output.clipDist = dot(output.worldPos, uniforms.clipPlane.xyz) + uniforms.clipPlane.w;
     
     return output;
@@ -138,10 +142,7 @@ struct FragmentInput {
 
 @fragment
 fn main(input: FragmentInput) -> @location(0) vec4<f32> {
-    // Discard if clipped
-    if (input.clipDist < 0.0) {
-        discard;
-    }
+    if (input.clipDist < 0.0) { discard; }
 
     if (uniforms.style >= 3.0) { return vec4<f32>(input.color, 1.0); }
 
@@ -167,9 +168,9 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
 }
 `;
 
-// --- NEW SHADERS FOR INSTANCED SPHERES ---
-
 export const sphereVertexShader = `
+${CONSTANTS}
+
 struct Uniforms {
     mvpMatrix: mat4x4<f32>,
     modelMatrix: mat4x4<f32>,
@@ -182,7 +183,7 @@ struct Uniforms {
 
 struct VertexInput {
     @location(0) position: vec3<f32>,
-    @location(1) instancePos: vec3<f32>, // Per-instance data
+    @location(1) instancePos: vec3<f32>,
 }
 
 struct VertexOutput {
@@ -196,14 +197,14 @@ struct VertexOutput {
 @group(0) @binding(1) var<storage, read> voxelGrid: array<f32>;
 
 fn getVoxelValue(worldPos: vec3<f32>) -> f32 {
-    let range = 1.6;
-    let normPos = (worldPos / range) * 0.5 + 0.5;
+    let normPos = (worldPos / BRAIN_RANGE) * 0.5 + 0.5;
     if (any(normPos < vec3<f32>(0.0)) || any(normPos > vec3<f32>(1.0))) { return 0.0; }
-    let dim = 32u;
-    let x = u32(normPos.x * f32(dim));
-    let y = u32(normPos.y * f32(dim));
-    let z = u32(normPos.z * f32(dim));
-    let index = min(z, dim-1u) * dim * dim + min(y, dim-1u) * dim + min(x, dim-1u);
+
+    let x = u32(normPos.x * f32(VOXEL_DIM));
+    let y = u32(normPos.y * f32(VOXEL_DIM));
+    let z = u32(normPos.z * f32(VOXEL_DIM));
+
+    let index = min(z, VOXEL_DIM-1u) * VOXEL_DIM * VOXEL_DIM + min(y, VOXEL_DIM-1u) * VOXEL_DIM + min(x, VOXEL_DIM-1u);
     return voxelGrid[index];
 }
 
@@ -213,18 +214,15 @@ fn main(input: VertexInput) -> VertexOutput {
 
     let activity = getVoxelValue(input.instancePos);
 
-    // Scale sphere based on activity
     let scale = 0.02 + (activity * 0.08);
     let pos = (input.position * scale) + input.instancePos;
 
     output.worldPos = (uniforms.modelMatrix * vec4<f32>(pos, 1.0)).xyz;
     output.position = uniforms.mvpMatrix * vec4<f32>(pos, 1.0);
 
-    // Color: White/Cyan based on activity
     let c1 = vec3<f32>(0.2, 0.2, 0.4);
     let c2 = vec3<f32>(1.0, 1.0, 1.0);
     output.color = mix(c1, c2, activity);
-
     output.clipDist = dot(output.worldPos, uniforms.clipPlane.xyz) + uniforms.clipPlane.w;
 
     return output;
@@ -246,6 +244,9 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
 `;
 
 export const computeShader = `
+${CONSTANTS}
+${HELPERS}
+
 struct TensorParams {
     time: f32,
     voxelDim: u32,
@@ -281,22 +282,19 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
 
     var val = voxelGrid[index];
 
-    // Calculate World Pos for Region Logic
-    let range = 1.6;
     let normPos = vec3<f32>(f32(x), f32(y), f32(z)) / f32(dim);
-    let worldPos = (normPos * 2.0 - 1.0) * range;
+    let worldPos = (normPos * 2.0 - 1.0) * BRAIN_RANGE;
 
     // Region definitions
-    // 0: General, 1: Frontal (Z > 0.5), 2: Occipital (Z < -0.5), 3: Temporal (|X| > 0.8)
     var regionDecay = 0.96;
     var diffusionRate = 0.1;
 
     if (worldPos.z > 0.5) { // Frontal
-        regionDecay = 0.98; // Lingers longer
-        diffusionRate = 0.15; // Spreads faster
+        regionDecay = 0.98;
+        diffusionRate = 0.15;
     } else if (worldPos.z < -0.5) { // Occipital
-        regionDecay = 0.92; // Fades fast (Visual cortex flashes)
-        diffusionRate = 0.05; // Tighter focus
+        regionDecay = 0.92;
+        diffusionRate = 0.05;
     } else if (abs(worldPos.x) > 0.8) { // Temporal
         regionDecay = 0.95;
     }
@@ -317,15 +315,13 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     // Stimulus
     if (params.stimulusActive > 0.0) {
         let dist = distance(worldPos, params.stimulusPos);
-        // If stimulus is near, add it.
-        if (dist < 0.4) {
-            val += params.stimulusActive * (1.0 - dist / 0.4);
+        let pulse = gaussian_pulse(dist, 0.5);
+        if (pulse > 0.01) {
+            val += params.stimulusActive * pulse;
         }
     }
 
-    // Decay
     val *= regionDecay;
-
     voxelGrid[index] = clamp(val, 0.0, 1.0);
 }
 `;

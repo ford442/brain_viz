@@ -1,5 +1,5 @@
 // Main application entry point
-// Neuro-Weaver V2.0.1 Implementation - Volumetric Renderer
+// Neuro-Weaver V2.1 Implementation - Volumetric Renderer
 import { BrainRenderer } from './brain-renderer.js';
 
 async function init() {
@@ -138,7 +138,7 @@ async function init() {
             });
         }
 
-        console.log('Starting renderer... V2.0.1 Active');
+        console.log('Starting renderer... V2.1 Active');
         renderer.start();
         console.log('Renderer started');
         
