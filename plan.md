@@ -28,6 +28,6 @@
 - [x] Frontend verification script created (`verification/verify_brain_viz.py`).
 - [x] Visual verification via screenshots confirmed UI controls and rendering modes (Connectome, Heatmap, Clipped).
 
-## Next Steps
-- [ ] Refactor shader constants for better maintainability.
-- [ ] Final code submission.
+## Final Polish
+- [x] Refactor shader constants for better maintainability (Implemented via `CONSTANTS` template literal).
+- [x] Final code submission.

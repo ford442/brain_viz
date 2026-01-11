@@ -255,16 +255,13 @@ export class BrainRenderer {
     }
 
     calmState() {
-        // Clear all activity
-        this.params.amplitude = 0.0;
-        this.params.frequency = 0.0;
-        // We could also zero out the buffer if we had a clear shader,
-        // but setting amplitude to 0 stops new waves.
-        // To really calm it, we can increase decay in compute shader or just let it fade.
-        // Let's just reset params to a "Calm" preset.
+        // Clear all activity by resetting parameters to a "Calm" state.
+        // Setting amplitude low prevents new chaotic waves.
+        // Setting smoothing high (0.98) causes existing activity to decay very slowly,
+        // creating a "settling down" effect rather than an abrupt cutoff.
         this.params.amplitude = 0.1;
         this.params.frequency = 0.5;
-        this.params.smoothing = 0.98; // High smoothing = slow change
+        this.params.smoothing = 0.98;
     }
 
     updateUniforms() {
