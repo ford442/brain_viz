@@ -96,11 +96,16 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     // --- HEATMAP MODE ---
     else if (uniforms.style >= 3.0) {
         finalPos = input.position;
+        // Thermal Gradient: Blue (Cold) -> Green (Mid) -> Red (Hot)
         let c1 = vec3<f32>(0.0, 0.0, 0.5);
         let c2 = vec3<f32>(0.0, 1.0, 0.0);
         let c3 = vec3<f32>(1.0, 0.0, 0.0);
-        if (activity < 0.5) { finalColor = mix(c1, c2, activity * 2.0); }
-        else { finalColor = mix(c2, c3, (activity - 0.5) * 2.0); }
+
+        if (activity < 0.5) {
+            finalColor = mix(c1, c2, activity * 2.0);
+        } else {
+            finalColor = mix(c2, c3, (activity - 0.5) * 2.0);
+        }
     }
     // --- GHOST MODE ---
     else {
