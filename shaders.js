@@ -166,8 +166,11 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
 
     var col = input.color;
     col += vec3<f32>(0.8) * rimAlpha;
-    let activityGlow = input.activity * 1.5;
-    col += vec3<f32>(0.5, 0.8, 1.0) * activityGlow * rimAlpha;
+
+    // Journal: "Using mix() for color based on activity looks better than additive blending."
+    let activityGlowColor = vec3<f32>(0.5, 0.8, 1.0);
+    let mixFactor = clamp(input.activity * 1.5 * rimAlpha, 0.0, 1.0);
+    col = mix(col, activityGlowColor, mixFactor);
 
     return vec4<f32>(col, clamp(finalAlpha, 0.0, 1.0));
 }

@@ -264,6 +264,12 @@ export class BrainRenderer {
         this.params.smoothing = 0.98;
     }
 
+    resetActivity() {
+        // Instantly clear the volumetric tensor data
+        const emptyData = new Float32Array(this.voxelCount);
+        this.device.queue.writeBuffer(this.tensorBuffer, 0, emptyData);
+    }
+
     updateUniforms() {
         this.rotation.x += (this.targetRotation.x - this.rotation.x) * 0.1;
         this.rotation.y += (this.targetRotation.y - this.rotation.y) * 0.1;

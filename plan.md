@@ -7,6 +7,7 @@
 - [x] Volumetric Tensor Data Implementation
 - [x] Interactive Stimulus
 - [x] Advanced Visualization Modes (Heatmap, Somas)
+- [x] Final Polish & Verification
 
 ## Completed Tasks
 
@@ -19,15 +20,17 @@
 - [x] **Activity Trails**: "Connectome Mode" shader logic updated to use `vertexIndex` and `spatialPhase` for traveling pulse effects.
 - [x] **Instanced Somas**: `spherePipeline` implemented to render Icosahedrons at node intersections.
 - [x] **Heatmap Mode**: Style 3.0 implemented in fragment shader with Blue-Green-Red gradient.
+- [x] **Refined Blending**: Updated `fragmentShader` to use `mix()` for smoother activity glow.
 
 ### 3. 🕹️ Interaction (UI)
 - [x] **UI Controls**: `index.html` and `main.js` updated with Stimulus buttons and Style selector.
 - [x] **Slice Control**: `clipPlane` uniform added to shaders and slider added to UI.
+- [x] **Reset Activity**: Added `resetActivity()` and UI button to instantly clear tensor data.
 
 ## Verification
 - [x] Frontend verification script created (`verification/verify_brain_viz.py`).
-- [x] Visual verification via screenshots confirmed UI controls and rendering modes (Connectome, Heatmap, Clipped).
+- [x] Visual verification via screenshots confirmed UI controls and rendering modes.
 
 ## Final Polish
-- [x] Refactor shader constants for better maintainability (Implemented via `CONSTANTS` template literal).
+- [x] Refactor shader constants for better maintainability.
 - [x] Final code submission.
