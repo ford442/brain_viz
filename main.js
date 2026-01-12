@@ -138,6 +138,14 @@ async function init() {
             });
         }
 
+        // Reset Activity Button
+        const resetBtn = document.getElementById('stim-reset');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                renderer.resetActivity();
+            });
+        }
+
         console.log('Starting renderer... V2.1 Active');
         renderer.start();
         console.log('Renderer started');
