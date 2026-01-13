@@ -8,7 +8,7 @@
 const CONSTANTS = `
     const BRAIN_RANGE: f32 = 1.6;
     const VOXEL_DIM: u32 = 32u;
-    const FLOW_SPEED: f32 = 8.0;
+    const FLOW_SPEED: f32 = 6.0;
     const FLOW_SCALE: f32 = 0.0005;
     const CLIP_PLANE_NORMAL: vec3<f32> = vec3<f32>(0.0, 0.0, -1.0);
 `;
@@ -96,10 +96,10 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     // --- HEATMAP MODE ---
     else if (uniforms.style >= 3.0) {
         finalPos = input.position;
-        // Thermal Gradient: Blue (Cold) -> Green (Mid) -> Red (Hot)
-        let c1 = vec3<f32>(0.0, 0.0, 0.5);
-        let c2 = vec3<f32>(0.0, 1.0, 0.0);
-        let c3 = vec3<f32>(1.0, 0.0, 0.0);
+        // Thermal Gradient: Deep Blue -> Cyan -> Red-Orange
+        let c1 = vec3<f32>(0.0, 0.0, 0.4);
+        let c2 = vec3<f32>(0.0, 0.8, 0.8);
+        let c3 = vec3<f32>(1.0, 0.2, 0.0);
 
         if (activity < 0.5) {
             finalColor = mix(c1, c2, activity * 2.0);
@@ -305,6 +305,9 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
         diffusionRate = 0.05;
     } else if (abs(worldPos.x) > 0.8) { // Temporal
         regionDecay = 0.95;
+    } else if (worldPos.y > 0.6) { // Parietal
+        regionDecay = 0.94;
+        diffusionRate = 0.12;
     }
 
     // Diffusion
