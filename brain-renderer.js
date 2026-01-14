@@ -236,9 +236,12 @@ export class BrainRenderer {
             compute: { module: this.device.createShaderModule({ code: computeShader }), entryPoint: 'main' }
         });
 
-        this.depthTexture = this.device.createTexture({ size: [this.canvas.width, this.canvas.height], format: 'depth24plus', usage: GPUTextureUsage.RENDER_ATTACHMENT });
+        // Ensure canvas dimensions are valid before creating depth texture
+        const width = Math.max(1, this.canvas.width);
+        const height = Math.max(1, this.canvas.height);
+        this.depthTexture = this.device.createTexture({ size: [width, height], format: 'depth24plus', usage: GPUTextureUsage.RENDER_ATTACHMENT });
 
-        console.log("Renderer V2.1 Initialized");
+        console.log("Renderer V2.2 Verified");
     }
 
     createBuffer(data, usage) {
@@ -249,9 +252,9 @@ export class BrainRenderer {
 
     setParams(newParams) { this.params = { ...this.params, ...newParams }; }
 
-    injectStimulus(x, y, z, strength) {
+    injectStimulus(x, y, z, intensity) {
         this.stimulus.pos = [x, y, z];
-        this.stimulus.active = strength;
+        this.stimulus.active = intensity;
     }
 
     calmState() {
