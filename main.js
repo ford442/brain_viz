@@ -1,5 +1,5 @@
 // Main application entry point
-// Neuro-Weaver V2.1 Implementation - Volumetric Renderer
+// Neuro-Weaver V2.2 Implementation - Volumetric Renderer
 import { BrainRenderer } from './brain-renderer.js';
 
 async function init() {
@@ -96,7 +96,8 @@ async function init() {
             });
         }
 
-        // --- STIMULUS BUTTONS ---
+        // --- STIMULUS BUTTONS (V2.2 UI) ---
+        // Maps UI buttons to 3D brain coordinates for stimulus injection
         const stimBtns = {
             'stim-frontal': [0, 0, 1.2],
             'stim-occipital': [0, 0, -1.2],
@@ -146,7 +147,7 @@ async function init() {
             });
         }
 
-        console.log('Starting renderer... V2.1 Active');
+        console.log('Starting renderer... V2.2 Active');
         renderer.start();
         console.log('Renderer started');
         

@@ -1,5 +1,5 @@
 // shaders.js
-// Verified Neuro-Weaver V2.1 Implementation
+// Verified Neuro-Weaver V2.2 Implementation
 // Updated with volumetric tensor logic (3D Flattened Buffer), instanced rendering, and heatmap modes.
 // Refactored constants and Gaussian Pulse logic.
 
@@ -8,8 +8,8 @@
 const CONSTANTS = `
     const BRAIN_RANGE: f32 = 1.6;
     const VOXEL_DIM: u32 = 32u;
-    const FLOW_SPEED: f32 = 6.0;
-    const FLOW_SCALE: f32 = 0.0005;
+    const FLOW_SPEED: f32 = 4.0;
+    const FLOW_SCALE: f32 = 0.001;
     const CLIP_PLANE_NORMAL: vec3<f32> = vec3<f32>(0.0, 0.0, -1.0);
 `;
 
@@ -82,10 +82,14 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
         let pulseColor = vec3<f32>(0.0, 0.8, 1.0);
 
         let radius = length(worldPos);
-        let spatialPhase = radius * 4.0;
 
-        let pulseWave = sin(f32(vertexIndex) * FLOW_SCALE + spatialPhase - uniforms.time * FLOW_SPEED);
-        let pulse = smoothstep(0.8, 1.0, pulseWave);
+        // Activity Trail: Combines vertex index (linear flow) with spatial radius (organic variety)
+        let spatialPhase = radius * 2.0;
+        let flowPhase = f32(vertexIndex) * FLOW_SCALE;
+
+        // "Data Packet" effect: Moves along the grid lines
+        let pulseWave = sin(flowPhase + spatialPhase - uniforms.time * FLOW_SPEED);
+        let pulse = smoothstep(0.85, 1.0, pulseWave); // Sharper pulses
 
         let activeGlow = mix(baseColor, pulseColor * 0.5, activity);
         let activePulse = pulseColor * pulse * activity;
@@ -96,10 +100,10 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     // --- HEATMAP MODE ---
     else if (uniforms.style >= 3.0) {
         finalPos = input.position;
-        // Thermal Gradient: Deep Blue -> Cyan -> Red-Orange
-        let c1 = vec3<f32>(0.0, 0.0, 0.4);
-        let c2 = vec3<f32>(0.0, 0.8, 0.8);
-        let c3 = vec3<f32>(1.0, 0.2, 0.0);
+        // Thermal Gradient: Blue -> Green/Cyan -> Red
+        let c1 = vec3<f32>(0.0, 0.0, 0.5); // Deep Blue
+        let c2 = vec3<f32>(0.0, 0.9, 0.4); // Teal/Green
+        let c3 = vec3<f32>(1.0, 0.2, 0.0); // Red/Orange
 
         if (activity < 0.5) {
             finalColor = mix(c1, c2, activity * 2.0);
@@ -120,6 +124,7 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     output.normal = normalize((uniforms.modelMatrix * vec4<f32>(finalNormal, 0.0)).xyz);
     output.color = finalColor;
     output.activity = activity;
+    // V2.2 Clipping Logic
     output.clipDist = dot(output.worldPos, uniforms.clipPlane.xyz) + uniforms.clipPlane.w;
     
     return output;
@@ -177,6 +182,7 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
 `;
 
 export const sphereVertexShader = `
+// V2.2 Instancing Logic
 ${CONSTANTS}
 
 struct Uniforms {
@@ -238,6 +244,7 @@ fn main(input: VertexInput) -> VertexOutput {
 `;
 
 export const sphereFragmentShader = `
+// V2.2 Sphere Fragment
 struct FragmentInput {
     @location(0) worldPos: vec3<f32>,
     @location(1) color: vec3<f32>,
@@ -252,6 +259,7 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
 `;
 
 export const computeShader = `
+// V2.2 Compute Logic: Region-based diffusion and stimulus
 ${CONSTANTS}
 ${HELPERS}
 
@@ -293,7 +301,7 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     let normPos = vec3<f32>(f32(x), f32(y), f32(z)) / f32(dim);
     let worldPos = (normPos * 2.0 - 1.0) * BRAIN_RANGE;
 
-    // Region definitions
+    // Region definitions (V2.2 Tuned)
     var regionDecay = 0.96;
     var diffusionRate = 0.1;
 
@@ -323,7 +331,7 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     let avg = neighborSum / max(1.0, neighborCount);
     val = mix(val, avg, diffusionRate);
 
-    // Stimulus
+    // Stimulus Injection (V2.2)
     if (params.stimulusActive > 0.0) {
         let dist = distance(worldPos, params.stimulusPos);
         let pulse = gaussian_pulse(dist, 0.5);

@@ -96,6 +96,7 @@ export class BrainGeometry {
         return len < maxRadius;
     }
 
+    // V2.2 Circuit Grid Generation
     generateCircuitGrid() {
         const step = 0.15; // Grid spacing
         const range = 1.5; // Bounding box half-size
@@ -152,5 +153,6 @@ export class BrainGeometry {
     getFiberData() { return new Float32Array(this.fibers); }
     getFiberVertexCount() { return this.fibers.length / 3; }
     getVertexCount() { return this.vertices.length / 3; }
+    // V2.2 Getter: Soma Positions
     getSomaPositions() { return new Float32Array(this.somaPositions); }
 }

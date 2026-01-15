@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neuro-Weaver Brain Viz V2.1</title>
-    <!-- Neuro-Weaver V2.1 - Volumetric Data Visualization -->
+    <title>Neuro-Weaver Brain Viz V2.2</title>
+    <!-- Neuro-Weaver V2.2 - Volumetric Data Visualization -->
     <style>
         body { margin: 0; overflow: hidden; background: #000; color: #fff; font-family: monospace; width: 100vw; height: 100vh; }
         canvas { display: block; width: 100vw; height: 100vh; }
@@ -39,7 +39,7 @@
 </head>
 <body>
     <div id="controls">
-        <h2>NEURO-WEAVER V2.1</h2>
+        <h2>NEURO-WEAVER V2.2</h2>
 
         <div class="control-group">
             <label>Visualization Style</label>
@@ -54,6 +54,7 @@
         <hr>
 
         <div class="control-group">
+            <!-- V2.2 Control: Slice Plane -->
             <label>Clip Plane Z (Slice) <span id="val-clip" class="value">2.0</span></label>
             <input type="range" id="clip" min="-2.0" max="2.0" step="0.1" value="2.0">
         </div>
@@ -81,6 +82,7 @@
         </div>
 
         <hr>
+        <!-- V2.2 Controls: Region Stimulation -->
         <label style="margin-bottom:10px; color:#fff">Inject Stimulus</label>
         <button id="stim-frontal">Frontal Lobe</button>
         <button id="stim-parietal">Parietal Lobe</button>
