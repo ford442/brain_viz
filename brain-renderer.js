@@ -1,5 +1,5 @@
 // brain-renderer.js
-// Verified Neuro-Weaver V2.1 Implementation
+// Verified Neuro-Weaver V2.2 Implementation
 import { BrainGeometry } from './brain-geometry.js';
 import { vertexShader, fragmentShader, computeShader, sphereVertexShader, sphereFragmentShader } from './shaders.js';
 import { Mat4 } from './math-utils.js';
@@ -35,7 +35,7 @@ export class BrainRenderer {
         this.voxelDim = 32;
         this.voxelCount = this.voxelDim * this.voxelDim * this.voxelDim;
 
-        // Stimulus State
+        // Stimulus State (V2.2 Initialized)
         this.stimulus = {
             pos: [0, 0, 0],
             active: 0.0
@@ -99,7 +99,7 @@ export class BrainRenderer {
         this.fiberBuffer = this.createBuffer(geometry.getFiberData(), GPUBufferUsage.VERTEX);
         this.fiberVertexCount = geometry.getFiberVertexCount();
         
-        // 3. Soma (Sphere) Instancing
+        // 3. Soma (Sphere) Instancing (V2.2)
         // Use explicit grid intersections from geometry
         const somaPositions = geometry.getSomaPositions();
         this.somaInstanceBuffer = this.createBuffer(somaPositions, GPUBufferUsage.VERTEX);
@@ -123,6 +123,7 @@ export class BrainRenderer {
             6,1,10, 9,0,11, 9,11,2, 9,2,5, 7,2,11
         ]);
 
+        // V2.2 Geometry Buffers
         this.sphereVertexBuffer = this.createBuffer(icoVerts, GPUBufferUsage.VERTEX);
         this.sphereIndexBuffer = this.createBuffer(icoIndices, GPUBufferUsage.INDEX);
         this.sphereIndexCount = icoIndices.length;
@@ -199,7 +200,8 @@ export class BrainRenderer {
             depthStencil: { depthWriteEnabled: false, depthCompare: 'less', format: 'depth24plus' } 
         });
 
-        // --- PIPELINE 3: INSTANCED SPHERES ---
+        // --- PIPELINE 3: INSTANCED SPHERES (V2.2) ---
+        // Renders soma spheres at circuit intersections
         this.spherePipeline = this.device.createRenderPipeline({
             layout: this.device.createPipelineLayout({ bindGroupLayouts: [renderBindGroupLayout] }),
             vertex: {
@@ -252,6 +254,8 @@ export class BrainRenderer {
 
     setParams(newParams) { this.params = { ...this.params, ...newParams }; }
 
+    // V2.2 Feature: Volumetric Stimulus Injection
+    // Writes to the compute buffer to simulate activity at a specific 3D coordinate.
     injectStimulus(x, y, z, intensity) {
         this.stimulus.pos = [x, y, z];
         this.stimulus.active = intensity;
@@ -299,11 +303,12 @@ export class BrainRenderer {
         uData[36] = 0.0; // Px
         uData[37] = 0.0; // Py
         uData[38] = -1.0; // Pz (Normal pointing backward)
+        // V2.2: Dynamic Clip Plane Uniform
         uData[39] = this.params.clipZ; // Distance
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         
-        // Compute Uniforms (48 bytes)
+        // Compute Uniforms (48 bytes) - Stimulus Data is here
         const cBuf = new ArrayBuffer(48);
         const dv = new DataView(cBuf);
         dv.setFloat32(0, this.time, true);
@@ -315,6 +320,7 @@ export class BrainRenderer {
         dv.setFloat32(24, this.params.style, true);
         dv.setFloat32(28, 0.0, true);
 
+        // V2.2: Write Stimulus
         dv.setFloat32(32, this.stimulus.pos[0], true);
         dv.setFloat32(36, this.stimulus.pos[1], true);
         dv.setFloat32(40, this.stimulus.pos[2], true);
@@ -369,7 +375,7 @@ export class BrainRenderer {
             renderPass.setVertexBuffer(1, this.fiberBuffer); 
             renderPass.draw(this.fiberVertexCount); 
 
-            // 2. Draw Instanced Neurons (Somas)
+            // 2. Draw Instanced Neurons (Somas) [V2.2 Pipeline]
             renderPass.setPipeline(this.spherePipeline);
             renderPass.setVertexBuffer(0, this.sphereVertexBuffer); // Mesh
             renderPass.setVertexBuffer(1, this.somaInstanceBuffer); // Positions
