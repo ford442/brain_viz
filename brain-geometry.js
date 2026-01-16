@@ -153,6 +153,6 @@ export class BrainGeometry {
     getFiberData() { return new Float32Array(this.fibers); }
     getFiberVertexCount() { return this.fibers.length / 3; }
     getVertexCount() { return this.vertices.length / 3; }
-    // V2.2 Getter: Soma Positions
+    // V2.2 Getter: Soma Positions for Instancing
     getSomaPositions() { return new Float32Array(this.somaPositions); }
 }
