@@ -8,6 +8,7 @@
 - [x] Interactive Stimulus
 - [x] Advanced Visualization Modes (Heatmap, Somas)
 - [x] Robustness & API Refinement (V2.2)
+- [x] Evolved Signal Control (V2.3)
 
 ## Completed Tasks
 
@@ -25,6 +26,7 @@
 ### 3. 🕹️ Interaction (UI)
 - [x] **UI Controls**: `index.html` and `main.js` updated with Stimulus buttons and Style selector.
 - [x] **Slice Control**: `clipPlane` uniform added to shaders and slider added to UI.
+- [x] **Signal Speed**: Added slider to control flow speed of neural pulses (V2.3).
 - [x] **Reset Activity**: Added `resetActivity()` and UI button to instantly clear tensor data.
 - [x] **Viewport Robustness**: Added CSS and JS checks to prevent 0x0 canvas errors in headless environments.
 
@@ -35,4 +37,4 @@
 
 ## Final Polish
 - [x] Refactor shader constants for better maintainability.
-- [x] Final code submission (V2.2).
+- [x] Final code submission (V2.3).
