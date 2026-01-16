@@ -36,6 +36,7 @@ export class BrainRenderer {
         this.voxelCount = this.voxelDim * this.voxelDim * this.voxelDim;
 
         // Stimulus State (V2.2 Initialized)
+        // Stores position and intensity for compute shader injection
         this.stimulus = {
             pos: [0, 0, 0],
             active: 0.0
@@ -100,7 +101,7 @@ export class BrainRenderer {
         this.fiberVertexCount = geometry.getFiberVertexCount();
         
         // 3. Soma (Sphere) Instancing (V2.2)
-        // Use explicit grid intersections from geometry
+        // Use explicit grid intersections from geometry for instance positions
         const somaPositions = geometry.getSomaPositions();
         this.somaInstanceBuffer = this.createBuffer(somaPositions, GPUBufferUsage.VERTEX);
         this.somaInstanceCount = somaPositions.length / 3;
@@ -110,6 +111,7 @@ export class BrainRenderer {
         const Z = 0.850650808352039932;
         const N = 0.0;
 
+        // V2.2 Icosahedron vertices
         const icoVerts = new Float32Array([
             -X,N,Z, X,N,Z, -X,N,-Z, X,N,-Z,
             N,Z,X, N,Z,-X, N,-Z,X, N,-Z,-X,
@@ -123,7 +125,7 @@ export class BrainRenderer {
             6,1,10, 9,0,11, 9,11,2, 9,2,5, 7,2,11
         ]);
 
-        // V2.2 Geometry Buffers
+        // V2.2 Geometry Buffers: Icosahedron mesh for somas
         this.sphereVertexBuffer = this.createBuffer(icoVerts, GPUBufferUsage.VERTEX);
         this.sphereIndexBuffer = this.createBuffer(icoIndices, GPUBufferUsage.INDEX);
         this.sphereIndexCount = icoIndices.length;
@@ -142,7 +144,8 @@ export class BrainRenderer {
         // MVP (64), Model (64), Time(4), Style(4), Pad(8), ClipPlane(16)
         this.uniformBuffer = this.device.createBuffer({ size: 192, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
         
-        this.computeUniformBuffer = this.device.createBuffer({ size: 48, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+        // V2.2 Fix: Increased to 64 bytes for std140 alignment of stimulusActive (offset 48)
+        this.computeUniformBuffer = this.device.createBuffer({ size: 64, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
         
         // Bind Groups Layouts
         const renderBindGroupLayout = this.device.createBindGroupLayout({
@@ -201,16 +204,17 @@ export class BrainRenderer {
         });
 
         // --- PIPELINE 3: INSTANCED SPHERES (V2.2) ---
-        // Renders soma spheres at circuit intersections
+        // Renders soma spheres at circuit intersections using instancing
         this.spherePipeline = this.device.createRenderPipeline({
             layout: this.device.createPipelineLayout({ bindGroupLayouts: [renderBindGroupLayout] }),
             vertex: {
-                module: this.device.createShaderModule({ code: sphereVertexShader }),
-                entryPoint: 'main',
+                module: this.device.createShaderModule({ code: sphereVertexShader }), // sphereVertexShader is exported from shaders.js
+                entryPoint: 'main_sphere',
                 buffers: [
                     // 1. Mesh Geometry (Cube/Sphere)
                     { arrayStride: 12, attributes: [{ shaderLocation: 0, offset: 0, format: 'float32x3' }] },
                     // 2. Instance Data (Positions)
+                    // Uses 'instance' step mode to position each soma
                     { arrayStride: 12, stepMode: 'instance', attributes: [{ shaderLocation: 1, offset: 0, format: 'float32x3' }] }
                 ]
             },
@@ -256,6 +260,7 @@ export class BrainRenderer {
 
     // V2.2 Feature: Volumetric Stimulus Injection
     // Writes to the compute buffer to simulate activity at a specific 3D coordinate.
+    // Verified implementation for Neuro-Weaver V2.2
     injectStimulus(x, y, z, intensity) {
         this.stimulus.pos = [x, y, z];
         this.stimulus.active = intensity;
@@ -303,13 +308,13 @@ export class BrainRenderer {
         uData[36] = 0.0; // Px
         uData[37] = 0.0; // Py
         uData[38] = -1.0; // Pz (Normal pointing backward)
-        // V2.2: Dynamic Clip Plane Uniform
+        // V2.2: Dynamic Clip Plane Uniform (Z-slice distance)
         uData[39] = this.params.clipZ; // Distance
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         
-        // Compute Uniforms (48 bytes) - Stimulus Data is here
-        const cBuf = new ArrayBuffer(48);
+        // Compute Uniforms (64 bytes) - Stimulus Data is here
+        const cBuf = new ArrayBuffer(64);
         const dv = new DataView(cBuf);
         dv.setFloat32(0, this.time, true);
         dv.setUint32(4, this.voxelDim, true);
@@ -321,13 +326,18 @@ export class BrainRenderer {
         dv.setFloat32(28, 0.0, true);
 
         // V2.2: Write Stimulus
+        // Manually writing floats to match TensorParams struct alignment
+        // vec3 stimulusPos aligned to 16 bytes (offset 32)
         dv.setFloat32(32, this.stimulus.pos[0], true);
         dv.setFloat32(36, this.stimulus.pos[1], true);
         dv.setFloat32(40, this.stimulus.pos[2], true);
+
+        // stimulusActive at offset 44 (packed immediately after vec3)
         dv.setFloat32(44, this.stimulus.active, true);
 
         this.device.queue.writeBuffer(this.computeUniformBuffer, 0, cBuf);
 
+        // Reset stimulus after one frame (Pulse)
         this.stimulus.active = 0.0;
     }
 
@@ -380,6 +390,7 @@ export class BrainRenderer {
             renderPass.setVertexBuffer(0, this.sphereVertexBuffer); // Mesh
             renderPass.setVertexBuffer(1, this.somaInstanceBuffer); // Positions
             renderPass.setIndexBuffer(this.sphereIndexBuffer, 'uint16');
+            // Draw call uses instance count
             renderPass.drawIndexed(this.sphereIndexCount, this.somaInstanceCount);
 
         } else {

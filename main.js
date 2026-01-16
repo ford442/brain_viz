@@ -98,6 +98,7 @@ async function init() {
 
         // --- STIMULUS BUTTONS (V2.2 UI) ---
         // Maps UI buttons to 3D brain coordinates for stimulus injection
+        // Each button targets a specific lobe region
         const stimBtns = {
             'stim-frontal': [0, 0, 1.2],
             'stim-occipital': [0, 0, -1.2],
@@ -106,6 +107,7 @@ async function init() {
             'stim-deep': [0, 0, 0],
         };
 
+        // V2.2: Attach event listeners to stimulus buttons
         Object.keys(stimBtns).forEach(id => {
             const btn = document.getElementById(id);
             if (btn) {

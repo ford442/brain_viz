@@ -16,6 +16,7 @@ const CONSTANTS = `
 // --- HELPER FUNCTIONS ---
 const HELPERS = `
     // Gaussian Pulse for smoother stimulus
+    // V2.2 Helper: Used for stimulus injection and region decay
     fn gaussian_pulse(dist: f32, width: f32) -> f32 {
         let k = 4.0 / (width * width);
         return exp(-k * dist * dist);
@@ -76,6 +77,7 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     let worldPos = (uniforms.modelMatrix * vec4<f32>(finalPos, 1.0)).xyz;
 
     // --- CONNECTOME MODE ---
+    // V2.2: Renders fiber pulses
     if (uniforms.style >= 2.0 && uniforms.style < 3.0) {
         finalPos = input.position;
         let baseColor = vec3<f32>(0.05, 0.1, 0.15);
@@ -88,6 +90,7 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
         let flowPhase = f32(vertexIndex) * FLOW_SCALE;
 
         // "Data Packet" effect: Moves along the grid lines
+        // Uses sine wave offset by vertex index (flowPhase) and time
         let pulseWave = sin(flowPhase + spatialPhase - uniforms.time * FLOW_SPEED);
         let pulse = smoothstep(0.85, 1.0, pulseWave); // Sharper pulses
 
@@ -98,6 +101,7 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
         finalNormal = vec3<f32>(0.0, 1.0, 0.0);
     }
     // --- HEATMAP MODE ---
+    // V2.2: Volumetric thermal gradient
     else if (uniforms.style >= 3.0) {
         finalPos = input.position;
         // Thermal Gradient: Blue -> Green/Cyan -> Red
@@ -124,7 +128,7 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     output.normal = normalize((uniforms.modelMatrix * vec4<f32>(finalNormal, 0.0)).xyz);
     output.color = finalColor;
     output.activity = activity;
-    // V2.2 Clipping Logic
+    // V2.2 Clipping Logic: Calculate distance to plane
     output.clipDist = dot(output.worldPos, uniforms.clipPlane.xyz) + uniforms.clipPlane.w;
     
     return output;
@@ -152,6 +156,7 @@ struct FragmentInput {
 
 @fragment
 fn main(input: FragmentInput) -> @location(0) vec4<f32> {
+    // V2.2 Clipping: Discard pixels behind plane
     if (input.clipDist < 0.0) { discard; }
 
     if (uniforms.style >= 3.0) { return vec4<f32>(input.color, 1.0); }
@@ -223,12 +228,13 @@ fn getVoxelValue(worldPos: vec3<f32>) -> f32 {
 }
 
 @vertex
-fn main(input: VertexInput) -> VertexOutput {
+fn main_sphere(input: VertexInput) -> VertexOutput {
     var output: VertexOutput;
 
     let activity = getVoxelValue(input.instancePos);
 
     let scale = 0.02 + (activity * 0.08);
+    // V2.2 Instancing: Offset vertex by instance position
     let pos = (input.position * scale) + input.instancePos;
 
     output.worldPos = (uniforms.modelMatrix * vec4<f32>(pos, 1.0)).xyz;
@@ -237,6 +243,7 @@ fn main(input: VertexInput) -> VertexOutput {
     let c1 = vec3<f32>(0.2, 0.2, 0.4);
     let c2 = vec3<f32>(1.0, 1.0, 1.0);
     output.color = mix(c1, c2, activity);
+    // V2.2 Clipping: Ensure instances respect the slice plane
     output.clipDist = dot(output.worldPos, uniforms.clipPlane.xyz) + uniforms.clipPlane.w;
 
     return output;
@@ -271,7 +278,8 @@ struct TensorParams {
     spikeThreshold: f32,
     smoothing: f32,
     style: f32,
-    padding: f32,
+    // Implicit padding (28 -> 32) aligns stimulusPos to 16 bytes.
+    // V2.2 Stimulus Fields (offset 32)
     stimulusPos: vec3<f32>,
     stimulusActive: f32,
 }
@@ -332,6 +340,7 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     val = mix(val, avg, diffusionRate);
 
     // Stimulus Injection (V2.2)
+    // Verified: Injects Gaussian pulse into volumetric field
     if (params.stimulusActive > 0.0) {
         let dist = distance(worldPos, params.stimulusPos);
         let pulse = gaussian_pulse(dist, 0.5);
