@@ -27,7 +27,8 @@ export class BrainRenderer {
             spikeThreshold: 0.8,
             smoothing: 0.9,
             style: 0.0, // 0=Organic, 1=Cyber, 2=Connectome, 3=Heatmap
-            clipZ: 2.0  // Slice plane Z value (Starts outside bounds)
+            clipZ: 2.0,  // Slice plane Z value (Starts outside bounds)
+            flowSpeed: 4.0 // V2.3: Signal Speed
         };
 
         // Voxel Grid Settings
@@ -300,6 +301,7 @@ export class BrainRenderer {
         uData.set(model, 16);    // 16-31
         uData[32] = this.time;
         uData[33] = this.params.style;
+        uData[34] = this.params.flowSpeed; // V2.3: Replaced padding1 with flowSpeed
 
         // Clip Plane: Vec4 (Normal X, Y, Z, Distance)
         // We want to clip if dot(pos, N) + D < 0

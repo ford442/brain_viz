@@ -8,7 +8,7 @@
 const CONSTANTS = `
     const BRAIN_RANGE: f32 = 1.6;
     const VOXEL_DIM: u32 = 32u;
-    const FLOW_SPEED: f32 = 4.0;
+    // FLOW_SPEED moved to uniforms in V2.3
     const FLOW_SCALE: f32 = 0.001;
     const CLIP_PLANE_NORMAL: vec3<f32> = vec3<f32>(0.0, 0.0, -1.0);
 `;
@@ -31,7 +31,7 @@ struct Uniforms {
     modelMatrix: mat4x4<f32>,
     time: f32,
     style: f32,
-    padding1: f32,
+    flowSpeed: f32, // V2.3: Controls pulse speed
     padding2: f32,
     clipPlane: vec4<f32>,
 }
@@ -91,7 +91,8 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
 
         // "Data Packet" effect: Moves along the grid lines
         // Uses sine wave offset by vertex index (flowPhase) and time
-        let pulseWave = sin(flowPhase + spatialPhase - uniforms.time * FLOW_SPEED);
+        // V2.3: Use uniform flowSpeed
+        let pulseWave = sin(flowPhase + spatialPhase - uniforms.time * uniforms.flowSpeed);
         let pulse = smoothstep(0.85, 1.0, pulseWave); // Sharper pulses
 
         let activeGlow = mix(baseColor, pulseColor * 0.5, activity);

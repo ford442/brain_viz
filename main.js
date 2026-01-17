@@ -13,6 +13,7 @@ async function init() {
         spikeThreshold: document.getElementById('thresh'),
         smoothing: document.getElementById('smooth'),
         clipZ: document.getElementById('clip'),
+        flowSpeed: document.getElementById('speed'), // V2.3
         style: document.getElementById('style-mode')
     };
     
@@ -21,7 +22,8 @@ async function init() {
         amplitude: document.getElementById('val-amp'),
         spikeThreshold: document.getElementById('val-thresh'),
         smoothing: document.getElementById('val-smooth'),
-        clipZ: document.getElementById('val-clip')
+        clipZ: document.getElementById('val-clip'),
+        flowSpeed: document.getElementById('val-speed') // V2.3
     };
     
     if (!navigator.gpu) {
