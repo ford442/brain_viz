@@ -205,17 +205,18 @@ export class BrainRenderer {
         });
 
         // --- PIPELINE 3: INSTANCED SPHERES (V2.2) ---
-        // Renders soma spheres at circuit intersections using instancing
+        // Renders soma spheres at circuit intersections using instancing.
+        // Verified: Uses explicit soma positions from BrainGeometry.
         this.spherePipeline = this.device.createRenderPipeline({
             layout: this.device.createPipelineLayout({ bindGroupLayouts: [renderBindGroupLayout] }),
             vertex: {
                 module: this.device.createShaderModule({ code: sphereVertexShader }), // sphereVertexShader is exported from shaders.js
                 entryPoint: 'main_sphere',
                 buffers: [
-                    // 1. Mesh Geometry (Cube/Sphere)
+                    // 1. Mesh Geometry (Icosahedron)
                     { arrayStride: 12, attributes: [{ shaderLocation: 0, offset: 0, format: 'float32x3' }] },
                     // 2. Instance Data (Positions)
-                    // Uses 'instance' step mode to position each soma
+                    // Uses 'instance' step mode to position each soma based on circuit nodes
                     { arrayStride: 12, stepMode: 'instance', attributes: [{ shaderLocation: 1, offset: 0, format: 'float32x3' }] }
                 ]
             },
@@ -261,7 +262,7 @@ export class BrainRenderer {
 
     // V2.2 Feature: Volumetric Stimulus Injection
     // Writes to the compute buffer to simulate activity at a specific 3D coordinate.
-    // Verified implementation for Neuro-Weaver V2.2
+    // Verified: Parameter 'intensity' replaces 'strength' from V2.1.
     injectStimulus(x, y, z, intensity) {
         this.stimulus.pos = [x, y, z];
         this.stimulus.active = intensity;
