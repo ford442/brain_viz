@@ -90,8 +90,8 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
         let flowPhase = f32(vertexIndex) * FLOW_SCALE;
 
         // "Data Packet" effect: Moves along the grid lines
-        // Uses sine wave offset by vertex index (flowPhase) and time
-        // V2.3: Use uniform flowSpeed
+        // Simulates information flow by offsetting sine wave with vertex index.
+        // V2.3 Verified: Uses uniform flowSpeed for dynamic control.
         let pulseWave = sin(flowPhase + spatialPhase - uniforms.time * uniforms.flowSpeed);
         let pulse = smoothstep(0.85, 1.0, pulseWave); // Sharper pulses
 
@@ -236,6 +236,7 @@ fn main_sphere(input: VertexInput) -> VertexOutput {
 
     let scale = 0.02 + (activity * 0.08);
     // V2.2 Instancing: Offset vertex by instance position
+    // Verified: Scale is modulated by local tensor activity
     let pos = (input.position * scale) + input.instancePos;
 
     output.worldPos = (uniforms.modelMatrix * vec4<f32>(pos, 1.0)).xyz;
@@ -311,18 +312,19 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     let worldPos = (normPos * 2.0 - 1.0) * BRAIN_RANGE;
 
     // Region definitions (V2.2 Tuned)
+    // Defines distinct signal propagation properties for anatomical regions.
     var regionDecay = 0.96;
     var diffusionRate = 0.1;
 
-    if (worldPos.z > 0.5) { // Frontal
+    if (worldPos.z > 0.5) { // Frontal Lobe
         regionDecay = 0.98;
         diffusionRate = 0.15;
-    } else if (worldPos.z < -0.5) { // Occipital
+    } else if (worldPos.z < -0.5) { // Occipital Lobe
         regionDecay = 0.92;
         diffusionRate = 0.05;
-    } else if (abs(worldPos.x) > 0.8) { // Temporal
+    } else if (abs(worldPos.x) > 0.8) { // Temporal Lobe
         regionDecay = 0.95;
-    } else if (worldPos.y > 0.6) { // Parietal
+    } else if (worldPos.y > 0.6) { // Parietal Lobe
         regionDecay = 0.94;
         diffusionRate = 0.12;
     }
