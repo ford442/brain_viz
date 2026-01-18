@@ -316,8 +316,8 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     var regionDecay = 0.96;
     var diffusionRate = 0.1;
 
-    if (worldPos.z > 0.5) { // Frontal Lobe
-        regionDecay = 0.98;
+    if (worldPos.z > 0.5) { // Frontal Lobe (Higher retention)
+        regionDecay = 0.985;
         diffusionRate = 0.15;
     } else if (worldPos.z < -0.5) { // Occipital Lobe
         regionDecay = 0.92;
