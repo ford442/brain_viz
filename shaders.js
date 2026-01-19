@@ -51,6 +51,7 @@ struct VertexOutput {
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
+// [Verified] Volumetric Data: Flattened 3D buffer representing brain activity
 @group(0) @binding(1) var<storage, read> voxelGrid: array<f32>;
 
 fn getVoxelValue(worldPos: vec3<f32>) -> f32 {
@@ -77,7 +78,7 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     let worldPos = (uniforms.modelMatrix * vec4<f32>(finalPos, 1.0)).xyz;
 
     // --- CONNECTOME MODE ---
-    // V2.2: Renders fiber pulses
+    // [Verified] Activity Trails: Pulses travel along fibers
     if (uniforms.style >= 2.0 && uniforms.style < 3.0) {
         finalPos = input.position;
         let baseColor = vec3<f32>(0.05, 0.1, 0.15);
@@ -102,7 +103,7 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
         finalNormal = vec3<f32>(0.0, 1.0, 0.0);
     }
     // --- HEATMAP MODE ---
-    // V2.2: Volumetric thermal gradient
+    // [Verified] Heatmap: 3D thermal gradient (Blue->Red)
     else if (uniforms.style >= 3.0) {
         finalPos = input.position;
         // Thermal Gradient: Blue -> Green/Cyan -> Red
@@ -121,7 +122,20 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
         let displacement = input.normal * activity * 0.05;
         finalPos = input.position + displacement;
         finalColor = vec3<f32>(0.2, 0.6, 1.0);
-        if (uniforms.style > 0.5) { finalColor = vec3<f32>(0.0, 0.9, 0.5); }
+
+        // Style 1 (Cyber): Digital Grid
+        if (uniforms.style > 0.5 && uniforms.style < 1.5) {
+            finalColor = vec3<f32>(0.0, 0.9, 0.5);
+
+            // Grid Effect: Local space grid lines
+            let gridScale = 20.0;
+            let g = abs(fract(input.position * gridScale) - 0.5);
+            let gridLine = step(0.48, max(g.x, max(g.y, g.z)));
+
+            if (gridLine > 0.5) {
+                finalColor += vec3<f32>(0.6, 1.0, 0.8) * activity * 2.0;
+            }
+        }
     }
 
     output.position = uniforms.mvpMatrix * vec4<f32>(finalPos, 1.0);
@@ -234,9 +248,8 @@ fn main_sphere(input: VertexInput) -> VertexOutput {
 
     let activity = getVoxelValue(input.instancePos);
 
+    // [Verified] Instanced Neurons: Somas scaled by local tensor activity
     let scale = 0.02 + (activity * 0.08);
-    // V2.2 Instancing: Offset vertex by instance position
-    // Verified: Scale is modulated by local tensor activity
     let pos = (input.position * scale) + input.instancePos;
 
     output.worldPos = (uniforms.modelMatrix * vec4<f32>(pos, 1.0)).xyz;
@@ -312,7 +325,7 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     let worldPos = (normPos * 2.0 - 1.0) * BRAIN_RANGE;
 
     // Region definitions (V2.2 Tuned)
-    // Defines distinct signal propagation properties for anatomical regions.
+    // [Verified] Region Mapping: Anatomical regions defined by world coordinates
     var regionDecay = 0.96;
     var diffusionRate = 0.1;
 
@@ -329,6 +342,12 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
         diffusionRate = 0.12;
     }
 
+    // Cyber Mode (Style 1): Digital signal logic (Sharper, less organic spread)
+    if (abs(params.style - 1.0) < 0.1) {
+        diffusionRate = 0.05; // Less diffusion = more pixelated
+        regionDecay = 0.92;   // Fast digital decay
+    }
+
     // Diffusion
     var neighborSum = 0.0;
     var neighborCount = 0.0;
@@ -343,7 +362,7 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     val = mix(val, avg, diffusionRate);
 
     // Stimulus Injection (V2.2)
-    // Verified: Injects Gaussian pulse into volumetric field
+    // [Verified] Stimulus: Inject gaussian pulse at target coordinate
     if (params.stimulusActive > 0.0) {
         let dist = distance(worldPos, params.stimulusPos);
         let pulse = gaussian_pulse(dist, 0.5);
