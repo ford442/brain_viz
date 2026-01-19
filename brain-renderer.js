@@ -133,6 +133,7 @@ export class BrainRenderer {
 
 
         // VOXEL DATA
+        // [Verified] 3D Texture Evolution: Flattened storage buffer for volumetric data
         this.dataSize = this.voxelCount;
         this.tensorBuffer = this.device.createBuffer({
             size: this.dataSize * 4,
@@ -261,9 +262,7 @@ export class BrainRenderer {
     setParams(newParams) { this.params = { ...this.params, ...newParams }; }
 
     // V2.2 Feature: Volumetric Stimulus Injection
-    // Writes to the compute buffer to simulate activity at a specific 3D coordinate.
-    // Verified: Parameter 'intensity' replaces 'strength' from V2.1.
-    // Neuro-Weaver Note: Writing to uniform allows CS to inject into storage buffer efficiently.
+    // [Verified] Stimulus: Writes to compute buffer to poke the brain at (x,y,z)
     injectStimulus(x, y, z, intensity) {
         this.stimulus.pos = [x, y, z];
         this.stimulus.active = intensity;
