@@ -264,6 +264,7 @@ export class BrainRenderer {
     // V2.2 Feature: Volumetric Stimulus Injection
     // [Verified] Stimulus: Writes to compute buffer to poke the brain at (x,y,z)
     injectStimulus(x, y, z, intensity) {
+        // [Neuro-Weaver] Injecting signal into 3D voxel grid
         this.stimulus.pos = [x, y, z];
         this.stimulus.active = intensity;
     }

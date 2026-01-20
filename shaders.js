@@ -326,6 +326,7 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
 
     // Region definitions (V2.2 Tuned)
     // [Verified] Region Mapping: Anatomical regions defined by world coordinates
+    // [Neuro-Weaver] Validating Regional Decay Logic
     var regionDecay = 0.96;
     var diffusionRate = 0.1;
 

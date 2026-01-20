@@ -115,7 +115,7 @@ async function init() {
             if (btn) {
                 btn.addEventListener('click', () => {
                     const pos = stimBtns[id];
-                    // Strong pulse
+                    // [Neuro-Weaver] Trigger strong pulse at target region
                     renderer.injectStimulus(pos[0], pos[1], pos[2], 1.0);
                 });
             }
