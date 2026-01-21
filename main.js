@@ -110,6 +110,7 @@ async function init() {
         };
 
         // V2.2: Attach event listeners to stimulus buttons
+        // [Neuro-Weaver] UI Control: Maps anatomical buttons to 3D coordinates
         Object.keys(stimBtns).forEach(id => {
             const btn = document.getElementById(id);
             if (btn) {

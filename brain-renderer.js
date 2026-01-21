@@ -102,7 +102,7 @@ export class BrainRenderer {
         this.fiberVertexCount = geometry.getFiberVertexCount();
         
         // 3. Soma (Sphere) Instancing (V2.2)
-        // Use explicit grid intersections from geometry for instance positions
+        // [Neuro-Weaver] Use explicit grid intersections from geometry for instance positions
         const somaPositions = geometry.getSomaPositions();
         this.somaInstanceBuffer = this.createBuffer(somaPositions, GPUBufferUsage.VERTEX);
         this.somaInstanceCount = somaPositions.length / 3;
@@ -261,12 +261,18 @@ export class BrainRenderer {
 
     setParams(newParams) { this.params = { ...this.params, ...newParams }; }
 
-    // V2.2 Feature: Volumetric Stimulus Injection
-    // [Verified] Stimulus: Writes to compute buffer to poke the brain at (x,y,z)
+    // [Neuro-Weaver] Task: Stimulus Injection
+    // Writes target coordinates to a temporary state, which is uploaded
+    // to the Compute Shader uniforms in the next render cycle.
     injectStimulus(x, y, z, intensity) {
-        // [Neuro-Weaver] Injecting signal into 3D voxel grid
+        // Validation (ensure we don't inject NaNs)
+        if (isNaN(x) || isNaN(y) || isNaN(z)) return;
+
+        // Update state
         this.stimulus.pos = [x, y, z];
-        this.stimulus.active = intensity;
+        this.stimulus.active = Math.max(0.0, intensity);
+
+        // console.log(`Stimulus Injected: [${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}] @ ${intensity}`);
     }
 
     calmState() {
@@ -329,20 +335,23 @@ export class BrainRenderer {
         dv.setFloat32(24, this.params.style, true);
         dv.setFloat32(28, 0.0, true);
 
-        // V2.2: Write Stimulus
-        // Manually writing floats to match TensorParams struct alignment
-        // vec3 stimulusPos aligned to 16 bytes (offset 32)
+        // [Neuro-Weaver] Upload Stimulus Data
+        // Layout must match TensorParams struct in WGSL (std140)
+        // Offset 32: stimulusPos (vec3)
+        // Offset 44: stimulusActive (f32)
         dv.setFloat32(32, this.stimulus.pos[0], true);
         dv.setFloat32(36, this.stimulus.pos[1], true);
         dv.setFloat32(40, this.stimulus.pos[2], true);
 
-        // stimulusActive at offset 44 (packed immediately after vec3)
         dv.setFloat32(44, this.stimulus.active, true);
 
+        // Upload to GPU
         this.device.queue.writeBuffer(this.computeUniformBuffer, 0, cBuf);
 
-        // Reset stimulus after one frame (Pulse)
-        this.stimulus.active = 0.0;
+        // Auto-reset pulse (single frame injection)
+        if (this.stimulus.active > 0) {
+             this.stimulus.active = 0.0;
+        }
     }
 
     render() {

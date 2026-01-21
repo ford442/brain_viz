@@ -78,32 +78,33 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     let worldPos = (uniforms.modelMatrix * vec4<f32>(finalPos, 1.0)).xyz;
 
     // --- CONNECTOME MODE ---
-    // [Verified] Activity Trails: Pulses travel along fibers
+    // [Neuro-Weaver] 3. Traveling Pulse Logic
     if (uniforms.style >= 2.0 && uniforms.style < 3.0) {
         finalPos = input.position;
-        let baseColor = vec3<f32>(0.05, 0.1, 0.15);
-        let pulseColor = vec3<f32>(0.0, 0.8, 1.0);
+        let baseCol = vec3<f32>(0.05, 0.1, 0.15); // Dark Blue Base
+        let highlight = vec3<f32>(0.0, 0.8, 1.0); // Cyan Pulse
 
-        let radius = length(worldPos);
+        // Calculate flow along the fiber
+        // Uses vertexIndex to simulate linear distance along the line strip
+        let flow = f32(vertexIndex) * FLOW_SCALE;
+        let spatial = length(worldPos) * 2.0;
 
-        // Activity Trail: Combines vertex index (linear flow) with spatial radius (organic variety)
-        let spatialPhase = radius * 2.0;
-        let flowPhase = f32(vertexIndex) * FLOW_SCALE;
+        // Dynamic Wave: sin(Distance - Time * Speed)
+        let wave = sin(flow + spatial - uniforms.time * uniforms.flowSpeed);
 
-        // "Data Packet" effect: Moves along the grid lines
-        // Simulates information flow by offsetting sine wave with vertex index.
-        // V2.3 Verified: Uses uniform flowSpeed for dynamic control.
-        let pulseWave = sin(flowPhase + spatialPhase - uniforms.time * uniforms.flowSpeed);
-        let pulse = smoothstep(0.85, 1.0, pulseWave); // Sharper pulses
+        // Sharpen the wave into a pulse
+        let signalStrength = smoothstep(0.85, 1.0, wave);
 
-        let activeGlow = mix(baseColor, pulseColor * 0.5, activity);
-        let activePulse = pulseColor * pulse * activity;
+        // Blend based on activity
+        let glow = mix(baseCol, highlight * 0.5, activity);
+        let flash = highlight * signalStrength * activity;
 
-        finalColor = activeGlow + activePulse;
+        finalColor = glow + flash;
         finalNormal = vec3<f32>(0.0, 1.0, 0.0);
     }
     // --- HEATMAP MODE ---
     // [Verified] Heatmap: 3D thermal gradient (Blue->Red)
+    // [Neuro-Weaver] Style 3.0: Volumetric Temperature Gradient
     else if (uniforms.style >= 3.0) {
         finalPos = input.position;
         // Thermal Gradient: Blue -> Green/Cyan -> Red
@@ -324,32 +325,38 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     let normPos = vec3<f32>(f32(x), f32(y), f32(z)) / f32(dim);
     let worldPos = (normPos * 2.0 - 1.0) * BRAIN_RANGE;
 
-    // Region definitions (V2.2 Tuned)
-    // [Verified] Region Mapping: Anatomical regions defined by world coordinates
-    // [Neuro-Weaver] Validating Regional Decay Logic
-    var regionDecay = 0.96;
-    var diffusionRate = 0.1;
+    // [Neuro-Weaver] 1. Region Mapping (V2.3 Update)
+    // Defines anatomical zones for varying signal decay and diffusion properties.
+    var decay = 0.96;
+    var diffusion = 0.1;
 
-    if (worldPos.z > 0.5) { // Frontal Lobe (Higher retention)
-        regionDecay = 0.985;
-        diffusionRate = 0.15;
-    } else if (worldPos.z < -0.5) { // Occipital Lobe
-        regionDecay = 0.92;
-        diffusionRate = 0.05;
-    } else if (abs(worldPos.x) > 0.8) { // Temporal Lobe
-        regionDecay = 0.95;
-    } else if (worldPos.y > 0.6) { // Parietal Lobe
-        regionDecay = 0.94;
-        diffusionRate = 0.12;
+    // Frontal Lobe: High retention for complex thought
+    if (worldPos.z > 0.5) {
+        decay = 0.985;
+        diffusion = 0.15;
+    }
+    // Occipital Lobe: Fast processing, visual inputs
+    else if (worldPos.z < -0.5) {
+        decay = 0.92;
+        diffusion = 0.05;
+    }
+    // Temporal Lobe: Auditory/Memory
+    else if (abs(worldPos.x) > 0.8) {
+        decay = 0.95;
+    }
+    // Parietal Lobe: Sensory integration
+    else if (worldPos.y > 0.6) {
+        decay = 0.94;
+        diffusion = 0.12;
     }
 
-    // Cyber Mode (Style 1): Digital signal logic (Sharper, less organic spread)
+    // Cyber Mode (Style 1): Digital signal logic
     if (abs(params.style - 1.0) < 0.1) {
-        diffusionRate = 0.05; // Less diffusion = more pixelated
-        regionDecay = 0.92;   // Fast digital decay
+        diffusion = 0.05;
+        decay = 0.92;
     }
 
-    // Diffusion
+    // Diffusion Step
     var neighborSum = 0.0;
     var neighborCount = 0.0;
     if (x > 0u) { neighborSum += voxelGrid[getIndex(x - 1u, y, z)]; neighborCount += 1.0; }
@@ -360,19 +367,22 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     if (z < dim - 1u) { neighborSum += voxelGrid[getIndex(x, y, z + 1u)]; neighborCount += 1.0; }
 
     let avg = neighborSum / max(1.0, neighborCount);
-    val = mix(val, avg, diffusionRate);
+    val = mix(val, avg, diffusion);
 
-    // Stimulus Injection (V2.2)
-    // [Verified] Stimulus: Inject gaussian pulse at target coordinate
+    // [Neuro-Weaver] 2. Stimulus Injection
+    // Direct voxel manipulation from CPU events
     if (params.stimulusActive > 0.0) {
-        let dist = distance(worldPos, params.stimulusPos);
-        let pulse = gaussian_pulse(dist, 0.5);
-        if (pulse > 0.01) {
-            val += params.stimulusActive * pulse;
+        let d = distance(worldPos, params.stimulusPos);
+        // Use wider Gaussian for more organic impact
+        let signal = gaussian_pulse(d, 0.5);
+
+        // Accumulate signal if above threshold
+        if (signal > 0.01) {
+            val += params.stimulusActive * signal;
         }
     }
 
-    val *= regionDecay;
+    val *= decay;
     voxelGrid[index] = clamp(val, 0.0, 1.0);
 }
 `;
