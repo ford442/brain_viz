@@ -1,8 +1,9 @@
 // Main application entry point
-// Neuro-Weaver V2.2 Implementation - Volumetric Renderer
+// Neuro-Weaver V2.3 Implementation - Volumetric Renderer
 import { BrainRenderer } from './brain-renderer.js';
 
 async function init() {
+    // [V2.3] Initialize UI and Renderer
     const canvas = document.getElementById('canvas');
     const errorDiv = document.getElementById('error');
     
@@ -110,6 +111,7 @@ async function init() {
         };
 
         // V2.2: Attach event listeners to stimulus buttons
+        // [V2.3] Setup Anatomical Region Buttons
         // [Neuro-Weaver] UI Control: Maps anatomical buttons to 3D coordinates
         Object.keys(stimBtns).forEach(id => {
             const btn = document.getElementById(id);
@@ -117,16 +119,17 @@ async function init() {
                 btn.addEventListener('click', () => {
                     const pos = stimBtns[id];
                     // [Neuro-Weaver] Trigger strong pulse at target region
-                    renderer.injectStimulus(pos[0], pos[1], pos[2], 1.0);
+                    renderer.triggerStimulus(pos[0], pos[1], pos[2], 1.0);
                 });
             }
         });
 
+        // [V2.3] Random Stimulus
         document.getElementById('stim-random').addEventListener('click', () => {
              const x = (Math.random() - 0.5) * 2.0;
              const y = (Math.random() - 0.5) * 2.0;
              const z = (Math.random() - 0.5) * 2.0;
-             renderer.injectStimulus(x, y, z, 1.0);
+             renderer.triggerStimulus(x, y, z, 1.0);
         });
 
         // Calm State Button

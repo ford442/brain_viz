@@ -1,5 +1,5 @@
 // brain-geometry.js
-// Procedural Brain Generation with Circuit Grid
+// Procedural Brain Generation with Circuit Grid - V2.3 Verified
 
 export class BrainGeometry {
     constructor() {
@@ -96,7 +96,7 @@ export class BrainGeometry {
         return len < maxRadius;
     }
 
-    // V2.2 Circuit Grid Generation
+    // [V2.3] Circuit Grid Generation
     generateCircuitGrid() {
         const step = 0.15; // Grid spacing
         const range = 1.5; // Bounding box half-size

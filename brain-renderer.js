@@ -1,5 +1,5 @@
 // brain-renderer.js
-// Verified Neuro-Weaver V2.2 Implementation
+// Verified Neuro-Weaver V2.3 Implementation
 import { BrainGeometry } from './brain-geometry.js';
 import { vertexShader, fragmentShader, computeShader, sphereVertexShader, sphereFragmentShader } from './shaders.js';
 import { Mat4 } from './math-utils.js';
@@ -205,7 +205,8 @@ export class BrainRenderer {
             depthStencil: { depthWriteEnabled: false, depthCompare: 'less', format: 'depth24plus' } 
         });
 
-        // --- PIPELINE 3: INSTANCED SPHERES (V2.2) ---
+        // --- PIPELINE 3: INSTANCED SPHERES (V2.3) ---
+        // [V2.3] Setup Somas Pipeline
         // Renders soma spheres at circuit intersections using instancing.
         // Verified: Uses explicit soma positions from BrainGeometry.
         this.spherePipeline = this.device.createRenderPipeline({
@@ -264,11 +265,12 @@ export class BrainRenderer {
     // [Neuro-Weaver] Task: Stimulus Injection
     // Writes target coordinates to a temporary state, which is uploaded
     // to the Compute Shader uniforms in the next render cycle.
-    injectStimulus(x, y, z, intensity) {
+    // [V2.3] Stimulus Injection Logic: Triggers a volumetric pulse at the target coordinate
+    triggerStimulus(x, y, z, intensity) {
         // Validation (ensure we don't inject NaNs)
         if (isNaN(x) || isNaN(y) || isNaN(z)) return;
 
-        // Update state
+        // Update state for Compute Shader
         this.stimulus.pos = [x, y, z];
         this.stimulus.active = Math.max(0.0, intensity);
 
@@ -311,6 +313,7 @@ export class BrainRenderer {
         uData[33] = this.params.style;
         uData[34] = this.params.flowSpeed; // V2.3: Replaced padding1 with flowSpeed
 
+        // [V2.3] Clip Plane Uniforms
         // Clip Plane: Vec4 (Normal X, Y, Z, Distance)
         // We want to clip if dot(pos, N) + D < 0
         // Standard Z clip: Keep if P.z < clipZ -> -P.z + clipZ > 0
@@ -355,6 +358,7 @@ export class BrainRenderer {
     }
 
     render() {
+        // [V2.3] Main Render Loop
         if (!this.isRunning) return;
         
         const width = this.canvas.clientWidth;
