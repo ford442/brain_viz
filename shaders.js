@@ -1,5 +1,5 @@
 // shaders.js
-// Verified Neuro-Weaver V2.2 Implementation
+// Verified Neuro-Weaver V2.3 Implementation
 // Updated with volumetric tensor logic (3D Flattened Buffer), instanced rendering, and heatmap modes.
 // Refactored constants and Gaussian Pulse logic.
 
@@ -78,7 +78,7 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     let worldPos = (uniforms.modelMatrix * vec4<f32>(finalPos, 1.0)).xyz;
 
     // --- CONNECTOME MODE ---
-    // [Neuro-Weaver] 3. Traveling Pulse Logic
+    // [V2.3] Traveling Pulse Logic (Activity Trails)
     if (uniforms.style >= 2.0 && uniforms.style < 3.0) {
         finalPos = input.position;
         let baseCol = vec3<f32>(0.05, 0.1, 0.15); // Dark Blue Base
@@ -103,7 +103,7 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
         finalNormal = vec3<f32>(0.0, 1.0, 0.0);
     }
     // --- HEATMAP MODE ---
-    // [Verified] Heatmap: 3D thermal gradient (Blue->Red)
+    // [V2.3] Volumetric Heatmap Style
     // [Neuro-Weaver] Style 3.0: Volumetric Temperature Gradient
     else if (uniforms.style >= 3.0) {
         finalPos = input.position;
@@ -144,7 +144,7 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     output.normal = normalize((uniforms.modelMatrix * vec4<f32>(finalNormal, 0.0)).xyz);
     output.color = finalColor;
     output.activity = activity;
-    // V2.2 Clipping Logic: Calculate distance to plane
+    // [V2.3] Clipping Logic: Calculate distance to plane
     output.clipDist = dot(output.worldPos, uniforms.clipPlane.xyz) + uniforms.clipPlane.w;
     
     return output;
@@ -203,7 +203,7 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
 `;
 
 export const sphereVertexShader = `
-// V2.2 Instancing Logic
+// [V2.3] Instanced Sphere Logic
 ${CONSTANTS}
 
 struct Uniforms {
@@ -267,7 +267,7 @@ fn main_sphere(input: VertexInput) -> VertexOutput {
 `;
 
 export const sphereFragmentShader = `
-// V2.2 Sphere Fragment
+// [V2.3] Sphere Fragment Shader
 struct FragmentInput {
     @location(0) worldPos: vec3<f32>,
     @location(1) color: vec3<f32>,
@@ -309,6 +309,7 @@ fn getIndex(x: u32, y: u32, z: u32) -> u32 {
 
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
+    // [V2.3] Compute Physics
     let index = globalId.x;
     let dim = params.voxelDim;
     let total = dim * dim * dim;
@@ -322,38 +323,38 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
 
     var val = voxelGrid[index];
 
-    let normPos = vec3<f32>(f32(x), f32(y), f32(z)) / f32(dim);
-    let worldPos = (normPos * 2.0 - 1.0) * BRAIN_RANGE;
+    let normalizedPosition = vec3<f32>(f32(x), f32(y), f32(z)) / f32(dim);
+    let worldPosition = (normalizedPosition * 2.0 - 1.0) * BRAIN_RANGE;
 
-    // [Neuro-Weaver] 1. Region Mapping (V2.3 Update)
+    // [V2.3] Region Mapping Implementation
     // Defines anatomical zones for varying signal decay and diffusion properties.
-    var decay = 0.96;
-    var diffusion = 0.1;
+    var signalDecay = 0.96;
+    var diffusionRate = 0.1;
 
     // Frontal Lobe: High retention for complex thought
-    if (worldPos.z > 0.5) {
-        decay = 0.985;
-        diffusion = 0.15;
+    if (worldPosition.z > 0.5) {
+        signalDecay = 0.985;
+        diffusionRate = 0.15;
     }
     // Occipital Lobe: Fast processing, visual inputs
-    else if (worldPos.z < -0.5) {
-        decay = 0.92;
-        diffusion = 0.05;
+    else if (worldPosition.z < -0.5) {
+        signalDecay = 0.92;
+        diffusionRate = 0.05;
     }
     // Temporal Lobe: Auditory/Memory
-    else if (abs(worldPos.x) > 0.8) {
-        decay = 0.95;
+    else if (abs(worldPosition.x) > 0.8) {
+        signalDecay = 0.95;
     }
     // Parietal Lobe: Sensory integration
-    else if (worldPos.y > 0.6) {
-        decay = 0.94;
-        diffusion = 0.12;
+    else if (worldPosition.y > 0.6) {
+        signalDecay = 0.94;
+        diffusionRate = 0.12;
     }
 
     // Cyber Mode (Style 1): Digital signal logic
     if (abs(params.style - 1.0) < 0.1) {
-        diffusion = 0.05;
-        decay = 0.92;
+        diffusionRate = 0.05;
+        signalDecay = 0.92;
     }
 
     // Diffusion Step
@@ -367,12 +368,12 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     if (z < dim - 1u) { neighborSum += voxelGrid[getIndex(x, y, z + 1u)]; neighborCount += 1.0; }
 
     let avg = neighborSum / max(1.0, neighborCount);
-    val = mix(val, avg, diffusion);
+    val = mix(val, avg, diffusionRate);
 
     // [Neuro-Weaver] 2. Stimulus Injection
     // Direct voxel manipulation from CPU events
     if (params.stimulusActive > 0.0) {
-        let d = distance(worldPos, params.stimulusPos);
+        let d = distance(worldPosition, params.stimulusPos);
         // Use wider Gaussian for more organic impact
         let signal = gaussian_pulse(d, 0.5);
 
@@ -382,7 +383,7 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
         }
     }
 
-    val *= decay;
+    val *= signalDecay;
     voxelGrid[index] = clamp(val, 0.0, 1.0);
 }
 `;
