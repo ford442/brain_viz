@@ -101,53 +101,9 @@ export class BrainRenderer {
         this.fiberBuffer = this.createBuffer(geometry.getFiberData(), GPUBufferUsage.VERTEX);
         this.fiberVertexCount = geometry.getFiberVertexCount();
         
-        // 3. Soma (Sphere) Instancing (V2.2)
-        // [Neuro-Weaver] Use explicit grid intersections from geometry for instance positions
-        const somaPositions = geometry.getSomaPositions();
-        this.somaInstanceBuffer = this.createBuffer(somaPositions, GPUBufferUsage.VERTEX);
-        this.somaInstanceCount = somaPositions.length / 3;
-
-        // Create a simple low-poly sphere (Icosahedron) for the instance geometry
-        const X = 0.525731112119133606;
-        const Z = 0.850650808352039932;
-        const N = 0.0;
-
-        // V2.2 Icosahedron vertices
-        const icoVerts = new Float32Array([
-            -X,N,Z, X,N,Z, -X,N,-Z, X,N,-Z,
-            N,Z,X, N,Z,-X, N,-Z,X, N,-Z,-X,
-            Z,X,N, -Z,X,N, Z,-X,N, -Z,-X,N
-        ]);
-
-        const icoIndices = new Uint16Array([
-            0,4,1, 0,9,4, 9,5,4, 4,5,8, 4,8,1,
-            8,10,1, 8,3,10, 5,3,8, 5,2,3, 2,7,3,
-            7,10,3, 7,6,10, 7,11,6, 11,0,6, 0,1,6,
-            6,1,10, 9,0,11, 9,11,2, 9,2,5, 7,2,11
-        ]);
-
-        // V2.2 Geometry Buffers: Icosahedron mesh for somas
-        this.sphereVertexBuffer = this.createBuffer(icoVerts, GPUBufferUsage.VERTEX);
-        this.sphereIndexBuffer = this.createBuffer(icoIndices, GPUBufferUsage.INDEX);
-        this.sphereIndexCount = icoIndices.length;
-
-
-        // VOXEL DATA
-        // [Verified] 3D Texture Evolution: Flattened storage buffer for volumetric data
-        this.dataSize = this.voxelCount;
-        this.tensorBuffer = this.device.createBuffer({
-            size: this.dataSize * 4,
-            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
-        });
-
-        // Uniforms (Size increased for ClipPlane)
-        // 48 floats (192 bytes)
-        // Layout:
-        // MVP (64), Model (64), Time(4), Style(4), Pad(8), ClipPlane(16)
-        this.uniformBuffer = this.device.createBuffer({ size: 192, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
-        
-        // V2.2 Fix: Increased to 64 bytes for std140 alignment of stimulusActive (offset 48)
-        this.computeUniformBuffer = this.device.createBuffer({ size: 64, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+        // 3. Setup Resource Groups
+        this.initSomaResources(geometry);
+        this.initVolumetricResources();
         
         // Bind Groups Layouts
         const renderBindGroupLayout = this.device.createBindGroupLayout({
@@ -205,6 +161,71 @@ export class BrainRenderer {
             depthStencil: { depthWriteEnabled: false, depthCompare: 'less', format: 'depth24plus' } 
         });
 
+        this.initSomaPipeline(renderBindGroupLayout, format);
+        this.initComputePipeline();
+
+        // Ensure canvas dimensions are valid before creating depth texture
+        const width = Math.max(1, this.canvas.width);
+        const height = Math.max(1, this.canvas.height);
+        this.depthTexture = this.device.createTexture({ size: [width, height], format: 'depth24plus', usage: GPUTextureUsage.RENDER_ATTACHMENT });
+
+        console.log("Renderer V2.2 Verified");
+    }
+
+    // [Neuro-Weaver] Refactored: Initialize Volumetric Data (Tensor)
+    initVolumetricResources() {
+        // VOXEL DATA
+        // [Verified] 3D Texture Evolution: Flattened storage buffer for volumetric data
+        this.dataSize = this.voxelCount;
+        this.tensorBuffer = this.device.createBuffer({
+            size: this.dataSize * 4,
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+        });
+
+        // Uniforms (Size increased for ClipPlane)
+        // 48 floats (192 bytes)
+        // Layout:
+        // MVP (64), Model (64), Time(4), Style(4), Pad(8), ClipPlane(16)
+        this.uniformBuffer = this.device.createBuffer({ size: 192, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+
+        // V2.2 Fix: Increased to 64 bytes for std140 alignment of stimulusActive (offset 48)
+        this.computeUniformBuffer = this.device.createBuffer({ size: 64, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+    }
+
+    // [Neuro-Weaver] Refactored: Initialize Soma Geometry
+    initSomaResources(geometry) {
+        // 3. Soma (Sphere) Instancing (V2.2)
+        // [Neuro-Weaver] Use explicit grid intersections from geometry for instance positions
+        const somaPositions = geometry.getSomaPositions();
+        this.somaInstanceBuffer = this.createBuffer(somaPositions, GPUBufferUsage.VERTEX);
+        this.somaInstanceCount = somaPositions.length / 3;
+
+        // Create a simple low-poly sphere (Icosahedron) for the instance geometry
+        const X = 0.525731112119133606;
+        const Z = 0.850650808352039932;
+        const N = 0.0;
+
+        // V2.2 Icosahedron vertices
+        const icoVerts = new Float32Array([
+            -X,N,Z, X,N,Z, -X,N,-Z, X,N,-Z,
+            N,Z,X, N,Z,-X, N,-Z,X, N,-Z,-X,
+            Z,X,N, -Z,X,N, Z,-X,N, -Z,-X,N
+        ]);
+
+        const icoIndices = new Uint16Array([
+            0,4,1, 0,9,4, 9,5,4, 4,5,8, 4,8,1,
+            8,10,1, 8,3,10, 5,3,8, 5,2,3, 2,7,3,
+            7,10,3, 7,6,10, 7,11,6, 11,0,6, 0,1,6,
+            6,1,10, 9,0,11, 9,11,2, 9,2,5, 7,2,11
+        ]);
+
+        // V2.2 Geometry Buffers: Icosahedron mesh for somas
+        this.sphereVertexBuffer = this.createBuffer(icoVerts, GPUBufferUsage.VERTEX);
+        this.sphereIndexBuffer = this.createBuffer(icoIndices, GPUBufferUsage.INDEX);
+        this.sphereIndexCount = icoIndices.length;
+    }
+
+    initSomaPipeline(renderBindGroupLayout, format) {
         // --- PIPELINE 3: INSTANCED SPHERES (V2.3) ---
         // [V2.3] Setup Somas Pipeline
         // Renders soma spheres at circuit intersections using instancing.
@@ -230,8 +251,9 @@ export class BrainRenderer {
             primitive: { topology: 'triangle-list', cullMode: 'back' },
             depthStencil: { depthWriteEnabled: true, depthCompare: 'less', format: 'depth24plus' }
         });
+    }
 
-
+    initComputePipeline() {
         // Compute Pipeline
         const computeLayout = this.device.createBindGroupLayout({
              entries: [{ binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
@@ -245,13 +267,6 @@ export class BrainRenderer {
             layout: this.device.createPipelineLayout({ bindGroupLayouts: [computeLayout] }),
             compute: { module: this.device.createShaderModule({ code: computeShader }), entryPoint: 'main' }
         });
-
-        // Ensure canvas dimensions are valid before creating depth texture
-        const width = Math.max(1, this.canvas.width);
-        const height = Math.max(1, this.canvas.height);
-        this.depthTexture = this.device.createTexture({ size: [width, height], format: 'depth24plus', usage: GPUTextureUsage.RENDER_ATTACHMENT });
-
-        console.log("Renderer V2.2 Verified");
     }
 
     createBuffer(data, usage) {
@@ -268,7 +283,8 @@ export class BrainRenderer {
     // [V2.3] Stimulus Injection Logic: Triggers a volumetric pulse at the target coordinate
     injectStimulus(x, y, z, intensity) {
         // Validation (ensure we don't inject NaNs)
-        if (isNaN(x) || isNaN(y) || isNaN(z)) return;
+        // [V2.5] Robustness: Check intensity as well
+        if (isNaN(x) || isNaN(y) || isNaN(z) || isNaN(intensity)) return;
 
         // Update state for Compute Shader
         this.stimulus.pos = [x, y, z];
@@ -318,11 +334,12 @@ export class BrainRenderer {
         // We want to clip if dot(pos, N) + D < 0
         // Standard Z clip: Keep if P.z < clipZ -> -P.z + clipZ > 0
         // Normal (0,0,-1), D = clipZ
-        uData[36] = 0.0; // Px
-        uData[37] = 0.0; // Py
-        uData[38] = -1.0; // Pz (Normal pointing backward)
+        const clipOffset = 36;
+        uData[clipOffset] = 0.0;      // Px
+        uData[clipOffset + 1] = 0.0;  // Py
+        uData[clipOffset + 2] = -1.0; // Pz (Normal pointing backward)
         // V2.2: Dynamic Clip Plane Uniform (Z-slice distance)
-        uData[39] = this.params.clipZ; // Distance
+        uData[clipOffset + 3] = this.params.clipZ; // Distance
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         

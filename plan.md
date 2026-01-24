@@ -46,3 +46,6 @@
 - [x] **Enhanced Region Physics**: Adjusted Frontal Lobe decay (0.99) for better retention of "complex thought" signals.
 - [x] **Vibrant Heatmap**: Updated Style 3.0 gradient (Deep Blue -> Vibrant Orange) for better depth perception.
 - [x] **Code Compliance**: Added Neuro-Weaver annotations to critical logic blocks (Connectome, Somas).
+
+## Neuro-Weaver V2.5 Robustness
+- [x] **Input Validation**: Hardening `injectStimulus` against NaN values.

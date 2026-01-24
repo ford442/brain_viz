@@ -21,10 +21,58 @@ const HELPERS = `
         let k = 4.0 / (width * width);
         return exp(-k * dist * dist);
     }
+
+    // [Neuro-Weaver] Refactored: Region Physics Logic
+    // Returns vec2(signalDecay, diffusionRate)
+    fn calculateRegionPhysics(worldPosition: vec3<f32>, style: f32) -> vec2<f32> {
+        var signalDecay = 0.96;
+        var diffusionRate = 0.1;
+
+        // Frontal Lobe: High retention for complex thought
+        if (worldPosition.z > 0.5) {
+            signalDecay = 0.99;
+            diffusionRate = 0.15;
+        }
+        // Occipital Lobe: Fast processing, visual inputs
+        else if (worldPosition.z < -0.5) {
+            signalDecay = 0.92;
+            diffusionRate = 0.05;
+        }
+        // Temporal Lobe: Auditory/Memory
+        else if (abs(worldPosition.x) > 0.8) {
+            signalDecay = 0.95;
+        }
+        // Parietal Lobe: Sensory integration
+        else if (worldPosition.y > 0.6) {
+            signalDecay = 0.94;
+            diffusionRate = 0.12;
+        }
+
+        // Cyber Mode (Style 1): Digital signal logic
+        if (abs(style - 1.0) < 0.1) {
+            diffusionRate = 0.05;
+            signalDecay = 0.92;
+        }
+        return vec2<f32>(signalDecay, diffusionRate);
+    }
+
+    // [Neuro-Weaver] Refactored: Connectome Pulse Logic
+    fn calculatePulse(vertexIndex: u32, worldPos: vec3<f32>, time: f32, speed: f32, flowScale: f32) -> f32 {
+        // Calculate flow along the fiber
+        let flow = f32(vertexIndex) * flowScale;
+        let spatial = length(worldPos) * 2.0;
+
+        // Dynamic Wave: sin(Distance - Time * Speed)
+        let wave = sin(flow + spatial - time * speed);
+
+        // Sharpen the wave into a pulse
+        return smoothstep(0.85, 1.0, wave);
+    }
 `;
 
 export const vertexShader = `
 ${CONSTANTS}
+${HELPERS}
 
 struct Uniforms {
     mvpMatrix: mat4x4<f32>,
@@ -85,16 +133,8 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
         let baseCol = vec3<f32>(0.05, 0.1, 0.15); // Dark Blue Base
         let highlight = vec3<f32>(0.0, 0.8, 1.0); // Cyan Pulse
 
-        // Calculate flow along the fiber
-        // Uses vertexIndex to simulate linear distance along the line strip
-        let flow = f32(vertexIndex) * FLOW_SCALE;
-        let spatial = length(worldPos) * 2.0;
-
-        // Dynamic Wave: sin(Distance - Time * Speed)
-        let wave = sin(flow + spatial - uniforms.time * uniforms.flowSpeed);
-
-        // Sharpen the wave into a pulse
-        let signalStrength = smoothstep(0.85, 1.0, wave);
+        // [Neuro-Weaver] Refactored: Use helper function
+        let signalStrength = calculatePulse(vertexIndex, worldPos, uniforms.time, uniforms.flowSpeed, FLOW_SCALE);
 
         // Blend based on activity
         let glow = mix(baseCol, highlight * 0.5, activity);
@@ -147,7 +187,10 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     output.color = finalColor;
     output.activity = activity;
     // [V2.3] Clipping Logic: Calculate distance to plane
-    output.clipDist = dot(output.worldPos, uniforms.clipPlane.xyz) + uniforms.clipPlane.w;
+    // [Neuro-Weaver] Refactored for clarity
+    let planeNormal = uniforms.clipPlane.xyz;
+    let planeDist = uniforms.clipPlane.w;
+    output.clipDist = dot(output.worldPos, planeNormal) + planeDist;
     
     return output;
 }
@@ -263,7 +306,10 @@ fn main_sphere(input: VertexInput) -> VertexOutput {
     let c2 = vec3<f32>(1.0, 1.0, 1.0);
     output.color = mix(c1, c2, activity);
     // V2.2 Clipping: Ensure instances respect the slice plane
-    output.clipDist = dot(output.worldPos, uniforms.clipPlane.xyz) + uniforms.clipPlane.w;
+    // [Neuro-Weaver] Use explicit variables
+    let planeNormal = uniforms.clipPlane.xyz;
+    let planeDist = uniforms.clipPlane.w;
+    output.clipDist = dot(output.worldPos, planeNormal) + planeDist;
 
     return output;
 }
@@ -331,34 +377,10 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
 
     // [V2.3] Region Mapping Implementation
     // Defines anatomical zones for varying signal decay and diffusion properties.
-    var signalDecay = 0.96;
-    var diffusionRate = 0.1;
-
-    // Frontal Lobe: High retention for complex thought [Refined]
-    if (worldPosition.z > 0.5) {
-        signalDecay = 0.99; // [Neuro-Weaver] Enhanced retention
-        diffusionRate = 0.15;
-    }
-    // Occipital Lobe: Fast processing, visual inputs
-    else if (worldPosition.z < -0.5) {
-        signalDecay = 0.92;
-        diffusionRate = 0.05;
-    }
-    // Temporal Lobe: Auditory/Memory
-    else if (abs(worldPosition.x) > 0.8) {
-        signalDecay = 0.95;
-    }
-    // Parietal Lobe: Sensory integration
-    else if (worldPosition.y > 0.6) {
-        signalDecay = 0.94;
-        diffusionRate = 0.12;
-    }
-
-    // Cyber Mode (Style 1): Digital signal logic
-    if (abs(params.style - 1.0) < 0.1) {
-        diffusionRate = 0.05;
-        signalDecay = 0.92;
-    }
+    // [Neuro-Weaver] Refactored: Use helper function
+    let physics = calculateRegionPhysics(worldPosition, params.style);
+    let signalDecay = physics.x;
+    let diffusionRate = physics.y;
 
     // Diffusion Step
     var neighborSum = 0.0;
