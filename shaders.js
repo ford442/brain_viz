@@ -79,6 +79,7 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
 
     // --- CONNECTOME MODE ---
     // [V2.3] Traveling Pulse Logic (Activity Trails)
+    // [Neuro-Weaver] Simulates information flow along the axon fibers
     if (uniforms.style >= 2.0 && uniforms.style < 3.0) {
         finalPos = input.position;
         let baseCol = vec3<f32>(0.05, 0.1, 0.15); // Dark Blue Base
@@ -108,9 +109,10 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     else if (uniforms.style >= 3.0) {
         finalPos = input.position;
         // Thermal Gradient: Blue -> Green/Cyan -> Red
-        let c1 = vec3<f32>(0.0, 0.0, 0.5); // Deep Blue
-        let c2 = vec3<f32>(0.0, 0.9, 0.4); // Teal/Green
-        let c3 = vec3<f32>(1.0, 0.2, 0.0); // Red/Orange
+        // [Refined] More vibrant palette for depth perception
+        let c1 = vec3<f32>(0.0, 0.0, 0.6); // Deeper Blue
+        let c2 = vec3<f32>(0.0, 0.9, 0.5); // Brighter Teal
+        let c3 = vec3<f32>(1.0, 0.3, 0.1); // Vibrant Orange-Red
 
         if (activity < 0.5) {
             finalColor = mix(c1, c2, activity * 2.0);
@@ -250,6 +252,7 @@ fn main_sphere(input: VertexInput) -> VertexOutput {
     let activity = getVoxelValue(input.instancePos);
 
     // [Verified] Instanced Neurons: Somas scaled by local tensor activity
+    // [Neuro-Weaver] Reactive scaling to visualize firing intensity
     let scale = 0.02 + (activity * 0.08);
     let pos = (input.position * scale) + input.instancePos;
 
@@ -331,9 +334,9 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     var signalDecay = 0.96;
     var diffusionRate = 0.1;
 
-    // Frontal Lobe: High retention for complex thought
+    // Frontal Lobe: High retention for complex thought [Refined]
     if (worldPosition.z > 0.5) {
-        signalDecay = 0.985;
+        signalDecay = 0.99; // [Neuro-Weaver] Enhanced retention
         diffusionRate = 0.15;
     }
     // Occipital Lobe: Fast processing, visual inputs

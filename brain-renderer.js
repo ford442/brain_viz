@@ -266,7 +266,7 @@ export class BrainRenderer {
     // Writes target coordinates to a temporary state, which is uploaded
     // to the Compute Shader uniforms in the next render cycle.
     // [V2.3] Stimulus Injection Logic: Triggers a volumetric pulse at the target coordinate
-    triggerStimulus(x, y, z, intensity) {
+    injectStimulus(x, y, z, intensity) {
         // Validation (ensure we don't inject NaNs)
         if (isNaN(x) || isNaN(y) || isNaN(z)) return;
 

@@ -40,3 +40,9 @@
 ## Final Polish
 - [x] Refactor shader constants for better maintainability.
 - [x] Final code submission (V2.3 Verified).
+
+## Neuro-Weaver V2.4 Evolution (Structured & Fluid)
+- [x] **Refined Stimulus API**: Renamed `triggerStimulus` to `injectStimulus` for precision.
+- [x] **Enhanced Region Physics**: Adjusted Frontal Lobe decay (0.99) for better retention of "complex thought" signals.
+- [x] **Vibrant Heatmap**: Updated Style 3.0 gradient (Deep Blue -> Vibrant Orange) for better depth perception.
+- [x] **Code Compliance**: Added Neuro-Weaver annotations to critical logic blocks (Connectome, Somas).

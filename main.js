@@ -119,7 +119,7 @@ async function init() {
                 btn.addEventListener('click', () => {
                     const pos = stimBtns[id];
                     // [Neuro-Weaver] Trigger strong pulse at target region
-                    renderer.triggerStimulus(pos[0], pos[1], pos[2], 1.0);
+                    renderer.injectStimulus(pos[0], pos[1], pos[2], 1.0);
                 });
             }
         });
@@ -129,7 +129,7 @@ async function init() {
              const x = (Math.random() - 0.5) * 2.0;
              const y = (Math.random() - 0.5) * 2.0;
              const z = (Math.random() - 0.5) * 2.0;
-             renderer.triggerStimulus(x, y, z, 1.0);
+             renderer.injectStimulus(x, y, z, 1.0);
         });
 
         // Calm State Button
