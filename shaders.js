@@ -1,6 +1,6 @@
 // shaders.js
 // Verified Neuro-Weaver V2.3 Implementation
-// Updated with volumetric tensor logic (3D Flattened Buffer), instanced rendering, and heatmap modes.
+// [Neuro-Weaver] Updated with volumetric tensor logic (3D Flattened Buffer), instanced rendering, and heatmap modes.
 // Refactored constants and Gaussian Pulse logic.
 
 // --- SHARED CONSTANTS ---
@@ -58,14 +58,14 @@ const HELPERS = `
 
     // [Neuro-Weaver] Refactored: Connectome Pulse Logic
     fn calculatePulse(vertexIndex: u32, worldPos: vec3<f32>, time: f32, speed: f32, flowScale: f32) -> f32 {
-        // Calculate flow along the fiber
-        let flow = f32(vertexIndex) * flowScale;
-        let spatial = length(worldPos) * 2.0;
+        // [Neuro-Weaver] Refactored: Calculate flow along the fiber
+        let flowOffset = f32(vertexIndex) * flowScale;
+        let spatialPhase = length(worldPos) * 2.0;
 
         // Dynamic Wave: sin(Distance - Time * Speed)
-        let wave = sin(flow + spatial - time * speed);
+        let wave = sin(flowOffset + spatialPhase - (time * speed));
 
-        // Sharpen the wave into a pulse
+        // Sharpen the wave into a pulse for better visibility
         return smoothstep(0.85, 1.0, wave);
     }
 `;
@@ -127,7 +127,7 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
 
     // --- CONNECTOME MODE ---
     // [V2.3] Traveling Pulse Logic (Activity Trails)
-    // [Neuro-Weaver] Simulates information flow along the axon fibers
+    // [Neuro-Weaver] Simulates information flow along the axon fibers using spatial phase offset
     if (uniforms.style >= 2.0 && uniforms.style < 3.0) {
         finalPos = input.position;
         let baseCol = vec3<f32>(0.05, 0.1, 0.15); // Dark Blue Base
@@ -220,9 +220,11 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
     // V2.2 Clipping: Discard pixels behind plane
     if (input.clipDist < 0.0) { discard; }
 
+    // [Neuro-Weaver] Style 3.0: Return Heatmap Color (calculated in Vertex Shader)
     if (uniforms.style >= 3.0) { return vec4<f32>(input.color, 1.0); }
 
     if (uniforms.style >= 2.0) {
+        // [Neuro-Weaver] Style 2.0: Translucent Fibers with activity glow
         let alpha = 0.4 + (input.activity * 0.6);
         return vec4<f32>(input.color, alpha);
     }
@@ -295,7 +297,7 @@ fn main_sphere(input: VertexInput) -> VertexOutput {
     let activity = getVoxelValue(input.instancePos);
 
     // [Verified] Instanced Neurons: Somas scaled by local tensor activity
-    // [Neuro-Weaver] Reactive scaling to visualize firing intensity
+    // [Neuro-Weaver] Reactive scaling to visualize firing intensity (0.02 base + activity)
     let scale = 0.02 + (activity * 0.08);
     let pos = (input.position * scale) + input.instancePos;
 
@@ -396,7 +398,7 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     val = mix(val, avg, diffusionRate);
 
     // [Neuro-Weaver] 2. Stimulus Injection
-    // Direct voxel manipulation from CPU events
+    // Direct voxel manipulation from CPU events (injected via uniforms)
     if (params.stimulusActive > 0.0) {
         let d = distance(worldPosition, params.stimulusPos);
         // Use wider Gaussian for more organic impact

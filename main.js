@@ -40,7 +40,7 @@ async function init() {
         // [Neuro-Weaver] Refactored: Setup UI Controls
         setupControls(renderer, inputs, labels);
 
-        console.log('Starting renderer... V2.2 Active');
+        console.log('Starting renderer... V2.3 Active');
         renderer.start();
         console.log('Renderer started');
 
@@ -133,7 +133,7 @@ function setupControls(renderer, inputs, labels) {
         if (btn) {
             btn.addEventListener('click', () => {
                 const pos = stimBtns[id];
-                // [Neuro-Weaver] Trigger strong pulse at target region
+                // [Neuro-Weaver] Action: Trigger strong pulse at target region
                 renderer.injectStimulus(pos[0], pos[1], pos[2], 1.0);
             });
         }
