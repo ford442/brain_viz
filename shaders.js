@@ -23,47 +23,47 @@ const HELPERS = `
     }
 
     // [Neuro-Weaver] Refactored: Region Physics Logic
-    // Returns vec2(signalDecay, diffusionRate)
+    // Returns vec2(decay, diffusion)
     fn calculateRegionPhysics(worldPosition: vec3<f32>, style: f32) -> vec2<f32> {
-        var signalDecay = 0.96;
-        var diffusionRate = 0.1;
+        var decay = 0.96;
+        var diffusion = 0.1;
 
         // Frontal Lobe: High retention for complex thought
         if (worldPosition.z > 0.5) {
-            signalDecay = 0.99;
-            diffusionRate = 0.15;
+            decay = 0.995;
+            diffusion = 0.15;
         }
         // Occipital Lobe: Fast processing, visual inputs
         else if (worldPosition.z < -0.5) {
-            signalDecay = 0.92;
-            diffusionRate = 0.05;
+            decay = 0.92;
+            diffusion = 0.04;
         }
         // Temporal Lobe: Auditory/Memory
         else if (abs(worldPosition.x) > 0.8) {
-            signalDecay = 0.95;
+            decay = 0.95;
         }
         // Parietal Lobe: Sensory integration
         else if (worldPosition.y > 0.6) {
-            signalDecay = 0.94;
-            diffusionRate = 0.12;
+            decay = 0.94;
+            diffusion = 0.12;
         }
 
         // Cyber Mode (Style 1): Digital signal logic
         if (abs(style - 1.0) < 0.1) {
-            diffusionRate = 0.05;
-            signalDecay = 0.92;
+            diffusion = 0.05;
+            decay = 0.92;
         }
-        return vec2<f32>(signalDecay, diffusionRate);
+        return vec2<f32>(decay, diffusion);
     }
 
     // [Neuro-Weaver] Refactored: Connectome Pulse Logic
     fn calculatePulse(vertexIndex: u32, worldPos: vec3<f32>, time: f32, speed: f32, flowScale: f32) -> f32 {
         // [Neuro-Weaver] Refactored: Calculate flow along the fiber
-        let flowOffset = f32(vertexIndex) * flowScale;
+        let fiberOffset = f32(vertexIndex) * flowScale;
         let spatialPhase = length(worldPos) * 2.0;
 
         // Dynamic Wave: sin(Distance - Time * Speed)
-        let wave = sin(flowOffset + spatialPhase - (time * speed));
+        let wave = sin(fiberOffset * 8.0 + spatialPhase - (time * speed));
 
         // Sharpen the wave into a pulse for better visibility
         return smoothstep(0.85, 1.0, wave);
@@ -148,11 +148,11 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     // [Neuro-Weaver] Style 3.0: Volumetric Temperature Gradient
     else if (uniforms.style >= 3.0) {
         finalPos = input.position;
-        // Thermal Gradient: Blue -> Green/Cyan -> Red
+        // Thermal Gradient: Blue -> Green/Cyan -> Neon Orange
         // [Refined] More vibrant palette for depth perception
         let c1 = vec3<f32>(0.0, 0.0, 0.6); // Deeper Blue
         let c2 = vec3<f32>(0.0, 0.9, 0.5); // Brighter Teal
-        let c3 = vec3<f32>(1.0, 0.3, 0.1); // Vibrant Orange-Red
+        let c3 = vec3<f32>(1.0, 0.4, 0.0); // Neon Orange
 
         if (activity < 0.5) {
             finalColor = mix(c1, c2, activity * 2.0);
@@ -187,10 +187,10 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     output.color = finalColor;
     output.activity = activity;
     // [V2.3] Clipping Logic: Calculate distance to plane
-    // [Neuro-Weaver] Refactored for clarity
+    // [Neuro-Weaver] Refactored: Renamed planeDist to sliceDepth for clarity
     let planeNormal = uniforms.clipPlane.xyz;
-    let planeDist = uniforms.clipPlane.w;
-    output.clipDist = dot(output.worldPos, planeNormal) + planeDist;
+    let sliceDepth = uniforms.clipPlane.w;
+    output.clipDist = dot(output.worldPos, planeNormal) + sliceDepth;
     
     return output;
 }
@@ -298,7 +298,7 @@ fn main_sphere(input: VertexInput) -> VertexOutput {
 
     // [Verified] Instanced Neurons: Somas scaled by local tensor activity
     // [Neuro-Weaver] Reactive scaling to visualize firing intensity (0.02 base + activity)
-    let scale = 0.02 + (activity * 0.08);
+    let scale = 0.02 + (activity * 0.12);
     let pos = (input.position * scale) + input.instancePos;
 
     output.worldPos = (uniforms.modelMatrix * vec4<f32>(pos, 1.0)).xyz;
@@ -308,10 +308,10 @@ fn main_sphere(input: VertexInput) -> VertexOutput {
     let c2 = vec3<f32>(1.0, 1.0, 1.0);
     output.color = mix(c1, c2, activity);
     // V2.2 Clipping: Ensure instances respect the slice plane
-    // [Neuro-Weaver] Use explicit variables
+    // [Neuro-Weaver] Refactored: Use explicit sliceDepth
     let planeNormal = uniforms.clipPlane.xyz;
-    let planeDist = uniforms.clipPlane.w;
-    output.clipDist = dot(output.worldPos, planeNormal) + planeDist;
+    let sliceDepth = uniforms.clipPlane.w;
+    output.clipDist = dot(output.worldPos, planeNormal) + sliceDepth;
 
     return output;
 }
@@ -381,8 +381,8 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     // Defines anatomical zones for varying signal decay and diffusion properties.
     // [Neuro-Weaver] Refactored: Use helper function
     let physics = calculateRegionPhysics(worldPosition, params.style);
-    let signalDecay = physics.x;
-    let diffusionRate = physics.y;
+    let decay = physics.x;
+    let diffusion = physics.y;
 
     // Diffusion Step
     var neighborSum = 0.0;
@@ -395,7 +395,7 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     if (z < dim - 1u) { neighborSum += voxelGrid[getIndex(x, y, z + 1u)]; neighborCount += 1.0; }
 
     let avg = neighborSum / max(1.0, neighborCount);
-    val = mix(val, avg, diffusionRate);
+    val = mix(val, avg, diffusion);
 
     // [Neuro-Weaver] 2. Stimulus Injection
     // Direct voxel manipulation from CPU events (injected via uniforms)
@@ -410,7 +410,7 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
         }
     }
 
-    val *= signalDecay;
+    val *= decay;
     voxelGrid[index] = clamp(val, 0.0, 1.0);
 }
 `;
