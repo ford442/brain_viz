@@ -169,13 +169,13 @@ export class BrainRenderer {
         const height = Math.max(1, this.canvas.height);
         this.depthTexture = this.device.createTexture({ size: [width, height], format: 'depth24plus', usage: GPUTextureUsage.RENDER_ATTACHMENT });
 
-        console.log("Renderer V2.2 Verified");
+        console.log("Renderer V2.3 Verified");
     }
 
     // [Neuro-Weaver] Refactored: Initialize Volumetric Data (Tensor)
     initVolumetricResources() {
         // VOXEL DATA
-        // [Verified] 3D Texture Evolution: Flattened storage buffer for volumetric data
+        // [Neuro-Weaver] 3D Texture Evolution: Flattened storage buffer for volumetric data
         this.dataSize = this.voxelCount;
         this.tensorBuffer = this.device.createBuffer({
             size: this.dataSize * 4,
@@ -227,13 +227,13 @@ export class BrainRenderer {
 
     initSomaPipeline(renderBindGroupLayout, format) {
         // --- PIPELINE 3: INSTANCED SPHERES (V2.3) ---
-        // [V2.3] Setup Somas Pipeline
+        // [Neuro-Weaver] Setup Instanced Soma Pipeline
         // Renders soma spheres at circuit intersections using instancing.
         // Verified: Uses explicit soma positions from BrainGeometry.
         this.spherePipeline = this.device.createRenderPipeline({
             layout: this.device.createPipelineLayout({ bindGroupLayouts: [renderBindGroupLayout] }),
             vertex: {
-                module: this.device.createShaderModule({ code: sphereVertexShader }), // sphereVertexShader is exported from shaders.js
+                module: this.device.createShaderModule({ code: sphereVertexShader }),
                 entryPoint: 'main_sphere',
                 buffers: [
                     // 1. Mesh Geometry (Icosahedron)
@@ -282,15 +282,15 @@ export class BrainRenderer {
     // to the Compute Shader uniforms in the next render cycle.
     // [V2.3] Stimulus Injection Logic: Triggers a volumetric pulse at the target coordinate
     injectStimulus(x, y, z, intensity) {
-        // Validation (ensure we don't inject NaNs)
-        // [V2.5] Robustness: Check intensity as well
-        if (isNaN(x) || isNaN(y) || isNaN(z) || isNaN(intensity)) return;
+        // [Neuro-Weaver] Validation: Prevent injection of invalid values
+        if (isNaN(x) || isNaN(y) || isNaN(z) || isNaN(intensity)) {
+            return;
+        }
 
-        // Update state for Compute Shader
+        // Update state for Compute Shader uniforms
         this.stimulus.pos = [x, y, z];
+        // Ensure intensity is non-negative
         this.stimulus.active = Math.max(0.0, intensity);
-
-        // console.log(`Stimulus Injected: [${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}] @ ${intensity}`);
     }
 
     calmState() {
@@ -331,14 +331,13 @@ export class BrainRenderer {
 
         // [V2.3] Clip Plane Uniforms
         // Clip Plane: Vec4 (Normal X, Y, Z, Distance)
-        // We want to clip if dot(pos, N) + D < 0
-        // Standard Z clip: Keep if P.z < clipZ -> -P.z + clipZ > 0
-        // Normal (0,0,-1), D = clipZ
+        // Logic: Discard if dot(pos, N) + D < 0
+        // Configuration: Normal (0,0,-1), D = clipZ
         const clipOffset = 36;
         uData[clipOffset] = 0.0;      // Px
         uData[clipOffset + 1] = 0.0;  // Py
         uData[clipOffset + 2] = -1.0; // Pz (Normal pointing backward)
-        // V2.2: Dynamic Clip Plane Uniform (Z-slice distance)
+        // [Neuro-Weaver] Dynamic Clip Plane Uniform (Z-slice distance)
         uData[clipOffset + 3] = this.params.clipZ; // Distance
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
