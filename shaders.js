@@ -23,15 +23,18 @@ const HELPERS = `
     }
 
     // [Neuro-Weaver] Refactored: Region Physics Logic
-    // Returns vec2(decay, diffusion)
-    fn calculateRegionPhysics(worldPosition: vec3<f32>, style: f32) -> vec2<f32> {
+    // Returns vec3(decay, diffusion, flowBias)
+    fn calculateRegionPhysics(worldPosition: vec3<f32>, style: f32) -> vec3<f32> {
         var decay = 0.96;
         var diffusion = 0.1;
+        var flowBias = 0.0;
 
         // Frontal Lobe: High retention for complex thought
         if (worldPosition.z > 0.5) {
             decay = 0.995;
             diffusion = 0.15;
+            // [Neuro-Weaver] Directional Flow: Signals drift from Frontal towards Occipital
+            flowBias = -1.0;
         }
         // Occipital Lobe: Fast processing, visual inputs
         else if (worldPosition.z < -0.5) {
@@ -52,8 +55,9 @@ const HELPERS = `
         if (abs(style - 1.0) < 0.1) {
             diffusion = 0.05;
             decay = 0.92;
+            flowBias = 0.0;
         }
-        return vec2<f32>(decay, diffusion);
+        return vec3<f32>(decay, diffusion, flowBias);
     }
 
     // [Neuro-Weaver] Refactored: Connectome Pulse Logic
@@ -96,6 +100,7 @@ struct VertexOutput {
     @location(2) color: vec3<f32>,
     @location(3) activity: f32,
     @location(4) clipDist: f32,
+    @location(5) signal: f32,
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
@@ -120,6 +125,7 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     var finalPos = input.position;
     var finalNormal = input.normal;
     var finalColor = vec3<f32>(0.0);
+    var signalStrength = 0.0;
     
     let activity = getVoxelValue(input.position);
 
@@ -134,7 +140,7 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
         let highlight = vec3<f32>(0.0, 0.8, 1.0); // Cyan Pulse
 
         // [Neuro-Weaver] Refactored: Use helper function
-        let signalStrength = calculatePulse(vertexIndex, worldPos, uniforms.time, uniforms.flowSpeed, FLOW_SCALE);
+        signalStrength = calculatePulse(vertexIndex, worldPos, uniforms.time, uniforms.flowSpeed, FLOW_SCALE);
 
         // Blend based on activity
         let glow = mix(baseCol, highlight * 0.5, activity);
@@ -186,6 +192,7 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     output.normal = normalize((uniforms.modelMatrix * vec4<f32>(finalNormal, 0.0)).xyz);
     output.color = finalColor;
     output.activity = activity;
+    output.signal = signalStrength;
     // [V2.3] Clipping Logic: Calculate distance to plane
     // [Neuro-Weaver] Refactored: Renamed planeDist to sliceDepth for clarity
     let planeNormal = uniforms.clipPlane.xyz;
@@ -213,6 +220,7 @@ struct FragmentInput {
     @location(2) color: vec3<f32>,
     @location(3) activity: f32,
     @location(4) clipDist: f32,
+    @location(5) signal: f32,
 }
 
 @fragment
@@ -225,7 +233,8 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
 
     if (uniforms.style >= 2.0) {
         // [Neuro-Weaver] Style 2.0: Translucent Fibers with activity glow
-        let alpha = 0.4 + (input.activity * 0.6);
+        // Opacity Modulation: Pulse ripples through transparency
+        let alpha = 0.3 + (input.activity * 0.2) + (input.signal * 0.8);
         return vec4<f32>(input.color, alpha);
     }
     
@@ -383,6 +392,7 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     let physics = calculateRegionPhysics(worldPosition, params.style);
     let decay = physics.x;
     let diffusion = physics.y;
+    let flowBias = physics.z;
 
     // Diffusion Step
     var neighborSum = 0.0;
@@ -393,6 +403,17 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     if (y < dim - 1u) { neighborSum += voxelGrid[getIndex(x, y + 1u, z)]; neighborCount += 1.0; }
     if (z > 0u) { neighborSum += voxelGrid[getIndex(x, y, z - 1u)]; neighborCount += 1.0; }
     if (z < dim - 1u) { neighborSum += voxelGrid[getIndex(x, y, z + 1u)]; neighborCount += 1.0; }
+
+    // [Neuro-Weaver] Directional Flow Logic
+    // If flowBias is negative, pull signal from 'upstream' (Frontal/Z+)
+    if (flowBias < -0.1) {
+        if (z < dim - 1u) {
+            let upstream = voxelGrid[getIndex(x, y, z + 1u)];
+            // Add weighted upstream influence to the average
+            neighborSum += upstream * 2.5;
+            neighborCount += 2.5;
+        }
+    }
 
     let avg = neighborSum / max(1.0, neighborCount);
     val = mix(val, avg, diffusion);
