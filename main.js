@@ -13,7 +13,7 @@ async function init() {
         amplitude: document.getElementById('amp'),
         spikeThreshold: document.getElementById('thresh'),
         smoothing: document.getElementById('smooth'),
-        clipZ: document.getElementById('clip'),
+        sliceZ: document.getElementById('clip'),
         flowSpeed: document.getElementById('speed'), // V2.3
         style: document.getElementById('style-mode')
     };
@@ -23,7 +23,7 @@ async function init() {
         amplitude: document.getElementById('val-amp'),
         spikeThreshold: document.getElementById('val-thresh'),
         smoothing: document.getElementById('val-smooth'),
-        clipZ: document.getElementById('val-clip'),
+        sliceZ: document.getElementById('val-clip'),
         flowSpeed: document.getElementById('val-speed') // V2.3
     };
     
@@ -38,7 +38,7 @@ async function init() {
         await renderer.initialize();
         
         // [Neuro-Weaver] Refactored: Setup UI Controls
-        setupControls(renderer, inputs, labels);
+        initUIControls(renderer, inputs, labels);
 
         console.log('Starting renderer... V2.3 Active');
         renderer.start();
@@ -51,7 +51,8 @@ async function init() {
     }
 }
 
-function setupControls(renderer, inputs, labels) {
+// [Neuro-Weaver] Refactored: Modular UI Initialization
+function initUIControls(renderer, inputs, labels) {
     // Helper to update renderer and label
     const updateParam = (key, value) => {
         const numVal = parseFloat(value);
@@ -59,7 +60,7 @@ function setupControls(renderer, inputs, labels) {
         if (labels[key]) labels[key].textContent = numVal.toFixed(2);
     };
 
-    // Attach listeners
+    // 1. Parameter Sliders
     Object.keys(inputs).forEach(key => {
         const input = inputs[key];
         if (!input) return;
@@ -67,7 +68,6 @@ function setupControls(renderer, inputs, labels) {
         // Set initial value
         updateParam(key, input.value);
 
-        // Special handling for style dropdown which isn't range
         if (input.tagName === 'SELECT') return;
 
         input.addEventListener('input', (e) => {
@@ -75,102 +75,79 @@ function setupControls(renderer, inputs, labels) {
         });
     });
 
-    // Style dropdown listener
+    // 2. Style Selection Logic
     const styleSelect = document.getElementById('style-mode');
     if (styleSelect) {
         styleSelect.addEventListener('change', (e) => {
             const val = parseFloat(e.target.value);
             renderer.setParams({ style: val });
 
-            // Style Presets
-            if (val === 3) { // Heatmap
-                renderer.setParams({ amplitude: 1.0, smoothing: 0.95 });
-                inputs.amplitude.value = 1.0;
-                inputs.smoothing.value = 0.95;
-                updateParam('amplitude', 1.0);
-                updateParam('smoothing', 0.95);
-            }
-            else if (val === 2) { // Connectome Preset
-                renderer.setParams({ frequency: 8.0, smoothing: 0.2, amplitude: 1.5 });
-                inputs.frequency.value = 8.0;
-                inputs.smoothing.value = 0.2;
-                inputs.amplitude.value = 1.5;
-                updateParam('frequency', 8.0);
-                updateParam('smoothing', 0.2);
-                updateParam('amplitude', 1.5);
-            } else if (val === 1) { // Cyber preset
-                renderer.setParams({ frequency: 5.0, smoothing: 0.5 });
-                inputs.frequency.value = 5.0;
-                inputs.smoothing.value = 0.5;
-                updateParam('frequency', 5.0);
-                updateParam('smoothing', 0.5);
-            } else { // Organic preset
-                renderer.setParams({ frequency: 2.0, smoothing: 0.9 });
-                inputs.frequency.value = 2.0;
-                inputs.smoothing.value = 0.9;
-                updateParam('frequency', 2.0);
-                updateParam('smoothing', 0.9);
-            }
+            // [Neuro-Weaver] Apply Style Presets
+            const presets = {
+                3: { amplitude: 1.0, smoothing: 0.95 }, // Heatmap
+                2: { frequency: 8.0, smoothing: 0.2, amplitude: 1.5 }, // Connectome
+                1: { frequency: 5.0, smoothing: 0.5 }, // Cyber
+                0: { frequency: 2.0, smoothing: 0.9 } // Organic
+            };
+
+            const preset = presets[val] || presets[0];
+            Object.keys(preset).forEach(k => {
+                renderer.setParams({ [k]: preset[k] });
+                if(inputs[k]) inputs[k].value = preset[k];
+                updateParam(k, preset[k]);
+            });
         });
     }
 
-    // --- STIMULUS BUTTONS (V2.2 UI) ---
-    // Maps UI buttons to 3D brain coordinates for stimulus injection.
-    // Verified: Coordinates target specific anatomical lobe regions.
-    const stimBtns = {
-        'stim-frontal': [0, 0, 1.2],
-        'stim-occipital': [0, 0, -1.2],
-        'stim-parietal': [0, 1.0, 0],
-        'stim-temporal': [1.0, 0, 0],
-        'stim-deep': [0, 0, 0],
-    };
+    // 3. Stimulus Controls (Anatomical Regions)
+    const stimConfig = [
+        { id: 'stim-frontal', pos: [0, 0, 1.2], label: 'Frontal Lobe' },
+        { id: 'stim-occipital', pos: [0, 0, -1.2], label: 'Occipital Lobe' },
+        { id: 'stim-parietal', pos: [0, 1.0, 0], label: 'Parietal Lobe' },
+        { id: 'stim-temporal', pos: [1.0, 0, 0], label: 'Temporal Lobe' },
+        { id: 'stim-deep', pos: [0, 0, 0], label: 'Deep Structure' }
+    ];
 
-    // V2.2: Attach event listeners to stimulus buttons
-    // [V2.3] Setup Anatomical Region Buttons
-    // [Neuro-Weaver] UI Control: Maps anatomical buttons to 3D coordinates
-    Object.keys(stimBtns).forEach(id => {
-        const btn = document.getElementById(id);
+    stimConfig.forEach(conf => {
+        const btn = document.getElementById(conf.id);
         if (btn) {
             btn.addEventListener('click', () => {
-                const pos = stimBtns[id];
-                // [Neuro-Weaver] Action: Trigger strong pulse at target region
-                renderer.injectStimulus(pos[0], pos[1], pos[2], 1.0);
+                // [Neuro-Weaver] Inject Pulse at defined coordinates
+                renderer.injectStimulus(...conf.pos, 1.0);
             });
         }
     });
 
-    // [V2.3] Random Stimulus
+    // Random Stimulus
     const randomBtn = document.getElementById('stim-random');
     if (randomBtn) {
         randomBtn.addEventListener('click', () => {
-            const x = (Math.random() - 0.5) * 2.0;
-            const y = (Math.random() - 0.5) * 2.0;
-            const z = (Math.random() - 0.5) * 2.0;
-            renderer.injectStimulus(x, y, z, 1.0);
+            renderer.injectStimulus(
+                (Math.random() - 0.5) * 2.0,
+                (Math.random() - 0.5) * 2.0,
+                (Math.random() - 0.5) * 2.0,
+                1.0
+            );
         });
     }
 
-    // Calm State Button
+    // Calm State
     const calmBtn = document.getElementById('stim-calm');
     if (calmBtn) {
         calmBtn.addEventListener('click', () => {
             renderer.calmState();
-            // Update UI sliders to reflect calm state
-            inputs.amplitude.value = renderer.params.amplitude;
-            inputs.frequency.value = renderer.params.frequency;
-            inputs.smoothing.value = renderer.params.smoothing;
-            updateParam('amplitude', renderer.params.amplitude);
-            updateParam('frequency', renderer.params.frequency);
-            updateParam('smoothing', renderer.params.smoothing);
+            // Sync UI
+            ['amplitude', 'frequency', 'smoothing'].forEach(k => {
+                inputs[k].value = renderer.params[k];
+                updateParam(k, renderer.params[k]);
+            });
         });
     }
 
-    // Reset Activity Button
+    // Reset Activity
     const resetBtn = document.getElementById('stim-reset');
     if (resetBtn) {
-        resetBtn.addEventListener('click', () => {
-            renderer.resetActivity();
-        });
+        resetBtn.addEventListener('click', () => renderer.resetActivity());
     }
 }
 

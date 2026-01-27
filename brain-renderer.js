@@ -27,7 +27,7 @@ export class BrainRenderer {
             spikeThreshold: 0.8,
             smoothing: 0.9,
             style: 0.0, // 0=Organic, 1=Cyber, 2=Connectome, 3=Heatmap
-            clipZ: 2.0,  // Slice plane Z value (Starts outside bounds)
+            sliceZ: 2.0,  // Slice plane Z value (Starts outside bounds)
             flowSpeed: 4.0 // V2.3: Signal Speed
         };
 
@@ -176,9 +176,9 @@ export class BrainRenderer {
     initVolumetricResources() {
         // VOXEL DATA
         // [Neuro-Weaver] 3D Texture Evolution: Flattened storage buffer for volumetric data
-        this.dataSize = this.voxelCount;
+        this.voxelBufferSize = this.voxelCount;
         this.tensorBuffer = this.device.createBuffer({
-            size: this.dataSize * 4,
+            size: this.voxelBufferSize * 4,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
         });
 
@@ -283,8 +283,9 @@ export class BrainRenderer {
     // [V2.3] Stimulus Injection Logic: Triggers a volumetric pulse at the target coordinate
     injectStimulus(x, y, z, intensity) {
         // [Neuro-Weaver] Validation: Prevent injection of invalid values
-        if (isNaN(x) || isNaN(y) || isNaN(z) || isNaN(intensity)) {
-            return;
+        if ([x, y, z, intensity].some(v => isNaN(v))) {
+             console.warn("Neuro-Weaver: Invalid stimulus parameters ignored");
+             return;
         }
 
         // Update state for Compute Shader uniforms
@@ -332,13 +333,13 @@ export class BrainRenderer {
         // [V2.3] Clip Plane Uniforms
         // Clip Plane: Vec4 (Normal X, Y, Z, Distance)
         // Logic: Discard if dot(pos, N) + D < 0
-        // Configuration: Normal (0,0,-1), D = clipZ
+        // Configuration: Normal (0,0,-1), D = sliceZ
         const clipOffset = 36;
         uData[clipOffset] = 0.0;      // Px
         uData[clipOffset + 1] = 0.0;  // Py
         uData[clipOffset + 2] = -1.0; // Pz (Normal pointing backward)
         // [Neuro-Weaver] Dynamic Clip Plane Uniform (Z-slice distance)
-        uData[clipOffset + 3] = this.params.clipZ; // Distance
+        uData[clipOffset + 3] = this.params.sliceZ; // Distance
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         
@@ -395,7 +396,7 @@ export class BrainRenderer {
         const computePass = commandEncoder.beginComputePass();
         computePass.setPipeline(this.computePipeline);
         computePass.setBindGroup(0, this.computeBindGroup);
-        computePass.dispatchWorkgroups(Math.ceil(this.dataSize / 64));
+        computePass.dispatchWorkgroups(Math.ceil(this.voxelBufferSize / 64));
         computePass.end();
         
         const renderPass = commandEncoder.beginRenderPass({
