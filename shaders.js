@@ -1,5 +1,5 @@
 // shaders.js
-// Verified Neuro-Weaver V2.3 Implementation
+// Verified Neuro-Weaver V2.5 Implementation
 // [Neuro-Weaver] Updated with volumetric tensor logic (3D Flattened Buffer), instanced rendering, and heatmap modes.
 // Refactored constants and Gaussian Pulse logic.
 
@@ -31,7 +31,7 @@ const HELPERS = `
 
         // Frontal Lobe: High retention for complex thought
         if (worldPosition.z > 0.5) {
-            decay = 0.995;
+            decay = 0.996; // [Neuro-Weaver] V2.5: Increased retention
             diffusion = 0.15;
             // [Neuro-Weaver] Directional Flow: Signals drift from Frontal towards Occipital
             flowBias = -1.0;
@@ -105,7 +105,7 @@ struct VertexOutput {
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 // [Verified] Volumetric Data: Flattened 3D buffer representing brain activity
-@group(0) @binding(1) var<storage, read> voxelGrid: array<f32>;
+@group(0) @binding(1) var<storage, read> activityTensor: array<f32>;
 
 fn getVoxelValue(worldPos: vec3<f32>) -> f32 {
     let normPos = (worldPos / BRAIN_RANGE) * 0.5 + 0.5;
@@ -116,7 +116,7 @@ fn getVoxelValue(worldPos: vec3<f32>) -> f32 {
     let z = u32(normPos.z * f32(VOXEL_DIM));
 
     let index = min(z, VOXEL_DIM-1u) * VOXEL_DIM * VOXEL_DIM + min(y, VOXEL_DIM-1u) * VOXEL_DIM + min(x, VOXEL_DIM-1u);
-    return voxelGrid[index];
+    return activityTensor[index];
 }
 
 @vertex
@@ -195,6 +195,7 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     output.signal = signalStrength;
     // [V2.3] Clipping Logic: Calculate distance to plane
     // [Neuro-Weaver] Refactored: Renamed planeDist to sliceDepth for clarity
+    // Clipping Logic: Dot product determines side of the plane
     let planeNormal = uniforms.clipPlane.xyz;
     let sliceDepth = uniforms.clipPlane.w;
     output.clipDist = dot(output.worldPos, planeNormal) + sliceDepth;
@@ -229,6 +230,7 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
     if (input.clipDist < 0.0) { discard; }
 
     // [Neuro-Weaver] Style 3.0: Return Heatmap Color (calculated in Vertex Shader)
+    // Renders the volumetric thermal gradient based on tensor activity
     if (uniforms.style >= 3.0) { return vec4<f32>(input.color, 1.0); }
 
     if (uniforms.style >= 2.0) {
@@ -285,7 +287,7 @@ struct VertexOutput {
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
-@group(0) @binding(1) var<storage, read> voxelGrid: array<f32>;
+@group(0) @binding(1) var<storage, read> activityTensor: array<f32>;
 
 fn getVoxelValue(worldPos: vec3<f32>) -> f32 {
     let normPos = (worldPos / BRAIN_RANGE) * 0.5 + 0.5;
@@ -296,7 +298,7 @@ fn getVoxelValue(worldPos: vec3<f32>) -> f32 {
     let z = u32(normPos.z * f32(VOXEL_DIM));
 
     let index = min(z, VOXEL_DIM-1u) * VOXEL_DIM * VOXEL_DIM + min(y, VOXEL_DIM-1u) * VOXEL_DIM + min(x, VOXEL_DIM-1u);
-    return voxelGrid[index];
+    return activityTensor[index];
 }
 
 @vertex
@@ -360,7 +362,7 @@ struct TensorParams {
     stimulusActive: f32,
 }
 
-@group(0) @binding(0) var<storage, read_write> voxelGrid: array<f32>;
+@group(0) @binding(0) var<storage, read_write> activityTensor: array<f32>;
 @group(0) @binding(1) var<uniform> params: TensorParams;
 
 fn getIndex(x: u32, y: u32, z: u32) -> u32 {
@@ -369,7 +371,7 @@ fn getIndex(x: u32, y: u32, z: u32) -> u32 {
 
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
-    // [V2.3] Compute Physics
+    // [V2.5] Compute Physics
     let index = globalId.x;
     let dim = params.voxelDim;
     let total = dim * dim * dim;
@@ -381,12 +383,12 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     let y = rem / dim;
     let x = rem % dim;
 
-    var val = voxelGrid[index];
+    var val = activityTensor[index];
 
     let normalizedPosition = vec3<f32>(f32(x), f32(y), f32(z)) / f32(dim);
     let worldPosition = (normalizedPosition * 2.0 - 1.0) * BRAIN_RANGE;
 
-    // [V2.3] Region Mapping Implementation
+    // [V2.5] Region Mapping Implementation
     // Defines anatomical zones for varying signal decay and diffusion properties.
     // [Neuro-Weaver] Refactored: Use helper function
     let physics = calculateRegionPhysics(worldPosition, params.style);
@@ -397,18 +399,18 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     // Diffusion Step
     var neighborSum = 0.0;
     var neighborCount = 0.0;
-    if (x > 0u) { neighborSum += voxelGrid[getIndex(x - 1u, y, z)]; neighborCount += 1.0; }
-    if (x < dim - 1u) { neighborSum += voxelGrid[getIndex(x + 1u, y, z)]; neighborCount += 1.0; }
-    if (y > 0u) { neighborSum += voxelGrid[getIndex(x, y - 1u, z)]; neighborCount += 1.0; }
-    if (y < dim - 1u) { neighborSum += voxelGrid[getIndex(x, y + 1u, z)]; neighborCount += 1.0; }
-    if (z > 0u) { neighborSum += voxelGrid[getIndex(x, y, z - 1u)]; neighborCount += 1.0; }
-    if (z < dim - 1u) { neighborSum += voxelGrid[getIndex(x, y, z + 1u)]; neighborCount += 1.0; }
+    if (x > 0u) { neighborSum += activityTensor[getIndex(x - 1u, y, z)]; neighborCount += 1.0; }
+    if (x < dim - 1u) { neighborSum += activityTensor[getIndex(x + 1u, y, z)]; neighborCount += 1.0; }
+    if (y > 0u) { neighborSum += activityTensor[getIndex(x, y - 1u, z)]; neighborCount += 1.0; }
+    if (y < dim - 1u) { neighborSum += activityTensor[getIndex(x, y + 1u, z)]; neighborCount += 1.0; }
+    if (z > 0u) { neighborSum += activityTensor[getIndex(x, y, z - 1u)]; neighborCount += 1.0; }
+    if (z < dim - 1u) { neighborSum += activityTensor[getIndex(x, y, z + 1u)]; neighborCount += 1.0; }
 
     // [Neuro-Weaver] Directional Flow Logic
     // If flowBias is negative, pull signal from 'upstream' (Frontal/Z+)
     if (flowBias < -0.1) {
         if (z < dim - 1u) {
-            let upstream = voxelGrid[getIndex(x, y, z + 1u)];
+            let upstream = activityTensor[getIndex(x, y, z + 1u)];
             // Add weighted upstream influence to the average
             neighborSum += upstream * 2.5;
             neighborCount += 2.5;
@@ -432,6 +434,6 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     }
 
     val *= decay;
-    voxelGrid[index] = clamp(val, 0.0, 1.0);
+    activityTensor[index] = clamp(val, 0.0, 1.0);
 }
 `;

@@ -1,4 +1,4 @@
-# Project Plan: Neuro-Weaver V2.2
+# Project Plan: Neuro-Weaver V2.5
 
 ## Current Status
 - [x] Basic Brain Visualization (Sphere deformation)

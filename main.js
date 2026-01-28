@@ -1,9 +1,9 @@
 // Main application entry point
-// Neuro-Weaver V2.3 Implementation - Volumetric Renderer
+// Neuro-Weaver V2.5 Implementation - Volumetric Renderer
 import { BrainRenderer } from './brain-renderer.js';
 
 async function init() {
-    // [V2.3] Initialize UI and Renderer
+    // [V2.5] Initialize UI and Renderer
     const canvas = document.getElementById('canvas');
     const errorDiv = document.getElementById('error');
     
@@ -40,7 +40,7 @@ async function init() {
         // [Neuro-Weaver] Refactored: Setup UI Controls
         initUIControls(renderer, inputs, labels);
 
-        console.log('Starting renderer... V2.3 Active');
+        console.log('Starting renderer... V2.5 Active');
         renderer.start();
         console.log('Renderer started');
 
