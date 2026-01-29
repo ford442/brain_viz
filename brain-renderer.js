@@ -1,5 +1,5 @@
 // brain-renderer.js
-// Verified Neuro-Weaver V2.3 Implementation
+// Verified Neuro-Weaver V2.5 Implementation
 import { BrainGeometry } from './brain-geometry.js';
 import { vertexShader, fragmentShader, computeShader, sphereVertexShader, sphereFragmentShader } from './shaders.js';
 import { Mat4 } from './math-utils.js';
@@ -169,7 +169,7 @@ export class BrainRenderer {
         const height = Math.max(1, this.canvas.height);
         this.depthTexture = this.device.createTexture({ size: [width, height], format: 'depth24plus', usage: GPUTextureUsage.RENDER_ATTACHMENT });
 
-        console.log("Renderer V2.3 Verified");
+        console.log("Renderer V2.5 Verified");
     }
 
     // [Neuro-Weaver] Refactored: Initialize Volumetric Data (Tensor)
@@ -226,10 +226,11 @@ export class BrainRenderer {
     }
 
     initSomaPipeline(renderBindGroupLayout, format) {
-        // --- PIPELINE 3: INSTANCED SPHERES (V2.3) ---
+        // --- PIPELINE 3: INSTANCED SPHERES (V2.5) ---
         // [Neuro-Weaver] Setup Instanced Soma Pipeline
         // Renders soma spheres at circuit intersections using instancing.
         // Verified: Uses explicit soma positions from BrainGeometry.
+        // This pipeline enables the "Structured Data" visualization by showing discrete nodes.
         this.spherePipeline = this.device.createRenderPipeline({
             layout: this.device.createPipelineLayout({ bindGroupLayouts: [renderBindGroupLayout] }),
             vertex: {
@@ -292,6 +293,8 @@ export class BrainRenderer {
         this.stimulus.pos = [x, y, z];
         // Ensure intensity is non-negative
         this.stimulus.active = Math.max(0.0, intensity);
+
+        console.log(`[Neuro-Weaver] Stimulus Injected: Pos(${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}) Intensity(${intensity.toFixed(2)})`);
     }
 
     calmState() {

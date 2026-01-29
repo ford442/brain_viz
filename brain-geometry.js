@@ -1,5 +1,5 @@
 // brain-geometry.js
-// Procedural Brain Generation with Circuit Grid - V2.3 Verified
+// Procedural Brain Generation with Circuit Grid - V2.5 Verified
 // [Neuro-Weaver] Generates deformed sphere mesh and internal fiber grid.
 
 export class BrainGeometry {
