@@ -31,7 +31,7 @@ const HELPERS = `
 
         // Frontal Lobe: High retention for complex thought
         if (worldPosition.z > 0.5) {
-            decay = 0.996; // [Neuro-Weaver] V2.5: Increased retention
+            decay = 0.998; // [Neuro-Weaver] V2.6: Hyper-retention for deep thought
             diffusion = 0.15;
             // [Neuro-Weaver] Directional Flow: Signals drift from Frontal towards Occipital
             flowBias = -1.0;
@@ -154,11 +154,11 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     // [Neuro-Weaver] Style 3.0: Volumetric Temperature Gradient
     else if (uniforms.style >= 3.0) {
         finalPos = input.position;
-        // Thermal Gradient: Blue -> Green/Cyan -> Neon Orange
-        // [Refined] More vibrant palette for depth perception
-        let c1 = vec3<f32>(0.0, 0.0, 0.6); // Deeper Blue
-        let c2 = vec3<f32>(0.0, 0.9, 0.5); // Brighter Teal
-        let c3 = vec3<f32>(1.0, 0.4, 0.0); // Neon Orange
+        // Thermal Gradient: Deep Void Blue -> Electric Cyan -> Magma Orange
+        // [Refined] Adjusted for higher contrast in V2.6
+        let c1 = vec3<f32>(0.0, 0.0, 0.2); // Void Blue
+        let c2 = vec3<f32>(0.0, 1.0, 0.8); // Electric Cyan
+        let c3 = vec3<f32>(1.0, 0.3, 0.0); // Magma Orange
 
         if (activity < 0.5) {
             finalColor = mix(c1, c2, activity * 2.0);
@@ -260,8 +260,8 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
 }
 `;
 
-export const sphereVertexShader = `
-// [V2.3] Instanced Sphere Logic
+export const somaVertexShader = `
+// [V2.3] Instanced Soma Logic (Neurons)
 ${CONSTANTS}
 
 struct Uniforms {
@@ -302,7 +302,7 @@ fn getVoxelValue(worldPos: vec3<f32>) -> f32 {
 }
 
 @vertex
-fn main_sphere(input: VertexInput) -> VertexOutput {
+fn main_soma(input: VertexInput) -> VertexOutput {
     var output: VertexOutput;
 
     let activity = getVoxelValue(input.instancePos);
@@ -328,8 +328,8 @@ fn main_sphere(input: VertexInput) -> VertexOutput {
 }
 `;
 
-export const sphereFragmentShader = `
-// [V2.3] Sphere Fragment Shader
+export const somaFragmentShader = `
+// [V2.3] Soma Fragment Shader
 struct FragmentInput {
     @location(0) worldPos: vec3<f32>,
     @location(1) color: vec3<f32>,
