@@ -49,3 +49,10 @@
 
 ## Neuro-Weaver V2.5 Robustness
 - [x] **Input Validation**: Hardening `injectStimulus` against NaN values.
+- [x] **Re-verification**: Confirmed functionality of all V2.5 features via automated Playwright tests.
+
+## Verification Log
+- **Date**: [Current Date]
+- **Status**: Verified
+- **Tests**: `verification/verify_brain_viz.py` passed.
+- **Artifacts**: `viz_connectome.png`, `viz_heatmap.png`, `viz_clipped.png` generated.
