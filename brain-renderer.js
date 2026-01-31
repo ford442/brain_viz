@@ -1,5 +1,5 @@
 // brain-renderer.js
-// Verified Neuro-Weaver V2.5 Implementation
+// Verified Neuro-Weaver V2.6 Implementation
 import { BrainGeometry } from './brain-geometry.js';
 import { vertexShader, fragmentShader, computeShader, sphereVertexShader, sphereFragmentShader } from './shaders.js';
 import { Mat4 } from './math-utils.js';
@@ -13,7 +13,7 @@ export class BrainRenderer {
         // Pipelines
         this.pipeline = null;      // Solid Mesh
         this.fiberPipeline = null; // Lines
-        this.spherePipeline = null;// Instanced Spheres (Somas)
+        this.somaPipeline = null;  // Instanced Spheres (Somas) [Renamed for V2.6]
         
         this.rotation = { x: 0, y: 0 };
         this.targetRotation = { x: 0.3, y: 0 };
@@ -169,7 +169,7 @@ export class BrainRenderer {
         const height = Math.max(1, this.canvas.height);
         this.depthTexture = this.device.createTexture({ size: [width, height], format: 'depth24plus', usage: GPUTextureUsage.RENDER_ATTACHMENT });
 
-        console.log("Renderer V2.5 Verified");
+        console.log("Renderer V2.6 Verified");
     }
 
     // [Neuro-Weaver] Refactored: Initialize Volumetric Data (Tensor)
@@ -226,12 +226,12 @@ export class BrainRenderer {
     }
 
     initSomaPipeline(renderBindGroupLayout, format) {
-        // --- PIPELINE 3: INSTANCED SPHERES (V2.5) ---
+        // --- PIPELINE 3: INSTANCED SPHERES (V2.6) ---
         // [Neuro-Weaver] Setup Instanced Soma Pipeline
         // Renders soma spheres at circuit intersections using instancing.
         // Verified: Uses explicit soma positions from BrainGeometry.
         // This pipeline enables the "Structured Data" visualization by showing discrete nodes.
-        this.spherePipeline = this.device.createRenderPipeline({
+        this.somaPipeline = this.device.createRenderPipeline({
             layout: this.device.createPipelineLayout({ bindGroupLayouts: [renderBindGroupLayout] }),
             vertex: {
                 module: this.device.createShaderModule({ code: sphereVertexShader }),
@@ -290,7 +290,13 @@ export class BrainRenderer {
         }
 
         // Update state for Compute Shader uniforms
-        this.stimulus.pos = [x, y, z];
+        // [Neuro-Weaver] V2.6: Clamp coordinates to brain range to prevent out-of-bounds stimulus
+        const CLAMP_RANGE = 1.6;
+        this.stimulus.pos = [
+            Math.max(-CLAMP_RANGE, Math.min(CLAMP_RANGE, x)),
+            Math.max(-CLAMP_RANGE, Math.min(CLAMP_RANGE, y)),
+            Math.max(-CLAMP_RANGE, Math.min(CLAMP_RANGE, z))
+        ];
         // Ensure intensity is non-negative
         this.stimulus.active = Math.max(0.0, intensity);
 
@@ -333,16 +339,16 @@ export class BrainRenderer {
         uData[33] = this.params.style;
         uData[34] = this.params.flowSpeed; // V2.3: Replaced padding1 with flowSpeed
 
-        // [V2.3] Clip Plane Uniforms
-        // Clip Plane: Vec4 (Normal X, Y, Z, Distance)
+        // [V2.3] Slice Plane Uniforms
+        // Slice Plane: Vec4 (Normal X, Y, Z, Distance)
         // Logic: Discard if dot(pos, N) + D < 0
         // Configuration: Normal (0,0,-1), D = sliceZ
-        const clipOffset = 36;
-        uData[clipOffset] = 0.0;      // Px
-        uData[clipOffset + 1] = 0.0;  // Py
-        uData[clipOffset + 2] = -1.0; // Pz (Normal pointing backward)
-        // [Neuro-Weaver] Dynamic Clip Plane Uniform (Z-slice distance)
-        uData[clipOffset + 3] = this.params.sliceZ; // Distance
+        const sliceOffset = 36;
+        uData[sliceOffset] = 0.0;      // Px
+        uData[sliceOffset + 1] = 0.0;  // Py
+        uData[sliceOffset + 2] = -1.0; // Pz (Normal pointing backward)
+        // [Neuro-Weaver] Dynamic Slice Plane Uniform (Z-slice distance)
+        uData[sliceOffset + 3] = this.params.sliceZ; // Distance
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         
@@ -422,8 +428,8 @@ export class BrainRenderer {
             renderPass.setVertexBuffer(1, this.fiberBuffer); 
             renderPass.draw(this.fiberVertexCount); 
 
-            // 2. Draw Instanced Neurons (Somas) [V2.2 Pipeline]
-            renderPass.setPipeline(this.spherePipeline);
+            // 2. Draw Instanced Neurons (Somas) [V2.6 Pipeline]
+            renderPass.setPipeline(this.somaPipeline);
             renderPass.setVertexBuffer(0, this.sphereVertexBuffer); // Mesh
             renderPass.setVertexBuffer(1, this.somaInstanceBuffer); // Positions
             renderPass.setIndexBuffer(this.sphereIndexBuffer, 'uint16');

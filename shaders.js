@@ -1,5 +1,5 @@
 // shaders.js
-// Verified Neuro-Weaver V2.5 Implementation
+// Verified Neuro-Weaver V2.6 Implementation
 // [Neuro-Weaver] Updated with volumetric tensor logic (3D Flattened Buffer), instanced rendering, and heatmap modes.
 // Refactored constants and Gaussian Pulse logic.
 
@@ -31,7 +31,7 @@ const HELPERS = `
 
         // Frontal Lobe: High retention for complex thought
         if (worldPosition.z > 0.5) {
-            decay = 0.996; // [Neuro-Weaver] V2.5: Increased retention
+            decay = 0.998; // [Neuro-Weaver] V2.6: Hyper-retention
             diffusion = 0.15;
             // [Neuro-Weaver] Directional Flow: Signals drift from Frontal towards Occipital
             flowBias = -1.0;
@@ -60,8 +60,8 @@ const HELPERS = `
         return vec3<f32>(decay, diffusion, flowBias);
     }
 
-    // [Neuro-Weaver] Refactored: Connectome Pulse Logic
-    fn calculatePulse(vertexIndex: u32, worldPos: vec3<f32>, time: f32, speed: f32, flowScale: f32) -> f32 {
+    // [Neuro-Weaver] Refactored: Signal Flow Logic (Renamed from calculatePulse for V2.6)
+    fn computeSignalFlow(vertexIndex: u32, worldPos: vec3<f32>, time: f32, speed: f32, flowScale: f32) -> f32 {
         // [Neuro-Weaver] Refactored: Calculate flow along the fiber
         let fiberOffset = f32(vertexIndex) * flowScale;
         let spatialPhase = length(worldPos) * 2.0;
@@ -71,6 +71,20 @@ const HELPERS = `
 
         // Sharpen the wave into a pulse for better visibility
         return smoothstep(0.85, 1.0, wave);
+    }
+
+    // [Neuro-Weaver] V2.6 Helper: Heatmap Color Ramp
+    fn getHeatmapColor(activity: f32) -> vec3<f32> {
+        // Thermal Gradient: Blue -> Green/Cyan -> Neon Orange
+        let c1 = vec3<f32>(0.0, 0.0, 0.6); // Deeper Blue
+        let c2 = vec3<f32>(0.0, 0.9, 0.5); // Brighter Teal
+        let c3 = vec3<f32>(1.0, 0.4, 0.0); // Neon Orange
+
+        if (activity < 0.5) {
+            return mix(c1, c2, activity * 2.0);
+        } else {
+            return mix(c2, c3, (activity - 0.5) * 2.0);
+        }
     }
 `;
 
@@ -85,7 +99,7 @@ struct Uniforms {
     style: f32,
     flowSpeed: f32, // V2.3: Controls pulse speed
     padding2: f32,
-    clipPlane: vec4<f32>,
+    slicePlane: vec4<f32>, // [Neuro-Weaver] V2.6: Renamed from clipPlane
 }
 
 struct VertexInput {
@@ -139,8 +153,8 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
         let baseCol = vec3<f32>(0.05, 0.1, 0.15); // Dark Blue Base
         let highlight = vec3<f32>(0.0, 0.8, 1.0); // Cyan Pulse
 
-        // [Neuro-Weaver] Refactored: Use helper function
-        signalStrength = calculatePulse(vertexIndex, worldPos, uniforms.time, uniforms.flowSpeed, FLOW_SCALE);
+        // [Neuro-Weaver] Refactored: Use helper function computeSignalFlow
+        signalStrength = computeSignalFlow(vertexIndex, worldPos, uniforms.time, uniforms.flowSpeed, FLOW_SCALE);
 
         // Blend based on activity
         let glow = mix(baseCol, highlight * 0.5, activity);
@@ -154,17 +168,8 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     // [Neuro-Weaver] Style 3.0: Volumetric Temperature Gradient
     else if (uniforms.style >= 3.0) {
         finalPos = input.position;
-        // Thermal Gradient: Blue -> Green/Cyan -> Neon Orange
-        // [Refined] More vibrant palette for depth perception
-        let c1 = vec3<f32>(0.0, 0.0, 0.6); // Deeper Blue
-        let c2 = vec3<f32>(0.0, 0.9, 0.5); // Brighter Teal
-        let c3 = vec3<f32>(1.0, 0.4, 0.0); // Neon Orange
-
-        if (activity < 0.5) {
-            finalColor = mix(c1, c2, activity * 2.0);
-        } else {
-            finalColor = mix(c2, c3, (activity - 0.5) * 2.0);
-        }
+        // [Neuro-Weaver] V2.6 Refactor: Use helper for Heatmap Color
+        finalColor = getHeatmapColor(activity);
     }
     // --- GHOST MODE ---
     else {
@@ -196,8 +201,9 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     // [V2.3] Clipping Logic: Calculate distance to plane
     // [Neuro-Weaver] Refactored: Renamed planeDist to sliceDepth for clarity
     // Clipping Logic: Dot product determines side of the plane
-    let planeNormal = uniforms.clipPlane.xyz;
-    let sliceDepth = uniforms.clipPlane.w;
+    // [Neuro-Weaver] V2.6: Use slicePlane
+    let planeNormal = uniforms.slicePlane.xyz;
+    let sliceDepth = uniforms.slicePlane.w;
     output.clipDist = dot(output.worldPos, planeNormal) + sliceDepth;
     
     return output;
@@ -211,7 +217,7 @@ struct Uniforms {
     time: f32,
     style: f32,
     padding: vec2<f32>,
-    clipPlane: vec4<f32>,
+    slicePlane: vec4<f32>, // [Neuro-Weaver] V2.6: Renamed from clipPlane
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
@@ -271,7 +277,7 @@ struct Uniforms {
     style: f32,
     padding1: f32,
     padding2: f32,
-    clipPlane: vec4<f32>,
+    slicePlane: vec4<f32>, // [Neuro-Weaver] V2.6: Renamed from clipPlane
 }
 
 struct VertexInput {
@@ -320,8 +326,9 @@ fn main_sphere(input: VertexInput) -> VertexOutput {
     output.color = mix(c1, c2, activity);
     // V2.2 Clipping: Ensure instances respect the slice plane
     // [Neuro-Weaver] Refactored: Use explicit sliceDepth
-    let planeNormal = uniforms.clipPlane.xyz;
-    let sliceDepth = uniforms.clipPlane.w;
+    // [Neuro-Weaver] V2.6: Use slicePlane
+    let planeNormal = uniforms.slicePlane.xyz;
+    let sliceDepth = uniforms.slicePlane.w;
     output.clipDist = dot(output.worldPos, planeNormal) + sliceDepth;
 
     return output;
