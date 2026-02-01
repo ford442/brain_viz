@@ -1,4 +1,6 @@
 // brain-geometry.js
+// Procedural Brain Generation with Circuit Grid - V2.5 Verified
+// [Neuro-Weaver] Generates deformed sphere mesh and internal fiber grid.
 
 export class BrainGeometry {
     constructor() {
@@ -6,6 +8,7 @@ export class BrainGeometry {
         this.normals = [];
         this.indices = [];
         this.fibers = [];
+        this.somaPositions = [];
     }
 
     generate(rows, cols) {
@@ -14,6 +17,7 @@ export class BrainGeometry {
         this.normals = [];
         this.indices = [];
         this.fibers = [];
+        this.somaPositions = [];
 
         // 1. Generate deformed sphere (Brain Mesh)
         for (let r = 0; r <= rows; r++) {
@@ -93,6 +97,7 @@ export class BrainGeometry {
         return len < maxRadius;
     }
 
+    // [V2.3] Circuit Grid Generation
     generateCircuitGrid() {
         const step = 0.15; // Grid spacing
         const range = 1.5; // Bounding box half-size
@@ -105,6 +110,10 @@ export class BrainGeometry {
                 for (let z = -range; z <= range; z += step) {
 
                     if (!this.isInsideBrain(x, y, z)) continue;
+
+                    // Store Soma Position (Grid Node)
+                    // Add some jitter for organic feel? No, grid structure is the aesthetic.
+                    this.somaPositions.push(x, y, z);
 
                     // Try to connect to neighbors (+X, +Y, +Z)
                     // We only connect 'forward' to avoid duplicates
@@ -145,4 +154,6 @@ export class BrainGeometry {
     getFiberData() { return new Float32Array(this.fibers); }
     getFiberVertexCount() { return this.fibers.length / 3; }
     getVertexCount() { return this.vertices.length / 3; }
+    // V2.2 Getter: Soma Positions for Instancing
+    getSomaPositions() { return new Float32Array(this.somaPositions); }
 }

@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neuro-Weaver Brain Viz</title>
+<title>Neuro-Weaver Brain Viz V2.6</title>
+    <!-- Neuro-Weaver V2.6 - Volumetric Data Visualization & Compute Shaders -->
+    <!-- [Neuro-Weaver] UI Layer for Parameter Control and Stimulus Injection -->
     <style>
-        body { margin: 0; overflow: hidden; background: #000; color: #fff; font-family: monospace; }
+        body { margin: 0; overflow: hidden; background: #000; color: #fff; font-family: monospace; width: 100vw; height: 100vh; }
         canvas { display: block; width: 100vw; height: 100vh; }
         #controls {
             position: absolute; top: 10px; left: 10px;
@@ -38,7 +40,7 @@
 </head>
 <body>
     <div id="controls">
-        <h2>NEURO-WEAVER V2</h2>
+        <h2>NEURO-WEAVER V2.6</h2>
 
         <div class="control-group">
             <label>Visualization Style</label>
@@ -46,15 +48,22 @@
                 <option value="0">0. Organic (Surface)</option>
                 <option value="1">1. Cyber (Wireframe)</option>
                 <option value="2">2. Connectome (Fibers)</option>
-                <option value="3">3. Heatmap (Volumetric)</option>
+                <option value="3">3. Heatmap (Volumetric) [V2.3]</option>
             </select>
         </div>
 
         <hr>
 
         <div class="control-group">
+            <!-- V2.2 Control: Slice Plane -->
             <label>Clip Plane Z (Slice) <span id="val-clip" class="value">2.0</span></label>
             <input type="range" id="clip" min="-2.0" max="2.0" step="0.1" value="2.0">
+        </div>
+
+        <div class="control-group">
+            <!-- V2.3 Control: Signal Speed -->
+            <label>Signal Flow Speed <span id="val-speed" class="value">4.0</span></label>
+            <input type="range" id="speed" min="0.0" max="10.0" step="0.5" value="4.0">
         </div>
 
         <hr>
@@ -80,13 +89,19 @@
         </div>
 
         <hr>
+        <!-- [V2.5] Controls: Region Stimulation -->
         <label style="margin-bottom:10px; color:#fff">Inject Stimulus</label>
-        <button id="stim-frontal">Frontal Lobe</button>
-        <button id="stim-parietal">Parietal Lobe</button>
-        <button id="stim-temporal">Temporal Lobe</button>
-        <button id="stim-occipital">Occipital Lobe</button>
-        <button id="stim-deep">Deep Brain</button>
-        <button id="stim-random" style="background:#422; border-color:#f44; color:#fcc">Random Pulse</button>
+        <button id="stim-frontal" class="stim-btn" type="button">Frontal Lobe (Cognition)</button>
+        <button id="stim-parietal" class="stim-btn" type="button">Parietal Lobe (Sensory)</button>
+        <button id="stim-temporal" class="stim-btn" type="button">Temporal Lobe (Memory)</button>
+        <button id="stim-occipital" class="stim-btn" type="button">Occipital Lobe (Vision)</button>
+        <button id="stim-deep" class="stim-btn" type="button">Deep Brain (Core)</button>
+        <button id="stim-random" class="stim-btn" style="background:#422; border-color:#f44; color:#fcc">Random Pulse</button>
+
+        <hr style="border-top: 1px dashed #444; margin: 8px 0;">
+
+        <button id="stim-calm" style="background:#244; border-color:#488; color:#aff">Calm State</button>
+        <button id="stim-reset" style="background:#444; border-color:#888; color:#eee">Reset Activity</button>
     </div>
 
     <div id="error"></div>

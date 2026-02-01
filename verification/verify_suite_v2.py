@@ -9,23 +9,27 @@ def verify_full_suite():
             args=["--enable-unsafe-webgpu", "--use-gl=swiftshader"]
         )
         page = browser.new_page()
+
+        # Capture console logs
+        page.on("console", lambda msg: print(f"BROWSER CONSOLE: {msg.text}"))
+
         page.goto("http://localhost:5173")
         page.wait_for_load_state("networkidle")
         time.sleep(3)
 
-        # 1. Verify Connectome Mode (should now show Spheres)
+        # 1. Verify Connectome Mode
+        print("Selecting Connectome Mode...")
         page.select_option("#style-mode", "2")
-        time.sleep(1)
+        time.sleep(2)
         page.screenshot(path="verification/connectome_spheres.png")
         print("Connectome screenshot taken.")
 
-        # 2. Verify Clipping
-        # Set clipZ to 0.0 using JS
-        page.evaluate("document.getElementById('clip').value = 0.0")
-        page.evaluate("document.getElementById('clip').dispatchEvent(new Event('input'))")
-        time.sleep(1)
-        page.screenshot(path="verification/clipped_brain.png")
-        print("Clipped brain screenshot taken.")
+        # 2. Verify Heatmap Mode
+        print("Selecting Heatmap Mode...")
+        page.select_option("#style-mode", "3")
+        time.sleep(2)
+        page.screenshot(path="verification/brain_heatmap.png")
+        print("Heatmap screenshot taken.")
 
         browser.close()
 
