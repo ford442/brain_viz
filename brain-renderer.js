@@ -1,7 +1,7 @@
 // brain-renderer.js
 // Verified Neuro-Weaver V2.5 Implementation
 import { BrainGeometry } from './brain-geometry.js';
-import { vertexShader, fragmentShader, computeShader, sphereVertexShader, sphereFragmentShader } from './shaders.js';
+import { vertexShader, fragmentShader, computeShader, somaVertexShader, somaFragmentShader } from './shaders.js';
 import { Mat4 } from './math-utils.js';
 
 export class BrainRenderer {
@@ -13,7 +13,7 @@ export class BrainRenderer {
         // Pipelines
         this.pipeline = null;      // Solid Mesh
         this.fiberPipeline = null; // Lines
-        this.spherePipeline = null;// Instanced Spheres (Somas)
+        this.somaPipeline = null;  // Instanced Somas (Neurons)
         
         this.rotation = { x: 0, y: 0 };
         this.targetRotation = { x: 0.3, y: 0 };
@@ -220,22 +220,22 @@ export class BrainRenderer {
         ]);
 
         // V2.2 Geometry Buffers: Icosahedron mesh for somas
-        this.sphereVertexBuffer = this.createBuffer(icoVerts, GPUBufferUsage.VERTEX);
-        this.sphereIndexBuffer = this.createBuffer(icoIndices, GPUBufferUsage.INDEX);
-        this.sphereIndexCount = icoIndices.length;
+        this.somaVertexBuffer = this.createBuffer(icoVerts, GPUBufferUsage.VERTEX);
+        this.somaIndexBuffer = this.createBuffer(icoIndices, GPUBufferUsage.INDEX);
+        this.somaIndexCount = icoIndices.length;
     }
 
     initSomaPipeline(renderBindGroupLayout, format) {
-        // --- PIPELINE 3: INSTANCED SPHERES (V2.5) ---
+        // --- PIPELINE 3: INSTANCED SOMAS (V2.5) ---
         // [Neuro-Weaver] Setup Instanced Soma Pipeline
         // Renders soma spheres at circuit intersections using instancing.
         // Verified: Uses explicit soma positions from BrainGeometry.
         // This pipeline enables the "Structured Data" visualization by showing discrete nodes.
-        this.spherePipeline = this.device.createRenderPipeline({
+        this.somaPipeline = this.device.createRenderPipeline({
             layout: this.device.createPipelineLayout({ bindGroupLayouts: [renderBindGroupLayout] }),
             vertex: {
-                module: this.device.createShaderModule({ code: sphereVertexShader }),
-                entryPoint: 'main_sphere',
+                module: this.device.createShaderModule({ code: somaVertexShader }),
+                entryPoint: 'main_soma',
                 buffers: [
                     // 1. Mesh Geometry (Icosahedron)
                     { arrayStride: 12, attributes: [{ shaderLocation: 0, offset: 0, format: 'float32x3' }] },
@@ -245,7 +245,7 @@ export class BrainRenderer {
                 ]
             },
             fragment: {
-                module: this.device.createShaderModule({ code: sphereFragmentShader }),
+                module: this.device.createShaderModule({ code: somaFragmentShader }),
                 entryPoint: 'main',
                 targets: [{ format: format, blend: { color: { srcFactor: 'src-alpha', dstFactor: 'one', operation: 'add' }, alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' } } }]
             },
@@ -290,7 +290,13 @@ export class BrainRenderer {
         }
 
         // Update state for Compute Shader uniforms
-        this.stimulus.pos = [x, y, z];
+        // [Neuro-Weaver] V2.6: Explicit clamping to Brain Range (-1.6 to 1.6)
+        const range = 1.6;
+        this.stimulus.pos = [
+            Math.max(-range, Math.min(range, x)),
+            Math.max(-range, Math.min(range, y)),
+            Math.max(-range, Math.min(range, z))
+        ];
         // Ensure intensity is non-negative
         this.stimulus.active = Math.max(0.0, intensity);
 
@@ -423,12 +429,12 @@ export class BrainRenderer {
             renderPass.draw(this.fiberVertexCount); 
 
             // 2. Draw Instanced Neurons (Somas) [V2.2 Pipeline]
-            renderPass.setPipeline(this.spherePipeline);
-            renderPass.setVertexBuffer(0, this.sphereVertexBuffer); // Mesh
+            renderPass.setPipeline(this.somaPipeline);
+            renderPass.setVertexBuffer(0, this.somaVertexBuffer); // Mesh
             renderPass.setVertexBuffer(1, this.somaInstanceBuffer); // Positions
-            renderPass.setIndexBuffer(this.sphereIndexBuffer, 'uint16');
+            renderPass.setIndexBuffer(this.somaIndexBuffer, 'uint16');
             // Draw call uses instance count
-            renderPass.drawIndexed(this.sphereIndexCount, this.somaInstanceCount);
+            renderPass.drawIndexed(this.somaIndexCount, this.somaInstanceCount);
 
         } else {
             renderPass.setPipeline(this.pipeline);
