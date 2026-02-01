@@ -79,7 +79,7 @@ async function init() {
                         const x = classMap[idx*3];
                         const y = classMap[idx*3+1];
                         const z = classMap[idx*3+2];
-                        renderer.triggerStimulus(x, y, z, strength);
+                        renderer.injectStimulus(x, y, z, strength);
                     });
                 }
             }
