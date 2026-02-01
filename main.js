@@ -1,9 +1,9 @@
 // Main application entry point
-// Neuro-Weaver V2.5 Implementation - Volumetric Renderer
+// Neuro-Weaver V2.6 Implementation - Volumetric Renderer
 import { BrainRenderer } from './brain-renderer.js';
 
 async function init() {
-    // [V2.5] Initialize UI and Renderer
+    // [V2.6] Initialize UI and Renderer
     const canvas = document.getElementById('canvas');
     const errorDiv = document.getElementById('error');
     
@@ -40,7 +40,7 @@ async function init() {
         // [Neuro-Weaver] Refactored: Setup UI Controls
         initUIControls(renderer, inputs, labels);
 
-        console.log('Starting renderer... V2.5 Active');
+        console.log('Starting renderer... V2.6 Active');
         renderer.start();
         console.log('Renderer started');
 
@@ -99,56 +99,61 @@ function initUIControls(renderer, inputs, labels) {
         });
     }
 
-    // 3. Stimulus Controls (Anatomical Regions)
-    const stimConfig = [
-        { id: 'stim-frontal', pos: [0, 0, 1.2], label: 'Frontal Lobe' },
-        { id: 'stim-occipital', pos: [0, 0, -1.2], label: 'Occipital Lobe' },
-        { id: 'stim-parietal', pos: [0, 1.0, 0], label: 'Parietal Lobe' },
-        { id: 'stim-temporal', pos: [1.0, 0, 0], label: 'Temporal Lobe' },
-        { id: 'stim-deep', pos: [0, 0, 0], label: 'Deep Structure' }
-    ];
+    // 3. Region Stimulation Controls (Refactored for V2.6)
+    const setupButtonListeners = () => {
+        // Anatomical Region Configuration
+        const regionConfig = [
+            { id: 'stim-frontal', pos: [0, 0, 1.2], label: 'Frontal Lobe' },
+            { id: 'stim-occipital', pos: [0, 0, -1.2], label: 'Occipital Lobe' },
+            { id: 'stim-parietal', pos: [0, 1.0, 0], label: 'Parietal Lobe' },
+            { id: 'stim-temporal', pos: [1.0, 0, 0], label: 'Temporal Lobe' },
+            { id: 'stim-deep', pos: [0, 0, 0], label: 'Deep Structure' }
+        ];
 
-    stimConfig.forEach(conf => {
-        const btn = document.getElementById(conf.id);
-        if (btn) {
-            btn.addEventListener('click', () => {
-                // [Neuro-Weaver] Inject Pulse at defined coordinates
-                renderer.injectStimulus(...conf.pos, 1.0);
+        regionConfig.forEach(conf => {
+            const btn = document.getElementById(conf.id);
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    // [Neuro-Weaver] Inject Pulse at defined coordinates
+                    renderer.injectStimulus(...conf.pos, 1.0);
+                });
+            }
+        });
+
+        // Random Stimulus
+        const randomBtn = document.getElementById('stim-random');
+        if (randomBtn) {
+            randomBtn.addEventListener('click', () => {
+                renderer.injectStimulus(
+                    (Math.random() - 0.5) * 2.0,
+                    (Math.random() - 0.5) * 2.0,
+                    (Math.random() - 0.5) * 2.0,
+                    1.0
+                );
             });
         }
-    });
 
-    // Random Stimulus
-    const randomBtn = document.getElementById('stim-random');
-    if (randomBtn) {
-        randomBtn.addEventListener('click', () => {
-            renderer.injectStimulus(
-                (Math.random() - 0.5) * 2.0,
-                (Math.random() - 0.5) * 2.0,
-                (Math.random() - 0.5) * 2.0,
-                1.0
-            );
-        });
-    }
-
-    // Calm State
-    const calmBtn = document.getElementById('stim-calm');
-    if (calmBtn) {
-        calmBtn.addEventListener('click', () => {
-            renderer.calmState();
-            // Sync UI
-            ['amplitude', 'frequency', 'smoothing'].forEach(k => {
-                inputs[k].value = renderer.params[k];
-                updateParam(k, renderer.params[k]);
+        // Calm State
+        const calmBtn = document.getElementById('stim-calm');
+        if (calmBtn) {
+            calmBtn.addEventListener('click', () => {
+                renderer.calmState();
+                // Sync UI sliders
+                ['amplitude', 'frequency', 'smoothing'].forEach(k => {
+                    if(inputs[k]) inputs[k].value = renderer.params[k];
+                    updateParam(k, renderer.params[k]);
+                });
             });
-        });
-    }
+        }
 
-    // Reset Activity
-    const resetBtn = document.getElementById('stim-reset');
-    if (resetBtn) {
-        resetBtn.addEventListener('click', () => renderer.resetActivity());
-    }
+        // Reset Activity
+        const resetBtn = document.getElementById('stim-reset');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => renderer.resetActivity());
+        }
+    };
+
+    setupButtonListeners();
 }
 
 init();
