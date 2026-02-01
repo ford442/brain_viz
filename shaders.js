@@ -31,7 +31,7 @@ const HELPERS = `
 
         // Frontal Lobe: High retention for complex thought
         if (worldPosition.z > 0.5) {
-            decay = 0.998; // [Neuro-Weaver] V2.6: Hyper-retention
+            decay = 0.998; // [Neuro-Weaver] V2.6: Hyper-retention for deep thought
             diffusion = 0.15;
             // [Neuro-Weaver] Directional Flow: Signals drift from Frontal towards Occipital
             flowBias = -1.0;
@@ -266,8 +266,8 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
 }
 `;
 
-export const sphereVertexShader = `
-// [V2.3] Instanced Sphere Logic
+export const somaVertexShader = `
+// [V2.3] Instanced Soma Logic (Neurons)
 ${CONSTANTS}
 
 struct Uniforms {
@@ -308,7 +308,7 @@ fn getVoxelValue(worldPos: vec3<f32>) -> f32 {
 }
 
 @vertex
-fn main_sphere(input: VertexInput) -> VertexOutput {
+fn main_soma(input: VertexInput) -> VertexOutput {
     var output: VertexOutput;
 
     let activity = getVoxelValue(input.instancePos);
@@ -335,8 +335,8 @@ fn main_sphere(input: VertexInput) -> VertexOutput {
 }
 `;
 
-export const sphereFragmentShader = `
-// [V2.3] Sphere Fragment Shader
+export const somaFragmentShader = `
+// [V2.3] Soma Fragment Shader
 struct FragmentInput {
     @location(0) worldPos: vec3<f32>,
     @location(1) color: vec3<f32>,

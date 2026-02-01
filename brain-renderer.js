@@ -1,7 +1,7 @@
 // brain-renderer.js
 // Verified Neuro-Weaver V2.6 Implementation
 import { BrainGeometry } from './brain-geometry.js';
-import { vertexShader, fragmentShader, computeShader, sphereVertexShader, sphereFragmentShader } from './shaders.js';
+import { vertexShader, fragmentShader, computeShader, somaVertexShader, somaFragmentShader } from './shaders.js';
 import { Mat4 } from './math-utils.js';
 
 export class BrainRenderer {
@@ -220,9 +220,9 @@ export class BrainRenderer {
         ]);
 
         // V2.2 Geometry Buffers: Icosahedron mesh for somas
-        this.sphereVertexBuffer = this.createBuffer(icoVerts, GPUBufferUsage.VERTEX);
-        this.sphereIndexBuffer = this.createBuffer(icoIndices, GPUBufferUsage.INDEX);
-        this.sphereIndexCount = icoIndices.length;
+        this.somaVertexBuffer = this.createBuffer(icoVerts, GPUBufferUsage.VERTEX);
+        this.somaIndexBuffer = this.createBuffer(icoIndices, GPUBufferUsage.INDEX);
+        this.somaIndexCount = icoIndices.length;
     }
 
     initSomaPipeline(renderBindGroupLayout, format) {
@@ -234,8 +234,8 @@ export class BrainRenderer {
         this.somaPipeline = this.device.createRenderPipeline({
             layout: this.device.createPipelineLayout({ bindGroupLayouts: [renderBindGroupLayout] }),
             vertex: {
-                module: this.device.createShaderModule({ code: sphereVertexShader }),
-                entryPoint: 'main_sphere',
+                module: this.device.createShaderModule({ code: somaVertexShader }),
+                entryPoint: 'main_soma',
                 buffers: [
                     // 1. Mesh Geometry (Icosahedron)
                     { arrayStride: 12, attributes: [{ shaderLocation: 0, offset: 0, format: 'float32x3' }] },
@@ -245,7 +245,7 @@ export class BrainRenderer {
                 ]
             },
             fragment: {
-                module: this.device.createShaderModule({ code: sphereFragmentShader }),
+                module: this.device.createShaderModule({ code: somaFragmentShader }),
                 entryPoint: 'main',
                 targets: [{ format: format, blend: { color: { srcFactor: 'src-alpha', dstFactor: 'one', operation: 'add' }, alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' } } }]
             },
@@ -432,9 +432,9 @@ export class BrainRenderer {
             renderPass.setPipeline(this.somaPipeline);
             renderPass.setVertexBuffer(0, this.sphereVertexBuffer); // Mesh
             renderPass.setVertexBuffer(1, this.somaInstanceBuffer); // Positions
-            renderPass.setIndexBuffer(this.sphereIndexBuffer, 'uint16');
+            renderPass.setIndexBuffer(this.somaIndexBuffer, 'uint16');
             // Draw call uses instance count
-            renderPass.drawIndexed(this.sphereIndexCount, this.somaInstanceCount);
+            renderPass.drawIndexed(this.somaIndexCount, this.somaInstanceCount);
 
         } else {
             renderPass.setPipeline(this.pipeline);
