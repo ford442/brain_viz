@@ -1,4 +1,4 @@
-# Project Plan: Neuro-Weaver V2.5
+# Project Plan: Neuro-Weaver V2.6
 
 ## Current Status
 - [x] Basic Brain Visualization (Sphere deformation)
@@ -10,6 +10,7 @@
 - [x] Robustness & API Refinement (V2.2)
 - [x] Evolved Signal Control (V2.3)
 - [x] Automated Feature Verification (Reviewer Compliance)
+- [x] AI "Dreaming" Mode Stability (V2.6)
 
 ## Completed Tasks
 
@@ -51,8 +52,17 @@
 - [x] **Input Validation**: Hardening `injectStimulus` against NaN values.
 - [x] **Re-verification**: Confirmed functionality of all V2.5 features via automated Playwright tests.
 
+## Neuro-Weaver V2.6 Polish (Current)
+- [x] **AI Loop Fix**: Resolved `triggerStimulus` vs `injectStimulus` naming conflict in `main.js` which prevented AI "Dreaming" mode from working.
+- [x] **Version Synchronization**: Updated documentation and logs to reflect V2.6 status across the codebase.
+
 ## Verification Log
 - **Date**: 2026-01-30
-- **Status**: Verified (Re-Validation)
+- **Status**: Verified (V2.5 Re-Validation)
 - **Tests**: `verification/verify_brain_viz.py` passed (UI interactions confirmed).
 - **Notes**: WebGPU rendering verified via console logs ("Renderer V2.5 Verified") and UI state changes in screenshots. Headless rendering limitations noted.
+
+- **Date**: 2026-02-18
+- **Status**: Verified (V2.6 AI Fix)
+- **Tests**: Manual code review and consistency check.
+- **Notes**: Fixed `main.js` crash in AI loop. Confirmed V2.6 version strings in `brain-renderer.js` and `shaders.js`.
