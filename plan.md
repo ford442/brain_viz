@@ -24,6 +24,7 @@
 - [x] **Instanced Somas**: `spherePipeline` implemented to render Icosahedrons at node intersections.
 - [x] **Heatmap Mode**: Style 3.0 implemented in fragment shader with **refined Blue-Cyan-Red** gradient.
 - [x] **Refined Blending**: Updated `fragmentShader` to use `mix()` for smoother activity glow.
+- [x] **Instanced Neurons Fix**: Resolved crash in Connectome mode by correcting `sphereVertexBuffer` to `somaVertexBuffer` (V2.6).
 
 ### 3. 🕹️ Interaction (UI)
 - [x] **UI Controls**: `index.html` and `main.js` updated with Stimulus buttons and Style selector.
@@ -55,6 +56,7 @@
 ## Neuro-Weaver V2.6 Polish (Current)
 - [x] **AI Loop Fix**: Resolved `triggerStimulus` vs `injectStimulus` naming conflict in `main.js` which prevented AI "Dreaming" mode from working.
 - [x] **Version Synchronization**: Updated documentation and logs to reflect V2.6 status across the codebase.
+- [x] **Render Pipeline Fix**: Fixed undefined `sphereVertexBuffer` in `brain-renderer.js` to enable Instanced Somas.
 
 ## Verification Log
 - **Date**: 2026-01-30
@@ -66,3 +68,8 @@
 - **Status**: Verified (V2.6 AI Fix)
 - **Tests**: Manual code review and consistency check.
 - **Notes**: Fixed `main.js` crash in AI loop. Confirmed V2.6 version strings in `brain-renderer.js` and `shaders.js`.
+
+- **Date**: 2026-02-18
+- **Status**: Verified (V2.6 Render Fix)
+- **Tests**: `verification/verify_brain_viz.py`
+- **Notes**: Successfully generated `viz_connectome.png` showing correct rendering without crash.

@@ -430,7 +430,7 @@ export class BrainRenderer {
 
             // 2. Draw Instanced Neurons (Somas) [V2.6 Pipeline]
             renderPass.setPipeline(this.somaPipeline);
-            renderPass.setVertexBuffer(0, this.sphereVertexBuffer); // Mesh
+            renderPass.setVertexBuffer(0, this.somaVertexBuffer); // Mesh
             renderPass.setVertexBuffer(1, this.somaInstanceBuffer); // Positions
             renderPass.setIndexBuffer(this.somaIndexBuffer, 'uint16');
             // Draw call uses instance count
