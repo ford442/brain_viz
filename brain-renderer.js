@@ -278,29 +278,29 @@ export class BrainRenderer {
 
     setParams(newParams) { this.params = { ...this.params, ...newParams }; }
 
-    // [Neuro-Weaver] Task: Stimulus Injection
+    // [Neuro-Weaver] Task: Stimulus Injection (Refactored V2.7)
     // Writes target coordinates to a temporary state, which is uploaded
     // to the Compute Shader uniforms in the next render cycle.
     // [V2.3] Stimulus Injection Logic: Triggers a volumetric pulse at the target coordinate
-    injectStimulus(x, y, z, intensity) {
+    injectStimulus(targetX, targetY, targetZ, pulseIntensity) {
         // [Neuro-Weaver] Validation: Prevent injection of invalid values
-        if ([x, y, z, intensity].some(v => isNaN(v))) {
+        if ([targetX, targetY, targetZ, pulseIntensity].some(val => isNaN(val))) {
              console.warn("Neuro-Weaver: Invalid stimulus parameters ignored");
              return;
         }
 
         // Update state for Compute Shader uniforms
-        // [Neuro-Weaver] V2.6: Clamp coordinates to brain range to prevent out-of-bounds stimulus
-        const CLAMP_RANGE = 1.6;
+        // [Neuro-Weaver] V2.7: Clamp coordinates to brain range (Refactored)
+        const BOUNDARY_LIMIT = 1.6;
         this.stimulus.pos = [
-            Math.max(-CLAMP_RANGE, Math.min(CLAMP_RANGE, x)),
-            Math.max(-CLAMP_RANGE, Math.min(CLAMP_RANGE, y)),
-            Math.max(-CLAMP_RANGE, Math.min(CLAMP_RANGE, z))
+            Math.max(-BOUNDARY_LIMIT, Math.min(BOUNDARY_LIMIT, targetX)),
+            Math.max(-BOUNDARY_LIMIT, Math.min(BOUNDARY_LIMIT, targetY)),
+            Math.max(-BOUNDARY_LIMIT, Math.min(BOUNDARY_LIMIT, targetZ))
         ];
         // Ensure intensity is non-negative
-        this.stimulus.active = Math.max(0.0, intensity);
+        this.stimulus.active = Math.max(0.0, pulseIntensity);
 
-        console.log(`[Neuro-Weaver] Stimulus Injected: Pos(${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}) Intensity(${intensity.toFixed(2)})`);
+        console.log(`[Neuro-Weaver] Stimulus Injected: Pos(${targetX.toFixed(2)}, ${targetY.toFixed(2)}, ${targetZ.toFixed(2)}) Intensity(${pulseIntensity.toFixed(2)})`);
     }
 
     calmState() {

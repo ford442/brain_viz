@@ -97,58 +97,59 @@ async function init() {
     }
 }
 
-// [Neuro-Weaver] Refactored: Modular UI Initialization
-function initUIControls(renderer, inputs, labels) {
+// [Neuro-Weaver] Refactored: Modular UI Initialization (V2.7)
+function initUIControls(renderer, uiInputs, uiLabels) {
     // Helper to update renderer and label
-    const updateParam = (key, value) => {
-        const numVal = parseFloat(value);
-        renderer.setParams({ [key]: numVal });
-        if (labels[key]) labels[key].textContent = numVal.toFixed(2);
+    const syncParam = (paramKey, paramValue) => {
+        const floatVal = parseFloat(paramValue);
+        renderer.setParams({ [paramKey]: floatVal });
+        if (uiLabels[paramKey]) uiLabels[paramKey].textContent = floatVal.toFixed(2);
     };
 
-    // 1. Parameter Sliders
-    Object.keys(inputs).forEach(key => {
-        const input = inputs[key];
-        if (!input) return;
+    // 1. Parameter Sliders (Reactive Inputs)
+    Object.keys(uiInputs).forEach(key => {
+        const inputEl = uiInputs[key];
+        if (!inputEl) return;
 
-        // Set initial value
-        updateParam(key, input.value);
+        // Set initial value from DOM
+        syncParam(key, inputEl.value);
 
-        if (input.tagName === 'SELECT') return;
+        // Skip event listener for Select elements (handled separately)
+        if (inputEl.tagName === 'SELECT') return;
 
-        input.addEventListener('input', (e) => {
-            updateParam(key, e.target.value);
+        inputEl.addEventListener('input', (evt) => {
+            syncParam(key, evt.target.value);
         });
     });
 
-    // 2. Style Selection Logic
-    const styleSelect = document.getElementById('style-mode');
-    if (styleSelect) {
-        styleSelect.addEventListener('change', (e) => {
-            const val = parseFloat(e.target.value);
-            renderer.setParams({ style: val });
+    // 2. Style Selection Logic (Visualization Modes)
+    const styleDropdown = document.getElementById('style-mode');
+    if (styleDropdown) {
+        styleDropdown.addEventListener('change', (evt) => {
+            const selectedStyle = parseFloat(evt.target.value);
+            renderer.setParams({ style: selectedStyle });
 
-            // [Neuro-Weaver] Apply Style Presets
-            const presets = {
-                3: { amplitude: 1.0, smoothing: 0.95 }, // Heatmap
-                2: { frequency: 8.0, smoothing: 0.2, amplitude: 1.5 }, // Connectome
-                1: { frequency: 5.0, smoothing: 0.5 }, // Cyber
-                0: { frequency: 2.0, smoothing: 0.9 } // Organic
+            // [Neuro-Weaver] Apply Style Presets (V2.7 Refined)
+            const stylePresets = {
+                3: { amplitude: 1.0, smoothing: 0.95 }, // Heatmap (Volumetric)
+                2: { frequency: 8.0, smoothing: 0.2, amplitude: 1.5 }, // Connectome (Fibers)
+                1: { frequency: 5.0, smoothing: 0.5 }, // Cyber (Digital)
+                0: { frequency: 2.0, smoothing: 0.9 } // Organic (Surface)
             };
 
-            const preset = presets[val] || presets[0];
-            Object.keys(preset).forEach(k => {
-                renderer.setParams({ [k]: preset[k] });
-                if(inputs[k]) inputs[k].value = preset[k];
-                updateParam(k, preset[k]);
+            const activePreset = stylePresets[selectedStyle] || stylePresets[0];
+            Object.keys(activePreset).forEach(pKey => {
+                renderer.setParams({ [pKey]: activePreset[pKey] });
+                if(uiInputs[pKey]) uiInputs[pKey].value = activePreset[pKey];
+                syncParam(pKey, activePreset[pKey]);
             });
         });
     }
 
-    // 3. Region Stimulation Controls (Refactored for V2.6)
-    const setupButtonListeners = () => {
+    // 3. Region Stimulation Controls (Anatomical Mapping)
+    const bindStimulusButtons = () => {
         // Anatomical Region Configuration
-        const regionConfig = [
+        const brainRegions = [
             { id: 'stim-frontal', pos: [0, 0, 1.2], label: 'Frontal Lobe' },
             { id: 'stim-occipital', pos: [0, 0, -1.2], label: 'Occipital Lobe' },
             { id: 'stim-parietal', pos: [0, 1.0, 0], label: 'Parietal Lobe' },
@@ -156,12 +157,12 @@ function initUIControls(renderer, inputs, labels) {
             { id: 'stim-deep', pos: [0, 0, 0], label: 'Deep Structure' }
         ];
 
-        regionConfig.forEach(conf => {
-            const btn = document.getElementById(conf.id);
-            if (btn) {
-                btn.addEventListener('click', () => {
+        brainRegions.forEach(region => {
+            const btnEl = document.getElementById(region.id);
+            if (btnEl) {
+                btnEl.addEventListener('click', () => {
                     // [Neuro-Weaver] Inject Pulse at defined coordinates
-                    renderer.injectStimulus(...conf.pos, 1.0);
+                    renderer.injectStimulus(...region.pos, 1.0);
                 });
             }
         });
@@ -186,8 +187,8 @@ function initUIControls(renderer, inputs, labels) {
                 renderer.calmState();
                 // Sync UI sliders
                 ['amplitude', 'frequency', 'smoothing'].forEach(k => {
-                    if(inputs[k]) inputs[k].value = renderer.params[k];
-                    updateParam(k, renderer.params[k]);
+                    if(uiInputs[k]) uiInputs[k].value = renderer.params[k];
+                    syncParam(k, renderer.params[k]);
                 });
             });
         }
@@ -199,7 +200,7 @@ function initUIControls(renderer, inputs, labels) {
         }
     };
 
-    setupButtonListeners();
+    bindStimulusButtons();
 }
 
 init();

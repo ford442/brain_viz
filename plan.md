@@ -10,7 +10,7 @@
 - [x] Robustness & API Refinement (V2.2)
 - [x] Evolved Signal Control (V2.3)
 - [x] Automated Feature Verification (Reviewer Compliance)
-- [x] AI "Dreaming" Mode Stability (V2.6)
+- [x] AI "Dreaming" Mode Stability (V2.7)
 
 ## Completed Tasks
 
@@ -53,23 +53,23 @@
 - [x] **Input Validation**: Hardening `injectStimulus` against NaN values.
 - [x] **Re-verification**: Confirmed functionality of all V2.5 features via automated Playwright tests.
 
-## Neuro-Weaver V2.6 Polish (Current)
+## Neuro-Weaver V2.6 Polish
 - [x] **AI Loop Fix**: Resolved `triggerStimulus` vs `injectStimulus` naming conflict in `main.js` which prevented AI "Dreaming" mode from working.
 - [x] **Version Synchronization**: Updated documentation and logs to reflect V2.6 status across the codebase.
 - [x] **Render Pipeline Fix**: Fixed undefined `sphereVertexBuffer` in `brain-renderer.js` to enable Instanced Somas.
 
+## Neuro-Weaver V2.7 AI Restoration (Evolved)
+- [x] **AI Dependencies**: Restored missing `squeezenet1.1.onnx` and WASM files in `public/`.
+- [x] **Vite Configuration**: Added `vite.config.js` with COOP/COEP headers to support Threaded WASM and fixed dynamic import errors.
+- [x] **Verification**: Updated `verify_brain_viz.py` and confirmed AI Model loading and inference loop execution.
+
 ## Verification Log
-- **Date**: 2026-01-30
-- **Status**: Verified (V2.5 Re-Validation)
-- **Tests**: `verification/verify_brain_viz.py` passed (UI interactions confirmed).
-- **Notes**: WebGPU rendering verified via console logs ("Renderer V2.5 Verified") and UI state changes in screenshots. Headless rendering limitations noted.
-
-- **Date**: 2026-02-18
-- **Status**: Verified (V2.6 AI Fix)
-- **Tests**: Manual code review and consistency check.
-- **Notes**: Fixed `main.js` crash in AI loop. Confirmed V2.6 version strings in `brain-renderer.js` and `shaders.js`.
-
 - **Date**: 2026-02-18
 - **Status**: Verified (V2.6 Render Fix)
-- **Tests**: `verification/verify_brain_viz.py`
-- **Notes**: Successfully generated `viz_connectome.png` showing correct rendering without crash.
+- **Tests**: `verification/verify_brain_viz.py` passed.
+- **Notes**: Successfully generated `viz_connectome.png` showing correct rendering.
+
+- **Date**: 2026-02-18 (Session 2)
+- **Status**: Verified (V2.7 AI Restoration)
+- **Tests**: `verification/verify_brain_viz.py` passed with explicit AI Model check.
+- **Notes**: "Model loaded successfully" confirmed. Threaded WASM backend active.

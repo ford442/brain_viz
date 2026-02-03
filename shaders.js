@@ -22,9 +22,9 @@ const HELPERS = `
         return exp(-k * dist * dist);
     }
 
-    // [Neuro-Weaver] Refactored: Region Physics Logic
+    // [Neuro-Weaver] Refactored: Region Physics Logic (Renamed for V2.7)
     // Returns vec3(decay, diffusion, flowBias)
-    fn calculateRegionPhysics(worldPosition: vec3<f32>, style: f32) -> vec3<f32> {
+    fn getRegionPhysics(worldPosition: vec3<f32>, style: f32) -> vec3<f32> {
         var decay = 0.96;
         var diffusion = 0.1;
         var flowBias = 0.0;
@@ -60,8 +60,8 @@ const HELPERS = `
         return vec3<f32>(decay, diffusion, flowBias);
     }
 
-    // [Neuro-Weaver] Refactored: Signal Flow Logic (Renamed from calculatePulse for V2.6)
-    fn computeSignalFlow(vertexIndex: u32, worldPos: vec3<f32>, time: f32, speed: f32, flowScale: f32) -> f32 {
+    // [Neuro-Weaver] Refactored: Signal Flow Logic (Renamed for V2.7)
+    fn calculateSignalFlow(vertexIndex: u32, worldPos: vec3<f32>, time: f32, speed: f32, flowScale: f32) -> f32 {
         // [Neuro-Weaver] Refactored: Calculate flow along the fiber
         let fiberOffset = f32(vertexIndex) * flowScale;
         let spatialPhase = length(worldPos) * 2.0;
@@ -153,8 +153,8 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
         let baseCol = vec3<f32>(0.05, 0.1, 0.15); // Dark Blue Base
         let highlight = vec3<f32>(0.0, 0.8, 1.0); // Cyan Pulse
 
-        // [Neuro-Weaver] Refactored: Use helper function computeSignalFlow
-        signalStrength = computeSignalFlow(vertexIndex, worldPos, uniforms.time, uniforms.flowSpeed, FLOW_SCALE);
+        // [Neuro-Weaver] Refactored: Use helper function calculateSignalFlow
+        signalStrength = calculateSignalFlow(vertexIndex, worldPos, uniforms.time, uniforms.flowSpeed, FLOW_SCALE);
 
         // Blend based on activity
         let glow = mix(baseCol, highlight * 0.5, activity);
@@ -398,7 +398,7 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     // [V2.5] Region Mapping Implementation
     // Defines anatomical zones for varying signal decay and diffusion properties.
     // [Neuro-Weaver] Refactored: Use helper function
-    let physics = calculateRegionPhysics(worldPosition, params.style);
+    let physics = getRegionPhysics(worldPosition, params.style);
     let decay = physics.x;
     let diffusion = physics.y;
     let flowBias = physics.z;
