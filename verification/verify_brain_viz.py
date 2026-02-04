@@ -17,7 +17,11 @@ def verify_brain_viz():
         page = context.new_page()
 
         # Capture console logs
-        page.on("console", lambda msg: print(f"Console: {msg.text}"))
+        console_logs = []
+        def log_console(msg):
+            print(f"Console: {msg.text}")
+            console_logs.append(msg.text)
+        page.on("console", log_console)
 
         try:
             print("Navigating to app...")
@@ -31,6 +35,13 @@ def verify_brain_viz():
 
             # Check Title
             print(f"Page Title: {page.title()}")
+
+            # Verify AI Model Loaded
+            model_loaded = any("Model loaded successfully" in msg for msg in console_logs)
+            if model_loaded:
+                print("VERIFIED: AI Model loaded successfully")
+            else:
+                print("WARNING: AI Model failed to load (Message not found)")
 
             # 1. Screenshot: Connectome Mode
             print("Selecting Connectome Mode...")
