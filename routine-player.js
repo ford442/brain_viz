@@ -11,6 +11,9 @@ export class RoutinePlayer {
         this.loop = false;
         this.timerId = null;
         this.onEvent = null; // Callback for UI updates
+
+        // [Phase 2] Easing Support
+        this.activeLerps = []; // { key, startVal, endVal, startTime, duration }
     }
 
     loadRoutine(routineData, loop = false) {
@@ -26,20 +29,33 @@ export class RoutinePlayer {
         this.isPlaying = true;
         this.startTime = performance.now();
         this.cursor = 0;
+        this.activeLerps = [];
         this.tick();
         console.log("[Routine] Playback started");
     }
 
     stop() {
         this.isPlaying = false;
-        cancelAnimationFrame(this.timerId);
+        if (this.timerId) {
+            cancelAnimationFrame(this.timerId);
+            this.timerId = null;
+        }
         this.cursor = 0;
+        this.activeLerps = [];
     }
 
     tick() {
         if (!this.isPlaying) return;
 
-        const currentTime = (performance.now() - this.startTime) / 1000.0; // Seconds
+        // Safety check: if renderer is lost or invalid
+        if (!this.renderer) {
+            console.error("[Routine] Renderer lost, stopping playback.");
+            this.stop();
+            return;
+        }
+
+        const now = performance.now();
+        const currentTime = (now - this.startTime) / 1000.0; // Seconds
 
         // Execute all events that are due
         while (this.cursor < this.routine.length) {
@@ -54,8 +70,11 @@ export class RoutinePlayer {
             }
         }
 
+        // [Phase 2] Process Active Lerps
+        this.processLerps(now);
+
         // Check for completion
-        if (this.cursor >= this.routine.length) {
+        if (this.cursor >= this.routine.length && this.activeLerps.length === 0) {
             if (this.loop) {
                 console.log("[Routine] Looping...");
                 this.startTime = performance.now();
@@ -68,6 +87,29 @@ export class RoutinePlayer {
         }
 
         this.timerId = requestAnimationFrame(() => this.tick());
+    }
+
+    processLerps(now) {
+        if (this.activeLerps.length === 0) return;
+
+        // Filter out completed lerps after processing
+        this.activeLerps = this.activeLerps.filter(lerp => {
+            const elapsed = (now - lerp.startTime) / 1000.0;
+            const progress = Math.min(1.0, elapsed / lerp.duration);
+
+            // Linear Interpolation
+            const currentVal = lerp.startVal + (lerp.endVal - lerp.startVal) * progress;
+
+            // Update Renderer
+            this.renderer.setParams({ [lerp.key]: currentVal });
+
+            // Notify UI
+            if (this.onEvent) {
+                this.onEvent({ type: 'param', key: lerp.key, value: currentVal });
+            }
+
+            return progress < 1.0;
+        });
     }
 
     executeEvent(event) {
@@ -83,6 +125,9 @@ export class RoutinePlayer {
             case 'param':
                 this.renderer.setParams({ [event.key]: event.value });
                 break;
+            case 'lerp':
+                this.startLerp(event);
+                break;
             case 'calm':
                 this.renderer.calmState();
                 break;
@@ -91,10 +136,32 @@ export class RoutinePlayer {
                 break;
         }
 
-        // Notify listener
+        // Notify listener (except for synthetic param updates handled in processLerps)
         if (this.onEvent) {
             this.onEvent(event);
         }
+    }
+
+    startLerp(event) {
+        // Event: { type: 'lerp', key: 'flowSpeed', value: 8.0, duration: 2.0 }
+        if (!this.renderer.params) return;
+
+        const currentVal = this.renderer.params[event.key];
+        if (currentVal === undefined) {
+            console.warn(`[Routine] Cannot lerp unknown param: ${event.key}`);
+            return;
+        }
+
+        // Remove any existing lerp for this key to avoid conflict
+        this.activeLerps = this.activeLerps.filter(l => l.key !== event.key);
+
+        this.activeLerps.push({
+            key: event.key,
+            startVal: currentVal,
+            endVal: event.value,
+            startTime: performance.now(),
+            duration: event.duration || 1.0
+        });
     }
 
     handleStimulus(evt) {
