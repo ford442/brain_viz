@@ -10,13 +10,13 @@
 ## 🧠 Strategic Roadmap
 
 ### Phase 1: The Sequencing Core (Routine Engine)
-- [ ] **Routine Player Module:** Implement `routine-player.js` to handle time-based event execution (Stimulus, Style Change, Parameter Tweaks).
-- [ ] **Main Integration:** Refactor `main.js` to initialize `RoutinePlayer` and expose it to the UI.
-- [ ] **"Deep Thought" Script:** Hardcode the demo routine (Organic -> Visual Input -> Connectome Processing -> Heatmap Aftermath).
-- [ ] **Playback UI:** Add a "Run Sequence" button and a transport clock (Play/Stop/Loop) to the DOM.
+- [x] **Routine Player Module:** Implement `routine-player.js` to handle time-based event execution (Stimulus, Style Change, Parameter Tweaks).
+- [x] **Main Integration:** Refactor `main.js` to initialize `RoutinePlayer` and expose it to the UI.
+- [x] **"Deep Thought" Script:** Hardcode the demo routine (Organic -> Visual Input -> Connectome Processing -> Heatmap Aftermath).
+- [x] **Playback UI:** Add a "Run Sequence" button and a transport clock (Play/Stop/Loop) to the DOM.
 
 ### Phase 2: Advanced Choreography
-- [ ] **Easing & Transitions:** Upgrade `RoutinePlayer` to support linear interpolation (Lerp) for parameters (e.g., slowly ramp `flowSpeed` from 1.0 to 10.0 over 3 seconds).
+- [x] **Easing & Transitions:** Upgrade `RoutinePlayer` to support linear interpolation (Lerp) for parameters (e.g., slowly ramp `flowSpeed` from 1.0 to 10.0 over 3 seconds).
 - [ ] **Camera Director:** Add a `camera` event type to the routine player to orbit/zoom the camera to specific regions of interest during playback.
 - [ ] **JSON Loader:** Allow loading routines from external `.json` files instead of hardcoded arrays.
 
@@ -30,6 +30,8 @@
 * *Idea:* "Narrative Mode" - Display text overlays synced with brain states (e.g., "Subject recognizes face" -> Temporal Lobe lights up).
 * *Idea:* "Multi-Brain" - Visualize two brains interacting (Mirror Neurons).
 * *Idea:* "fMRI Import" - Parse CSV data to playback real recorded brain activity.
+* *Idea:* "Serotonin Color Shift" - Modulate color palettes (e.g., from cool blues to warm golds) based on simulated neurotransmitter levels.
 
 ## 📜 Changelog
+* [2025-02-05] - Completed Phase 1 (Routine Engine) and Phase 2 (Easing/Transitions). Added Serotonin Color Shift to Dream Log.
 * [Date] - Plan initialized.

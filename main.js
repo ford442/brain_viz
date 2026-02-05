@@ -87,11 +87,11 @@ async function init() {
 
             // 4s: Shift to Frontal (Processing) & Change to Connectome Mode
             { time: 4.0, type: 'style', value: 2 }, // Connectome
-            { time: 4.1, type: 'param', key: 'flowSpeed', value: 2.0 }, // Slow flow
+            { time: 4.1, type: 'lerp', key: 'flowSpeed', value: 2.0, duration: 1.0 }, // Slow down smoothly
             { time: 4.5, type: 'stimulus', target: 'frontal', intensity: 1.5 },
 
             // 6s: Deep Insight (Global Activity)
-            { time: 6.0, type: 'param', key: 'flowSpeed', value: 8.0 }, // Fast flow
+            { time: 6.0, type: 'lerp', key: 'flowSpeed', value: 8.0, duration: 2.0 }, // Speed up smoothly
             { time: 6.0, type: 'stimulus', target: 'deep', intensity: 2.0 },
             { time: 6.2, type: 'stimulus', target: 'temporal', intensity: 1.0 },
             { time: 6.4, type: 'stimulus', target: 'parietal', intensity: 1.0 },
