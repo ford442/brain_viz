@@ -1,10 +1,10 @@
 // Main application entry point
-// Neuro-Weaver V2.6 Implementation - Volumetric Renderer
+// Neuro-Weaver V2.8 Implementation - With Routine Engine
 import { BrainRenderer } from './brain-renderer.js';
 import { InferenceEngine } from './inference-engine.js';
+import { RoutinePlayer } from './routine-player.js'; // [NEW]
 
 async function init() {
-    // [V2.6] Initialize UI and Renderer
     const canvas = document.getElementById('canvas');
     const errorDiv = document.getElementById('error');
     
@@ -15,7 +15,7 @@ async function init() {
         spikeThreshold: document.getElementById('thresh'),
         smoothing: document.getElementById('smooth'),
         sliceZ: document.getElementById('clip'),
-        flowSpeed: document.getElementById('speed'), // V2.3
+        flowSpeed: document.getElementById('speed'),
         style: document.getElementById('style-mode')
     };
     
@@ -25,7 +25,7 @@ async function init() {
         spikeThreshold: document.getElementById('val-thresh'),
         smoothing: document.getElementById('val-smooth'),
         sliceZ: document.getElementById('val-clip'),
-        flowSpeed: document.getElementById('val-speed') // V2.3
+        flowSpeed: document.getElementById('val-speed')
     };
     
     if (!navigator.gpu) {
@@ -38,36 +38,121 @@ async function init() {
         const renderer = new BrainRenderer(canvas);
         await renderer.initialize();
         
-        // Initialize AI components
+        // --- 1. SETUP ROUTINE PLAYER ---
+        // Define region map for easy scripting
+        const regionMap = {
+            'frontal': [0, 0, 1.2],
+            'occipital': [0, 0, -1.2],
+            'parietal': [0, 1.0, 0],
+            'temporal': [1.0, 0, 0],
+            'deep': [0, 0, 0]
+        };
+
+        const player = new RoutinePlayer(renderer, regionMap);
+
+        // Sync UI when routine executes events
+        player.onEvent = (event) => {
+             if (event.type === 'style') {
+                 if (inputs.style) inputs.style.value = event.value;
+             }
+             if (event.type === 'param') {
+                 if (inputs[event.key]) inputs[event.key].value = event.value;
+                 if (labels[event.key]) labels[event.key].textContent = event.value.toFixed(2);
+             }
+             if (event.type === 'calm') {
+                 // Calm state modifies amplitude, frequency, smoothing
+                 // We should sync them if they are in the renderer params
+                 ['amplitude', 'frequency', 'smoothing'].forEach(k => {
+                    if (inputs[k]) inputs[k].value = renderer.params[k];
+                    if (labels[k]) labels[k].textContent = renderer.params[k].toFixed(2);
+                 });
+             }
+             if (event.type === 'reset') {
+                 // Reset might clear buffers but usually doesn't change params,
+                 // but if it did, we'd sync here.
+             }
+        };
+
+        // Define a "Deep Thought" Routine
+        const deepThoughtRoutine = [
+            // 0s: Reset and start in Organic Mode
+            { time: 0.0, type: 'reset' },
+            { time: 0.1, type: 'style', value: 0 }, // Organic
+            { time: 0.1, type: 'calm' },
+
+            // 1s - 3s: Visual Input (Occipital)
+            { time: 1.0, type: 'stimulus', target: 'occipital', intensity: 0.8 },
+            { time: 1.5, type: 'stimulus', target: 'occipital', intensity: 1.0 },
+            { time: 2.0, type: 'stimulus', target: 'occipital', intensity: 1.2 },
+
+            // 4s: Shift to Frontal (Processing) & Change to Connectome Mode
+            { time: 4.0, type: 'style', value: 2 }, // Connectome
+            { time: 4.1, type: 'param', key: 'flowSpeed', value: 2.0 }, // Slow flow
+            { time: 4.5, type: 'stimulus', target: 'frontal', intensity: 1.5 },
+
+            // 6s: Deep Insight (Global Activity)
+            { time: 6.0, type: 'param', key: 'flowSpeed', value: 8.0 }, // Fast flow
+            { time: 6.0, type: 'stimulus', target: 'deep', intensity: 2.0 },
+            { time: 6.2, type: 'stimulus', target: 'temporal', intensity: 1.0 },
+            { time: 6.4, type: 'stimulus', target: 'parietal', intensity: 1.0 },
+
+            // 9s: Heatmap View of the aftermath
+            { time: 9.0, type: 'style', value: 3 }, // Heatmap
+
+            // 12s: Fade out
+            { time: 12.0, type: 'calm' },
+            { time: 13.0, type: 'style', value: 0 } // Back to Organic
+        ];
+
+        // --- UI FOR ROUTINE ---
+        const controls = document.getElementById('controls');
+
+        const routineContainer = document.createElement('div');
+        routineContainer.style.marginTop = "10px";
+        routineContainer.style.paddingTop = "10px";
+        routineContainer.style.borderTop = "1px solid #444";
+
+        const playBtn = document.createElement('button');
+        playBtn.textContent = '▶ Run "Deep Thought" Sequence';
+        playBtn.style.width = "100%";
+        playBtn.style.background = "#0055aa";
+        playBtn.style.color = "white";
+
+        playBtn.onclick = () => {
+            player.loadRoutine(deepThoughtRoutine, false); // Set true to loop
+            player.play();
+        };
+
+        routineContainer.appendChild(playBtn);
+        controls.appendChild(routineContainer);
+
+        // -----------------------------
+
         const inferenceEngine = new InferenceEngine();
         const aiEnabled = await inferenceEngine.initialize();
-        let aiMode = false;
 
-        // Add AI toggle button
+        // [Existing AI Button Code preserved...]
+        let aiMode = false;
         const aiToggle = document.createElement('button');
         aiToggle.textContent = 'Enable AI "Dreaming"';
         aiToggle.style.background = '#424';
         aiToggle.style.borderColor = '#d0d';
         aiToggle.style.color = '#eaffea';
+        aiToggle.style.marginTop = "5px";
         aiToggle.onclick = () => {
             aiMode = !aiMode;
             aiToggle.textContent = aiMode ? 'Disable AI Mode' : 'Enable AI "Dreaming"';
             aiToggle.style.background = aiMode ? '#626' : '#424';
+            // Stop routine if AI starts
+            if(aiMode) player.stop();
         };
-        const controls = document.getElementById('controls');
-        controls.appendChild(document.createElement('hr'));
         controls.appendChild(aiToggle);
 
-        // [Neuro-Weaver] Refactored: Setup UI Controls
-        initUIControls(renderer, inputs, labels);
+        initUIControls(renderer, inputs, labels); // [Reuse existing function]
 
-        console.log('Starting renderer... V2.6 Active');
-
-        // --- AI LOOP ---
+        // AI Loop
         const classMap = new Float32Array(1000 * 3);
-        for(let i=0; i<3000; i++) {
-            classMap[i] = (Math.random() - 0.5) * 2.0;
-        }
+        for(let i=0; i<3000; i++) classMap[i] = (Math.random() - 0.5) * 2.0;
 
         const runAI = async () => {
             if (aiMode && aiEnabled) {
@@ -76,10 +161,7 @@ async function init() {
                     topK.forEach(item => {
                         const idx = item.index;
                         const strength = item.value * 0.5;
-                        const x = classMap[idx*3];
-                        const y = classMap[idx*3+1];
-                        const z = classMap[idx*3+2];
-                        renderer.injectStimulus(x, y, z, strength);
+                        renderer.injectStimulus(classMap[idx*3], classMap[idx*3+1], classMap[idx*3+2], strength);
                     });
                 }
             }
@@ -97,46 +179,34 @@ async function init() {
     }
 }
 
-// [Neuro-Weaver] Refactored: Modular UI Initialization (V2.7)
+// [Include your existing initUIControls function here unchanged]
 function initUIControls(renderer, uiInputs, uiLabels) {
-    // Helper to update renderer and label
     const syncParam = (paramKey, paramValue) => {
         const floatVal = parseFloat(paramValue);
         renderer.setParams({ [paramKey]: floatVal });
         if (uiLabels[paramKey]) uiLabels[paramKey].textContent = floatVal.toFixed(2);
     };
 
-    // 1. Parameter Sliders (Reactive Inputs)
     Object.keys(uiInputs).forEach(key => {
         const inputEl = uiInputs[key];
         if (!inputEl) return;
-
-        // Set initial value from DOM
         syncParam(key, inputEl.value);
-
-        // Skip event listener for Select elements (handled separately)
         if (inputEl.tagName === 'SELECT') return;
-
-        inputEl.addEventListener('input', (evt) => {
-            syncParam(key, evt.target.value);
-        });
+        inputEl.addEventListener('input', (evt) => syncParam(key, evt.target.value));
     });
 
-    // 2. Style Selection Logic (Visualization Modes)
     const styleDropdown = document.getElementById('style-mode');
     if (styleDropdown) {
         styleDropdown.addEventListener('change', (evt) => {
             const selectedStyle = parseFloat(evt.target.value);
             renderer.setParams({ style: selectedStyle });
-
-            // [Neuro-Weaver] Apply Style Presets (V2.7 Refined)
+            // Style presets...
             const stylePresets = {
-                3: { amplitude: 1.0, smoothing: 0.95 }, // Heatmap (Volumetric)
-                2: { frequency: 8.0, smoothing: 0.2, amplitude: 1.5 }, // Connectome (Fibers)
-                1: { frequency: 5.0, smoothing: 0.5 }, // Cyber (Digital)
-                0: { frequency: 2.0, smoothing: 0.9 } // Organic (Surface)
+                3: { amplitude: 1.0, smoothing: 0.95 },
+                2: { frequency: 8.0, smoothing: 0.2, amplitude: 1.5 },
+                1: { frequency: 5.0, smoothing: 0.5 },
+                0: { frequency: 2.0, smoothing: 0.9 }
             };
-
             const activePreset = stylePresets[selectedStyle] || stylePresets[0];
             Object.keys(activePreset).forEach(pKey => {
                 renderer.setParams({ [pKey]: activePreset[pKey] });
@@ -146,61 +216,32 @@ function initUIControls(renderer, uiInputs, uiLabels) {
         });
     }
 
-    // 3. Region Stimulation Controls (Anatomical Mapping)
-    const bindStimulusButtons = () => {
-        // Anatomical Region Configuration
-        const brainRegions = [
-            { id: 'stim-frontal', pos: [0, 0, 1.2], label: 'Frontal Lobe' },
-            { id: 'stim-occipital', pos: [0, 0, -1.2], label: 'Occipital Lobe' },
-            { id: 'stim-parietal', pos: [0, 1.0, 0], label: 'Parietal Lobe' },
-            { id: 'stim-temporal', pos: [1.0, 0, 0], label: 'Temporal Lobe' },
-            { id: 'stim-deep', pos: [0, 0, 0], label: 'Deep Structure' }
-        ];
+    // Stimulus buttons logic...
+    const brainRegions = [
+        { id: 'stim-frontal', pos: [0, 0, 1.2] },
+        { id: 'stim-occipital', pos: [0, 0, -1.2] },
+        { id: 'stim-parietal', pos: [0, 1.0, 0] },
+        { id: 'stim-temporal', pos: [1.0, 0, 0] },
+        { id: 'stim-deep', pos: [0, 0, 0] }
+    ];
+    brainRegions.forEach(region => {
+        const btn = document.getElementById(region.id);
+        if(btn) btn.addEventListener('click', () => renderer.injectStimulus(...region.pos, 1.0));
+    });
 
-        brainRegions.forEach(region => {
-            const btnEl = document.getElementById(region.id);
-            if (btnEl) {
-                btnEl.addEventListener('click', () => {
-                    // [Neuro-Weaver] Inject Pulse at defined coordinates
-                    renderer.injectStimulus(...region.pos, 1.0);
-                });
-            }
+    document.getElementById('stim-random')?.addEventListener('click', () => {
+        renderer.injectStimulus((Math.random()-0.5)*2, (Math.random()-0.5)*2, (Math.random()-0.5)*2, 1.0);
+    });
+
+    document.getElementById('stim-calm')?.addEventListener('click', () => {
+        renderer.calmState();
+        ['amplitude', 'frequency', 'smoothing'].forEach(k => {
+            if(uiInputs[k]) uiInputs[k].value = renderer.params[k];
+            syncParam(k, renderer.params[k]);
         });
+    });
 
-        // Random Stimulus
-        const randomBtn = document.getElementById('stim-random');
-        if (randomBtn) {
-            randomBtn.addEventListener('click', () => {
-                renderer.injectStimulus(
-                    (Math.random() - 0.5) * 2.0,
-                    (Math.random() - 0.5) * 2.0,
-                    (Math.random() - 0.5) * 2.0,
-                    1.0
-                );
-            });
-        }
-
-        // Calm State
-        const calmBtn = document.getElementById('stim-calm');
-        if (calmBtn) {
-            calmBtn.addEventListener('click', () => {
-                renderer.calmState();
-                // Sync UI sliders
-                ['amplitude', 'frequency', 'smoothing'].forEach(k => {
-                    if(uiInputs[k]) uiInputs[k].value = renderer.params[k];
-                    syncParam(k, renderer.params[k]);
-                });
-            });
-        }
-
-        // Reset Activity
-        const resetBtn = document.getElementById('stim-reset');
-        if (resetBtn) {
-            resetBtn.addEventListener('click', () => renderer.resetActivity());
-        }
-    };
-
-    bindStimulusButtons();
+    document.getElementById('stim-reset')?.addEventListener('click', () => renderer.resetActivity());
 }
 
 init();
