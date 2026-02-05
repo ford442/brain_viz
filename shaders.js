@@ -24,6 +24,7 @@ const HELPERS = `
 
     // [Neuro-Weaver] Refactored: Region Physics Logic (Renamed for V2.7)
     // Returns vec3(decay, diffusion, flowBias)
+    // [Neuro-Weaver] Defines anatomical zones: Frontal, Occipital, Temporal, Parietal
     fn getRegionPhysics(worldPosition: vec3<f32>, style: f32) -> vec3<f32> {
         var decay = 0.96;
         var diffusion = 0.1;
@@ -148,17 +149,20 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     // --- CONNECTOME MODE ---
     // [V2.3] Traveling Pulse Logic (Activity Trails)
     // [Neuro-Weaver] Simulates information flow along the axon fibers using spatial phase offset
+    // Signals travel along the fibers based on vertex index and flow speed
     if (uniforms.style >= 2.0 && uniforms.style < 3.0) {
         finalPos = input.position;
-        let baseCol = vec3<f32>(0.05, 0.1, 0.15); // Dark Blue Base
-        let highlight = vec3<f32>(0.0, 0.8, 1.0); // Cyan Pulse
+        let baseColor = vec3<f32>(0.05, 0.1, 0.15); // Dark Blue Base
+        let pulseColor = vec3<f32>(0.0, 0.8, 1.0); // Cyan Pulse
 
         // [Neuro-Weaver] Refactored: Use helper function calculateSignalFlow
         signalStrength = calculateSignalFlow(vertexIndex, worldPos, uniforms.time, uniforms.flowSpeed, FLOW_SCALE);
 
         // Blend based on activity
-        let glow = mix(baseCol, highlight * 0.5, activity);
-        let flash = highlight * signalStrength * activity;
+        // Glow is the resting state activity
+        let glow = mix(baseColor, pulseColor * 0.5, activity);
+        // Flash is the moving signal pulse
+        let flash = pulseColor * signalStrength * activity;
 
         finalColor = glow + flash;
         finalNormal = vec3<f32>(0.0, 1.0, 0.0);
@@ -166,6 +170,7 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     // --- HEATMAP MODE ---
     // [V2.3] Volumetric Heatmap Style
     // [Neuro-Weaver] Style 3.0: Volumetric Temperature Gradient
+    // Renders the brain surface using a thermal color ramp derived from volumetric activity
     else if (uniforms.style >= 3.0) {
         finalPos = input.position;
         // [Neuro-Weaver] V2.6 Refactor: Use helper for Heatmap Color
@@ -403,13 +408,19 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     let diffusion = physics.y;
     let flowBias = physics.z;
 
-    // Diffusion Step
+    // [Neuro-Weaver V2.8] Diffusion Step (6-Neighbor Laplacian)
     var neighborSum = 0.0;
     var neighborCount = 0.0;
+
+    // X-Axis Neighbors
     if (x > 0u) { neighborSum += activityTensor[getIndex(x - 1u, y, z)]; neighborCount += 1.0; }
     if (x < dim - 1u) { neighborSum += activityTensor[getIndex(x + 1u, y, z)]; neighborCount += 1.0; }
+
+    // Y-Axis Neighbors
     if (y > 0u) { neighborSum += activityTensor[getIndex(x, y - 1u, z)]; neighborCount += 1.0; }
     if (y < dim - 1u) { neighborSum += activityTensor[getIndex(x, y + 1u, z)]; neighborCount += 1.0; }
+
+    // Z-Axis Neighbors
     if (z > 0u) { neighborSum += activityTensor[getIndex(x, y, z - 1u)]; neighborCount += 1.0; }
     if (z < dim - 1u) { neighborSum += activityTensor[getIndex(x, y, z + 1u)]; neighborCount += 1.0; }
 
@@ -430,6 +441,7 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     // [Neuro-Weaver] 2. Stimulus Injection
     // Direct voxel manipulation from CPU events (injected via uniforms)
     if (params.stimulusActive > 0.0) {
+        // Calculate distance from stimulus center
         let d = distance(worldPosition, params.stimulusPos);
         // Use wider Gaussian for more organic impact
         let signal = gaussian_pulse(d, 0.5);
