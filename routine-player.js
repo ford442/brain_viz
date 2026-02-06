@@ -1,5 +1,15 @@
 // routine-player.js
 // orchestrates timed sequences of brain activity
+
+const CAMERA_PRESETS = {
+    'frontal': { rotation: { x: 0.1, y: 0 }, zoom: 3.0 },     // Face on
+    'occipital': { rotation: { x: 0.2, y: Math.PI }, zoom: 3.0 }, // Back
+    'temporal': { rotation: { x: 0, y: -Math.PI / 2 }, zoom: 3.5 }, // Right Side
+    'parietal': { rotation: { x: 1.0, y: 0 }, zoom: 3.5 },    // Top-ish
+    'deep': { rotation: { x: 0.3, y: 0.3 }, zoom: 2.5 },      // Close up angle
+    'global': { rotation: { x: 0.3, y: 0 }, zoom: 3.5 }       // Standard view
+};
+
 export class RoutinePlayer {
     constructor(renderer, regionMap) {
         this.renderer = renderer;
@@ -134,6 +144,9 @@ export class RoutinePlayer {
             case 'reset':
                 this.renderer.resetActivity();
                 break;
+            case 'camera':
+                this.handleCamera(event);
+                break;
         }
 
         // Notify listener (except for synthetic param updates handled in processLerps)
@@ -176,5 +189,32 @@ export class RoutinePlayer {
 
         // Inject
         this.renderer.injectStimulus(coords[0], coords[1], coords[2], evt.intensity || 1.0);
+    }
+
+    handleCamera(evt) {
+        // Event: { type: 'camera', target: 'frontal', zoom: 4.0 }
+        // OR: { type: 'camera', rotation: {x:0, y:0}, zoom: 3.5 }
+
+        let params = {};
+
+        if (typeof evt.target === 'string') {
+            const preset = CAMERA_PRESETS[evt.target];
+            if (preset) {
+                params = { ...preset };
+            } else {
+                console.warn(`[Routine] Unknown camera target: ${evt.target}`);
+            }
+        } else if (evt.rotation) {
+            params.rotation = evt.rotation;
+        }
+
+        // Override zoom if explicitly provided in event, even if using a preset
+        if (evt.zoom !== undefined) {
+            params.zoom = evt.zoom;
+        }
+
+        if (this.renderer.setCameraParams) {
+            this.renderer.setCameraParams(params);
+        }
     }
 }
