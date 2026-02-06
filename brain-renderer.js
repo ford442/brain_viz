@@ -113,6 +113,9 @@ export class BrainRenderer {
             ]
         });
         
+        // Create Bind Group for Rendering
+        // Binding 0: Uniforms (MVP, Time, Style, etc.)
+        // Binding 1: Volumetric Data (Read-Only Storage)
         this.bindGroup = this.device.createBindGroup({
             layout: renderBindGroupLayout,
             entries: [
@@ -177,8 +180,10 @@ export class BrainRenderer {
         // VOXEL DATA
         // [Neuro-Weaver] 3D Texture Evolution: Flattened storage buffer for volumetric data
         this.voxelBufferSize = this.voxelCount;
+
+        // Create Storage Buffer for Tensor Data (Read/Write in Compute, Read-Only in Vertex)
         this.tensorBuffer = this.device.createBuffer({
-            size: this.voxelBufferSize * 4,
+            size: this.voxelBufferSize * 4, // 32x32x32 floats
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
         });
 
@@ -186,10 +191,16 @@ export class BrainRenderer {
         // 48 floats (192 bytes)
         // Layout:
         // MVP (64), Model (64), Time(4), Style(4), Pad(8), ClipPlane(16)
-        this.uniformBuffer = this.device.createBuffer({ size: 192, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+        this.uniformBuffer = this.device.createBuffer({
+            size: 192,
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+        });
 
         // V2.2 Fix: Increased to 64 bytes for std140 alignment of stimulusActive (offset 48)
-        this.computeUniformBuffer = this.device.createBuffer({ size: 64, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+        this.computeUniformBuffer = this.device.createBuffer({
+            size: 64,
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+        });
     }
 
     // [Neuro-Weaver] Refactored: Initialize Soma Geometry
@@ -231,10 +242,14 @@ export class BrainRenderer {
         // Renders soma spheres at circuit intersections using instancing.
         // Verified: Uses explicit soma positions from BrainGeometry.
         // This pipeline enables the "Structured Data" visualization by showing discrete nodes.
+
+        const somaModule = this.device.createShaderModule({ code: somaVertexShader });
+        const somaFragModule = this.device.createShaderModule({ code: somaFragmentShader });
+
         this.somaPipeline = this.device.createRenderPipeline({
             layout: this.device.createPipelineLayout({ bindGroupLayouts: [renderBindGroupLayout] }),
             vertex: {
-                module: this.device.createShaderModule({ code: somaVertexShader }),
+                module: somaModule,
                 entryPoint: 'main_soma',
                 buffers: [
                     // 1. Mesh Geometry (Icosahedron)
@@ -245,7 +260,7 @@ export class BrainRenderer {
                 ]
             },
             fragment: {
-                module: this.device.createShaderModule({ code: somaFragmentShader }),
+                module: somaFragModule,
                 entryPoint: 'main',
                 targets: [{ format: format, blend: { color: { srcFactor: 'src-alpha', dstFactor: 'one', operation: 'add' }, alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' } } }]
             },
@@ -282,9 +297,10 @@ export class BrainRenderer {
     // Writes target coordinates to a temporary state, which is uploaded
     // to the Compute Shader uniforms in the next render cycle.
     // [V2.3] Stimulus Injection Logic: Triggers a volumetric pulse at the target coordinate
-    injectStimulus(targetX, targetY, targetZ, pulseIntensity) {
+    // [Neuro-Weaver V2.8] Updated signature for clarity
+    injectStimulus(targetX, targetY, targetZ, intensity) {
         // [Neuro-Weaver] Validation: Prevent injection of invalid values
-        if ([targetX, targetY, targetZ, pulseIntensity].some(val => isNaN(val))) {
+        if ([targetX, targetY, targetZ, intensity].some(val => isNaN(val))) {
              console.warn("Neuro-Weaver: Invalid stimulus parameters ignored");
              return;
         }
@@ -298,9 +314,9 @@ export class BrainRenderer {
             Math.max(-BOUNDARY_LIMIT, Math.min(BOUNDARY_LIMIT, targetZ))
         ];
         // Ensure intensity is non-negative
-        this.stimulus.active = Math.max(0.0, pulseIntensity);
+        this.stimulus.active = Math.max(0.0, intensity);
 
-        console.log(`[Neuro-Weaver] Stimulus Injected: Pos(${targetX.toFixed(2)}, ${targetY.toFixed(2)}, ${targetZ.toFixed(2)}) Intensity(${pulseIntensity.toFixed(2)})`);
+        console.log(`[Neuro-Weaver] Stimulus Injected: Pos(${targetX.toFixed(2)}, ${targetY.toFixed(2)}, ${targetZ.toFixed(2)}) Intensity(${intensity.toFixed(2)})`);
     }
 
     calmState() {

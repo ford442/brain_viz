@@ -181,12 +181,14 @@ async function init() {
 
 // [Include your existing initUIControls function here unchanged]
 function initUIControls(renderer, uiInputs, uiLabels) {
+    // [Neuro-Weaver] Sync UI State with Renderer Params
     const syncParam = (paramKey, paramValue) => {
         const floatVal = parseFloat(paramValue);
         renderer.setParams({ [paramKey]: floatVal });
         if (uiLabels[paramKey]) uiLabels[paramKey].textContent = floatVal.toFixed(2);
     };
 
+    // Attach listeners to all inputs
     Object.keys(uiInputs).forEach(key => {
         const inputEl = uiInputs[key];
         if (!inputEl) return;
@@ -216,17 +218,24 @@ function initUIControls(renderer, uiInputs, uiLabels) {
         });
     }
 
-    // Stimulus buttons logic...
-    const brainRegions = [
-        { id: 'stim-frontal', pos: [0, 0, 1.2] },
-        { id: 'stim-occipital', pos: [0, 0, -1.2] },
-        { id: 'stim-parietal', pos: [0, 1.0, 0] },
-        { id: 'stim-temporal', pos: [1.0, 0, 0] },
-        { id: 'stim-deep', pos: [0, 0, 0] }
+    // [Neuro-Weaver] Stimulus Button Event Listeners
+    // Maps UI buttons to 3D brain coordinates for injection
+    const regions = [
+        { id: 'stim-frontal', pos: [0, 0, 1.2] },   // Frontal Lobe
+        { id: 'stim-occipital', pos: [0, 0, -1.2] }, // Occipital Lobe
+        { id: 'stim-parietal', pos: [0, 1.0, 0] },   // Parietal Lobe
+        { id: 'stim-temporal', pos: [1.0, 0, 0] },   // Temporal Lobe
+        { id: 'stim-deep', pos: [0, 0, 0] }          // Deep Structures
     ];
-    brainRegions.forEach(region => {
+
+    regions.forEach(region => {
         const btn = document.getElementById(region.id);
-        if(btn) btn.addEventListener('click', () => renderer.injectStimulus(...region.pos, 1.0));
+        if (btn) {
+            btn.addEventListener('click', () => {
+                // Inject stimulus at region coordinates with intensity 1.0
+                renderer.injectStimulus(region.pos[0], region.pos[1], region.pos[2], 1.0);
+            });
+        }
     });
 
     document.getElementById('stim-random')?.addEventListener('click', () => {
