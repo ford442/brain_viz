@@ -18,6 +18,7 @@ export class BrainRenderer {
         this.rotation = { x: 0, y: 0 };
         this.targetRotation = { x: 0.3, y: 0 };
         this.zoom = 3.5;
+        this.targetZoom = 3.5; // [Neuro-Weaver] Smooth Zoom Target
         this.time = 0;
         this.isRunning = false;
         
@@ -62,8 +63,19 @@ export class BrainRenderer {
         this.canvas.addEventListener('mouseup', () => { isDragging = false; });
         this.canvas.addEventListener('wheel', (e) => {
             e.preventDefault();
-            this.zoom = Math.max(2, Math.min(10, this.zoom + e.deltaY * 0.01));
+            this.targetZoom = Math.max(2, Math.min(10, this.targetZoom + e.deltaY * 0.01));
         });
+    }
+
+    // [Neuro-Weaver] Camera Control API
+    setCameraParams({ rotation, zoom }) {
+        if (rotation) {
+            if (rotation.x !== undefined) this.targetRotation.x = rotation.x;
+            if (rotation.y !== undefined) this.targetRotation.y = rotation.y;
+        }
+        if (zoom !== undefined) {
+            this.targetZoom = Math.max(2, Math.min(10, zoom));
+        }
     }
 
     async initialize() {
@@ -338,6 +350,7 @@ export class BrainRenderer {
     updateUniforms() {
         this.rotation.x += (this.targetRotation.x - this.rotation.x) * 0.1;
         this.rotation.y += (this.targetRotation.y - this.rotation.y) * 0.1;
+        this.zoom += (this.targetZoom - this.zoom) * 0.1;
         
         const aspect = this.canvas.width / this.canvas.height;
         const projection = Mat4.perspective(Math.PI / 4, aspect, 0.1, 100.0);
