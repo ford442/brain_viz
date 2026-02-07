@@ -1,0 +1,28 @@
+[
+    { "time": 0.0, "type": "reset" },
+    { "time": 0.0, "type": "camera", "target": "global" },
+    { "time": 0.1, "type": "style", "value": 0 },
+    { "time": 0.1, "type": "calm" },
+
+    { "time": 1.0, "type": "camera", "target": "occipital", "zoom": 4.5 },
+    { "time": 1.0, "type": "stimulus", "target": "occipital", "intensity": 0.8 },
+    { "time": 1.5, "type": "stimulus", "target": "occipital", "intensity": 1.0 },
+    { "time": 2.0, "type": "stimulus", "target": "occipital", "intensity": 1.2 },
+
+    { "time": 4.0, "type": "camera", "target": "frontal" },
+    { "time": 4.0, "type": "style", "value": 2 },
+    { "time": 4.1, "type": "lerp", "key": "flowSpeed", "value": 2.0, "duration": 1.0 },
+    { "time": 4.5, "type": "stimulus", "target": "frontal", "intensity": 1.5 },
+
+    { "time": 6.0, "type": "camera", "target": "parietal" },
+    { "time": 6.0, "type": "lerp", "key": "flowSpeed", "value": 8.0, "duration": 2.0 },
+    { "time": 6.0, "type": "stimulus", "target": "deep", "intensity": 2.0 },
+    { "time": 6.2, "type": "stimulus", "target": "temporal", "intensity": 1.0 },
+    { "time": 6.4, "type": "stimulus", "target": "parietal", "intensity": 1.0 },
+
+    { "time": 9.0, "type": "camera", "target": "global", "zoom": 2.8 },
+    { "time": 9.0, "type": "style", "value": 3 },
+
+    { "time": 12.0, "type": "calm" },
+    { "time": 13.0, "type": "style", "value": 0 }
+]
