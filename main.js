@@ -73,42 +73,6 @@ async function init() {
              }
         };
 
-        // Define a "Deep Thought" Routine
-        const deepThoughtRoutine = [
-            // 0s: Reset and start in Organic Mode, Global View
-            { time: 0.0, type: 'reset' },
-            { time: 0.0, type: 'camera', target: 'global' },
-            { time: 0.1, type: 'style', value: 0 }, // Organic
-            { time: 0.1, type: 'calm' },
-
-            // 1s - 3s: Visual Input (Occipital) - Zoom in on back of brain
-            { time: 1.0, type: 'camera', target: 'occipital', zoom: 4.5 },
-            { time: 1.0, type: 'stimulus', target: 'occipital', intensity: 0.8 },
-            { time: 1.5, type: 'stimulus', target: 'occipital', intensity: 1.0 },
-            { time: 2.0, type: 'stimulus', target: 'occipital', intensity: 1.2 },
-
-            // 4s: Shift to Frontal (Processing) - Rotate to face
-            { time: 4.0, type: 'camera', target: 'frontal' },
-            { time: 4.0, type: 'style', value: 2 }, // Connectome
-            { time: 4.1, type: 'lerp', key: 'flowSpeed', value: 2.0, duration: 1.0 }, // Slow down smoothly
-            { time: 4.5, type: 'stimulus', target: 'frontal', intensity: 1.5 },
-
-            // 6s: Deep Insight (Global Activity) - Zoom out slightly, maybe look from top
-            { time: 6.0, type: 'camera', target: 'parietal' },
-            { time: 6.0, type: 'lerp', key: 'flowSpeed', value: 8.0, duration: 2.0 }, // Speed up smoothly
-            { time: 6.0, type: 'stimulus', target: 'deep', intensity: 2.0 },
-            { time: 6.2, type: 'stimulus', target: 'temporal', intensity: 1.0 },
-            { time: 6.4, type: 'stimulus', target: 'parietal', intensity: 1.0 },
-
-            // 9s: Heatmap View of the aftermath - Wide angle
-            { time: 9.0, type: 'camera', target: 'global', zoom: 2.8 },
-            { time: 9.0, type: 'style', value: 3 }, // Heatmap
-
-            // 12s: Fade out
-            { time: 12.0, type: 'calm' },
-            { time: 13.0, type: 'style', value: 0 } // Back to Organic
-        ];
-
         // --- UI FOR ROUTINE ---
         const controls = document.getElementById('controls');
 
@@ -123,12 +87,46 @@ async function init() {
         playBtn.style.background = "#0055aa";
         playBtn.style.color = "white";
 
-        playBtn.onclick = () => {
-            player.loadRoutine(deepThoughtRoutine, false); // Set true to loop
+        playBtn.onclick = async () => {
+            await player.loadRoutineFromFile('routines/deep_thought.json', false);
             player.play();
         };
 
         routineContainer.appendChild(playBtn);
+
+        // [New] JSON Loader Input
+        const fileLabel = document.createElement('label');
+        fileLabel.textContent = "Load Custom Routine (.json)";
+        fileLabel.style.marginTop = "10px";
+        routineContainer.appendChild(fileLabel);
+
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.json';
+        fileInput.style.color = "#aaa";
+        fileInput.style.marginTop = "5px";
+        fileInput.style.width = "100%";
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                try {
+                    const routineData = JSON.parse(evt.target.result);
+                    player.loadRoutine(routineData, false);
+                    player.play();
+                    console.log(`[Main] Loaded custom routine: ${file.name}`);
+                } catch (err) {
+                    console.error("Invalid JSON:", err);
+                    alert("Failed to parse routine JSON.");
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        routineContainer.appendChild(fileInput);
         controls.appendChild(routineContainer);
 
         // -----------------------------

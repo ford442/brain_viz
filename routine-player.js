@@ -34,6 +34,20 @@ export class RoutinePlayer {
         console.log(`[Routine] Loaded ${this.routine.length} events.`);
     }
 
+    async loadRoutineFromFile(url, loop = false) {
+        try {
+            console.log(`[Routine] Fetching routine from: ${url}`);
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`Failed to load routine: ${response.statusText}`);
+            }
+            const routineData = await response.json();
+            this.loadRoutine(routineData, loop);
+        } catch (error) {
+            console.error('[Routine] Error loading routine file:', error);
+        }
+    }
+
     play() {
         if (this.routine.length === 0) return;
         this.isPlaying = true;

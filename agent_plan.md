@@ -18,7 +18,7 @@
 ### Phase 2: Advanced Choreography
 - [x] **Easing & Transitions:** Upgrade `RoutinePlayer` to support linear interpolation (Lerp) for parameters (e.g., slowly ramp `flowSpeed` from 1.0 to 10.0 over 3 seconds).
 - [x] **Camera Director:** Add a `camera` event type to the routine player to orbit/zoom the camera to specific regions of interest during playback.
-- [ ] **JSON Loader:** Allow loading routines from external `.json` files instead of hardcoded arrays.
+- [x] **JSON Loader:** Allow loading routines from external `.json` files instead of hardcoded arrays.
 
 ### Phase 3: "Brain DJ" Mode (Live Performance)
 - [ ] **Keyboard Triggers:** Bind number keys (1-9) to specific mini-routines (e.g., Press '1' for "Sudden Surprise", '2' for "Calm Down").
@@ -32,8 +32,10 @@
 * *Idea:* "fMRI Import" - Parse CSV data to playback real recorded brain activity.
 * *Idea:* "Serotonin Color Shift" - Modulate color palettes (e.g., from cool blues to warm golds) based on simulated neurotransmitter levels.
 * *Idea:* "Synaptic Sparkles" - Particle system bursts at intersection points when signal intensity spikes.
+* *Idea:* "Web Audio Reactivity" - Visualize music frequencies mapped to brain regions.
 
 ## 📜 Changelog
+* [2025-02-07] - Completed Phase 2 (JSON Loader). Implemented JSON routine loading and file upload support. Added "Web Audio Reactivity" to Dream Log.
 * [2025-02-06] - Completed Phase 2 (Camera Director). Implemented smooth zoom and camera event handling. Added "Synaptic Sparkles" to Dream Log.
 * [2025-02-05] - Completed Phase 1 (Routine Engine) and Phase 2 (Easing/Transitions). Added Serotonin Color Shift to Dream Log.
 * [Date] - Plan initialized.
