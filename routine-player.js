@@ -48,6 +48,15 @@ export class RoutinePlayer {
         }
     }
 
+    /**
+     * Immediate playback of a transient routine
+     * @param {Array} routineData - The sequence of events
+     */
+    playNow(routineData) {
+        this.loadRoutine(routineData, false);
+        this.play();
+    }
+
     play() {
         if (this.routine.length === 0) return;
         this.isPlaying = true;

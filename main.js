@@ -4,6 +4,29 @@ import { BrainRenderer } from './brain-renderer.js';
 import { InferenceEngine } from './inference-engine.js';
 import { RoutinePlayer } from './routine-player.js'; // [NEW]
 
+// [Phase 3] Keyboard Triggered Routines
+const MINI_ROUTINES = {
+    '1': [ // Surprise
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'param', key: 'frequency', value: 12.0 },
+        { time: 0.0, type: 'param', key: 'amplitude', value: 2.0 },
+        { time: 0.0, type: 'camera', zoom: 2.5 }, // Zoom in
+        { time: 0.1, type: 'stimulus', target: 'deep', intensity: 8.0 },
+        { time: 0.5, type: 'lerp', key: 'amplitude', value: 0.5, duration: 1.5 }
+    ],
+    '2': [ // Calm
+        { time: 0.0, type: 'calm' }, // Helper to reset params
+        { time: 0.0, type: 'lerp', key: 'frequency', value: 0.5, duration: 2.0 },
+        { time: 0.0, type: 'camera', target: 'global' } // Reset cam
+    ],
+    '3': [ // Scan
+        { time: 0.0, type: 'param', key: 'sliceZ', value: -1.5 },
+        { time: 0.0, type: 'camera', target: 'parietal' },
+        { time: 0.5, type: 'lerp', key: 'sliceZ', value: 1.5, duration: 4.0 },
+        { time: 5.0, type: 'param', key: 'sliceZ', value: 2.0 } // Reset slice
+    ]
+};
+
 async function init() {
     const canvas = document.getElementById('canvas');
     const errorDiv = document.getElementById('error');
@@ -49,6 +72,30 @@ async function init() {
         };
 
         const player = new RoutinePlayer(renderer, regionMap);
+
+        // --- KEYBOARD TRIGGERS ---
+        document.addEventListener('keydown', (e) => {
+            const routine = MINI_ROUTINES[e.key];
+            if (routine) {
+                console.log(`[Main] Triggering Mini-Routine: ${e.key}`);
+                player.playNow(routine);
+            }
+        });
+
+        // Legend UI
+        const legend = document.createElement('div');
+        legend.id = 'keyboard-legend';
+        legend.style.position = 'absolute';
+        legend.style.bottom = '10px';
+        legend.style.right = '10px';
+        legend.style.background = 'rgba(0, 0, 0, 0.7)';
+        legend.style.color = '#fff';
+        legend.style.padding = '8px';
+        legend.style.fontFamily = 'monospace';
+        legend.style.fontSize = '12px';
+        legend.style.pointerEvents = 'none';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan';
+        document.body.appendChild(legend);
 
         // Sync UI when routine executes events
         player.onEvent = (event) => {
