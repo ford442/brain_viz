@@ -3,6 +3,7 @@
 import { BrainRenderer } from './brain-renderer.js';
 import { InferenceEngine } from './inference-engine.js';
 import { RoutinePlayer } from './routine-player.js'; // [NEW]
+import { AudioReactor } from './audio-reactor.js';   // [NEW]
 
 // [Phase 3] Keyboard Triggered Routines
 const MINI_ROUTINES = {
@@ -72,6 +73,7 @@ async function init() {
         };
 
         const player = new RoutinePlayer(renderer, regionMap);
+        const audioReactor = new AudioReactor();
 
         // --- KEYBOARD TRIGGERS ---
         document.addEventListener('keydown', (e) => {
@@ -198,7 +200,41 @@ async function init() {
         };
         controls.appendChild(aiToggle);
 
+        // [Audio Reactivity Button]
+        const audioBtn = document.createElement('button');
+        audioBtn.textContent = 'Enable Audio Reactivity 🎤';
+        audioBtn.style.background = '#442';
+        audioBtn.style.borderColor = '#dd4';
+        audioBtn.style.color = '#ff9';
+        audioBtn.style.marginTop = "5px";
+        audioBtn.onclick = async () => {
+            if (!audioReactor.isActive) {
+                await audioReactor.start();
+                audioBtn.textContent = 'Disable Audio Reactivity 🔇';
+                audioBtn.style.background = '#662';
+            } else {
+                audioReactor.stop();
+                audioBtn.textContent = 'Enable Audio Reactivity 🎤';
+                audioBtn.style.background = '#442';
+            }
+        };
+        controls.appendChild(audioBtn);
+
         initUIControls(renderer, inputs, labels); // [Reuse existing function]
+
+        // Audio Loop
+        const runAudio = () => {
+            if (audioReactor.isActive) {
+                audioReactor.update(renderer);
+                // Sync UI sliders
+                if(inputs.amplitude) inputs.amplitude.value = renderer.params.amplitude;
+                if(labels.amplitude) labels.amplitude.textContent = renderer.params.amplitude.toFixed(2);
+                if(inputs.flowSpeed) inputs.flowSpeed.value = renderer.params.flowSpeed;
+                if(labels.flowSpeed) labels.flowSpeed.textContent = renderer.params.flowSpeed.toFixed(2);
+            }
+            requestAnimationFrame(runAudio);
+        };
+        runAudio();
 
         // AI Loop
         const classMap = new Float32Array(1000 * 3);
