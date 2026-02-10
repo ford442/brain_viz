@@ -24,11 +24,15 @@
 - [x] **Keyboard Triggers:** Bind number keys (1-9) to specific mini-routines (e.g., Press '1' for "Sudden Surprise", '2' for "Calm Down").
 - [x] **Audio Reactivity:** Connect the Web Audio API to drive `amplitude` and `stimulus` intensity based on microphone input or music.
 
+### Phase 4: Narrative & Immersion
+- [x] **Narrative Overlay:** Display text captions synced with routine events (e.g., "Subject enters REM sleep").
+
 ---
 
 ## 🧪 "Dream" Log (Future Concepts)
 * *Idea:* "Narrative Mode" - Display text overlays synced with brain states (e.g., "Subject recognizes face" -> Temporal Lobe lights up).
 * *Idea:* "Multi-Brain" - Visualize two brains interacting (Mirror Neurons).
+* *Idea:* "VR/XR Mode" - WebXR integration for immersive brain walkthrough.
 * *Idea:* "fMRI Import" - Parse CSV data to playback real recorded brain activity.
 * *Idea:* "Serotonin Color Shift" - Modulate color palettes (e.g., from cool blues to warm golds) based on simulated neurotransmitter levels.
 * *Idea:* "Synaptic Sparkles" - Particle system bursts at intersection points when signal intensity spikes.

@@ -170,6 +170,9 @@ export class RoutinePlayer {
             case 'camera':
                 this.handleCamera(event);
                 break;
+            case 'text':
+                // Handled via onEvent callback
+                break;
         }
 
         // Notify listener (except for synthetic param updates handled in processLerps)
