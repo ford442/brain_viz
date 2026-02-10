@@ -70,6 +70,25 @@ def verify_brain_viz():
             page.screenshot(path="verification/viz_clipped.png")
             print("Screenshot clipped taken")
 
+            # 4. Verify Narrative Overlay
+            print("Testing Narrative Routine...")
+            # Click the play button (by text content)
+            page.get_by_text('▶ Run "Deep Thought" Sequence').click()
+            page.wait_for_timeout(1000) # Wait for routine to start and first text event
+
+            # Check overlay
+            overlay = page.locator("#narrative-overlay")
+            if overlay.is_visible():
+                text = overlay.text_content()
+                if text:
+                    print(f"VERIFIED: Narrative Overlay Active - '{text}'")
+                else:
+                    print("WARNING: Narrative Overlay visible but empty")
+            else:
+                 print("WARNING: Narrative Overlay NOT visible")
+
+            page.screenshot(path="verification/viz_narrative.png")
+
         except Exception as e:
             print(f"Script Error: {e}")
             page.screenshot(path="verification/error_state.png")

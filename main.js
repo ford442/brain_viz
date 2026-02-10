@@ -99,8 +99,51 @@ async function init() {
         legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan';
         document.body.appendChild(legend);
 
+        // [Phase 4] Narrative Overlay
+        const narrative = document.createElement('div');
+        narrative.id = 'narrative-overlay';
+        Object.assign(narrative.style, {
+            position: 'absolute',
+            bottom: '15%',
+            width: '100%',
+            textAlign: 'center',
+            color: 'rgba(220, 240, 255, 0.9)',
+            fontFamily: '"Courier New", monospace',
+            fontSize: '24px',
+            textShadow: '0 0 10px rgba(0, 150, 255, 0.8)',
+            pointerEvents: 'none',
+            transition: 'opacity 1.0s ease-in-out',
+            opacity: '0',
+            zIndex: '100'
+        });
+        document.body.appendChild(narrative);
+
         // Sync UI when routine executes events
+        let narrativeTimeout = null;
+
         player.onEvent = (event) => {
+             if (event.type === 'text') {
+                 if (event.message) {
+                     narrative.textContent = event.message;
+                     narrative.style.opacity = '1';
+
+                     if (narrativeTimeout) clearTimeout(narrativeTimeout);
+
+                     // Optional: Auto-fade if duration is provided
+                     if (event.duration) {
+                         narrativeTimeout = setTimeout(() => {
+                             narrative.style.opacity = '0';
+                             narrativeTimeout = null;
+                         }, event.duration * 1000);
+                     }
+                 } else {
+                     narrative.style.opacity = '0';
+                     if (narrativeTimeout) {
+                         clearTimeout(narrativeTimeout);
+                         narrativeTimeout = null;
+                     }
+                 }
+             }
              if (event.type === 'style') {
                  if (inputs.style) inputs.style.value = event.value;
              }
