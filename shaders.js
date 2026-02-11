@@ -99,7 +99,7 @@ struct Uniforms {
     time: f32,
     style: f32,
     flowSpeed: f32, // V2.3: Controls pulse speed
-    padding2: f32,
+    colorShift: f32, // [Phase 5] Serotonin Color Shift
     slicePlane: vec4<f32>, // [Neuro-Weaver] V2.6: Renamed from clipPlane
 }
 
@@ -152,8 +152,17 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     // Signals travel along the fibers based on vertex index and flow speed
     if (uniforms.style >= 2.0 && uniforms.style < 3.0) {
         finalPos = input.position;
-        let baseColor = vec3<f32>(0.05, 0.1, 0.15); // Dark Blue Base
-        let pulseColor = vec3<f32>(0.0, 0.8, 1.0); // Cyan Pulse
+
+        var baseColor = vec3<f32>(0.05, 0.1, 0.15); // Dark Blue Base
+        var pulseColor = vec3<f32>(0.0, 0.8, 1.0); // Cyan Pulse
+
+        // [Phase 5] Serotonin Color Shift (Blue -> Gold/Red)
+        if (uniforms.colorShift > 0.0) {
+             let warmBase = vec3<f32>(0.2, 0.05, 0.05); // Deep Red
+             let warmPulse = vec3<f32>(1.0, 0.8, 0.2); // Gold
+             baseColor = mix(baseColor, warmBase, uniforms.colorShift);
+             pulseColor = mix(pulseColor, warmPulse, uniforms.colorShift);
+        }
 
         // [Neuro-Weaver] Refactored: Use helper function calculateSignalFlow
         signalStrength = calculateSignalFlow(vertexIndex, worldPos, uniforms.time, uniforms.flowSpeed, FLOW_SCALE);
@@ -175,6 +184,12 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
         finalPos = input.position;
         // [Neuro-Weaver] V2.6 Refactor: Use helper for Heatmap Color
         finalColor = getHeatmapColor(activity);
+
+        // [Phase 5] Heatmap Color Shift
+        if (uniforms.colorShift > 0.0) {
+             let warmShift = vec3<f32>(1.0, 0.5, 0.0);
+             finalColor = mix(finalColor, warmShift, uniforms.colorShift * activity * 0.8);
+        }
     }
     // --- GHOST MODE ---
     else {
@@ -221,7 +236,8 @@ struct Uniforms {
     modelMatrix: mat4x4<f32>,
     time: f32,
     style: f32,
-    padding: vec2<f32>,
+    flowSpeed: f32,
+    colorShift: f32, // [Phase 5]
     slicePlane: vec4<f32>, // [Neuro-Weaver] V2.6: Renamed from clipPlane
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
@@ -280,8 +296,8 @@ struct Uniforms {
     modelMatrix: mat4x4<f32>,
     time: f32,
     style: f32,
-    padding1: f32,
-    padding2: f32,
+    flowSpeed: f32,
+    colorShift: f32, // [Phase 5]
     slicePlane: vec4<f32>, // [Neuro-Weaver] V2.6: Renamed from clipPlane
 }
 
@@ -326,8 +342,15 @@ fn main_soma(input: VertexInput) -> VertexOutput {
     output.worldPos = (uniforms.modelMatrix * vec4<f32>(pos, 1.0)).xyz;
     output.position = uniforms.mvpMatrix * vec4<f32>(pos, 1.0);
 
-    let c1 = vec3<f32>(0.2, 0.2, 0.4);
-    let c2 = vec3<f32>(1.0, 1.0, 1.0);
+    var c1 = vec3<f32>(0.2, 0.2, 0.4);
+    var c2 = vec3<f32>(1.0, 1.0, 1.0);
+
+    // [Phase 5] Soma Color Shift
+    if (uniforms.colorShift > 0.0) {
+        c1 = mix(c1, vec3<f32>(0.4, 0.1, 0.1), uniforms.colorShift); // Reddish
+        c2 = mix(c2, vec3<f32>(1.0, 0.9, 0.5), uniforms.colorShift); // Gold
+    }
+
     output.color = mix(c1, c2, activity);
     // V2.2 Clipping: Ensure instances respect the slice plane
     // [Neuro-Weaver] Refactored: Use explicit sliceDepth

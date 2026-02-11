@@ -25,6 +25,14 @@ const MINI_ROUTINES = {
         { time: 0.0, type: 'camera', target: 'parietal' },
         { time: 0.5, type: 'lerp', key: 'sliceZ', value: 1.5, duration: 4.0 },
         { time: 5.0, type: 'param', key: 'sliceZ', value: 2.0 } // Reset slice
+    ],
+    '4': [ // Serotonin Surge
+        { time: 0.0, type: 'text', message: 'Serotonin Flood...', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'lerp', key: 'colorShift', value: 1.0, duration: 2.0 },
+        { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 8.0, duration: 2.0 },
+        { time: 3.0, type: 'lerp', key: 'colorShift', value: 0.0, duration: 3.0 },
+        { time: 3.0, type: 'lerp', key: 'flowSpeed', value: 4.0, duration: 3.0 }
     ]
 };
 
@@ -40,6 +48,7 @@ async function init() {
         smoothing: document.getElementById('smooth'),
         sliceZ: document.getElementById('clip'),
         flowSpeed: document.getElementById('speed'),
+        colorShift: document.getElementById('shift'), // [Phase 5]
         style: document.getElementById('style-mode')
     };
     
@@ -49,7 +58,8 @@ async function init() {
         spikeThreshold: document.getElementById('val-thresh'),
         smoothing: document.getElementById('val-smooth'),
         sliceZ: document.getElementById('val-clip'),
-        flowSpeed: document.getElementById('val-speed')
+        flowSpeed: document.getElementById('val-speed'),
+        colorShift: document.getElementById('val-shift') // [Phase 5]
     };
     
     if (!navigator.gpu) {
@@ -96,7 +106,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin';
         document.body.appendChild(legend);
 
         // [Phase 4] Narrative Overlay

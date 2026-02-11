@@ -29,7 +29,8 @@ export class BrainRenderer {
             smoothing: 0.9,
             style: 0.0, // 0=Organic, 1=Cyber, 2=Connectome, 3=Heatmap
             sliceZ: 2.0,  // Slice plane Z value (Starts outside bounds)
-            flowSpeed: 4.0 // V2.3: Signal Speed
+            flowSpeed: 4.0, // V2.3: Signal Speed
+            colorShift: 0.0 // [Phase 5] Serotonin Color Shift
         };
 
         // Voxel Grid Settings
@@ -339,6 +340,7 @@ export class BrainRenderer {
         this.params.amplitude = 0.1;
         this.params.frequency = 0.5;
         this.params.smoothing = 0.98;
+        this.params.colorShift = 0.0;
     }
 
     resetActivity() {
@@ -367,6 +369,7 @@ export class BrainRenderer {
         uData[32] = this.time;
         uData[33] = this.params.style;
         uData[34] = this.params.flowSpeed; // V2.3: Replaced padding1 with flowSpeed
+        uData[35] = this.params.colorShift; // [Phase 5]
 
         // [V2.3] Slice Plane Uniforms
         // Slice Plane: Vec4 (Normal X, Y, Z, Distance)
