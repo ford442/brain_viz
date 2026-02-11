@@ -185,6 +185,11 @@ export class RoutinePlayer {
         // Event: { type: 'lerp', key: 'flowSpeed', value: 8.0, duration: 2.0 }
         if (!this.renderer.params) return;
 
+        if (isNaN(event.value)) {
+            console.warn(`[Routine] Invalid lerp value for ${event.key}: ${event.value}`);
+            return;
+        }
+
         const currentVal = this.renderer.params[event.key];
         if (currentVal === undefined) {
             console.warn(`[Routine] Cannot lerp unknown param: ${event.key}`);
@@ -201,6 +206,8 @@ export class RoutinePlayer {
             startTime: performance.now(),
             duration: event.duration || 1.0
         });
+
+        console.log(`[Routine] Lerp started: ${event.key} -> ${event.value} (${event.duration || 1.0}s)`);
     }
 
     handleStimulus(evt) {

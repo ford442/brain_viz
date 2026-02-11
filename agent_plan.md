@@ -27,6 +27,9 @@
 ### Phase 4: Narrative & Immersion
 - [x] **Narrative Overlay:** Display text captions synced with routine events (e.g., "Subject enters REM sleep").
 
+### Phase 5: Neuro-Biochemistry (New)
+- [x] **Serotonin Color Shift:** Implement `colorShift` uniform to modulate palette (Blue -> Gold/Red) for visualizing chemical changes.
+
 ---
 
 ## 🧪 "Dream" Log (Future Concepts)
@@ -34,12 +37,12 @@
 * *Idea:* "Multi-Brain" - Visualize two brains interacting (Mirror Neurons).
 * *Idea:* "VR/XR Mode" - WebXR integration for immersive brain walkthrough.
 * *Idea:* "fMRI Import" - Parse CSV data to playback real recorded brain activity.
-* *Idea:* "Serotonin Color Shift" - Modulate color palettes (e.g., from cool blues to warm golds) based on simulated neurotransmitter levels.
 * *Idea:* "Synaptic Sparkles" - Particle system bursts at intersection points when signal intensity spikes.
 * *Idea:* "Neuro-Sonification" - Generate ambient music/soundscapes based on brain activity state (Inverse of Audio Reactivity).
 * *Idea:* "EEG Hardware Integration" - Connect to Muse or OpenBCI headsets via WebBluetooth to drive visualization with real brainwaves.
 
 ## 📜 Changelog
+* [2025-02-18] - Completed Phase 5 (Serotonin Color Shift). Implemented `colorShift` uniform to modulate palette in Connectome and Heatmap modes, added UI slider and "Serotonin Surge" routine.
 * [2025-02-09] - Completed Phase 3 (Audio Reactivity). Implemented `audio-reactor.js` for microphone analysis and real-time visualization mapping (Bass->Amplitude, Treble->Sparks). Removed "Web Audio Reactivity" from Dream Log.
 * [2025-02-08] - Completed Phase 3 (Keyboard Triggers). Implemented number key bindings for mini-routines (Surprise, Calm, Scan). Added "EEG Hardware Integration" to Dream Log.
 * [2025-02-07] - Completed Phase 2 (JSON Loader). Implemented JSON routine loading and file upload support. Added "Web Audio Reactivity" to Dream Log.
