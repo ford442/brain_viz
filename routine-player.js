@@ -21,9 +21,20 @@ export class RoutinePlayer {
         this.loop = false;
         this.timerId = null;
         this.onEvent = null; // Callback for UI updates
+        this.lastPauseTime = 0;
 
         // [Phase 2] Easing Support
         this.activeLerps = []; // { key, startVal, endVal, startTime, duration }
+    }
+
+    get currentTime() {
+        if (this.startTime === 0) return 0;
+        const now = (this.isPlaying || this.lastPauseTime === 0) ? performance.now() : this.lastPauseTime;
+        return Math.max(0, (now - this.startTime) / 1000.0);
+    }
+
+    get duration() {
+        return this.routine.length > 0 ? this.routine[this.routine.length - 1].time : 0;
     }
 
     loadRoutine(routineData, loop = false) {
@@ -59,22 +70,53 @@ export class RoutinePlayer {
 
     play() {
         if (this.routine.length === 0) return;
+        this.stop(); // Reset state
         this.isPlaying = true;
         this.startTime = performance.now();
+        this.lastPauseTime = 0;
         this.cursor = 0;
         this.activeLerps = [];
         this.tick();
         console.log("[Routine] Playback started");
     }
 
+    pause() {
+        if (!this.isPlaying) return;
+        this.isPlaying = false;
+        this.lastPauseTime = performance.now();
+        if (this.timerId) {
+            cancelAnimationFrame(this.timerId);
+            this.timerId = null;
+        }
+        console.log(`[Routine] Paused at ${this.currentTime.toFixed(2)}s`);
+        if (this.onEvent) this.onEvent({ type: 'pause', value: true });
+    }
+
+    resume() {
+        if (this.isPlaying || this.lastPauseTime === 0) return;
+
+        const pauseDuration = performance.now() - this.lastPauseTime;
+        this.startTime += pauseDuration;
+        this.activeLerps.forEach(l => l.startTime += pauseDuration);
+
+        this.isPlaying = true;
+        this.lastPauseTime = 0;
+        this.tick();
+        console.log("[Routine] Resumed");
+        if (this.onEvent) this.onEvent({ type: 'pause', value: false });
+    }
+
     stop() {
         this.isPlaying = false;
+        this.lastPauseTime = 0;
+        this.startTime = 0;
         if (this.timerId) {
             cancelAnimationFrame(this.timerId);
             this.timerId = null;
         }
         this.cursor = 0;
         this.activeLerps = [];
+        if (this.onEvent) this.onEvent({ type: 'stop' });
     }
 
     tick() {

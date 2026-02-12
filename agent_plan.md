@@ -40,8 +40,10 @@
 * *Idea:* "Synaptic Sparkles" - Particle system bursts at intersection points when signal intensity spikes.
 * *Idea:* "Neuro-Sonification" - Generate ambient music/soundscapes based on brain activity state (Inverse of Audio Reactivity).
 * *Idea:* "EEG Hardware Integration" - Connect to Muse or OpenBCI headsets via WebBluetooth to drive visualization with real brainwaves.
+* *Idea:* "AI Narrative Generation" - Use LLM to generate routine scripts based on themes (e.g., "Anxiety Spike", "Eureka Moment").
 
 ## 📜 Changelog
+* [2025-02-19] - Refined Phase 1 (Playback UI). Implemented full transport controls (Play/Pause/Stop/Loop) and Time Display in `main.js` and `routine-player.js`. Added `pause()`/`resume()` support to `RoutinePlayer`.
 * [2025-02-18] - Completed Phase 5 (Serotonin Color Shift). Implemented `colorShift` uniform to modulate palette in Connectome and Heatmap modes, added UI slider and "Serotonin Surge" routine.
 * [2025-02-09] - Completed Phase 3 (Audio Reactivity). Implemented `audio-reactor.js` for microphone analysis and real-time visualization mapping (Bass->Amplitude, Treble->Sparks). Removed "Web Audio Reactivity" from Dream Log.
 * [2025-02-08] - Completed Phase 3 (Keyboard Triggers). Implemented number key bindings for mini-routines (Surprise, Calm, Scan). Added "EEG Hardware Integration" to Dream Log.
