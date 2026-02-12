@@ -183,18 +183,85 @@ async function init() {
         routineContainer.style.paddingTop = "10px";
         routineContainer.style.borderTop = "1px solid #444";
 
-        const playBtn = document.createElement('button');
-        playBtn.textContent = '▶ Run "Deep Thought" Sequence';
-        playBtn.style.width = "100%";
-        playBtn.style.background = "#0055aa";
-        playBtn.style.color = "white";
+        // Transport Controls
+        const transportDiv = document.createElement('div');
+        transportDiv.style.display = 'flex';
+        transportDiv.style.gap = '5px';
+        transportDiv.style.marginBottom = '5px';
 
-        playBtn.onclick = async () => {
-            await player.loadRoutineFromFile('routines/deep_thought.json', false);
-            player.play();
+        const btnPlay = document.createElement('button');
+        btnPlay.textContent = '▶ Play';
+        btnPlay.style.flex = '2';
+        btnPlay.style.background = "#0055aa";
+        btnPlay.style.color = "white";
+
+        const btnStop = document.createElement('button');
+        btnStop.textContent = '⏹';
+        btnStop.style.flex = '1';
+        btnStop.style.background = "#aa2222";
+
+        transportDiv.appendChild(btnPlay);
+        transportDiv.appendChild(btnStop);
+        routineContainer.appendChild(transportDiv);
+
+        // Transport Info (Time + Loop)
+        const infoDiv = document.createElement('div');
+        infoDiv.style.display = 'flex';
+        infoDiv.style.justifyContent = 'space-between';
+        infoDiv.style.alignItems = 'center';
+        infoDiv.style.marginBottom = '10px';
+        infoDiv.style.fontSize = '12px';
+        infoDiv.style.color = '#aaa';
+
+        const timeDisplay = document.createElement('span');
+        timeDisplay.textContent = "00:00 / 00:00";
+
+        const loopLabel = document.createElement('label');
+        loopLabel.style.display = 'flex';
+        loopLabel.style.alignItems = 'center';
+        loopLabel.style.gap = '5px';
+        loopLabel.style.margin = '0';
+
+        const chkLoop = document.createElement('input');
+        chkLoop.type = 'checkbox';
+        chkLoop.style.width = 'auto'; // Reset width from CSS
+
+        loopLabel.appendChild(chkLoop);
+        loopLabel.appendChild(document.createTextNode('Loop'));
+
+        infoDiv.appendChild(timeDisplay);
+        infoDiv.appendChild(loopLabel);
+        routineContainer.appendChild(infoDiv);
+
+        // Event Listeners
+        let isLoading = false;
+        btnPlay.onclick = async () => {
+            if (player.isPlaying) {
+                player.pause();
+            } else {
+                // If no routine loaded, load default
+                if (player.routine.length === 0) {
+                     isLoading = true;
+                     btnPlay.textContent = "⏳ Loading...";
+                     await player.loadRoutineFromFile('routines/deep_thought.json', chkLoop.checked);
+                     isLoading = false;
+                     player.play();
+                } else {
+                    // Resume if paused, otherwise Play
+                    if (player.lastPauseTime > 0) {
+                        player.resume();
+                    } else {
+                        player.play();
+                    }
+                }
+            }
         };
 
-        routineContainer.appendChild(playBtn);
+        btnStop.onclick = () => player.stop();
+
+        chkLoop.onchange = () => {
+            player.loop = chkLoop.checked;
+        };
 
         // [New] JSON Loader Input
         const fileLabel = document.createElement('label');
@@ -275,8 +342,9 @@ async function init() {
 
         initUIControls(renderer, inputs, labels); // [Reuse existing function]
 
-        // Audio Loop
-        const runAudio = () => {
+        // UI & Audio Loop
+        const updateLoop = () => {
+            // 1. Audio Reactivity
             if (audioReactor.isActive) {
                 audioReactor.update(renderer);
                 // Sync UI sliders
@@ -285,9 +353,29 @@ async function init() {
                 if(inputs.flowSpeed) inputs.flowSpeed.value = renderer.params.flowSpeed;
                 if(labels.flowSpeed) labels.flowSpeed.textContent = renderer.params.flowSpeed.toFixed(2);
             }
-            requestAnimationFrame(runAudio);
+
+            // 2. Transport UI Update
+            if (player.isPlaying) {
+                btnPlay.textContent = "⏸ Pause";
+                btnPlay.style.background = "#aa8800";
+            } else {
+                if (!isLoading) {
+                    btnPlay.textContent = (player.lastPauseTime > 0) ? "▶ Resume" : "▶ Play";
+                    btnPlay.style.background = (player.lastPauseTime > 0) ? "#00aa55" : "#0055aa";
+                }
+            }
+
+            // Time Format
+            const fmt = (t) => {
+                const m = Math.floor(t / 60).toString().padStart(2, '0');
+                const s = Math.floor(t % 60).toString().padStart(2, '0');
+                return `${m}:${s}`;
+            };
+            timeDisplay.textContent = `${fmt(player.currentTime)} / ${fmt(player.duration)}`;
+
+            requestAnimationFrame(updateLoop);
         };
-        runAudio();
+        updateLoop();
 
         // AI Loop
         const classMap = new Float32Array(1000 * 3);
