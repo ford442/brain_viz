@@ -70,10 +70,27 @@ def verify_brain_viz():
             page.screenshot(path="verification/viz_clipped.png")
             print("Screenshot clipped taken")
 
-            # 4. Verify Narrative Overlay
+            # 4. Verify Playback Speed Control
+            print("Testing Playback Speed Control...")
+            speed_slider = page.locator("#routine-speed")
+            if speed_slider.is_visible():
+                print("VERIFIED: Speed Slider found")
+                # Change value to 2.0
+                page.evaluate("document.getElementById('routine-speed').value = '2.0'")
+                page.evaluate("document.getElementById('routine-speed').dispatchEvent(new Event('input'))")
+                page.wait_for_timeout(500)
+
+                if page.get_by_text("Speed: 2.0x").is_visible():
+                     print("VERIFIED: Speed Label updated correctly")
+                else:
+                     print("WARNING: Speed Label NOT updated")
+            else:
+                print("WARNING: Speed Slider NOT found")
+
+            # 5. Verify Narrative Overlay
             print("Testing Narrative Routine...")
             # Click the play button (by text content)
-            page.get_by_text('▶ Run "Deep Thought" Sequence').click()
+            page.get_by_text('▶ Play').click()
             page.wait_for_timeout(1000) # Wait for routine to start and first text event
 
             # Check overlay
