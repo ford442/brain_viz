@@ -83,6 +83,9 @@ async function init() {
         };
 
         const player = new RoutinePlayer(renderer, regionMap);
+        // [Phase 2] Register Mini-Routines for recursive 'call' support
+        player.registerSubRoutines(MINI_ROUTINES);
+
         const audioReactor = new AudioReactor();
 
         // --- KEYBOARD TRIGGERS ---
