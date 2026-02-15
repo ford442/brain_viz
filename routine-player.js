@@ -26,7 +26,8 @@ export class RoutinePlayer {
         this.loop = false;
         this.timerId = null;
         this.onEvent = null; // Callback for UI updates
-        this.lastPauseTime = 0; // Deprecated but kept for compatibility if needed
+        this.lastPauseTime = 0;
+        this.subRoutines = {}; // [Phase 2] Sub-Routine System
 
         // [Phase 2] Easing Support
         this.activeLerps = []; // { key, startVal, endVal, elapsed, duration }
@@ -45,12 +46,53 @@ export class RoutinePlayer {
         return this.routine.length > 0 ? this.routine[this.routine.length - 1].time : 0;
     }
 
+    // [Phase 2] Register named sub-routines for 'call' events
+    registerSubRoutines(map) {
+        this.subRoutines = { ...this.subRoutines, ...map };
+    }
+
+    // [Phase 2] Recursively expand 'call' events into flat timeline
+    expandRoutine(routine, depth = 0) {
+        if (depth > 5) {
+            console.warn("[Routine] Max recursion depth reached for sub-routines.");
+            return routine;
+        }
+
+        let expanded = [];
+        // Clone routine to avoid modifying original reference if passed
+        const source = [...routine];
+
+        for (const event of source) {
+            if (event.type === 'call') {
+                const sub = this.subRoutines[event.routine];
+                if (sub) {
+                    // Recursively expand the sub-routine
+                    const childEvents = this.expandRoutine(sub, depth + 1);
+                    // Offset time by current event's time
+                    const offsetEvents = childEvents.map(e => ({
+                        ...e,
+                        time: event.time + e.time
+                    }));
+                    expanded.push(...offsetEvents);
+                } else {
+                    console.warn(`[Routine] Sub-routine '${event.routine}' not found.`);
+                }
+            } else {
+                expanded.push(event);
+            }
+        }
+        return expanded;
+    }
+
     loadRoutine(routineData, loop = false) {
+        // [Phase 2] Expand sub-routines
+        const expanded = this.expandRoutine(routineData);
+
         // Sort events by time to ensure correct playback order
-        this.routine = routineData.sort((a, b) => a.time - b.time);
+        this.routine = expanded.sort((a, b) => a.time - b.time);
         this.loop = loop;
         this.stop();
-        console.log(`[Routine] Loaded ${this.routine.length} events.`);
+        console.log(`[Routine] Loaded ${this.routine.length} events (Expanded).`);
     }
 
     async loadRoutineFromFile(url, loop = false) {
@@ -224,6 +266,10 @@ export class RoutinePlayer {
                 break;
             case 'text':
                 // Handled via onEvent callback
+                break;
+            case 'call':
+                // Should have been expanded by loadRoutine
+                console.warn("[Routine] Unexpanded 'call' event encountered at runtime.");
                 break;
         }
 
