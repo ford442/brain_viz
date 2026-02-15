@@ -227,12 +227,23 @@ export class RoutinePlayer {
             // Linear Interpolation
             const currentVal = lerp.startVal + (lerp.endVal - lerp.startVal) * progress;
 
-            // Update Renderer
-            this.renderer.setParams({ [lerp.key]: currentVal });
+            // [Phase 2] Handle Camera Lerps
+            if (lerp.isCamera) {
+                if (lerp.key === 'cameraRotX') {
+                    this.renderer.setCameraParams({ rotation: { x: currentVal } });
+                } else if (lerp.key === 'cameraRotY') {
+                    this.renderer.setCameraParams({ rotation: { y: currentVal } });
+                } else if (lerp.key === 'cameraZoom') {
+                    this.renderer.setCameraParams({ zoom: currentVal });
+                }
+            } else {
+                // Update Renderer Params
+                this.renderer.setParams({ [lerp.key]: currentVal });
 
-            // Notify UI
-            if (this.onEvent) {
-                this.onEvent({ type: 'param', key: lerp.key, value: currentVal });
+                // Notify UI
+                if (this.onEvent) {
+                    this.onEvent({ type: 'param', key: lerp.key, value: currentVal });
+                }
             }
 
             return progress < 1.0;
@@ -342,6 +353,52 @@ export class RoutinePlayer {
         // Override zoom if explicitly provided in event, even if using a preset
         if (evt.zoom !== undefined) {
             params.zoom = evt.zoom;
+        }
+
+        // [Phase 2] Cinematic Camera Support (Duration)
+        if (evt.duration && evt.duration > 0 && this.renderer.targetRotation) {
+            console.log(`[Routine] Camera Transition started (${evt.duration}s)`);
+            const duration = evt.duration;
+
+            // Remove existing camera lerps
+            this.activeLerps = this.activeLerps.filter(l => !l.isCamera);
+
+            // Lerp Rotation X
+            if (params.rotation && params.rotation.x !== undefined) {
+                this.activeLerps.push({
+                    key: 'cameraRotX',
+                    startVal: this.renderer.targetRotation.x,
+                    endVal: params.rotation.x,
+                    elapsed: 0,
+                    duration: duration,
+                    isCamera: true
+                });
+            }
+
+            // Lerp Rotation Y
+            if (params.rotation && params.rotation.y !== undefined) {
+                this.activeLerps.push({
+                    key: 'cameraRotY',
+                    startVal: this.renderer.targetRotation.y,
+                    endVal: params.rotation.y,
+                    elapsed: 0,
+                    duration: duration,
+                    isCamera: true
+                });
+            }
+
+            // Lerp Zoom
+            if (params.zoom !== undefined) {
+                this.activeLerps.push({
+                    key: 'cameraZoom',
+                    startVal: this.renderer.targetZoom,
+                    endVal: params.zoom,
+                    elapsed: 0,
+                    duration: duration,
+                    isCamera: true
+                });
+            }
+            return;
         }
 
         if (this.renderer.setCameraParams) {
