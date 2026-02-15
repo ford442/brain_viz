@@ -16,7 +16,12 @@ export class RoutinePlayer {
         this.regions = regionMap; // Maps names like 'frontal' to [x,y,z]
         this.routine = [];
         this.isPlaying = false;
-        this.startTime = 0;
+
+        // Time State
+        this.elapsedTime = 0; // Accumulated time in seconds
+        this.playbackSpeed = 1.0;
+        this.lastFrameTime = 0;
+
         this.cursor = 0; // Index of the next event to fire
         this.loop = false;
         this.timerId = null;
@@ -25,13 +30,16 @@ export class RoutinePlayer {
         this.subRoutines = {}; // [Phase 2] Sub-Routine System
 
         // [Phase 2] Easing Support
-        this.activeLerps = []; // { key, startVal, endVal, startTime, duration }
+        this.activeLerps = []; // { key, startVal, endVal, elapsed, duration }
     }
 
     get currentTime() {
-        if (this.startTime === 0) return 0;
-        const now = (this.isPlaying || this.lastPauseTime === 0) ? performance.now() : this.lastPauseTime;
-        return Math.max(0, (now - this.startTime) / 1000.0);
+        return this.elapsedTime;
+    }
+
+    setPlaybackSpeed(speed) {
+        this.playbackSpeed = Math.max(0.1, Math.min(5.0, speed));
+        console.log(`[Routine] Playback Speed: ${this.playbackSpeed.toFixed(1)}x`);
     }
 
     get duration() {
@@ -114,8 +122,8 @@ export class RoutinePlayer {
         if (this.routine.length === 0) return;
         this.stop(); // Reset state
         this.isPlaying = true;
-        this.startTime = performance.now();
-        this.lastPauseTime = 0;
+        this.elapsedTime = 0;
+        this.lastFrameTime = performance.now();
         this.cursor = 0;
         this.activeLerps = [];
         this.tick();
@@ -125,7 +133,6 @@ export class RoutinePlayer {
     pause() {
         if (!this.isPlaying) return;
         this.isPlaying = false;
-        this.lastPauseTime = performance.now();
         if (this.timerId) {
             cancelAnimationFrame(this.timerId);
             this.timerId = null;
@@ -135,14 +142,11 @@ export class RoutinePlayer {
     }
 
     resume() {
-        if (this.isPlaying || this.lastPauseTime === 0) return;
-
-        const pauseDuration = performance.now() - this.lastPauseTime;
-        this.startTime += pauseDuration;
-        this.activeLerps.forEach(l => l.startTime += pauseDuration);
+        if (this.isPlaying) return;
 
         this.isPlaying = true;
-        this.lastPauseTime = 0;
+        this.lastFrameTime = performance.now();
+
         this.tick();
         console.log("[Routine] Resumed");
         if (this.onEvent) this.onEvent({ type: 'pause', value: false });
@@ -150,8 +154,7 @@ export class RoutinePlayer {
 
     stop() {
         this.isPlaying = false;
-        this.lastPauseTime = 0;
-        this.startTime = 0;
+        this.elapsedTime = 0;
         if (this.timerId) {
             cancelAnimationFrame(this.timerId);
             this.timerId = null;
@@ -172,13 +175,17 @@ export class RoutinePlayer {
         }
 
         const now = performance.now();
-        const currentTime = (now - this.startTime) / 1000.0; // Seconds
+        const dt = (now - this.lastFrameTime) / 1000.0;
+        this.lastFrameTime = now;
+
+        // Update accumulated time with speed factor
+        this.elapsedTime += dt * this.playbackSpeed;
 
         // Execute all events that are due
         while (this.cursor < this.routine.length) {
             const event = this.routine[this.cursor];
 
-            if (currentTime >= event.time) {
+            if (this.elapsedTime >= event.time) {
                 this.executeEvent(event);
                 this.cursor++;
             } else {
@@ -188,14 +195,15 @@ export class RoutinePlayer {
         }
 
         // [Phase 2] Process Active Lerps
-        this.processLerps(now);
+        this.processLerps(dt);
 
         // Check for completion
         if (this.cursor >= this.routine.length && this.activeLerps.length === 0) {
             if (this.loop) {
                 console.log("[Routine] Looping...");
-                this.startTime = performance.now();
+                this.elapsedTime = 0;
                 this.cursor = 0;
+                this.activeLerps = [];
             } else {
                 console.log("[Routine] Finished");
                 this.stop();
@@ -206,13 +214,15 @@ export class RoutinePlayer {
         this.timerId = requestAnimationFrame(() => this.tick());
     }
 
-    processLerps(now) {
+    processLerps(dt) {
         if (this.activeLerps.length === 0) return;
 
         // Filter out completed lerps after processing
         this.activeLerps = this.activeLerps.filter(lerp => {
-            const elapsed = (now - lerp.startTime) / 1000.0;
-            const progress = Math.min(1.0, elapsed / lerp.duration);
+            // Update lerp progress using scaled time
+            lerp.elapsed += dt * this.playbackSpeed;
+
+            const progress = Math.min(1.0, lerp.elapsed / lerp.duration);
 
             // Linear Interpolation
             const currentVal = lerp.startVal + (lerp.endVal - lerp.startVal) * progress;
@@ -291,7 +301,7 @@ export class RoutinePlayer {
             key: event.key,
             startVal: currentVal,
             endVal: event.value,
-            startTime: performance.now(),
+            elapsed: 0,
             duration: event.duration || 1.0
         });
 

@@ -236,6 +236,39 @@ async function init() {
         infoDiv.appendChild(loopLabel);
         routineContainer.appendChild(infoDiv);
 
+        // [Phase 2] Playback Speed Control
+        const speedDiv = document.createElement('div');
+        speedDiv.style.marginTop = "5px";
+        speedDiv.style.marginBottom = "10px";
+        speedDiv.style.display = "flex";
+        speedDiv.style.alignItems = "center";
+        speedDiv.style.gap = "10px";
+        speedDiv.style.fontSize = "12px";
+        speedDiv.style.color = "#aaa";
+
+        const speedLabel = document.createElement('span');
+        speedLabel.textContent = "Speed: 1.0x";
+        speedLabel.style.minWidth = "70px";
+
+        const speedSlider = document.createElement('input');
+        speedSlider.type = "range";
+        speedSlider.id = "routine-speed"; // For verification
+        speedSlider.min = "0.1";
+        speedSlider.max = "5.0";
+        speedSlider.step = "0.1";
+        speedSlider.value = "1.0";
+        speedSlider.style.flex = "1";
+
+        speedSlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            player.setPlaybackSpeed(val);
+            speedLabel.textContent = `Speed: ${val.toFixed(1)}x`;
+        });
+
+        speedDiv.appendChild(speedLabel);
+        speedDiv.appendChild(speedSlider);
+        routineContainer.appendChild(speedDiv);
+
         // Event Listeners
         let isLoading = false;
         btnPlay.onclick = async () => {
