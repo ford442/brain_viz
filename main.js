@@ -33,6 +33,14 @@ const MINI_ROUTINES = {
         { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 8.0, duration: 2.0 },
         { time: 3.0, type: 'lerp', key: 'colorShift', value: 0.0, duration: 3.0 },
         { time: 3.0, type: 'lerp', key: 'flowSpeed', value: 4.0, duration: 3.0 }
+    ],
+    '5': [ // Epiphany (Sparkles)
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'text', message: 'EUREKA MOMENT!', duration: 2.0 },
+        { time: 0.0, type: 'lerp', key: 'sparkle', value: 1.0, duration: 0.2 }, // Flash on
+        { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 20.0, duration: 0.5 }, // Rush
+        { time: 0.5, type: 'lerp', key: 'sparkle', value: 0.0, duration: 2.0 }, // Fade out
+        { time: 0.5, type: 'lerp', key: 'flowSpeed', value: 4.0, duration: 3.0 } // Slow down
     ]
 };
 
@@ -49,6 +57,7 @@ async function init() {
         sliceZ: document.getElementById('clip'),
         flowSpeed: document.getElementById('speed'),
         colorShift: document.getElementById('shift'), // [Phase 5]
+        sparkle: document.getElementById('sparkle'), // [Phase 5]
         style: document.getElementById('style-mode')
     };
     
@@ -59,7 +68,8 @@ async function init() {
         smoothing: document.getElementById('val-smooth'),
         sliceZ: document.getElementById('val-clip'),
         flowSpeed: document.getElementById('val-speed'),
-        colorShift: document.getElementById('val-shift') // [Phase 5]
+        colorShift: document.getElementById('val-shift'), // [Phase 5]
+        sparkle: document.getElementById('val-sparkle') // [Phase 5]
     };
     
     if (!navigator.gpu) {
@@ -109,7 +119,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany';
         document.body.appendChild(legend);
 
         // [Phase 4] Narrative Overlay
@@ -167,7 +177,7 @@ async function init() {
              if (event.type === 'calm') {
                  // Calm state modifies amplitude, frequency, smoothing
                  // We should sync them if they are in the renderer params
-                 ['amplitude', 'frequency', 'smoothing'].forEach(k => {
+                 ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle'].forEach(k => {
                     if (inputs[k]) inputs[k].value = renderer.params[k];
                     if (labels[k]) labels[k].textContent = renderer.params[k].toFixed(2);
                  });
@@ -507,7 +517,7 @@ function initUIControls(renderer, uiInputs, uiLabels) {
 
     document.getElementById('stim-calm')?.addEventListener('click', () => {
         renderer.calmState();
-        ['amplitude', 'frequency', 'smoothing'].forEach(k => {
+        ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle'].forEach(k => {
             if(uiInputs[k]) uiInputs[k].value = renderer.params[k];
             syncParam(k, renderer.params[k]);
         });

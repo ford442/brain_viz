@@ -101,6 +101,7 @@ struct Uniforms {
     flowSpeed: f32, // V2.3: Controls pulse speed
     colorShift: f32, // [Phase 5] Serotonin Color Shift
     slicePlane: vec4<f32>, // [Neuro-Weaver] V2.6: Renamed from clipPlane
+    sparkle: f32, // [Phase 5] Synaptic Sparkles
 }
 
 struct VertexInput {
@@ -174,6 +175,16 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
         let flash = pulseColor * signalStrength * activity;
 
         finalColor = glow + flash;
+
+        // [Phase 5] Synaptic Sparkles: Add high-frequency digital strobe
+        if (uniforms.sparkle > 0.0) {
+             // Pseudo-random flicker based on vertex index
+             let flicker = sin(uniforms.time * 40.0 + f32(vertexIndex) * 0.1);
+             if (flicker > 0.8) {
+                 finalColor += vec3<f32>(1.0, 1.0, 1.0) * uniforms.sparkle;
+             }
+        }
+
         finalNormal = vec3<f32>(0.0, 1.0, 0.0);
     }
     // --- HEATMAP MODE ---
@@ -239,6 +250,7 @@ struct Uniforms {
     flowSpeed: f32,
     colorShift: f32, // [Phase 5]
     slicePlane: vec4<f32>, // [Neuro-Weaver] V2.6: Renamed from clipPlane
+    sparkle: f32, // [Phase 5] Synaptic Sparkles
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
@@ -299,6 +311,7 @@ struct Uniforms {
     flowSpeed: f32,
     colorShift: f32, // [Phase 5]
     slicePlane: vec4<f32>, // [Neuro-Weaver] V2.6: Renamed from clipPlane
+    sparkle: f32, // [Phase 5] Synaptic Sparkles
 }
 
 struct VertexInput {
@@ -336,7 +349,17 @@ fn main_soma(input: VertexInput) -> VertexOutput {
 
     // [Verified] Instanced Neurons: Somas scaled by local tensor activity
     // [Neuro-Weaver] Reactive scaling to visualize firing intensity (0.02 base + activity)
-    let scale = 0.02 + (activity * 0.12);
+    var scale = 0.02 + (activity * 0.12);
+
+    // [Phase 5] Sparkle Logic: Pop Scale
+    if (uniforms.sparkle > 0.0) {
+        let noise = fract(sin(dot(input.instancePos.xy, vec2(12.9898, 78.233))) * 43758.5453);
+        let flicker = sin(uniforms.time * 30.0 + noise * 50.0);
+        if (flicker > 0.5) {
+             scale += uniforms.sparkle * 0.03 * flicker;
+        }
+    }
+
     let pos = (input.position * scale) + input.instancePos;
 
     output.worldPos = (uniforms.modelMatrix * vec4<f32>(pos, 1.0)).xyz;
@@ -352,6 +375,13 @@ fn main_soma(input: VertexInput) -> VertexOutput {
     }
 
     output.color = mix(c1, c2, activity);
+
+    // [Phase 5] Sparkle Logic: Flash Color
+    if (uniforms.sparkle > 0.0 && activity > 0.1) {
+         let noise = fract(sin(dot(input.instancePos.zx, vec2(34.123, 19.33))) * 12345.67);
+         let flash = step(0.95 - (uniforms.sparkle * 0.2), sin(uniforms.time * 40.0 + noise * 10.0));
+         output.color += vec3<f32>(0.8, 0.9, 1.0) * flash * uniforms.sparkle;
+    }
     // V2.2 Clipping: Ensure instances respect the slice plane
     // [Neuro-Weaver] Refactored: Use explicit sliceDepth
     // [Neuro-Weaver] V2.6: Use slicePlane
