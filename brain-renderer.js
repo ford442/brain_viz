@@ -30,7 +30,8 @@ export class BrainRenderer {
             style: 0.0, // 0=Organic, 1=Cyber, 2=Connectome, 3=Heatmap
             sliceZ: 2.0,  // Slice plane Z value (Starts outside bounds)
             flowSpeed: 4.0, // V2.3: Signal Speed
-            colorShift: 0.0 // [Phase 5] Serotonin Color Shift
+            colorShift: 0.0, // [Phase 5] Serotonin Color Shift
+            sparkle: 0.0 // [Phase 5] Synaptic Sparkles
         };
 
         // Voxel Grid Settings
@@ -341,6 +342,7 @@ export class BrainRenderer {
         this.params.frequency = 0.5;
         this.params.smoothing = 0.98;
         this.params.colorShift = 0.0;
+        this.params.sparkle = 0.0;
     }
 
     resetActivity() {
@@ -362,25 +364,40 @@ export class BrainRenderer {
         const pv = Mat4.multiply(view, projection);
         const mvp = Mat4.multiply(model, pv);
         
-        // Uniform Buffer Size 192 bytes
-        const uData = new Float32Array(48); // 48 * 4 = 192 bytes
-        uData.set(mvp, 0);       // 0-15
-        uData.set(model, 16);    // 16-31
-        uData[32] = this.time;
-        uData[33] = this.params.style;
-        uData[34] = this.params.flowSpeed; // V2.3: Replaced padding1 with flowSpeed
-        uData[35] = this.params.colorShift; // [Phase 5]
+        // Uniform Buffer Layout (Verified)
+        // [0-15]: MVP (64 bytes)
+        // [16-31]: Model (64 bytes)
+        // [32]: Time
+        // [33]: Style
+        // [34]: FlowSpeed
+        // [35]: ColorShift
+        // [36-39]: SlicePlane (Vec4, 16 bytes)
+        // [40]: Sparkle (4 bytes)
 
-        // [V2.3] Slice Plane Uniforms
-        // Slice Plane: Vec4 (Normal X, Y, Z, Distance)
-        // Logic: Discard if dot(pos, N) + D < 0
-        // Configuration: Normal (0,0,-1), D = sliceZ
-        const sliceOffset = 36;
-        uData[sliceOffset] = 0.0;      // Px
-        uData[sliceOffset + 1] = 0.0;  // Py
-        uData[sliceOffset + 2] = -1.0; // Pz (Normal pointing backward)
-        // [Neuro-Weaver] Dynamic Slice Plane Uniform (Z-slice distance)
-        uData[sliceOffset + 3] = this.params.sliceZ; // Distance
+        const OFFSET_MVP = 0;
+        const OFFSET_MODEL = 16;
+        const OFFSET_TIME = 32;
+        const OFFSET_STYLE = 33;
+        const OFFSET_FLOW = 34;
+        const OFFSET_COLOR = 35;
+        const OFFSET_SLICE = 36;
+        const OFFSET_SPARKLE = 40;
+
+        const uData = new Float32Array(48); // 48 * 4 = 192 bytes
+        uData.set(mvp, OFFSET_MVP);
+        uData.set(model, OFFSET_MODEL);
+        uData[OFFSET_TIME] = this.time;
+        uData[OFFSET_STYLE] = this.params.style;
+        uData[OFFSET_FLOW] = this.params.flowSpeed;
+        uData[OFFSET_COLOR] = this.params.colorShift;
+
+        // Slice Plane Logic
+        uData[OFFSET_SLICE] = 0.0;      // Px
+        uData[OFFSET_SLICE + 1] = 0.0;  // Py
+        uData[OFFSET_SLICE + 2] = -1.0; // Pz (Normal pointing backward)
+        uData[OFFSET_SLICE + 3] = this.params.sliceZ; // Distance
+
+        uData[OFFSET_SPARKLE] = this.params.sparkle;
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         
