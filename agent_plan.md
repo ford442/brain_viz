@@ -21,6 +21,7 @@
 - [x] **JSON Loader:** Allow loading routines from external `.json` files instead of hardcoded arrays.
 - [x] **Sub-Routine System:** Allow routines to 'call' other named routines (nesting/expansion).
 - [x] **Global Time Dilation:** Add playback speed control (0.1x - 5.0x) to allow slow-motion or fast-forward execution of routines.
+- [x] **Cinematic Camera:** Add `duration` support to `camera` events for smooth, timed transitions.
 
 ### Phase 3: "Brain DJ" Mode (Live Performance)
 - [x] **Keyboard Triggers:** Bind number keys (1-9) to specific mini-routines (e.g., Press '1' for "Sudden Surprise", '2' for "Calm Down").
