@@ -22,6 +22,7 @@
 - [x] **Sub-Routine System:** Allow routines to 'call' other named routines (nesting/expansion).
 - [x] **Global Time Dilation:** Add playback speed control (0.1x - 5.0x) to allow slow-motion or fast-forward execution of routines.
 - [x] **Cinematic Camera:** Add `duration` support to `camera` events for smooth, timed transitions.
+- [x] **Non-Linear Easing:** Support quadratic/cubic/sine easing for `lerp` and `camera` events.
 
 ### Phase 3: "Brain DJ" Mode (Live Performance)
 - [x] **Keyboard Triggers:** Bind number keys (1-9) to specific mini-routines (e.g., Press '1' for "Sudden Surprise", '2' for "Calm Down").
@@ -42,6 +43,7 @@
 * *Idea:* "VR/XR Mode" - WebXR integration for immersive brain walkthrough.
 * *Idea:* "fMRI Import" - Parse CSV data to playback real recorded brain activity.
 * *Idea:* "Synaptic Sparkles" - Particle system bursts at intersection points when signal intensity spikes.
+* *Idea:* "Chromatic Aberration Shader" - Add post-processing for cinematic distortion.
 * *Idea:* "Neuro-Sonification" - Generate ambient music/soundscapes based on brain activity state (Inverse of Audio Reactivity).
 * *Idea:* "EEG Hardware Integration" - Connect to Muse or OpenBCI headsets via WebBluetooth to drive visualization with real brainwaves.
 * *Idea:* "AI Narrative Generation" - Use LLM to generate routine scripts based on themes (e.g., "Anxiety Spike", "Eureka Moment").
@@ -49,6 +51,7 @@
 * *Idea:* "Dendritic Growth Animation" - Visualizing the growth of new connections over time (neuroplasticity).
 
 ## 📜 Changelog
+* [2025-02-22] - Completed Phase 2 (Non-Linear Easing). Implemented `Easing` utilities in `math-utils.js` and integrated them into `RoutinePlayer` for cinematic camera/parameter transitions.
 * [2025-02-21] - Completed Phase 5 (Synaptic Sparkles). Implemented `sparkle` uniform for visual bursts, added "Epiphany" routine, and updated UI controls.
 * [2025-02-20] - Completed Phase 2 (Global Time Dilation). Implemented playback speed control (0.1x - 5.0x) in `RoutinePlayer` and added UI slider to `main.js`.
 * [2025-02-19] - Refined Phase 1 (Playback UI). Implemented full transport controls (Play/Pause/Stop/Loop) and Time Display in `main.js` and `routine-player.js`. Added `pause()`/`resume()` support to `RoutinePlayer`.

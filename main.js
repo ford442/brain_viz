@@ -11,9 +11,9 @@ const MINI_ROUTINES = {
         { time: 0.0, type: 'style', value: 2 }, // Connectome
         { time: 0.0, type: 'param', key: 'frequency', value: 12.0 },
         { time: 0.0, type: 'param', key: 'amplitude', value: 2.0 },
-        { time: 0.0, type: 'camera', zoom: 2.5 }, // Zoom in
+        { time: 0.0, type: 'camera', zoom: 2.5, ease: 'backOut' }, // Zoom in with bounce
         { time: 0.1, type: 'stimulus', target: 'deep', intensity: 8.0 },
-        { time: 0.5, type: 'lerp', key: 'amplitude', value: 0.5, duration: 1.5 }
+        { time: 0.5, type: 'lerp', key: 'amplitude', value: 0.5, duration: 1.5, ease: 'quadOut' }
     ],
     '2': [ // Calm
         { time: 0.0, type: 'calm' }, // Helper to reset params
@@ -29,18 +29,18 @@ const MINI_ROUTINES = {
     '4': [ // Serotonin Surge
         { time: 0.0, type: 'text', message: 'Serotonin Flood...', duration: 2.0 },
         { time: 0.0, type: 'style', value: 2 }, // Connectome
-        { time: 0.0, type: 'lerp', key: 'colorShift', value: 1.0, duration: 2.0 },
-        { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 8.0, duration: 2.0 },
-        { time: 3.0, type: 'lerp', key: 'colorShift', value: 0.0, duration: 3.0 },
-        { time: 3.0, type: 'lerp', key: 'flowSpeed', value: 4.0, duration: 3.0 }
+        { time: 0.0, type: 'lerp', key: 'colorShift', value: 1.0, duration: 2.0, ease: 'sineInOut' },
+        { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 8.0, duration: 2.0, ease: 'cubicIn' },
+        { time: 3.0, type: 'lerp', key: 'colorShift', value: 0.0, duration: 3.0, ease: 'sineInOut' },
+        { time: 3.0, type: 'lerp', key: 'flowSpeed', value: 4.0, duration: 3.0, ease: 'quadOut' }
     ],
     '5': [ // Epiphany (Sparkles)
         { time: 0.0, type: 'style', value: 2 }, // Connectome
         { time: 0.0, type: 'text', message: 'EUREKA MOMENT!', duration: 2.0 },
-        { time: 0.0, type: 'lerp', key: 'sparkle', value: 1.0, duration: 0.2 }, // Flash on
-        { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 20.0, duration: 0.5 }, // Rush
-        { time: 0.5, type: 'lerp', key: 'sparkle', value: 0.0, duration: 2.0 }, // Fade out
-        { time: 0.5, type: 'lerp', key: 'flowSpeed', value: 4.0, duration: 3.0 } // Slow down
+        { time: 0.0, type: 'lerp', key: 'sparkle', value: 1.0, duration: 0.2, ease: 'cubicOut' }, // Flash on
+        { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 20.0, duration: 0.5, ease: 'quadIn' }, // Rush
+        { time: 0.5, type: 'lerp', key: 'sparkle', value: 0.0, duration: 2.0, ease: 'quadOut' }, // Fade out
+        { time: 0.5, type: 'lerp', key: 'flowSpeed', value: 4.0, duration: 3.0, ease: 'quadOut' } // Slow down
     ]
 };
 
