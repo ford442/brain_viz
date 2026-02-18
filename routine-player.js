@@ -47,6 +47,22 @@ export class RoutinePlayer {
         return this.routine.length > 0 ? this.routine[this.routine.length - 1].time : 0;
     }
 
+    /**
+     * Helper for Director Mode: Logs current camera state for easy copy-pasting into routines.
+     */
+    logCameraState() {
+        if (!this.renderer) return;
+        const state = {
+            rotation: {
+                x: parseFloat(this.renderer.targetRotation.x.toFixed(3)),
+                y: parseFloat(this.renderer.targetRotation.y.toFixed(3))
+            },
+            zoom: parseFloat(this.renderer.targetZoom.toFixed(2))
+        };
+        console.log(JSON.stringify(state, null, 2));
+        return state;
+    }
+
     // [Phase 2] Register named sub-routines for 'call' events
     registerSubRoutines(map) {
         this.subRoutines = { ...this.subRoutines, ...map };

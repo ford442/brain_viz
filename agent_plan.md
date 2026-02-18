@@ -23,6 +23,7 @@
 - [x] **Global Time Dilation:** Add playback speed control (0.1x - 5.0x) to allow slow-motion or fast-forward execution of routines.
 - [x] **Cinematic Camera:** Add `duration` support to `camera` events for smooth, timed transitions.
 - [x] **Non-Linear Easing:** Support quadratic/cubic/sine easing for `lerp` and `camera` events.
+- [x] **Director Tools:** Implement a UI overlay to display real-time camera coordinates (Rotation/Zoom) and a "Log State" button to facilitate creating new routines.
 
 ### Phase 3: "Brain DJ" Mode (Live Performance)
 - [x] **Keyboard Triggers:** Bind number keys (1-9) to specific mini-routines (e.g., Press '1' for "Sudden Surprise", '2' for "Calm Down").
@@ -49,6 +50,7 @@
 * *Idea:* "AI Narrative Generation" - Use LLM to generate routine scripts based on themes (e.g., "Anxiety Spike", "Eureka Moment").
 * *Idea:* "Fractal Recursive Zoom" - Procedurally generate infinite detail when zooming into a soma or fiber.
 * *Idea:* "Dendritic Growth Animation" - Visualizing the growth of new connections over time (neuroplasticity).
+* *Idea:* "Chromatic Aberration Shader" - Add post-processing for cinematic distortion.
 
 ## 📜 Changelog
 * [2025-02-22] - Completed Phase 2 (Non-Linear Easing). Implemented `Easing` utilities in `math-utils.js` and integrated them into `RoutinePlayer` for cinematic camera/parameter transitions.
