@@ -388,6 +388,9 @@ async function init() {
 
         initUIControls(renderer, inputs, labels); // [Reuse existing function]
 
+        // [Director Mode]
+        const directorLabels = initDirectorTools(renderer, player);
+
         // UI & Audio Loop
         const updateLoop = () => {
             // 1. Audio Reactivity
@@ -418,6 +421,13 @@ async function init() {
                 return `${m}:${s}`;
             };
             timeDisplay.textContent = `${fmt(player.currentTime)} / ${fmt(player.duration)}`;
+
+            // 3. Director Tools Update
+            if (directorLabels) {
+                directorLabels.RotX.textContent = renderer.rotation.x.toFixed(3);
+                directorLabels.RotY.textContent = renderer.rotation.y.toFixed(3);
+                directorLabels.Zoom.textContent = renderer.zoom.toFixed(2);
+            }
 
             requestAnimationFrame(updateLoop);
         };
@@ -524,6 +534,75 @@ function initUIControls(renderer, uiInputs, uiLabels) {
     });
 
     document.getElementById('stim-reset')?.addEventListener('click', () => renderer.resetActivity());
+}
+
+function initDirectorTools(renderer, player) {
+    const container = document.createElement('div');
+    container.id = 'director-tools';
+    Object.assign(container.style, {
+        position: 'absolute',
+        bottom: '10px',
+        left: '20px',
+        background: 'rgba(0,0,0,0.8)',
+        border: '1px solid #0055aa',
+        padding: '10px',
+        borderRadius: '5px',
+        fontFamily: 'monospace',
+        fontSize: '12px',
+        color: '#00aaff',
+        zIndex: '200'
+    });
+
+    const title = document.createElement('div');
+    title.textContent = "DIRECTOR MODE";
+    title.style.fontWeight = 'bold';
+    title.style.marginBottom = '5px';
+    title.style.color = '#fff';
+    container.appendChild(title);
+
+    const labels = {};
+    ['RotX', 'RotY', 'Zoom'].forEach(key => {
+        const div = document.createElement('div');
+        div.style.marginBottom = '2px';
+        const label = document.createElement('span');
+        label.textContent = `${key}: `;
+        label.style.color = '#aaa';
+        const val = document.createElement('span');
+        val.textContent = '0.00';
+        val.style.color = '#0ff';
+
+        div.appendChild(label);
+        div.appendChild(val);
+        container.appendChild(div);
+        labels[key] = val;
+    });
+
+    const copyBtn = document.createElement('button');
+    copyBtn.textContent = '📋 Copy State';
+    Object.assign(copyBtn.style, {
+        marginTop: '8px',
+        background: '#004488',
+        border: '1px solid #0066cc',
+        color: 'white',
+        cursor: 'pointer',
+        width: '100%'
+    });
+
+    copyBtn.onclick = () => {
+        if (player) {
+            player.logCameraState();
+        } else {
+            console.warn("Player not available for logging");
+        }
+
+        const origText = copyBtn.textContent;
+        copyBtn.textContent = '✅ Logged to Console';
+        setTimeout(() => copyBtn.textContent = origText, 1500);
+    };
+    container.appendChild(copyBtn);
+
+    document.body.appendChild(container);
+    return labels;
 }
 
 init();
