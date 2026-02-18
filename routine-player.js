@@ -1,5 +1,6 @@
 // routine-player.js
 // orchestrates timed sequences of brain activity
+import { Easing } from './math-utils.js';
 
 const CAMERA_PRESETS = {
     'frontal': { rotation: { x: 0.1, y: 0 }, zoom: 3.0 },     // Face on
@@ -222,9 +223,14 @@ export class RoutinePlayer {
             // Update lerp progress using scaled time
             lerp.elapsed += dt * this.playbackSpeed;
 
-            const progress = Math.min(1.0, lerp.elapsed / lerp.duration);
+            const rawProgress = Math.min(1.0, lerp.elapsed / lerp.duration);
 
-            // Linear Interpolation
+            // [Phase 2] Apply Easing
+            // Default to 'linear' if ease type is missing or invalid
+            const easeFunc = Easing[lerp.ease] || Easing.linear;
+            const progress = easeFunc(rawProgress);
+
+            // Interpolation
             const currentVal = lerp.startVal + (lerp.endVal - lerp.startVal) * progress;
 
             // [Phase 2] Handle Camera Lerps
@@ -246,7 +252,7 @@ export class RoutinePlayer {
                 }
             }
 
-            return progress < 1.0;
+            return rawProgress < 1.0;
         });
     }
 
@@ -313,10 +319,11 @@ export class RoutinePlayer {
             startVal: currentVal,
             endVal: event.value,
             elapsed: 0,
-            duration: event.duration || 1.0
+            duration: event.duration || 1.0,
+            ease: event.ease || 'linear'
         });
 
-        console.log(`[Routine] Lerp started: ${event.key} -> ${event.value} (${event.duration || 1.0}s)`);
+        console.log(`[Routine] Lerp started: ${event.key} -> ${event.value} (${event.duration || 1.0}s) [${event.ease || 'linear'}]`);
     }
 
     handleStimulus(evt) {
@@ -359,6 +366,7 @@ export class RoutinePlayer {
         if (evt.duration && evt.duration > 0 && this.renderer.targetRotation) {
             console.log(`[Routine] Camera Transition started (${evt.duration}s)`);
             const duration = evt.duration;
+            const ease = evt.ease || 'linear';
 
             // Remove existing camera lerps
             this.activeLerps = this.activeLerps.filter(l => !l.isCamera);
@@ -371,7 +379,8 @@ export class RoutinePlayer {
                     endVal: params.rotation.x,
                     elapsed: 0,
                     duration: duration,
-                    isCamera: true
+                    isCamera: true,
+                    ease: ease
                 });
             }
 
@@ -383,7 +392,8 @@ export class RoutinePlayer {
                     endVal: params.rotation.y,
                     elapsed: 0,
                     duration: duration,
-                    isCamera: true
+                    isCamera: true,
+                    ease: ease
                 });
             }
 
@@ -395,7 +405,8 @@ export class RoutinePlayer {
                     endVal: params.zoom,
                     elapsed: 0,
                     duration: duration,
-                    isCamera: true
+                    isCamera: true,
+                    ease: ease
                 });
             }
             return;

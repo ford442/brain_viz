@@ -136,3 +136,30 @@ function cross(a, b) {
 function dot(a, b) {
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
+
+// [Neuro-Weaver] Advanced Easing Functions for RoutinePlayer
+export const Easing = {
+    linear: t => t,
+
+    // Quadratic (Power of 2)
+    quadIn: t => t * t,
+    quadOut: t => t * (2 - t),
+    quadInOut: t => t < .5 ? 2 * t * t : -1 + (4 - 2 * t) * t,
+
+    // Cubic (Power of 3)
+    cubicIn: t => t * t * t,
+    cubicOut: t => (--t) * t * t + 1,
+    cubicInOut: t => t < .5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1,
+
+    // Sine (Trigonometric)
+    sineIn: t => 1 - Math.cos(t * Math.PI / 2),
+    sineOut: t => Math.sin(t * Math.PI / 2),
+    sineInOut: t => -(Math.cos(Math.PI * t) - 1) / 2,
+
+    // Back (Overshoot)
+    backOut: t => {
+        const c1 = 1.70158;
+        const c3 = c1 + 1;
+        return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+    }
+};
