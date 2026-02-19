@@ -102,6 +102,7 @@ struct Uniforms {
     colorShift: f32, // [Phase 5] Serotonin Color Shift
     slicePlane: vec4<f32>, // [Neuro-Weaver] V2.6: Renamed from clipPlane
     sparkle: f32, // [Phase 5] Synaptic Sparkles
+    growth: f32, // [Phase 6] Dendritic Growth
 }
 
 struct VertexInput {
@@ -117,6 +118,7 @@ struct VertexOutput {
     @location(3) activity: f32,
     @location(4) clipDist: f32,
     @location(5) signal: f32,
+    @location(6) distToCenter: f32, // [Phase 6]
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
@@ -237,6 +239,9 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     let sliceDepth = uniforms.slicePlane.w;
     output.clipDist = dot(output.worldPos, planeNormal) + sliceDepth;
     
+    // [Phase 6] Dendritic Growth: Distance from center
+    output.distToCenter = length(output.worldPos);
+
     return output;
 }
 `;
@@ -251,6 +256,7 @@ struct Uniforms {
     colorShift: f32, // [Phase 5]
     slicePlane: vec4<f32>, // [Neuro-Weaver] V2.6: Renamed from clipPlane
     sparkle: f32, // [Phase 5] Synaptic Sparkles
+    growth: f32, // [Phase 6]
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
@@ -261,12 +267,16 @@ struct FragmentInput {
     @location(3) activity: f32,
     @location(4) clipDist: f32,
     @location(5) signal: f32,
+    @location(6) distToCenter: f32, // [Phase 6]
 }
 
 @fragment
 fn main(input: FragmentInput) -> @location(0) vec4<f32> {
     // V2.2 Clipping: Discard pixels behind plane
     if (input.clipDist < 0.0) { discard; }
+
+    // [Phase 6] Dendritic Growth: Discard outside growth radius
+    if (input.distToCenter > uniforms.growth * 1.8) { discard; }
 
     // [Neuro-Weaver] Style 3.0: Return Heatmap Color (calculated in Vertex Shader)
     // Renders the volumetric thermal gradient based on tensor activity
@@ -312,6 +322,7 @@ struct Uniforms {
     colorShift: f32, // [Phase 5]
     slicePlane: vec4<f32>, // [Neuro-Weaver] V2.6: Renamed from clipPlane
     sparkle: f32, // [Phase 5] Synaptic Sparkles
+    growth: f32, // [Phase 6]
 }
 
 struct VertexInput {
@@ -358,6 +369,11 @@ fn main_soma(input: VertexInput) -> VertexOutput {
         if (flicker > 0.5) {
              scale += uniforms.sparkle * 0.03 * flicker;
         }
+    }
+
+    // [Phase 6] Dendritic Growth: Hide instances outside radius
+    if (length(input.instancePos) > uniforms.growth * 1.8) {
+        scale = 0.0;
     }
 
     let pos = (input.position * scale) + input.instancePos;
