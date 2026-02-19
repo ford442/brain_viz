@@ -58,6 +58,7 @@ async function init() {
         flowSpeed: document.getElementById('speed'),
         colorShift: document.getElementById('shift'), // [Phase 5]
         sparkle: document.getElementById('sparkle'), // [Phase 5]
+        growth: document.getElementById('growth'), // [Phase 6]
         style: document.getElementById('style-mode')
     };
     
@@ -69,7 +70,8 @@ async function init() {
         sliceZ: document.getElementById('val-clip'),
         flowSpeed: document.getElementById('val-speed'),
         colorShift: document.getElementById('val-shift'), // [Phase 5]
-        sparkle: document.getElementById('val-sparkle') // [Phase 5]
+        sparkle: document.getElementById('val-sparkle'), // [Phase 5]
+        growth: document.getElementById('val-growth') // [Phase 6]
     };
     
     if (!navigator.gpu) {

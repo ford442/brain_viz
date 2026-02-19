@@ -31,7 +31,8 @@ export class BrainRenderer {
             sliceZ: 2.0,  // Slice plane Z value (Starts outside bounds)
             flowSpeed: 4.0, // V2.3: Signal Speed
             colorShift: 0.0, // [Phase 5] Serotonin Color Shift
-            sparkle: 0.0 // [Phase 5] Synaptic Sparkles
+            sparkle: 0.0, // [Phase 5] Synaptic Sparkles
+            growth: 1.0 // [Phase 6] Dendritic Growth (0.0 - 1.0)
         };
 
         // Voxel Grid Settings
@@ -382,6 +383,7 @@ export class BrainRenderer {
         const OFFSET_COLOR = 35;
         const OFFSET_SLICE = 36;
         const OFFSET_SPARKLE = 40;
+        const OFFSET_GROWTH = 41;
 
         const uData = new Float32Array(48); // 48 * 4 = 192 bytes
         uData.set(mvp, OFFSET_MVP);
@@ -398,6 +400,7 @@ export class BrainRenderer {
         uData[OFFSET_SLICE + 3] = this.params.sliceZ; // Distance
 
         uData[OFFSET_SPARKLE] = this.params.sparkle;
+        uData[OFFSET_GROWTH] = this.params.growth;
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         
