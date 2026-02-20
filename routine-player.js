@@ -1,5 +1,6 @@
 // routine-player.js
 // orchestrates timed sequences of brain activity
+// Refactored for Extensibility (V2.9)
 import { Easing } from './math-utils.js';
 
 const CAMERA_PRESETS = {
@@ -14,7 +15,7 @@ const CAMERA_PRESETS = {
 export class RoutinePlayer {
     constructor(renderer, regionMap) {
         this.renderer = renderer;
-        this.regions = regionMap; // Maps names like 'frontal' to [x,y,z]
+        this.regions = regionMap || {}; // Maps names like 'frontal' to [x,y,z]
         this.routine = [];
         this.isPlaying = false;
 
@@ -32,6 +33,74 @@ export class RoutinePlayer {
 
         // [Phase 2] Easing Support
         this.activeLerps = []; // { key, startVal, endVal, elapsed, duration }
+
+        // [Phase 3] Extensible Event System
+        this.handlers = new Map();
+        this.setupDefaultHandlers();
+    }
+
+    setupDefaultHandlers() {
+        // Stimulus Injection
+        this.registerHandler('stimulus', (evt) => {
+            let coords = [0,0,0];
+            if (typeof evt.target === 'string' && this.regions[evt.target]) {
+                coords = this.regions[evt.target];
+            } else if (Array.isArray(evt.target)) {
+                coords = evt.target;
+            }
+            this.renderer.injectStimulus(coords[0], coords[1], coords[2], evt.intensity || 1.0);
+        });
+
+        // Style Change
+        this.registerHandler('style', (evt) => {
+            this.renderer.setParams({ style: evt.value });
+        });
+
+        // Parameter Update
+        this.registerHandler('param', (evt) => {
+            this.renderer.setParams({ [evt.key]: evt.value });
+        });
+
+        // Lerp Transition
+        this.registerHandler('lerp', (evt) => {
+            this.startLerp(evt);
+        });
+
+        // Calm State
+        this.registerHandler('calm', () => {
+            this.renderer.calmState();
+        });
+
+        // Reset Activity
+        this.registerHandler('reset', () => {
+            this.renderer.resetActivity();
+        });
+
+        // Camera Control
+        this.registerHandler('camera', (evt) => {
+            this.handleCamera(evt);
+        });
+
+        // Text (No-op in engine, handled by UI listener)
+        this.registerHandler('text', () => {});
+
+        // Call (Sub-routine expansion happens at load time, runtime calls are warnings)
+        this.registerHandler('call', (evt) => {
+            console.warn("[Routine] Unexpanded 'call' event encountered at runtime:", evt);
+        });
+    }
+
+    /**
+     * Register a custom event handler
+     * @param {string} type - Event type (e.g., 'sound', 'custom')
+     * @param {function} callback - Function receiving the event object
+     */
+    registerHandler(type, callback) {
+        if (typeof callback !== 'function') {
+            console.error(`[Routine] Handler for '${type}' must be a function.`);
+            return;
+        }
+        this.handlers.set(type, callback);
     }
 
     get currentTime() {
@@ -47,9 +116,6 @@ export class RoutinePlayer {
         return this.routine.length > 0 ? this.routine[this.routine.length - 1].time : 0;
     }
 
-    /**
-     * Helper for Director Mode: Logs current camera state for easy copy-pasting into routines.
-     */
     logCameraState() {
         if (!this.renderer) return;
         const state = {
@@ -63,12 +129,10 @@ export class RoutinePlayer {
         return state;
     }
 
-    // [Phase 2] Register named sub-routines for 'call' events
     registerSubRoutines(map) {
         this.subRoutines = { ...this.subRoutines, ...map };
     }
 
-    // [Phase 2] Recursively expand 'call' events into flat timeline
     expandRoutine(routine, depth = 0) {
         if (depth > 5) {
             console.warn("[Routine] Max recursion depth reached for sub-routines.");
@@ -76,16 +140,13 @@ export class RoutinePlayer {
         }
 
         let expanded = [];
-        // Clone routine to avoid modifying original reference if passed
         const source = [...routine];
 
         for (const event of source) {
             if (event.type === 'call') {
                 const sub = this.subRoutines[event.routine];
                 if (sub) {
-                    // Recursively expand the sub-routine
                     const childEvents = this.expandRoutine(sub, depth + 1);
-                    // Offset time by current event's time
                     const offsetEvents = childEvents.map(e => ({
                         ...e,
                         time: event.time + e.time
@@ -102,10 +163,7 @@ export class RoutinePlayer {
     }
 
     loadRoutine(routineData, loop = false) {
-        // [Phase 2] Expand sub-routines
         const expanded = this.expandRoutine(routineData);
-
-        // Sort events by time to ensure correct playback order
         this.routine = expanded.sort((a, b) => a.time - b.time);
         this.loop = loop;
         this.stop();
@@ -126,10 +184,6 @@ export class RoutinePlayer {
         }
     }
 
-    /**
-     * Immediate playback of a transient routine
-     * @param {Array} routineData - The sequence of events
-     */
     playNow(routineData) {
         this.loadRoutine(routineData, false);
         this.play();
@@ -137,7 +191,7 @@ export class RoutinePlayer {
 
     play() {
         if (this.routine.length === 0) return;
-        this.stop(); // Reset state
+        this.stop();
         this.isPlaying = true;
         this.elapsedTime = 0;
         this.lastFrameTime = performance.now();
@@ -184,21 +238,27 @@ export class RoutinePlayer {
     tick() {
         if (!this.isPlaying) return;
 
-        // Safety check: if renderer is lost or invalid
+        // Safety check: if renderer is lost or stopped
         if (!this.renderer) {
-            console.error("[Routine] Renderer lost, stopping playback.");
-            this.stop();
-            return;
+             console.error("[Routine] Renderer lost, stopping playback.");
+             this.stop();
+             return;
+        }
+        // [Safety] Graceful degradation if WebGPU context is invalid or renderer stopped
+        if (this.renderer.isRunning !== undefined && !this.renderer.isRunning) {
+             // Only log if we expect it to be running (avoid log spam if intentionally stopped?)
+             // Actually, if routine is playing but renderer is not, that's an issue.
+             console.warn("[Routine] Renderer is not running. Stopping routine.");
+             this.stop();
+             return;
         }
 
         const now = performance.now();
         const dt = (now - this.lastFrameTime) / 1000.0;
         this.lastFrameTime = now;
 
-        // Update accumulated time with speed factor
         this.elapsedTime += dt * this.playbackSpeed;
 
-        // Execute all events that are due
         while (this.cursor < this.routine.length) {
             const event = this.routine[this.cursor];
 
@@ -206,15 +266,12 @@ export class RoutinePlayer {
                 this.executeEvent(event);
                 this.cursor++;
             } else {
-                // Next event is in the future
                 break;
             }
         }
 
-        // [Phase 2] Process Active Lerps
         this.processLerps(dt);
 
-        // Check for completion
         if (this.cursor >= this.routine.length && this.activeLerps.length === 0) {
             if (this.loop) {
                 console.log("[Routine] Looping...");
@@ -234,22 +291,15 @@ export class RoutinePlayer {
     processLerps(dt) {
         if (this.activeLerps.length === 0) return;
 
-        // Filter out completed lerps after processing
         this.activeLerps = this.activeLerps.filter(lerp => {
-            // Update lerp progress using scaled time
             lerp.elapsed += dt * this.playbackSpeed;
-
             const rawProgress = Math.min(1.0, lerp.elapsed / lerp.duration);
 
-            // [Phase 2] Apply Easing
-            // Default to 'linear' if ease type is missing or invalid
             const easeFunc = Easing[lerp.ease] || Easing.linear;
             const progress = easeFunc(rawProgress);
 
-            // Interpolation
             const currentVal = lerp.startVal + (lerp.endVal - lerp.startVal) * progress;
 
-            // [Phase 2] Handle Camera Lerps
             if (lerp.isCamera) {
                 if (lerp.key === 'cameraRotX') {
                     this.renderer.setCameraParams({ rotation: { x: currentVal } });
@@ -259,10 +309,7 @@ export class RoutinePlayer {
                     this.renderer.setCameraParams({ zoom: currentVal });
                 }
             } else {
-                // Update Renderer Params
                 this.renderer.setParams({ [lerp.key]: currentVal });
-
-                // Notify UI
                 if (this.onEvent) {
                     this.onEvent({ type: 'param', key: lerp.key, value: currentVal });
                 }
@@ -273,47 +320,25 @@ export class RoutinePlayer {
     }
 
     executeEvent(event) {
-        // console.log(`[${event.time.toFixed(1)}s] Executing: ${event.type}`);
-
-        switch (event.type) {
-            case 'stimulus':
-                this.handleStimulus(event);
-                break;
-            case 'style':
-                this.renderer.setParams({ style: event.value });
-                break;
-            case 'param':
-                this.renderer.setParams({ [event.key]: event.value });
-                break;
-            case 'lerp':
-                this.startLerp(event);
-                break;
-            case 'calm':
-                this.renderer.calmState();
-                break;
-            case 'reset':
-                this.renderer.resetActivity();
-                break;
-            case 'camera':
-                this.handleCamera(event);
-                break;
-            case 'text':
-                // Handled via onEvent callback
-                break;
-            case 'call':
-                // Should have been expanded by loadRoutine
-                console.warn("[Routine] Unexpanded 'call' event encountered at runtime.");
-                break;
+        const handler = this.handlers.get(event.type);
+        if (handler) {
+            try {
+                handler(event);
+            } catch (err) {
+                console.error(`[Routine] Error executing handler for '${event.type}':`, err);
+            }
+        } else {
+            // Optional: Warn about unhandled events?
+            // console.warn(`[Routine] No handler for event type: ${event.type}`);
         }
 
-        // Notify listener (except for synthetic param updates handled in processLerps)
+        // Notify listener (UI sync)
         if (this.onEvent) {
             this.onEvent(event);
         }
     }
 
     startLerp(event) {
-        // Event: { type: 'lerp', key: 'flowSpeed', value: 8.0, duration: 2.0 }
         if (!this.renderer.params) return;
 
         if (isNaN(event.value)) {
@@ -327,7 +352,6 @@ export class RoutinePlayer {
             return;
         }
 
-        // Remove any existing lerp for this key to avoid conflict
         this.activeLerps = this.activeLerps.filter(l => l.key !== event.key);
 
         this.activeLerps.push({
@@ -339,27 +363,10 @@ export class RoutinePlayer {
             ease: event.ease || 'linear'
         });
 
-        console.log(`[Routine] Lerp started: ${event.key} -> ${event.value} (${event.duration || 1.0}s) [${event.ease || 'linear'}]`);
-    }
-
-    handleStimulus(evt) {
-        let coords = [0,0,0];
-
-        // Lookup region by name or use explicit coords
-        if (typeof evt.target === 'string' && this.regions[evt.target]) {
-            coords = this.regions[evt.target];
-        } else if (Array.isArray(evt.target)) {
-            coords = evt.target;
-        }
-
-        // Inject
-        this.renderer.injectStimulus(coords[0], coords[1], coords[2], evt.intensity || 1.0);
+        console.log(`[Routine] Lerp started: ${event.key} -> ${event.value} (${event.duration || 1.0}s)`);
     }
 
     handleCamera(evt) {
-        // Event: { type: 'camera', target: 'frontal', zoom: 4.0 }
-        // OR: { type: 'camera', rotation: {x:0, y:0}, zoom: 3.5 }
-
         let params = {};
 
         if (typeof evt.target === 'string') {
@@ -373,21 +380,17 @@ export class RoutinePlayer {
             params.rotation = evt.rotation;
         }
 
-        // Override zoom if explicitly provided in event, even if using a preset
         if (evt.zoom !== undefined) {
             params.zoom = evt.zoom;
         }
 
-        // [Phase 2] Cinematic Camera Support (Duration)
         if (evt.duration && evt.duration > 0 && this.renderer.targetRotation) {
             console.log(`[Routine] Camera Transition started (${evt.duration}s)`);
             const duration = evt.duration;
             const ease = evt.ease || 'linear';
 
-            // Remove existing camera lerps
             this.activeLerps = this.activeLerps.filter(l => !l.isCamera);
 
-            // Lerp Rotation X
             if (params.rotation && params.rotation.x !== undefined) {
                 this.activeLerps.push({
                     key: 'cameraRotX',
@@ -400,7 +403,6 @@ export class RoutinePlayer {
                 });
             }
 
-            // Lerp Rotation Y
             if (params.rotation && params.rotation.y !== undefined) {
                 this.activeLerps.push({
                     key: 'cameraRotY',
@@ -413,7 +415,6 @@ export class RoutinePlayer {
                 });
             }
 
-            // Lerp Zoom
             if (params.zoom !== undefined) {
                 this.activeLerps.push({
                     key: 'cameraZoom',
