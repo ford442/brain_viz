@@ -222,8 +222,16 @@ async function init() {
         btnStop.style.flex = '1';
         btnStop.style.background = "#aa2222";
 
+        // [Phase 3] Procedural Generation Button
+        const btnGen = document.createElement('button');
+        btnGen.textContent = '🎲';
+        btnGen.title = "Generate Random Routine";
+        btnGen.style.flex = '0.5';
+        btnGen.style.background = "#5522aa";
+
         transportDiv.appendChild(btnPlay);
         transportDiv.appendChild(btnStop);
+        transportDiv.appendChild(btnGen);
         routineContainer.appendChild(transportDiv);
 
         // Transport Info (Time + Loop)
@@ -313,6 +321,12 @@ async function init() {
         };
 
         btnStop.onclick = () => player.stop();
+
+        // [Phase 3] Procedural Generation Handler
+        btnGen.onclick = () => {
+             player.generateProceduralRoutine();
+             player.play();
+        };
 
         chkLoop.onchange = () => {
             player.loop = chkLoop.checked;
