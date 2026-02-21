@@ -95,6 +95,13 @@ async function init() {
         };
 
         const player = new RoutinePlayer(renderer, regionMap);
+
+        // [Phase 3] Extensible Event System Demo
+        // Register a custom 'debug' handler to demonstrate the new V2.9 architecture
+        player.registerHandler('debug', (evt) => {
+             console.log(`%c[Routine Debug] ${evt.message}`, 'color: #ff00ff; font-weight: bold;');
+        });
+
         // [Phase 2] Register Mini-Routines for recursive 'call' support
         player.registerSubRoutines(MINI_ROUTINES);
 
