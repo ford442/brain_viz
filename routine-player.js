@@ -76,6 +76,22 @@ export class RoutinePlayer {
             this.renderer.resetActivity();
         });
 
+        // [Phase 2] Camera Shake
+        this.registerHandler('shake', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 0.05;
+            this.renderer.setParams({ shake: intensity });
+
+            if (evt.duration) {
+                // Auto-fade out
+                this.startLerp({
+                    key: 'shake',
+                    value: 0.0,
+                    duration: evt.duration,
+                    ease: evt.ease || 'quadOut'
+                });
+            }
+        });
+
         // Camera Control
         this.registerHandler('camera', (evt) => {
             this.handleCamera(evt);

@@ -32,7 +32,8 @@ export class BrainRenderer {
             flowSpeed: 4.0, // V2.3: Signal Speed
             colorShift: 0.0, // [Phase 5] Serotonin Color Shift
             sparkle: 0.0, // [Phase 5] Synaptic Sparkles
-            growth: 1.0 // [Phase 6] Dendritic Growth (0.0 - 1.0)
+            growth: 1.0, // [Phase 6] Dendritic Growth (0.0 - 1.0)
+            shake: 0.0 // [Phase 2] Camera Shake Intensity (Trauma/Panic)
         };
 
         // Voxel Grid Settings
@@ -360,7 +361,16 @@ export class BrainRenderer {
         const aspect = this.canvas.width / this.canvas.height;
         const projection = Mat4.perspective(Math.PI / 4, aspect, 0.1, 100.0);
         const view = Mat4.lookAt([0, 0, this.zoom], [0, 0, 0], [0, 1, 0]);
-        const model = Mat4.multiply(Mat4.rotateX(this.rotation.x), Mat4.rotateY(this.rotation.y));
+
+        // [Phase 2] Camera Shake Logic
+        let shakeX = 0;
+        let shakeY = 0;
+        if (this.params.shake > 0.001) {
+             shakeX = (Math.random() - 0.5) * this.params.shake;
+             shakeY = (Math.random() - 0.5) * this.params.shake;
+        }
+
+        const model = Mat4.multiply(Mat4.rotateX(this.rotation.x + shakeX), Mat4.rotateY(this.rotation.y + shakeY));
 
         const pv = Mat4.multiply(view, projection);
         const mvp = Mat4.multiply(model, pv);
