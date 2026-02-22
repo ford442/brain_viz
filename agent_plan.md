@@ -25,6 +25,7 @@
 - [x] **Non-Linear Easing:** Support quadratic/cubic/sine easing for `lerp` and `camera` events.
 - [x] **Director Tools:** Implement a UI overlay to display real-time camera coordinates (Rotation/Zoom) and a "Log State" button to facilitate creating new routines.
 - [x] **Extensible Event System:** Refactor `RoutinePlayer` to support dynamic custom event handlers, enabling "Brain DJ" features.
+- [x] **Camera Shake:** Add a 'shake' event type for trauma/panic simulation.
 
 ### Phase 3: "Brain DJ" Mode (Live Performance)
 - [x] **Keyboard Triggers:** Bind number keys (1-9) to specific mini-routines (e.g., Press '1' for "Sudden Surprise", '2' for "Calm Down").
@@ -60,6 +61,7 @@
 * *Idea:* "Collaborative Brain Storming" - Multi-user session where multiple people can inject stimuli into the same visualization via WebSockets.
 
 ## 📜 Changelog
+* [2025-02-22] - Completed Phase 2 (Camera Shake). Implemented `shake` parameter in `BrainRenderer` and event handler in `RoutinePlayer`. Added "Panic Attack" routine and UI controls.
 * [2025-02-22] - Completed Phase 2 (Non-Linear Easing). Implemented `Easing` utilities in `math-utils.js` and integrated them into `RoutinePlayer` for cinematic camera/parameter transitions.
 * [2025-02-21] - Completed Phase 5 (Synaptic Sparkles). Implemented `sparkle` uniform for visual bursts, added "Epiphany" routine, and updated UI controls.
 * [2025-02-20] - Completed Phase 2 (Global Time Dilation). Implemented playback speed control (0.1x - 5.0x) in `RoutinePlayer` and added UI slider to `main.js`.
