@@ -116,7 +116,19 @@ def verify_brain_viz():
             # Let's just check if the code we added (console.log) appears when we manually trigger a camera event with duration?
             # We can't easily access the internal player.
             # But we can check if the file is loaded correctly.
-            pass
+
+            # 7. Verify Procedural Generation
+            print("Testing Procedural Generation...")
+            # Click the generate button
+            page.get_by_text("🎲").click()
+            page.wait_for_timeout(2000) # Wait for generation and log
+
+            # Check for console log
+            proc_log = any("Procedural Routine Generated" in msg for msg in console_logs)
+            if proc_log:
+                print("VERIFIED: Procedural Routine Generated log found")
+            else:
+                print("WARNING: Procedural Routine log NOT found")
 
         except Exception as e:
             print(f"Script Error: {e}")
