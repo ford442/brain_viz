@@ -92,6 +92,24 @@ export class RoutinePlayer {
             }
         });
 
+        // [Phase 7] Cinematic Effects (Aberration, Grain)
+        this.registerHandler('cinematic', (evt) => {
+            if (evt.aberration !== undefined) {
+                if (evt.duration) {
+                    this.startLerp({ key: 'aberration', value: evt.aberration, duration: evt.duration, ease: evt.ease });
+                } else {
+                    this.renderer.setParams({ aberration: evt.aberration });
+                }
+            }
+            if (evt.grain !== undefined) {
+                 if (evt.duration) {
+                    this.startLerp({ key: 'grain', value: evt.grain, duration: evt.duration, ease: evt.ease });
+                } else {
+                    this.renderer.setParams({ grain: evt.grain });
+                }
+            }
+        });
+
         // Camera Control
         this.registerHandler('camera', (evt) => {
             this.handleCamera(evt);

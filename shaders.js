@@ -103,6 +103,8 @@ struct Uniforms {
     slicePlane: vec4<f32>, // [Neuro-Weaver] V2.6: Renamed from clipPlane
     sparkle: f32, // [Phase 5] Synaptic Sparkles
     growth: f32, // [Phase 6] Dendritic Growth
+    aberration: f32, // [Phase 7] Chromatic Aberration
+    grain: f32, // [Phase 7] Film Grain
 }
 
 struct VertexInput {
@@ -257,6 +259,8 @@ struct Uniforms {
     slicePlane: vec4<f32>, // [Neuro-Weaver] V2.6: Renamed from clipPlane
     sparkle: f32, // [Phase 5] Synaptic Sparkles
     growth: f32, // [Phase 6]
+    aberration: f32, // [Phase 7]
+    grain: f32, // [Phase 7]
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
@@ -323,6 +327,8 @@ struct Uniforms {
     slicePlane: vec4<f32>, // [Neuro-Weaver] V2.6: Renamed from clipPlane
     sparkle: f32, // [Phase 5] Synaptic Sparkles
     growth: f32, // [Phase 6]
+    aberration: f32, // [Phase 7]
+    grain: f32, // [Phase 7]
 }
 
 struct VertexInput {
@@ -525,3 +531,62 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     activityTensor[index] = clamp(val, 0.0, 1.0);
 }
 `;
+
+// [Phase 7] Post-Processing Shaders
+
+export const postVertexShader = \`
+@vertex
+fn main(@builtin(vertex_index) VertexIndex : u32) -> @builtin(position) vec4<f32> {
+    var pos = array<vec2<f32>, 6>(
+        vec2<f32>(-1.0, -1.0), vec2<f32>(1.0, -1.0), vec2<f32>(-1.0, 1.0),
+        vec2<f32>(-1.0, 1.0), vec2<f32>(1.0, -1.0), vec2<f32>(1.0, 1.0)
+    );
+    return vec4<f32>(pos[VertexIndex], 0.0, 1.0);
+}
+\`;
+
+export const postFragmentShader = \`
+struct Uniforms {
+    mvpMatrix: mat4x4<f32>,
+    modelMatrix: mat4x4<f32>,
+    time: f32,
+    style: f32,
+    flowSpeed: f32,
+    colorShift: f32,
+    slicePlane: vec4<f32>,
+    sparkle: f32,
+    growth: f32,
+    aberration: f32,
+    grain: f32,
+}
+@group(0) @binding(0) var<uniform> uniforms: Uniforms;
+@group(0) @binding(1) var tDiffuse: texture_2d<f32>;
+@group(0) @binding(2) var sDiffuse: sampler;
+
+@fragment
+fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
+    let uv = position.xy / vec2<f32>(textureDimensions(tDiffuse));
+
+    // Chromatic Aberration
+    var offset = uniforms.aberration * 0.01;
+    // Distort from center
+    let center = vec2<f32>(0.5, 0.5);
+    let dist = distance(uv, center);
+    // Increase offset at edges
+    offset *= dist * 2.0;
+
+    let r = textureSample(tDiffuse, sDiffuse, uv + vec2<f32>(offset, 0.0)).r;
+    let g = textureSample(tDiffuse, sDiffuse, uv).g;
+    let b = textureSample(tDiffuse, sDiffuse, uv - vec2<f32>(offset, 0.0)).b;
+
+    var color = vec3<f32>(r, g, b);
+
+    // Film Grain
+    if (uniforms.grain > 0.0) {
+        let noise = fract(sin(dot(uv + uniforms.time * 0.1, vec2<f32>(12.9898, 78.233))) * 43758.5453);
+        color += (noise - 0.5) * uniforms.grain;
+    }
+
+    return vec4<f32>(color, 1.0);
+}
+\`;
