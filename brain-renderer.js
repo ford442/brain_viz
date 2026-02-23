@@ -1,7 +1,7 @@
 // brain-renderer.js
 // Verified Neuro-Weaver V2.6 Implementation
 import { BrainGeometry } from './brain-geometry.js';
-import { vertexShader, fragmentShader, computeShader, somaVertexShader, somaFragmentShader } from './shaders.js';
+import { vertexShader, fragmentShader, computeShader, somaVertexShader, somaFragmentShader, postVertexShader, postFragmentShader } from './shaders.js';
 import { Mat4 } from './math-utils.js';
 
 export class BrainRenderer {
@@ -13,7 +13,8 @@ export class BrainRenderer {
         // Pipelines
         this.pipeline = null;      // Solid Mesh
         this.fiberPipeline = null; // Lines
-        this.somaPipeline = null;  // Instanced Spheres (Somas) [Renamed for V2.6]
+        this.somaPipeline = null;  // Instanced Spheres (Somas)
+        this.postPipeline = null;  // [Phase 7] Cinematic Post-Process
         
         this.rotation = { x: 0, y: 0 };
         this.targetRotation = { x: 0.3, y: 0 };
@@ -33,7 +34,9 @@ export class BrainRenderer {
             colorShift: 0.0, // [Phase 5] Serotonin Color Shift
             sparkle: 0.0, // [Phase 5] Synaptic Sparkles
             growth: 1.0, // [Phase 6] Dendritic Growth (0.0 - 1.0)
-            shake: 0.0 // [Phase 2] Camera Shake Intensity (Trauma/Panic)
+            shake: 0.0, // [Phase 2] Camera Shake Intensity (Trauma/Panic)
+            aberration: 0.0, // [Phase 7] Chromatic Aberration Intensity
+            grain: 0.0 // [Phase 7] Film Grain Intensity
         };
 
         // Voxel Grid Settings
@@ -48,6 +51,10 @@ export class BrainRenderer {
             active: 0.0
         };
         
+        this.renderTarget = null;
+        this.sampler = null;
+        this.postBindGroup = null;
+
         this.setupInputHandlers();
     }
     
@@ -183,12 +190,16 @@ export class BrainRenderer {
         this.initSomaPipeline(renderBindGroupLayout, format);
         this.initComputePipeline();
 
+        // [Phase 7] Post-Processing Init
+        this.initPostProcessing(format);
+
         // Ensure canvas dimensions are valid before creating depth texture
         const width = Math.max(1, this.canvas.width);
         const height = Math.max(1, this.canvas.height);
         this.depthTexture = this.device.createTexture({ size: [width, height], format: 'depth24plus', usage: GPUTextureUsage.RENDER_ATTACHMENT });
+        this.createRenderTarget(width, height);
 
-        console.log("Renderer V2.6 Verified");
+        console.log("Renderer V2.6 Verified with Post-Processing");
     }
 
     // [Neuro-Weaver] Refactored: Initialize Volumetric Data (Tensor)
@@ -301,6 +312,55 @@ export class BrainRenderer {
         });
     }
 
+    // [Phase 7] Initialize Post-Processing
+    initPostProcessing(format) {
+        const postModule = this.device.createShaderModule({ code: postVertexShader });
+        const postFragModule = this.device.createShaderModule({ code: postFragmentShader });
+
+        this.postPipeline = this.device.createRenderPipeline({
+            layout: 'auto',
+            vertex: {
+                module: postModule,
+                entryPoint: 'main'
+            },
+            fragment: {
+                module: postFragModule,
+                entryPoint: 'main',
+                targets: [{ format: format }] // Render to screen
+            },
+            primitive: {
+                topology: 'triangle-list'
+            }
+        });
+
+        this.sampler = this.device.createSampler({
+            magFilter: 'linear',
+            minFilter: 'linear',
+        });
+    }
+
+    createRenderTarget(width, height) {
+        if (this.renderTarget) this.renderTarget.destroy();
+
+        // Must match canvas format for compatibility if copying, but here we render to it then sample from it.
+        // It's used as a color attachment and a texture binding.
+        this.renderTarget = this.device.createTexture({
+            size: [width, height],
+            format: navigator.gpu.getPreferredCanvasFormat(),
+            usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING
+        });
+
+        // Recreate Bind Group
+        this.postBindGroup = this.device.createBindGroup({
+            layout: this.postPipeline.getBindGroupLayout(0),
+            entries: [
+                { binding: 0, resource: { buffer: this.uniformBuffer } },
+                { binding: 1, resource: this.renderTarget.createView() },
+                { binding: 2, resource: this.sampler }
+            ]
+        });
+    }
+
     createBuffer(data, usage) {
         const buffer = this.device.createBuffer({ size: data.byteLength, usage: usage | GPUBufferUsage.COPY_DST });
         this.device.queue.writeBuffer(buffer, 0, data);
@@ -345,6 +405,8 @@ export class BrainRenderer {
         this.params.smoothing = 0.98;
         this.params.colorShift = 0.0;
         this.params.sparkle = 0.0;
+        this.params.aberration = 0.0;
+        this.params.grain = 0.0;
     }
 
     resetActivity() {
@@ -384,6 +446,9 @@ export class BrainRenderer {
         // [35]: ColorShift
         // [36-39]: SlicePlane (Vec4, 16 bytes)
         // [40]: Sparkle (4 bytes)
+        // [41]: Growth (4 bytes)
+        // [42]: Aberration (4 bytes)
+        // [43]: Grain (4 bytes)
 
         const OFFSET_MVP = 0;
         const OFFSET_MODEL = 16;
@@ -394,6 +459,8 @@ export class BrainRenderer {
         const OFFSET_SLICE = 36;
         const OFFSET_SPARKLE = 40;
         const OFFSET_GROWTH = 41;
+        const OFFSET_ABERRATION = 42;
+        const OFFSET_GRAIN = 43;
 
         const uData = new Float32Array(48); // 48 * 4 = 192 bytes
         uData.set(mvp, OFFSET_MVP);
@@ -411,6 +478,8 @@ export class BrainRenderer {
 
         uData[OFFSET_SPARKLE] = this.params.sparkle;
         uData[OFFSET_GROWTH] = this.params.growth;
+        uData[OFFSET_ABERRATION] = this.params.aberration;
+        uData[OFFSET_GRAIN] = this.params.grain;
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         
@@ -457,6 +526,9 @@ export class BrainRenderer {
             this.canvas.width = width; this.canvas.height = height;
             this.depthTexture.destroy();
             this.depthTexture = this.device.createTexture({ size: [width, height], format: 'depth24plus', usage: GPUTextureUsage.RENDER_ATTACHMENT });
+
+            // Resize Render Target
+            this.createRenderTarget(width, height);
         }
 
         this.time += 0.016;
@@ -470,9 +542,10 @@ export class BrainRenderer {
         computePass.dispatchWorkgroups(Math.ceil(this.voxelBufferSize / 64));
         computePass.end();
         
+        // --- PASS 1: RENDER SCENE TO TEXTURE ---
         const renderPass = commandEncoder.beginRenderPass({
             colorAttachments: [{
-                view: this.context.getCurrentTexture().createView(),
+                view: this.renderTarget.createView(),
                 clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 }, 
                 loadOp: 'clear', storeOp: 'store'
             }],
@@ -507,6 +580,21 @@ export class BrainRenderer {
         }
         
         renderPass.end();
+
+        // --- PASS 2: POST-PROCESSING TO SCREEN ---
+        const postPass = commandEncoder.beginRenderPass({
+            colorAttachments: [{
+                view: this.context.getCurrentTexture().createView(),
+                loadOp: 'clear', storeOp: 'store',
+                clearValue: { r: 0, g: 0, b: 0, a: 1 }
+            }]
+        });
+
+        postPass.setPipeline(this.postPipeline);
+        postPass.setBindGroup(0, this.postBindGroup);
+        postPass.draw(6); // Draw full-screen quad
+        postPass.end();
+
         this.device.queue.submit([commandEncoder.finish()]);
         requestAnimationFrame(() => this.render());
     }

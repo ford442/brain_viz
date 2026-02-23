@@ -42,6 +42,9 @@
 ### Phase 6: Structural Dynamics
 - [x] **Dendritic Growth Animation:** Implement `growth` uniform to control the maximum render radius of the brain structure, simulating organic growth.
 
+### Phase 7: Cinematic Post-Processing
+- [x] **Chromatic Aberration & Film Grain:** Implement a post-processing pipeline for cinematic effects (RGB split, noise).
+
 ---
 
 ## 🧪 "Dream" Log (Future Concepts)

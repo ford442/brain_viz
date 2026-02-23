@@ -46,6 +46,8 @@ const MINI_ROUTINES = {
         { time: 0.0, type: 'text', message: 'PANIC!', duration: 1.0 },
         { time: 0.0, type: 'style', value: 1 }, // Cyber/Glitch
         { time: 0.0, type: 'shake', intensity: 0.1, duration: 4.0 }, // Big shake
+        { time: 0.0, type: 'cinematic', aberration: 1.0, duration: 0.2 }, // [Phase 7] Aberration spike
+        { time: 0.0, type: 'cinematic', grain: 0.8, duration: 0.5 }, // [Phase 7] Grain spike
         { time: 0.0, type: 'lerp', key: 'frequency', value: 15.0, duration: 0.5 },
         { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 20.0, duration: 0.5 },
         { time: 0.5, type: 'lerp', key: 'colorShift', value: 1.0, duration: 0.1 }, // Flash Red
@@ -53,6 +55,7 @@ const MINI_ROUTINES = {
         { time: 0.7, type: 'lerp', key: 'colorShift', value: 1.0, duration: 0.1 },
         { time: 0.8, type: 'lerp', key: 'colorShift', value: 0.0, duration: 0.1 },
         { time: 1.0, type: 'stimulus', target: 'deep', intensity: 5.0 },
+        { time: 2.0, type: 'cinematic', aberration: 0.0, grain: 0.0, duration: 2.0 },
         { time: 4.0, type: 'calm' },
         { time: 4.0, type: 'text', message: 'Stabilizing...', duration: 2.0 }
     ]
@@ -74,6 +77,8 @@ async function init() {
         sparkle: document.getElementById('sparkle'), // [Phase 5]
         growth: document.getElementById('growth'), // [Phase 6]
         shake: document.getElementById('shake'), // [Phase 2]
+        aberration: document.getElementById('aberration'), // [Phase 7]
+        grain: document.getElementById('grain'), // [Phase 7]
         style: document.getElementById('style-mode')
     };
     
@@ -87,7 +92,9 @@ async function init() {
         colorShift: document.getElementById('val-shift'), // [Phase 5]
         sparkle: document.getElementById('val-sparkle'), // [Phase 5]
         growth: document.getElementById('val-growth'), // [Phase 6]
-        shake: document.getElementById('val-shake') // [Phase 2]
+        shake: document.getElementById('val-shake'), // [Phase 2]
+        aberration: document.getElementById('val-aberration'), // [Phase 7]
+        grain: document.getElementById('val-grain') // [Phase 7]
     };
     
     if (!navigator.gpu) {
@@ -202,7 +209,7 @@ async function init() {
              if (event.type === 'calm') {
                  // Calm state modifies amplitude, frequency, smoothing
                  // We should sync them if they are in the renderer params
-                 ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake'].forEach(k => {
+                 ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'aberration', 'grain'].forEach(k => {
                     if (inputs[k]) inputs[k].value = renderer.params[k];
                     if (labels[k]) labels[k].textContent = renderer.params[k].toFixed(2);
                  });
@@ -566,7 +573,7 @@ function initUIControls(renderer, uiInputs, uiLabels) {
 
     document.getElementById('stim-calm')?.addEventListener('click', () => {
         renderer.calmState();
-        ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake'].forEach(k => {
+        ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'aberration', 'grain'].forEach(k => {
             if(uiInputs[k]) uiInputs[k].value = renderer.params[k];
             syncParam(k, renderer.params[k]);
         });
