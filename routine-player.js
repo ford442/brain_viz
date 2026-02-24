@@ -9,7 +9,11 @@ const CAMERA_PRESETS = {
     'temporal': { rotation: { x: 0, y: -Math.PI / 2 }, zoom: 3.5 }, // Right Side
     'parietal': { rotation: { x: 1.0, y: 0 }, zoom: 3.5 },    // Top-ish
     'deep': { rotation: { x: 0.3, y: 0.3 }, zoom: 2.5 },      // Close up angle
-    'global': { rotation: { x: 0.3, y: 0 }, zoom: 3.5 }       // Standard view
+    'global': { rotation: { x: 0.3, y: 0 }, zoom: 3.5 },      // Standard view
+    // [Phase 2] Expanded Presets
+    'top': { rotation: { x: 1.57, y: 0 }, zoom: 3.5 },        // Direct Top-down
+    'bottom': { rotation: { x: -1.57, y: 0 }, zoom: 3.5 },    // Bottom-up
+    'iso': { rotation: { x: 0.5, y: 0.5 }, zoom: 3.0 }        // Isometric-like
 };
 
 export class RoutinePlayer {
@@ -30,6 +34,7 @@ export class RoutinePlayer {
         this.onEvent = null; // Callback for UI updates
         this.lastPauseTime = 0;
         this.subRoutines = {}; // [Phase 2] Sub-Routine System
+        this.customPresets = {}; // [Phase 2] Custom Camera Presets
 
         // [Phase 2] Easing Support
         this.activeLerps = []; // { key, startVal, endVal, elapsed, duration }
@@ -161,6 +166,11 @@ export class RoutinePlayer {
         };
         console.log(JSON.stringify(state, null, 2));
         return state;
+    }
+
+    addCameraPreset(name, params) {
+        this.customPresets[name] = params;
+        console.log(`[Routine] Added custom camera preset: ${name}`);
     }
 
     registerSubRoutines(map) {
@@ -489,7 +499,7 @@ export class RoutinePlayer {
         let params = {};
 
         if (typeof evt.target === 'string') {
-            const preset = CAMERA_PRESETS[evt.target];
+            const preset = CAMERA_PRESETS[evt.target] || this.customPresets[evt.target];
             if (preset) {
                 params = { ...preset };
             } else {

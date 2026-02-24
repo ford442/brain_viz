@@ -58,6 +58,18 @@ const MINI_ROUTINES = {
         { time: 2.0, type: 'cinematic', aberration: 0.0, grain: 0.0, duration: 2.0 },
         { time: 4.0, type: 'calm' },
         { time: 4.0, type: 'text', message: 'Stabilizing...', duration: 2.0 }
+    ],
+    '7': [ // Top View
+        { time: 0.0, type: 'camera', target: 'top', duration: 1.5, ease: 'quadInOut' },
+        { time: 0.0, type: 'text', message: 'Dorsal View', duration: 1.5 }
+    ],
+    '8': [ // Bottom View
+        { time: 0.0, type: 'camera', target: 'bottom', duration: 1.5, ease: 'quadInOut' },
+        { time: 0.0, type: 'text', message: 'Ventral View', duration: 1.5 }
+    ],
+    '9': [ // Isometric View
+        { time: 0.0, type: 'camera', target: 'iso', duration: 1.5, ease: 'quadInOut' },
+        { time: 0.0, type: 'text', message: 'Isometric Projection', duration: 1.5 }
     ]
 };
 
@@ -151,7 +163,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7=Top, 8=Bot, 9=Iso';
         document.body.appendChild(legend);
 
         // [Phase 4] Narrative Overlay
