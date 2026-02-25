@@ -369,13 +369,13 @@ async function init() {
 
         // [New] JSON Loader Input
         const fileLabel = document.createElement('label');
-        fileLabel.textContent = "Load Custom Routine (.json)";
+        fileLabel.textContent = "Load Custom Routine (.json / .csv)";
         fileLabel.style.marginTop = "10px";
         routineContainer.appendChild(fileLabel);
 
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
-        fileInput.accept = '.json';
+        fileInput.accept = '.json, .csv';
         fileInput.style.color = "#aaa";
         fileInput.style.marginTop = "5px";
         fileInput.style.width = "100%";
@@ -386,14 +386,26 @@ async function init() {
 
             const reader = new FileReader();
             reader.onload = (evt) => {
-                try {
-                    const routineData = JSON.parse(evt.target.result);
-                    player.loadRoutine(routineData, false);
-                    player.play();
-                    console.log(`[Main] Loaded custom routine: ${file.name}`);
-                } catch (err) {
-                    console.error("Invalid JSON:", err);
-                    alert("Failed to parse routine JSON.");
+                const text = evt.target.result;
+                if (file.name.toLowerCase().endsWith('.csv')) {
+                    try {
+                        player.loadRoutineFromCSV(text, false);
+                        player.play();
+                        console.log(`[Main] Loaded custom CSV routine: ${file.name}`);
+                    } catch (err) {
+                        console.error("Invalid CSV:", err);
+                        alert("Failed to parse routine CSV.");
+                    }
+                } else {
+                    try {
+                        const routineData = JSON.parse(text);
+                        player.loadRoutine(routineData, false);
+                        player.play();
+                        console.log(`[Main] Loaded custom routine: ${file.name}`);
+                    } catch (err) {
+                        console.error("Invalid JSON:", err);
+                        alert("Failed to parse routine JSON.");
+                    }
                 }
             };
             reader.readAsText(file);

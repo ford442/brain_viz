@@ -1,0 +1,8 @@
+time,type,key,value,duration,ease,message
+0.0,text,,,2.0,,CSV Routine Loaded
+0.0,style,,2,,,
+0.0,camera,target,global,2.0,quadInOut,
+1.0,lerp,flowSpeed,8.0,3.0,sineIn,
+2.0,stimulus,target,frontal,1.0,,
+4.0,lerp,flowSpeed,2.0,2.0,quadOut,
+6.0,text,,,2.0,,End of CSV

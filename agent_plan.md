@@ -46,6 +46,9 @@
 ### Phase 7: Cinematic Post-Processing
 - [x] **Chromatic Aberration & Film Grain:** Implement a post-processing pipeline for cinematic effects (RGB split, noise).
 
+### Phase 8: Data Integration
+- [x] **CSV/fMRI Import:** Implement `RoutinePlayer` support for parsing CSV data (Time Series & Event Lists) to drive brain visualization from external datasets.
+
 ---
 
 ## 🧪 "Dream" Log (Future Concepts)
