@@ -105,6 +105,8 @@ struct Uniforms {
     growth: f32, // [Phase 6] Dendritic Growth
     aberration: f32, // [Phase 7] Chromatic Aberration
     grain: f32, // [Phase 7] Film Grain
+    focus: f32, // [Phase 7] Focus Distance
+    aperture: f32, // [Phase 7] Aperture Size
 }
 
 struct VertexInput {
@@ -329,6 +331,8 @@ struct Uniforms {
     growth: f32, // [Phase 6]
     aberration: f32, // [Phase 7]
     grain: f32, // [Phase 7]
+    focus: f32, // [Phase 7]
+    aperture: f32, // [Phase 7]
 }
 
 struct VertexInput {
@@ -558,28 +562,60 @@ struct Uniforms {
     growth: f32,
     aberration: f32,
     grain: f32,
+    focus: f32,
+    aperture: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var tDiffuse: texture_2d<f32>;
 @group(0) @binding(2) var sDiffuse: sampler;
+@group(0) @binding(3) var tDepth: texture_depth_2d;
 
 @fragment
 fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
     let uv = position.xy / vec2<f32>(textureDimensions(tDiffuse));
 
+    // [Phase 7] Depth of Field Logic
+    let coords = vec2<i32>(position.xy);
+    let depth = textureLoad(tDepth, coords, 0);
+
+    // Calculate Circle of Confusion
+    let coc = abs(depth - uniforms.focus);
+    let blurAmount = coc * uniforms.aperture * 10.0;
+
     // Chromatic Aberration
     var offset = uniforms.aberration * 0.01;
-    // Distort from center
     let center = vec2<f32>(0.5, 0.5);
     let dist = distance(uv, center);
-    // Increase offset at edges
     offset *= dist * 2.0;
 
-    let r = textureSample(tDiffuse, sDiffuse, uv + vec2<f32>(offset, 0.0)).r;
-    let g = textureSample(tDiffuse, sDiffuse, uv).g;
-    let b = textureSample(tDiffuse, sDiffuse, uv - vec2<f32>(offset, 0.0)).b;
+    var color = vec3<f32>(0.0);
 
-    var color = vec3<f32>(r, g, b);
+    if (blurAmount > 0.1) {
+        // Simple Box Blur with Spread
+        let spread = blurAmount * 0.01;
+        var accum = vec3<f32>(0.0);
+        var totalWeight = 0.0;
+
+        // 9-tap kernel
+        for(var i = -1; i <= 1; i++) {
+            for(var j = -1; j <= 1; j++) {
+                let uvOffset = vec2<f32>(f32(i), f32(j)) * spread;
+
+                let r = textureSample(tDiffuse, sDiffuse, uv + uvOffset + vec2<f32>(offset, 0.0)).r;
+                let g = textureSample(tDiffuse, sDiffuse, uv + uvOffset).g;
+                let b = textureSample(tDiffuse, sDiffuse, uv + uvOffset - vec2<f32>(offset, 0.0)).b;
+
+                accum += vec3<f32>(r, g, b);
+                totalWeight += 1.0;
+            }
+        }
+        color = accum / totalWeight;
+    } else {
+         let r = textureSample(tDiffuse, sDiffuse, uv + vec2<f32>(offset, 0.0)).r;
+         let g = textureSample(tDiffuse, sDiffuse, uv).g;
+         let b = textureSample(tDiffuse, sDiffuse, uv - vec2<f32>(offset, 0.0)).b;
+         color = vec3<f32>(r, g, b);
+    }
 
     // Film Grain
     if (uniforms.grain > 0.0) {

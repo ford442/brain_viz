@@ -36,7 +36,9 @@ export class BrainRenderer {
             growth: 1.0, // [Phase 6] Dendritic Growth (0.0 - 1.0)
             shake: 0.0, // [Phase 2] Camera Shake Intensity (Trauma/Panic)
             aberration: 0.0, // [Phase 7] Chromatic Aberration Intensity
-            grain: 0.0 // [Phase 7] Film Grain Intensity
+            grain: 0.0, // [Phase 7] Film Grain Intensity
+            focus: 0.5, // [Phase 7] Focus Distance (0.0 - 1.0)
+            aperture: 0.0 // [Phase 7] Blur Strength (DoF)
         };
 
         // Voxel Grid Settings
@@ -164,7 +166,7 @@ export class BrainRenderer {
                 targets: [{ format: format, blend: { color: { srcFactor: 'src-alpha', dstFactor: 'one-minus-src-alpha', operation: 'add' }, alpha: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha', operation: 'add' } } }]
             },
             primitive: { topology: 'triangle-list', cullMode: 'none' },
-            depthStencil: { depthWriteEnabled: true, depthCompare: 'less', format: 'depth24plus' }
+            depthStencil: { depthWriteEnabled: true, depthCompare: 'less', format: 'depth32float' }
         });
 
         // --- PIPELINE 2: FIBERS ---
@@ -184,7 +186,7 @@ export class BrainRenderer {
                 targets: [{ format: format, blend: { color: { srcFactor: 'src-alpha', dstFactor: 'one', operation: 'add' }, alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' } } }] 
             },
             primitive: { topology: 'line-list' }, 
-            depthStencil: { depthWriteEnabled: false, depthCompare: 'less', format: 'depth24plus' } 
+            depthStencil: { depthWriteEnabled: false, depthCompare: 'less', format: 'depth32float' }
         });
 
         this.initSomaPipeline(renderBindGroupLayout, format);
@@ -196,7 +198,7 @@ export class BrainRenderer {
         // Ensure canvas dimensions are valid before creating depth texture
         const width = Math.max(1, this.canvas.width);
         const height = Math.max(1, this.canvas.height);
-        this.depthTexture = this.device.createTexture({ size: [width, height], format: 'depth24plus', usage: GPUTextureUsage.RENDER_ATTACHMENT });
+        this.depthTexture = this.device.createTexture({ size: [width, height], format: 'depth32float', usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING });
         this.createRenderTarget(width, height);
 
         console.log("Renderer V2.6 Verified with Post-Processing");
@@ -292,7 +294,7 @@ export class BrainRenderer {
                 targets: [{ format: format, blend: { color: { srcFactor: 'src-alpha', dstFactor: 'one', operation: 'add' }, alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' } } }]
             },
             primitive: { topology: 'triangle-list', cullMode: 'back' },
-            depthStencil: { depthWriteEnabled: true, depthCompare: 'less', format: 'depth24plus' }
+            depthStencil: { depthWriteEnabled: true, depthCompare: 'less', format: 'depth32float' }
         });
     }
 
@@ -356,7 +358,8 @@ export class BrainRenderer {
             entries: [
                 { binding: 0, resource: { buffer: this.uniformBuffer } },
                 { binding: 1, resource: this.renderTarget.createView() },
-                { binding: 2, resource: this.sampler }
+                { binding: 2, resource: this.sampler },
+                { binding: 3, resource: this.depthTexture.createView() }
             ]
         });
     }
@@ -407,6 +410,7 @@ export class BrainRenderer {
         this.params.sparkle = 0.0;
         this.params.aberration = 0.0;
         this.params.grain = 0.0;
+        this.params.aperture = 0.0;
     }
 
     resetActivity() {
@@ -461,6 +465,8 @@ export class BrainRenderer {
         const OFFSET_GROWTH = 41;
         const OFFSET_ABERRATION = 42;
         const OFFSET_GRAIN = 43;
+        const OFFSET_FOCUS = 44;
+        const OFFSET_APERTURE = 45;
 
         const uData = new Float32Array(48); // 48 * 4 = 192 bytes
         uData.set(mvp, OFFSET_MVP);
@@ -480,6 +486,8 @@ export class BrainRenderer {
         uData[OFFSET_GROWTH] = this.params.growth;
         uData[OFFSET_ABERRATION] = this.params.aberration;
         uData[OFFSET_GRAIN] = this.params.grain;
+        uData[OFFSET_FOCUS] = this.params.focus;
+        uData[OFFSET_APERTURE] = this.params.aperture;
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         
@@ -525,7 +533,7 @@ export class BrainRenderer {
         if (this.canvas.width !== width || this.canvas.height !== height) {
             this.canvas.width = width; this.canvas.height = height;
             this.depthTexture.destroy();
-            this.depthTexture = this.device.createTexture({ size: [width, height], format: 'depth24plus', usage: GPUTextureUsage.RENDER_ATTACHMENT });
+            this.depthTexture = this.device.createTexture({ size: [width, height], format: 'depth32float', usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING });
 
             // Resize Render Target
             this.createRenderTarget(width, height);
