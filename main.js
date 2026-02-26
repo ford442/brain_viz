@@ -70,6 +70,16 @@ const MINI_ROUTINES = {
     '9': [ // Isometric View
         { time: 0.0, type: 'camera', target: 'iso', duration: 1.5, ease: 'quadInOut' },
         { time: 0.0, type: 'text', message: 'Isometric Projection', duration: 1.5 }
+    ],
+    '0': [ // Microscope (DoF Demo)
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'text', message: 'Microscopic Analysis', duration: 2.0 },
+        { time: 0.0, type: 'camera', target: 'deep', zoom: 8.0, duration: 2.0, ease: 'quadOut' },
+        { time: 0.0, type: 'lerp', key: 'aperture', value: 0.5, duration: 1.0 },
+        { time: 0.0, type: 'lerp', key: 'focus', value: 0.15, duration: 2.0 }, // Start close focus
+        { time: 2.0, type: 'lerp', key: 'focus', value: 0.25, duration: 3.0, ease: 'sineInOut' }, // Rack focus
+        { time: 5.0, type: 'lerp', key: 'aperture', value: 0.0, duration: 1.0 }, // Clear up
+        { time: 5.0, type: 'camera', zoom: 3.5, duration: 2.0 } // Reset Zoom
     ]
 };
 
@@ -91,6 +101,8 @@ async function init() {
         shake: document.getElementById('shake'), // [Phase 2]
         aberration: document.getElementById('aberration'), // [Phase 7]
         grain: document.getElementById('grain'), // [Phase 7]
+        focus: document.getElementById('focus'), // [Phase 7]
+        aperture: document.getElementById('aperture'), // [Phase 7]
         style: document.getElementById('style-mode')
     };
     
@@ -106,7 +118,9 @@ async function init() {
         growth: document.getElementById('val-growth'), // [Phase 6]
         shake: document.getElementById('val-shake'), // [Phase 2]
         aberration: document.getElementById('val-aberration'), // [Phase 7]
-        grain: document.getElementById('val-grain') // [Phase 7]
+        grain: document.getElementById('val-grain'), // [Phase 7]
+        focus: document.getElementById('val-focus'), // [Phase 7]
+        aperture: document.getElementById('val-aperture') // [Phase 7]
     };
     
     if (!navigator.gpu) {
@@ -163,7 +177,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7=Top, 8=Bot, 9=Iso';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus';
         document.body.appendChild(legend);
 
         // [Phase 4] Narrative Overlay
@@ -221,7 +235,7 @@ async function init() {
              if (event.type === 'calm') {
                  // Calm state modifies amplitude, frequency, smoothing
                  // We should sync them if they are in the renderer params
-                 ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'aberration', 'grain'].forEach(k => {
+                 ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'aberration', 'grain', 'focus', 'aperture'].forEach(k => {
                     if (inputs[k]) inputs[k].value = renderer.params[k];
                     if (labels[k]) labels[k].textContent = renderer.params[k].toFixed(2);
                  });
@@ -597,7 +611,7 @@ function initUIControls(renderer, uiInputs, uiLabels) {
 
     document.getElementById('stim-calm')?.addEventListener('click', () => {
         renderer.calmState();
-        ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'aberration', 'grain'].forEach(k => {
+        ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'aberration', 'grain', 'focus', 'aperture'].forEach(k => {
             if(uiInputs[k]) uiInputs[k].value = renderer.params[k];
             syncParam(k, renderer.params[k]);
         });

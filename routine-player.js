@@ -97,7 +97,7 @@ export class RoutinePlayer {
             }
         });
 
-        // [Phase 7] Cinematic Effects (Aberration, Grain)
+        // [Phase 7] Cinematic Effects (Aberration, Grain, Focus, Aperture)
         this.registerHandler('cinematic', (evt) => {
             if (evt.aberration !== undefined) {
                 if (evt.duration) {
@@ -111,6 +111,20 @@ export class RoutinePlayer {
                     this.startLerp({ key: 'grain', value: evt.grain, duration: evt.duration, ease: evt.ease });
                 } else {
                     this.renderer.setParams({ grain: evt.grain });
+                }
+            }
+            if (evt.focus !== undefined) {
+                 if (evt.duration) {
+                    this.startLerp({ key: 'focus', value: evt.focus, duration: evt.duration, ease: evt.ease });
+                } else {
+                    this.renderer.setParams({ focus: evt.focus });
+                }
+            }
+            if (evt.aperture !== undefined) {
+                 if (evt.duration) {
+                    this.startLerp({ key: 'aperture', value: evt.aperture, duration: evt.duration, ease: evt.ease });
+                } else {
+                    this.renderer.setParams({ aperture: evt.aperture });
                 }
             }
         });

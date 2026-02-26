@@ -45,6 +45,7 @@
 
 ### Phase 7: Cinematic Post-Processing
 - [x] **Chromatic Aberration & Film Grain:** Implement a post-processing pipeline for cinematic effects (RGB split, noise).
+- [x] **Depth of Field:** Implement post-processing focus blur using depth buffer.
 
 ### Phase 8: Data Integration
 - [x] **CSV/fMRI Import:** Implement `RoutinePlayer` support for parsing CSV data (Time Series & Event Lists) to drive brain visualization from external datasets.
@@ -52,6 +53,7 @@
 ---
 
 ## 🧪 "Dream" Log (Future Concepts)
+* *Idea:* "Neuronal Glitch" - Simulate data corruption/packet loss in the neural stream (blocky noise, scanlines).
 * *Idea:* "Narrative Mode" - Display text overlays synced with brain states (e.g., "Subject recognizes face" -> Temporal Lobe lights up).
 * *Idea:* "Multi-Brain" - Visualize two brains interacting (Mirror Neurons).
 * *Idea:* "VR/XR Mode" - WebXR integration for immersive brain walkthrough.
