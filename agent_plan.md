@@ -16,6 +16,8 @@
 - [x] **Playback UI:** Add a "Run Sequence" button and a transport clock (Play/Stop/Loop) to the DOM.
 
 ### Phase 2: Advanced Choreography
+- [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
+- [ ] **Parameter Interpolation/Easing:** Add parameter interpolation to routines.
 - [x] **Easing & Transitions:** Upgrade `RoutinePlayer` to support linear interpolation (Lerp) for parameters (e.g., slowly ramp `flowSpeed` from 1.0 to 10.0 over 3 seconds).
 - [x] **Camera Director:** Add a `camera` event type to the routine player to orbit/zoom the camera to specific regions of interest during playback.
 - [x] **JSON Loader:** Allow loading routines from external `.json` files instead of hardcoded arrays.
@@ -68,6 +70,7 @@
 * *Idea:* "Dendritic Growth Animation" - Visualizing the growth of new connections over time (neuroplasticity).
 * *Idea:* "Chromatic Aberration Shader" - Add post-processing for cinematic distortion.
 * *Idea:* "Collaborative Brain Storming" - Multi-user session where multiple people can inject stimuli into the same visualization via WebSockets.
+* *Idea:* "What if we visualized Serotonin levels as color shifts?"
 
 ## 📜 Changelog
 * [2026-02-24] - **Bug Fix:** Resolved syntax errors in `shaders.js` that prevented the application from building.
