@@ -143,7 +143,13 @@ async function init() {
             'deep': [0, 0, 0]
         };
 
-        const player = new RoutinePlayer(renderer, regionMap);
+        const cameraMap = {
+            'overview': { rotation: { x: 0.5, y: -0.5 }, zoom: 4.0 },
+            'close-up': { rotation: { x: 0.1, y: 0.1 }, zoom: 1.5 },
+            'scan': { rotation: { x: 0.8, y: 0.2 }, zoom: 3.0 }
+        };
+
+        const player = new RoutinePlayer(renderer, regionMap, cameraMap);
 
         // [Phase 3] Extensible Event System Demo
         // Register a custom 'debug' handler to demonstrate the new V2.9 architecture

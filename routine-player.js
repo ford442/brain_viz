@@ -17,9 +17,10 @@ const CAMERA_PRESETS = {
 };
 
 export class RoutinePlayer {
-    constructor(renderer, regionMap) {
+    constructor(renderer, regionMap, cameraMap) {
         this.renderer = renderer;
         this.regions = regionMap || {}; // Maps names like 'frontal' to [x,y,z]
+        this.cameraMap = cameraMap || {}; // Maps camera target names to {rotation, zoom}
         this.routine = [];
         this.isPlaying = false;
 
@@ -185,6 +186,11 @@ export class RoutinePlayer {
     addCameraPreset(name, params) {
         this.customPresets[name] = params;
         console.log(`[Routine] Added custom camera preset: ${name}`);
+    }
+
+    updateCameraMap(map) {
+        this.cameraMap = { ...this.cameraMap, ...map };
+        console.log(`[Routine] Updated Camera Coordinates Map.`);
     }
 
     registerSubRoutines(map) {
@@ -604,7 +610,7 @@ export class RoutinePlayer {
         let params = {};
 
         if (typeof evt.target === 'string') {
-            const preset = CAMERA_PRESETS[evt.target] || this.customPresets[evt.target];
+            const preset = CAMERA_PRESETS[evt.target] || this.cameraMap[evt.target] || this.customPresets[evt.target];
             if (preset) {
                 params = { ...preset };
             } else {
