@@ -17,8 +17,9 @@
 
 ### Phase 2: Advanced Choreography
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
-- [ ] **Parameter Interpolation/Easing:** Add parameter interpolation to routines.
+- [x] **Parameter Interpolation/Easing:** Add parameter interpolation to routines.
 - [x] **Easing & Transitions:** Upgrade `RoutinePlayer` to support linear interpolation (Lerp) for parameters (e.g., slowly ramp `flowSpeed` from 1.0 to 10.0 over 3 seconds).
+- [ ] **Dynamic Lighting Control:** Add support for routines to animate directional and ambient lighting attributes.
 - [x] **Camera Director:** Add a `camera` event type to the routine player to orbit/zoom the camera to specific regions of interest during playback.
 - [x] **JSON Loader:** Allow loading routines from external `.json` files instead of hardcoded arrays.
 - [x] **Sub-Routine System:** Allow routines to 'call' other named routines (nesting/expansion).
@@ -71,8 +72,10 @@
 * *Idea:* "Chromatic Aberration Shader" - Add post-processing for cinematic distortion.
 * *Idea:* "Collaborative Brain Storming" - Multi-user session where multiple people can inject stimuli into the same visualization via WebSockets.
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
+* *Idea:* "What if we allowed scripts to trigger external events like Haptic Feedback API?"
 
 ## 📜 Changelog
+* [2026-02-24] - Completed Phase 2 (Parameter Interpolation/Easing). Created a "Deep Breathing" routine in `main.js` that linearly interpolates `growth`, `flowSpeed`, and `amplitude` for a calming visual effect. Added "Haptic Feedback API" idea to Dream Log.
 * [2026-02-24] - **Bug Fix:** Resolved syntax errors in `shaders.js` that prevented the application from building.
 * [2025-02-22] - Completed Phase 2 (Camera Shake). Implemented `shake` parameter in `BrainRenderer` and event handler in `RoutinePlayer`. Added "Panic Attack" routine and UI controls.
 * [2025-02-22] - Completed Phase 2 (Non-Linear Easing). Implemented `Easing` utilities in `math-utils.js` and integrated them into `RoutinePlayer` for cinematic camera/parameter transitions.

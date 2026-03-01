@@ -590,31 +590,37 @@ fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
 
     var color = vec3<f32>(0.0);
 
-    if (blurAmount > 0.1) {
-        // Simple Box Blur with Spread
-        let spread = blurAmount * 0.01;
-        var accum = vec3<f32>(0.0);
-        var totalWeight = 0.0;
+    // WGSL uniform control flow fix: Compute all samples, then blend
 
-        // 9-tap kernel
-        for(var i = -1; i <= 1; i++) {
-            for(var j = -1; j <= 1; j++) {
-                let uvOffset = vec2<f32>(f32(i), f32(j)) * spread;
+    // Simple Box Blur with Spread
+    let spread = blurAmount * 0.01;
+    var accum = vec3<f32>(0.0);
+    var totalWeight = 0.0;
 
-                let r = textureSample(tDiffuse, sDiffuse, uv + uvOffset + vec2<f32>(offset, 0.0)).r;
-                let g = textureSample(tDiffuse, sDiffuse, uv + uvOffset).g;
-                let b = textureSample(tDiffuse, sDiffuse, uv + uvOffset - vec2<f32>(offset, 0.0)).b;
+    // 9-tap kernel
+    for(var i = -1; i <= 1; i++) {
+        for(var j = -1; j <= 1; j++) {
+            let uvOffset = vec2<f32>(f32(i), f32(j)) * spread;
 
-                accum += vec3<f32>(r, g, b);
-                totalWeight += 1.0;
-            }
+            let r = textureSample(tDiffuse, sDiffuse, uv + uvOffset + vec2<f32>(offset, 0.0)).r;
+            let g = textureSample(tDiffuse, sDiffuse, uv + uvOffset).g;
+            let b = textureSample(tDiffuse, sDiffuse, uv + uvOffset - vec2<f32>(offset, 0.0)).b;
+
+            accum += vec3<f32>(r, g, b);
+            totalWeight += 1.0;
         }
-        color = accum / totalWeight;
+    }
+    let blurredColor = accum / totalWeight;
+
+    let r_sharp = textureSample(tDiffuse, sDiffuse, uv + vec2<f32>(offset, 0.0)).r;
+    let g_sharp = textureSample(tDiffuse, sDiffuse, uv).g;
+    let b_sharp = textureSample(tDiffuse, sDiffuse, uv - vec2<f32>(offset, 0.0)).b;
+    let sharpColor = vec3<f32>(r_sharp, g_sharp, b_sharp);
+
+    if (blurAmount > 0.1) {
+        color = blurredColor;
     } else {
-         let r = textureSample(tDiffuse, sDiffuse, uv + vec2<f32>(offset, 0.0)).r;
-         let g = textureSample(tDiffuse, sDiffuse, uv).g;
-         let b = textureSample(tDiffuse, sDiffuse, uv - vec2<f32>(offset, 0.0)).b;
-         color = vec3<f32>(r, g, b);
+        color = sharpColor;
     }
 
     // Film Grain
