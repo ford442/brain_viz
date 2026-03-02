@@ -80,6 +80,18 @@ const MINI_ROUTINES = {
         { time: 2.0, type: 'lerp', key: 'focus', value: 0.25, duration: 3.0, ease: 'sineInOut' }, // Rack focus
         { time: 5.0, type: 'lerp', key: 'aperture', value: 0.0, duration: 1.0 }, // Clear up
         { time: 5.0, type: 'camera', zoom: 3.5, duration: 2.0 } // Reset Zoom
+    ],
+    '-': [ // Deep Breathing (Parameter Interpolation Demo)
+        { time: 0.0, type: 'text', message: 'Inhale...', duration: 3.0 },
+        { time: 0.0, type: 'lerp', key: 'growth', value: 1.0, duration: 3.0, ease: 'sineInOut' },
+        { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 8.0, duration: 3.0, ease: 'sineInOut' },
+        { time: 0.0, type: 'lerp', key: 'amplitude', value: 1.0, duration: 3.0, ease: 'sineInOut' },
+        { time: 3.0, type: 'text', message: 'Exhale...', duration: 4.0 },
+        { time: 3.0, type: 'lerp', key: 'growth', value: 0.5, duration: 4.0, ease: 'sineInOut' },
+        { time: 3.0, type: 'lerp', key: 'flowSpeed', value: 2.0, duration: 4.0, ease: 'sineInOut' },
+        { time: 3.0, type: 'lerp', key: 'amplitude', value: 0.2, duration: 4.0, ease: 'sineInOut' },
+        { time: 7.0, type: 'text', message: 'Centered', duration: 2.0 },
+        { time: 7.0, type: 'calm' }
     ]
 };
 
@@ -183,7 +195,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe';
         document.body.appendChild(legend);
 
         // [Phase 4] Narrative Overlay

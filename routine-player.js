@@ -488,11 +488,12 @@ export class RoutinePlayer {
         if (this.renderer.isRunning !== undefined && !this.renderer.isRunning) {
              // Only log if we expect it to be running (avoid log spam if intentionally stopped?)
              // Actually, if routine is playing but renderer is not, that's an issue.
-             console.warn("[Routine] Renderer is not running. Stopping routine.");
+             console.warn("[Routine] Renderer is not running. Stopping routine to prevent memory leaks or crashes.");
              this.stop();
              return;
         }
 
+        // [Routine Logic] Ensure the tick() loop uses performance.now() for drift-free timing
         const now = performance.now();
         const dt = (now - this.lastFrameTime) / 1000.0;
         this.lastFrameTime = now;
@@ -559,6 +560,7 @@ export class RoutinePlayer {
         });
     }
 
+    // [Event Handling] An extensible event execution mechanism (replaces rigid switch statements)
     executeEvent(event) {
         const handler = this.handlers.get(event.type);
         if (handler) {
@@ -568,8 +570,8 @@ export class RoutinePlayer {
                 console.error(`[Routine] Error executing handler for '${event.type}':`, err);
             }
         } else {
-            // Optional: Warn about unhandled events?
-            // console.warn(`[Routine] No handler for event type: ${event.type}`);
+            // Fallback for missing handlers, logging a warning to help debug user routines
+            console.warn(`[Routine] No handler registered for event type: '${event.type}'`);
         }
 
         // Notify listener (UI sync)
