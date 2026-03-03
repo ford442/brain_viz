@@ -92,6 +92,18 @@ const MINI_ROUTINES = {
         { time: 3.0, type: 'lerp', key: 'amplitude', value: 0.2, duration: 4.0, ease: 'sineInOut' },
         { time: 7.0, type: 'text', message: 'Centered', duration: 2.0 },
         { time: 7.0, type: 'calm' }
+    ],
+    'l': [ // Dynamic Lighting Demo
+        { time: 0.0, type: 'text', message: 'Lights Out', duration: 2.0 },
+        { time: 0.0, type: 'light', ambient: 0.0, dirIntensity: 0.0, duration: 2.0, ease: 'quadOut' },
+        { time: 2.5, type: 'text', message: 'Sunrise', duration: 3.0 },
+        { time: 2.5, type: 'light', dirX: 1.0, dirY: 0.5, dirZ: 1.0, dirIntensity: 2.0, ambient: 0.1, duration: 3.0, ease: 'sineInOut' },
+        { time: 6.0, type: 'text', message: 'High Noon', duration: 2.0 },
+        { time: 6.0, type: 'light', dirX: 0.0, dirY: 1.0, dirZ: 0.0, dirIntensity: 3.0, ambient: 0.3, duration: 2.0, ease: 'quadInOut' },
+        { time: 8.5, type: 'text', message: 'Sunset', duration: 3.0 },
+        { time: 8.5, type: 'light', dirX: -1.0, dirY: 0.2, dirZ: 0.5, dirIntensity: 1.5, ambient: 0.05, duration: 3.0, ease: 'sineInOut' },
+        { time: 12.0, type: 'text', message: 'Default Lights', duration: 2.0 },
+        { time: 12.0, type: 'light', dirX: 1.0, dirY: 1.0, dirZ: 1.0, dirIntensity: 0.8, ambient: 0.2, duration: 2.0 }
     ]
 };
 
@@ -115,6 +127,11 @@ async function init() {
         grain: document.getElementById('grain'), // [Phase 7]
         focus: document.getElementById('focus'), // [Phase 7]
         aperture: document.getElementById('aperture'), // [Phase 7]
+        ambientLight: document.getElementById('ambientLight'), // [Phase 2]
+        dirIntensity: document.getElementById('dirIntensity'), // [Phase 2]
+        lightDirX: document.getElementById('lightDirX'), // [Phase 2]
+        lightDirY: document.getElementById('lightDirY'), // [Phase 2]
+        lightDirZ: document.getElementById('lightDirZ'), // [Phase 2]
         style: document.getElementById('style-mode')
     };
     
@@ -132,7 +149,12 @@ async function init() {
         aberration: document.getElementById('val-aberration'), // [Phase 7]
         grain: document.getElementById('val-grain'), // [Phase 7]
         focus: document.getElementById('val-focus'), // [Phase 7]
-        aperture: document.getElementById('val-aperture') // [Phase 7]
+        aperture: document.getElementById('val-aperture'), // [Phase 7]
+        ambientLight: document.getElementById('val-ambientLight'), // [Phase 2]
+        dirIntensity: document.getElementById('val-dirIntensity'), // [Phase 2]
+        lightDirX: document.getElementById('val-lightDirX'), // [Phase 2]
+        lightDirY: document.getElementById('val-lightDirY'), // [Phase 2]
+        lightDirZ: document.getElementById('val-lightDirZ') // [Phase 2]
     };
     
     if (!navigator.gpu) {
@@ -195,7 +217,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting';
         document.body.appendChild(legend);
 
         // [Phase 4] Narrative Overlay
@@ -253,7 +275,7 @@ async function init() {
              if (event.type === 'calm') {
                  // Calm state modifies amplitude, frequency, smoothing
                  // We should sync them if they are in the renderer params
-                 ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'aberration', 'grain', 'focus', 'aperture'].forEach(k => {
+                 ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
                     if (inputs[k]) inputs[k].value = renderer.params[k];
                     if (labels[k]) labels[k].textContent = renderer.params[k].toFixed(2);
                  });
@@ -629,7 +651,7 @@ function initUIControls(renderer, uiInputs, uiLabels) {
 
     document.getElementById('stim-calm')?.addEventListener('click', () => {
         renderer.calmState();
-        ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'aberration', 'grain', 'focus', 'aperture'].forEach(k => {
+        ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
             if(uiInputs[k]) uiInputs[k].value = renderer.params[k];
             syncParam(k, renderer.params[k]);
         });

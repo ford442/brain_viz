@@ -106,7 +106,10 @@ struct Uniforms {
     aberration: f32, // [Phase 7] Chromatic Aberration
     grain: f32, // [Phase 7] Film Grain
     focus: f32, // [Phase 7] Focus Distance
-    aperture: f32, // [Phase 7] Aperture Size
+    aperture: f32, // [Phase 7] Aperture Size,
+    lightDir: vec3<f32>, // [Phase 2] Directional Light
+    ambientLight: f32, // [Phase 2] Ambient Light Intensity
+    dirIntensity: f32, // [Phase 2] Directional Light Intensity
 }
 
 struct VertexInput {
@@ -262,7 +265,10 @@ struct Uniforms {
     sparkle: f32, // [Phase 5] Synaptic Sparkles
     growth: f32, // [Phase 6]
     aberration: f32, // [Phase 7]
-    grain: f32, // [Phase 7]
+    grain: f32, // [Phase 7],
+    lightDir: vec3<f32>, // [Phase 2]
+    ambientLight: f32, // [Phase 2]
+    dirIntensity: f32, // [Phase 2]
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
@@ -303,7 +309,12 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
     let rimAlpha = smoothstep(0.6, 1.0, rim);
     let finalAlpha = baseAlpha + rimAlpha * 0.5;
 
-    var col = input.color;
+    // [Phase 2] Dynamic Lighting Control
+    let NdotL = max(0.0, dot(input.normal, normalize(uniforms.lightDir)));
+    let diffuse = vec3<f32>(1.0) * NdotL * uniforms.dirIntensity;
+    let ambient = vec3<f32>(1.0) * uniforms.ambientLight;
+
+    var col = input.color * (ambient + diffuse);
     col += vec3<f32>(0.8) * rimAlpha;
 
     // Journal: "Using mix() for color based on activity looks better than additive blending."
@@ -330,7 +341,10 @@ struct Uniforms {
     sparkle: f32, // [Phase 5] Synaptic Sparkles
     growth: f32, // [Phase 6]
     aberration: f32, // [Phase 7]
-    grain: f32, // [Phase 7]
+    grain: f32, // [Phase 7],
+    lightDir: vec3<f32>, // [Phase 2]
+    ambientLight: f32, // [Phase 2]
+    dirIntensity: f32, // [Phase 2]
     focus: f32, // [Phase 7]
     aperture: f32, // [Phase 7]
 }
@@ -564,6 +578,9 @@ struct Uniforms {
     grain: f32,
     focus: f32,
     aperture: f32,
+    lightDir: vec3<f32>,
+    ambientLight: f32,
+    dirIntensity: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var tDiffuse: texture_2d<f32>;
