@@ -38,7 +38,12 @@ export class BrainRenderer {
             aberration: 0.0, // [Phase 7] Chromatic Aberration Intensity
             grain: 0.0, // [Phase 7] Film Grain Intensity
             focus: 0.5, // [Phase 7] Focus Distance (0.0 - 1.0)
-            aperture: 0.0 // [Phase 7] Blur Strength (DoF)
+            aperture: 0.0, // [Phase 7] Blur Strength (DoF)
+            lightDirX: 1.0, // [Phase 2] Directional Light X
+            lightDirY: 1.0, // [Phase 2] Directional Light Y
+            lightDirZ: 1.0, // [Phase 2] Directional Light Z
+            ambientLight: 0.2, // [Phase 2] Ambient Light Intensity
+            dirIntensity: 0.8 // [Phase 2] Directional Light Intensity
         };
 
         // Voxel Grid Settings
@@ -217,11 +222,11 @@ export class BrainRenderer {
         });
 
         // Uniforms (Size increased for ClipPlane)
-        // 48 floats (192 bytes)
+        // 56 floats (224 bytes)
         // Layout:
         // MVP (64), Model (64), Time(4), Style(4), Pad(8), ClipPlane(16)
         this.uniformBuffer = this.device.createBuffer({
-            size: 192,
+            size: 224,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         });
 
@@ -453,6 +458,11 @@ export class BrainRenderer {
         // [41]: Growth (4 bytes)
         // [42]: Aberration (4 bytes)
         // [43]: Grain (4 bytes)
+        // [44]: Focus (4 bytes)
+        // [45]: Aperture (4 bytes)
+        // [48-50]: LightDir (12 bytes)
+        // [51]: AmbientLight (4 bytes)
+        // [52]: DirIntensity (4 bytes)
 
         const OFFSET_MVP = 0;
         const OFFSET_MODEL = 16;
@@ -467,8 +477,11 @@ export class BrainRenderer {
         const OFFSET_GRAIN = 43;
         const OFFSET_FOCUS = 44;
         const OFFSET_APERTURE = 45;
+        const OFFSET_LIGHT_DIR = 48;
+        const OFFSET_AMBIENT = 51;
+        const OFFSET_DIR_INTENSITY = 52;
 
-        const uData = new Float32Array(48); // 48 * 4 = 192 bytes
+        const uData = new Float32Array(56); // 56 * 4 = 224 bytes
         uData.set(mvp, OFFSET_MVP);
         uData.set(model, OFFSET_MODEL);
         uData[OFFSET_TIME] = this.time;
@@ -488,6 +501,11 @@ export class BrainRenderer {
         uData[OFFSET_GRAIN] = this.params.grain;
         uData[OFFSET_FOCUS] = this.params.focus;
         uData[OFFSET_APERTURE] = this.params.aperture;
+        uData[OFFSET_LIGHT_DIR] = this.params.lightDirX;
+        uData[OFFSET_LIGHT_DIR + 1] = this.params.lightDirY;
+        uData[OFFSET_LIGHT_DIR + 2] = this.params.lightDirZ;
+        uData[OFFSET_AMBIENT] = this.params.ambientLight;
+        uData[OFFSET_DIR_INTENSITY] = this.params.dirIntensity;
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         

@@ -98,6 +98,30 @@ export class RoutinePlayer {
             }
         });
 
+        // [Phase 2] Dynamic Lighting Control
+        this.registerHandler('light', (evt) => {
+            if (evt.ambient !== undefined) {
+                if (evt.duration) this.startLerp({ key: 'ambientLight', value: evt.ambient, duration: evt.duration, ease: evt.ease });
+                else this.renderer.setParams({ ambientLight: evt.ambient });
+            }
+            if (evt.dirIntensity !== undefined) {
+                if (evt.duration) this.startLerp({ key: 'dirIntensity', value: evt.dirIntensity, duration: evt.duration, ease: evt.ease });
+                else this.renderer.setParams({ dirIntensity: evt.dirIntensity });
+            }
+            if (evt.dirX !== undefined) {
+                if (evt.duration) this.startLerp({ key: 'lightDirX', value: evt.dirX, duration: evt.duration, ease: evt.ease });
+                else this.renderer.setParams({ lightDirX: evt.dirX });
+            }
+            if (evt.dirY !== undefined) {
+                if (evt.duration) this.startLerp({ key: 'lightDirY', value: evt.dirY, duration: evt.duration, ease: evt.ease });
+                else this.renderer.setParams({ lightDirY: evt.dirY });
+            }
+            if (evt.dirZ !== undefined) {
+                if (evt.duration) this.startLerp({ key: 'lightDirZ', value: evt.dirZ, duration: evt.duration, ease: evt.ease });
+                else this.renderer.setParams({ lightDirZ: evt.dirZ });
+            }
+        });
+
         // [Phase 7] Cinematic Effects (Aberration, Grain, Focus, Aperture)
         this.registerHandler('cinematic', (evt) => {
             if (evt.aberration !== undefined) {
