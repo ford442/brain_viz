@@ -104,6 +104,16 @@ const MINI_ROUTINES = {
         { time: 8.5, type: 'light', dirX: -1.0, dirY: 0.2, dirZ: 0.5, dirIntensity: 1.5, ambient: 0.05, duration: 3.0, ease: 'sineInOut' },
         { time: 12.0, type: 'text', message: 'Default Lights', duration: 2.0 },
         { time: 12.0, type: 'light', dirX: 1.0, dirY: 1.0, dirZ: 1.0, dirIntensity: 0.8, ambient: 0.2, duration: 2.0 }
+    ],
+    'g': [ // Glitch Storm
+        { time: 0.0, type: 'text', message: 'SYSTEM FAILURE...', duration: 1.5 },
+        { time: 0.0, type: 'glitch', intensity: 1.5, duration: 0.5, ease: 'quadOut' },
+        { time: 0.6, type: 'glitch', intensity: 0.8, duration: 0.2, ease: 'quadOut' },
+        { time: 1.0, type: 'glitch', intensity: 2.5, duration: 1.0, ease: 'sineInOut' },
+        { time: 2.0, type: 'text', message: 'REBOOTING SYSTEM', duration: 2.0 },
+        { time: 2.0, type: 'calm' },
+        { time: 2.0, type: 'style', value: 0 }, // Back to organic
+        { time: 2.0, type: 'lerp', key: 'flowSpeed', value: 4.0, duration: 2.0 }
     ]
 };
 
@@ -217,7 +227,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch';
         document.body.appendChild(legend);
 
         // [Phase 4] Narrative Overlay
