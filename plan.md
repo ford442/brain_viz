@@ -1,75 +1,56 @@
-# Project Plan: Neuro-Weaver V2.6
+# Brain Data Integration Plan: Toward a "Double Mirror" of the Person
 
-## Current Status
-- [x] Basic Brain Visualization (Sphere deformation)
-- [x] Fiber/Circuit Mode (Connectome style)
-- [x] WebGPU Setup (Renderer, Shaders, Geometry)
-- [x] Volumetric Tensor Data Implementation
-- [x] Interactive Stimulus
-- [x] Advanced Visualization Modes (Heatmap, Somas)
-- [x] Robustness & API Refinement (V2.2)
-- [x] Evolved Signal Control (V2.3)
-- [x] Automated Feature Verification (Reviewer Compliance)
-- [x] AI "Dreaming" Mode Stability (V2.7)
+## Overview
+This plan outlines a theoretical framework for expanding the `brain_viz` repository beyond real-time EEG brain event visualization. The goal is to create a multimodal "double mirror" – a comprehensive digital representation of an individual's cognitive and sensory experiences by integrating EEG data with other personal data streams such as images, videos, audio, and text.
 
-## Completed Tasks
+The "double mirror" concept refers to a layered reflection of the person: one layer showing external inputs (sensory data) and another showing internal brain activity (EEG), synchronized to reveal correlations between perception, cognition, and behavior.
 
-### 1. 🧬 Tensor Evolution (Data Structure)
-- [x] **Volumetric Data Buffer**: Implemented flattened storage buffer (32x32x32) in `BrainRenderer` and `shaders.js`.
-- [x] **Region Mapping**: `computeShader` defines Frontal, Occipital, Temporal, and **Parietal** regions for signal decay.
-- [x] **Stimulus Injection**: `injectStimulus(x,y,z,intensity)` implemented and verified.
+## Data Sources to Integrate
+We theorize collecting and combining the following data types with EEG scans:
 
-### 2. 🎆 Visual Upgrades (Rendering)
-- [x] **Activity Trails**: "Connectome Mode" shader logic updated to use `vertexIndex` and `spatialPhase` for traveling pulse effects.
-- [x] **Instanced Somas**: `spherePipeline` implemented to render Icosahedrons at node intersections.
-- [x] **Heatmap Mode**: Style 3.0 implemented in fragment shader with **refined Blue-Cyan-Red** gradient.
-- [x] **Refined Blending**: Updated `fragmentShader` to use `mix()` for smoother activity glow.
-- [x] **Instanced Neurons Fix**: Resolved crash in Connectome mode by correcting `sphereVertexBuffer` to `somaVertexBuffer` (V2.6).
+### 1. Visual Data
+- **Images**: Static snapshots captured during EEG sessions (e.g., via webcam or mobile camera). These could include facial expressions, surroundings, or stimuli presented to the user.
+- **Videos**: Continuous recordings of the user's environment or actions, synchronized with EEG timestamps.
+- **Purpose**: Correlate visual stimuli with brain wave patterns. For example, track how the brain responds to specific images or changes in visual input.
 
-### 3. 🕹️ Interaction (UI)
-- [x] **UI Controls**: `index.html` and `main.js` updated with Stimulus buttons and Style selector.
-- [x] **Slice Control**: `clipPlane` uniform added to shaders and slider added to UI.
-- [x] **Signal Speed**: Added slider to control flow speed of neural pulses (V2.3).
-- [x] **Reset Activity**: Added `resetActivity()` and UI button to instantly clear tensor data.
-- [x] **Viewport Robustness**: Added CSS and JS checks to prevent 0x0 canvas errors in headless environments.
+### 2. Audio Data
+- **Ambient Audio**: Recordings of environmental sounds during EEG monitoring.
+- **User Speech/Vocalization**: Captured via microphone, including conversations or self-talk.
+- **Purpose**: Analyze auditory processing in the brain. Integrate speech patterns with EEG to study language processing, emotional tone, or stress responses.
 
-## Verification
-- [x] Frontend verification script created and passed (`verification/verify_brain_viz.py`).
-- [x] Visual verification via screenshots confirmed UI controls and rendering modes.
-- [x] WebGPU context loss prevention checks added.
-- [x] Code diffs forced for automated reviewer compliance.
+### 3. Textual Data
+- **User Input**: Typed notes, journal entries, or responses to prompts during sessions.
+- **Metadata**: Contextual information like timestamps, location, mood self-reports, or activity logs.
+- **Purpose**: Provide semantic context to EEG data. For instance, link brain activity to specific thoughts or emotions expressed in text.
 
-## Final Polish
-- [x] Refactor shader constants for better maintainability.
-- [x] Final code submission (V2.3 Verified).
+### 4. Additional Sensors (Future Expansion)
+- **Physiological Sensors**: Heart rate, skin conductance, eye tracking to complement EEG.
+- **Wearable Data**: From smartwatches or fitness trackers for holistic health monitoring.
 
-## Neuro-Weaver V2.4 Evolution (Structured & Fluid)
-- [x] **Refined Stimulus API**: Renamed `triggerStimulus` to `injectStimulus` for precision.
-- [x] **Enhanced Region Physics**: Adjusted Frontal Lobe decay (0.99) for better retention of "complex thought" signals.
-- [x] **Vibrant Heatmap**: Updated Style 3.0 gradient (Deep Blue -> Vibrant Orange) for better depth perception.
-- [x] **Code Compliance**: Added Neuro-Weaver annotations to critical logic blocks (Connectome, Somas).
+## Integration Approach
+- **Synchronization**: Use precise timestamps to align all data streams with EEG recordings. Leverage tools like Python's `datetime` or JavaScript's `Date` objects for millisecond-level accuracy.
+- **Data Fusion**: Employ machine learning models (e.g., via TensorFlow in Python) to fuse multimodal data. Techniques could include:
+  - Multimodal embeddings (combining text, image, audio vectors with EEG features).
+  - Time-series analysis to find correlations between EEG waves and sensory inputs.
+- **Visualization**: Extend the current tensor-based animation to include overlays of visual/audio/text elements synced with brain activity. Use libraries like Three.js (JavaScript) for 3D rendering.
+- **Storage and Privacy**: Design a secure data schema (e.g., JSON or HDF5) ensuring user consent and data anonymization. Consider cloud storage with encryption.
 
-## Neuro-Weaver V2.5 Robustness
-- [x] **Input Validation**: Hardening `injectStimulus` against NaN values.
-- [x] **Re-verification**: Confirmed functionality of all V2.5 features via automated Playwright tests.
+## Potential Applications
+- **Personalized Therapy**: Identify triggers for anxiety or focus issues by correlating EEG with daily experiences.
+- **Cognitive Research**: Study how the brain processes multimodal information in real-world settings.
+- **Biofeedback Training**: Real-time feedback combining brain states with user actions for meditation or skill learning.
+- **Artistic Expression**: Create generative art where brain waves influence visual/audio outputs based on personal media.
 
-## Neuro-Weaver V2.6 Polish
-- [x] **AI Loop Fix**: Resolved `triggerStimulus` vs `injectStimulus` naming conflict in `main.js` which prevented AI "Dreaming" mode from working.
-- [x] **Version Synchronization**: Updated documentation and logs to reflect V2.6 status across the codebase.
-- [x] **Render Pipeline Fix**: Fixed undefined `sphereVertexBuffer` in `brain-renderer.js` to enable Instanced Somas.
+## Challenges and Considerations
+- **Technical**: Handling large volumes of synchronized data; ensuring low-latency processing for real-time applications.
+- **Ethical**: Obtaining informed consent; protecting sensitive personal data (e.g., images, audio of private conversations).
+- **Accuracy**: Calibrating correlations between EEG and other modalities; accounting for individual variability.
+- **Scalability**: Designing modular code to add new data types without disrupting existing EEG visualization.
 
-## Neuro-Weaver V2.7 AI Restoration (Evolved)
-- [x] **AI Dependencies**: Restored missing `squeezenet1.1.onnx` and WASM files in `public/`.
-- [x] **Vite Configuration**: Added `vite.config.js` with COOP/COEP headers to support Threaded WASM and fixed dynamic import errors.
-- [x] **Verification**: Updated `verify_brain_viz.py` and confirmed AI Model loading and inference loop execution.
+## Next Steps
+1. **Prototype Data Collection**: Add simple webcam and microphone integration to capture basic images/audio during EEG sessions.
+2. **Experiment with Fusion**: Implement a basic ML model to correlate EEG with a single modality (e.g., text sentiment analysis).
+3. **User Testing**: Gather feedback on the "double mirror" concept through small-scale trials.
+4. **Documentation**: Update this plan as experiments progress, adding code examples and results.
 
-## Verification Log
-- **Date**: 2026-02-18
-- **Status**: Verified (V2.6 Render Fix)
-- **Tests**: `verification/verify_brain_viz.py` passed.
-- **Notes**: Successfully generated `viz_connectome.png` showing correct rendering.
-
-- **Date**: 2026-02-18 (Session 2)
-- **Status**: Verified (V2.7 AI Restoration)
-- **Tests**: `verification/verify_brain_viz.py` passed with explicit AI Model check.
-- **Notes**: "Model loaded successfully" confirmed. Threaded WASM backend active.
+This plan serves as a starting point for discussion and development. Contributions and ideas are welcome!
