@@ -30,6 +30,7 @@
 - [x] **Extensible Event System:** Refactor `RoutinePlayer` to support dynamic custom event handlers, enabling "Brain DJ" features.
 - [x] **Camera Shake:** Add a 'shake' event type for trauma/panic simulation.
 - [x] **Expanded Camera Presets:** Add 'top', 'bottom', 'isometric' presets and a runtime API for adding custom presets.
+- [x] **Neuronal Glitch:** Add a `glitch` event type to `RoutinePlayer` that simulates data corruption (modifying aberration, grain, shake, and style).
 
 ### Phase 3: "Brain DJ" Mode (Live Performance)
 - [x] **Keyboard Triggers:** Bind number keys (1-9) to specific mini-routines (e.g., Press '1' for "Sudden Surprise", '2' for "Calm Down").
@@ -78,6 +79,10 @@
 
 ## 📜 Changelog
 * [2026-03-05] - Completed Phase 7 (Neuronal Glitch). Implemented `glitch` event handler in `RoutinePlayer`, mapping it to cinematic post-processing parameters. Added "Glitch Storm" mini-routine to `main.js`. Added "Memory Fragment Flashbacks" to Dream Log.
+* *Idea:* "Memory Fragmentation: Visualize memory loss as mesh decoupling."
+
+## 📜 Changelog
+* [2026-03-04] - Completed Phase 2 (Neuronal Glitch). Implemented `glitch` event handler in `RoutinePlayer` to simulate data corruption via cinematic params and style toggles. Added "Memory Fragmentation" idea to Dream Log.
 * [2026-03-03] - Completed Phase 2 (Dynamic Lighting Control). Implemented `light` event handler in `RoutinePlayer`, added lighting uniform mapping to `BrainRenderer` and updated shaders. Added "Dynamic Weather Systems" idea to Dream Log.
 * [2026-02-24] - Completed Phase 2 (Parameter Interpolation/Easing). Created a "Deep Breathing" routine in `main.js` that linearly interpolates `growth`, `flowSpeed`, and `amplitude` for a calming visual effect. Added "Haptic Feedback API" idea to Dream Log.
 * [2026-02-24] - **Bug Fix:** Resolved syntax errors in `shaders.js` that prevented the application from building.

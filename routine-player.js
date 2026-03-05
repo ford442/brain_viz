@@ -122,6 +122,28 @@ export class RoutinePlayer {
             }
         });
 
+        // [Phase 2] Neuronal Glitch (Data Corruption Simulation)
+        this.registerHandler('glitch', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 0.5;
+
+            // Instantly apply high cinematic & shake values, plus switch to Cyber style
+            this.renderer.setParams({
+                style: 1, // Cyber / Wireframe
+                aberration: intensity * 2.0,
+                grain: intensity * 1.5,
+                shake: intensity * 0.2
+            });
+
+            // Auto-fade out all effects back to calm/normal levels
+            if (duration > 0) {
+                const ease = evt.ease || 'quadOut';
+                this.startLerp({ key: 'aberration', value: 0.0, duration: duration, ease: ease });
+                this.startLerp({ key: 'grain', value: 0.0, duration: duration, ease: ease });
+                this.startLerp({ key: 'shake', value: 0.0, duration: duration, ease: ease });
+            }
+        });
+
         // [Phase 7] Cinematic Effects (Aberration, Grain, Focus, Aperture)
         this.registerHandler('cinematic', (evt) => {
             if (evt.aberration !== undefined) {
