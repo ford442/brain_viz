@@ -106,14 +106,15 @@ const MINI_ROUTINES = {
         { time: 12.0, type: 'light', dirX: 1.0, dirY: 1.0, dirZ: 1.0, dirIntensity: 0.8, ambient: 0.2, duration: 2.0 }
     ],
     'g': [ // Glitch Storm
-        { time: 0.0, type: 'text', message: 'SYSTEM FAILURE...', duration: 1.5 },
-        { time: 0.0, type: 'glitch', intensity: 1.5, duration: 0.5, ease: 'quadOut' },
-        { time: 0.6, type: 'glitch', intensity: 0.8, duration: 0.2, ease: 'quadOut' },
-        { time: 1.0, type: 'glitch', intensity: 2.5, duration: 1.0, ease: 'sineInOut' },
-        { time: 2.0, type: 'text', message: 'REBOOTING SYSTEM', duration: 2.0 },
-        { time: 2.0, type: 'calm' },
-        { time: 2.0, type: 'style', value: 0 }, // Back to organic
-        { time: 2.0, type: 'lerp', key: 'flowSpeed', value: 4.0, duration: 2.0 }
+        { time: 0.0, type: 'text', message: 'DATA CORRUPTION DETECTED', duration: 2.0 },
+        { time: 0.0, type: 'glitch', intensity: 1.0, autoRestore: false },
+        { time: 0.2, type: 'glitch', intensity: 1.5, autoRestore: true },
+        { time: 0.5, type: 'glitch', intensity: 2.0, autoRestore: false },
+        { time: 0.8, type: 'glitch', intensity: 1.2, autoRestore: true },
+        { time: 1.2, type: 'glitch', intensity: 2.5, autoRestore: false },
+        { time: 1.5, type: 'text', message: 'SYSTEM REBOOTING...', duration: 2.0 },
+        { time: 2.5, type: 'calm' },
+        { time: 2.5, type: 'cinematic', aberration: 0.0, grain: 0.0, duration: 0.5 }
     ]
 };
 

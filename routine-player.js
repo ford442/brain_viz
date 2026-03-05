@@ -176,6 +176,24 @@ export class RoutinePlayer {
             }
         });
 
+        // Neuronal Glitch (Data Corruption Simulation)
+        this.registerHandler('glitch', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+
+            // Randomly jump parameters
+            if (Math.random() > 0.5) this.renderer.setParams({ aberration: Math.random() * intensity });
+            if (Math.random() > 0.5) this.renderer.setParams({ grain: Math.random() * intensity });
+            if (Math.random() > 0.8) this.renderer.setParams({ shake: Math.random() * 0.1 * intensity });
+            if (Math.random() > 0.7) this.renderer.setParams({ style: Math.floor(Math.random() * 4) });
+
+            // Restore after short random duration if autoRestore is true
+            if (evt.autoRestore) {
+                setTimeout(() => {
+                    this.renderer.setParams({ aberration: 0.0, grain: 0.0, shake: 0.0, style: 0.0 });
+                }, 100 + Math.random() * 300);
+            }
+        });
+
         // Camera Control
         this.registerHandler('camera', (evt) => {
             this.handleCamera(evt);
