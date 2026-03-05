@@ -49,6 +49,7 @@
 ### Phase 7: Cinematic Post-Processing
 - [x] **Chromatic Aberration & Film Grain:** Implement a post-processing pipeline for cinematic effects (RGB split, noise).
 - [x] **Depth of Field:** Implement post-processing focus blur using depth buffer.
+- [x] **Neuronal Glitch:** Simulate data corruption/packet loss in the neural stream (blocky noise, scanlines).
 
 ### Phase 8: Data Integration
 - [x] **CSV/fMRI Import:** Implement `RoutinePlayer` support for parsing CSV data (Time Series & Event Lists) to drive brain visualization from external datasets.
@@ -57,7 +58,6 @@
 
 ## 🧪 "Dream" Log (Future Concepts)
 * *Idea:* "Dynamic Weather Systems" - Allow routines to control global environmental weather effects like rain/fog inside the brain.
-* *Idea:* "Neuronal Glitch" - Simulate data corruption/packet loss in the neural stream (blocky noise, scanlines).
 * *Idea:* "Narrative Mode" - Display text overlays synced with brain states (e.g., "Subject recognizes face" -> Temporal Lobe lights up).
 * *Idea:* "Multi-Brain" - Visualize two brains interacting (Mirror Neurons).
 * *Idea:* "VR/XR Mode" - WebXR integration for immersive brain walkthrough.
@@ -74,8 +74,10 @@
 * *Idea:* "Collaborative Brain Storming" - Multi-user session where multiple people can inject stimuli into the same visualization via WebSockets.
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "What if we allowed scripts to trigger external events like Haptic Feedback API?"
+* *Idea:* "Memory Fragment Flashbacks" - Randomly inject brief, high-intensity visual glitches intermixed with text representing recalled memories.
 
 ## 📜 Changelog
+* [2026-03-05] - Completed Phase 7 (Neuronal Glitch). Implemented `glitch` event handler in `RoutinePlayer`, mapping it to cinematic post-processing parameters. Added "Glitch Storm" mini-routine to `main.js`. Added "Memory Fragment Flashbacks" to Dream Log.
 * [2026-03-03] - Completed Phase 2 (Dynamic Lighting Control). Implemented `light` event handler in `RoutinePlayer`, added lighting uniform mapping to `BrainRenderer` and updated shaders. Added "Dynamic Weather Systems" idea to Dream Log.
 * [2026-02-24] - Completed Phase 2 (Parameter Interpolation/Easing). Created a "Deep Breathing" routine in `main.js` that linearly interpolates `growth`, `flowSpeed`, and `amplitude` for a calming visual effect. Added "Haptic Feedback API" idea to Dream Log.
 * [2026-02-24] - **Bug Fix:** Resolved syntax errors in `shaders.js` that prevented the application from building.
