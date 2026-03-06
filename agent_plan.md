@@ -31,6 +31,8 @@
 - [x] **Camera Shake:** Add a 'shake' event type for trauma/panic simulation.
 - [x] **Expanded Camera Presets:** Add 'top', 'bottom', 'isometric' presets and a runtime API for adding custom presets.
 - [x] **Neuronal Glitch:** Add a `glitch` event type to `RoutinePlayer` that simulates data corruption (modifying aberration, grain, shake, and style).
+- [x] **Haptic Feedback API:** Allow scripts to trigger external events like physical device vibration.
+- [x] **Memory Fragment Flashbacks:** Add a flashback event type for simulating traumatic recall with rapid stimuli and glitching.
 
 ### Phase 3: "Brain DJ" Mode (Live Performance)
 - [x] **Keyboard Triggers:** Bind number keys (1-9) to specific mini-routines (e.g., Press '1' for "Sudden Surprise", '2' for "Calm Down").
@@ -75,9 +77,10 @@
 * *Idea:* "Collaborative Brain Storming" - Multi-user session where multiple people can inject stimuli into the same visualization via WebSockets.
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "What if we allowed scripts to trigger external events like Haptic Feedback API?"
-* *Idea:* "Memory Fragment Flashbacks" - Randomly inject brief, high-intensity visual glitches intermixed with text representing recalled memories.
+* *Idea:* "Multimodal Embeddings" - Connect an ML backend to translate input text (e.g., from an LLM) into corresponding brain state routines automatically.
 
 ## 📜 Changelog
+* [2026-03-06] - Completed Phase 2 (Haptic Feedback & Flashbacks). Added `haptic` and `flashback` events to `RoutinePlayer`. Implemented "Memory Flashback" routine in `main.js`. Added "Multimodal Embeddings" to Dream Log.
 * [2026-03-05] - Completed Phase 7 (Neuronal Glitch). Implemented `glitch` event handler in `RoutinePlayer`, mapping it to cinematic post-processing parameters. Added "Glitch Storm" mini-routine to `main.js`. Added "Memory Fragment Flashbacks" to Dream Log.
 * *Idea:* "Memory Fragmentation: Visualize memory loss as mesh decoupling."
 

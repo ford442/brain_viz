@@ -115,6 +115,14 @@ const MINI_ROUTINES = {
         { time: 1.5, type: 'text', message: 'SYSTEM REBOOTING...', duration: 2.0 },
         { time: 2.5, type: 'calm' },
         { time: 2.5, type: 'cinematic', aberration: 0.0, grain: 0.0, duration: 0.5 }
+    ],
+    'm': [ // Memory Flashback
+        { time: 0.0, type: 'flashback', message: 'MEMORY FRAGMENT #42', intensity: 1.5 },
+        { time: 0.0, type: 'haptic', duration: 200 },
+        { time: 0.8, type: 'flashback', message: 'ERROR: TRAUMA DETECTED', intensity: 2.0 },
+        { time: 0.8, type: 'haptic', duration: [100, 50, 100] }, // Haptic pattern
+        { time: 2.0, type: 'calm' },
+        { time: 2.0, type: 'text', message: 'Memory Suppressed', duration: 2.0 }
     ]
 };
 
@@ -228,7 +236,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory';
         document.body.appendChild(legend);
 
         // [Phase 4] Narrative Overlay
