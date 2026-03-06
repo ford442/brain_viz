@@ -199,6 +199,38 @@ export class RoutinePlayer {
             this.handleCamera(evt);
         });
 
+        // [Phase 2] Haptic Feedback API
+        this.registerHandler('haptic', (evt) => {
+            if (navigator.vibrate && evt.duration) {
+                navigator.vibrate(evt.duration);
+            }
+        });
+
+        // [Phase 2] Memory Fragment Flashbacks
+        this.registerHandler('flashback', (evt) => {
+            const intensity = evt.intensity || 1.0;
+            const message = evt.message || 'MEMORY FLASHBACK';
+
+            this.executeEvent({ type: 'text', message: message, duration: 0.5 });
+            this.executeEvent({ type: 'style', value: 1 }); // Cyber / Wireframe
+            this.executeEvent({ type: 'cinematic', aberration: intensity * 2.0, grain: intensity * 1.5 });
+            this.executeEvent({ type: 'shake', intensity: intensity * 0.2 });
+
+            // Rapid stimuli
+            const regions = Object.keys(this.regions);
+            if (regions.length > 0) {
+                const target = regions[Math.floor(Math.random() * regions.length)];
+                this.executeEvent({ type: 'stimulus', target: target, intensity: intensity * 3.0 });
+            }
+
+            // Restore after short duration
+            setTimeout(() => {
+                this.executeEvent({ type: 'style', value: 0 }); // Restore default style
+                this.executeEvent({ type: 'cinematic', aberration: 0.0, grain: 0.0 });
+                this.executeEvent({ type: 'shake', intensity: 0.0 });
+            }, 500);
+        });
+
         // Text (No-op in engine, handled by UI listener)
         this.registerHandler('text', () => {});
 
