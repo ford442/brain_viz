@@ -12,6 +12,7 @@ const MINI_ROUTINES = {
         { time: 0.0, type: 'param', key: 'frequency', value: 12.0 },
         { time: 0.0, type: 'param', key: 'amplitude', value: 2.0 },
         { time: 0.0, type: 'camera', zoom: 2.5, ease: 'backOut' }, // Zoom in with bounce
+        { time: 0.0, type: 'sound', frequency: 880, oscType: 'square', duration: 0.2, volume: 0.8 }, // [Phase 2] Audio Event
         { time: 0.1, type: 'stimulus', target: 'deep', intensity: 8.0 },
         { time: 0.5, type: 'lerp', key: 'amplitude', value: 0.5, duration: 1.5, ease: 'quadOut' }
     ],
@@ -46,13 +47,16 @@ const MINI_ROUTINES = {
         { time: 0.0, type: 'text', message: 'PANIC!', duration: 1.0 },
         { time: 0.0, type: 'style', value: 1 }, // Cyber/Glitch
         { time: 0.0, type: 'shake', intensity: 0.1, duration: 4.0 }, // Big shake
+        { time: 0.0, type: 'sound', frequency: 150, oscType: 'sawtooth', duration: 4.0, volume: 0.6 }, // Low rumble
         { time: 0.0, type: 'cinematic', aberration: 1.0, duration: 0.2 }, // [Phase 7] Aberration spike
         { time: 0.0, type: 'cinematic', grain: 0.8, duration: 0.5 }, // [Phase 7] Grain spike
         { time: 0.0, type: 'lerp', key: 'frequency', value: 15.0, duration: 0.5 },
         { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 20.0, duration: 0.5 },
         { time: 0.5, type: 'lerp', key: 'colorShift', value: 1.0, duration: 0.1 }, // Flash Red
+        { time: 0.5, type: 'sound', frequency: 600, oscType: 'square', duration: 0.1, volume: 0.5 }, // Beep
         { time: 0.6, type: 'lerp', key: 'colorShift', value: 0.0, duration: 0.1 },
         { time: 0.7, type: 'lerp', key: 'colorShift', value: 1.0, duration: 0.1 },
+        { time: 0.7, type: 'sound', frequency: 600, oscType: 'square', duration: 0.1, volume: 0.5 }, // Beep
         { time: 0.8, type: 'lerp', key: 'colorShift', value: 0.0, duration: 0.1 },
         { time: 1.0, type: 'stimulus', target: 'deep', intensity: 5.0 },
         { time: 2.0, type: 'cinematic', aberration: 0.0, grain: 0.0, duration: 2.0 },
@@ -119,8 +123,10 @@ const MINI_ROUTINES = {
     'm': [ // Memory Flashback
         { time: 0.0, type: 'flashback', message: 'MEMORY FRAGMENT #42', intensity: 1.5 },
         { time: 0.0, type: 'haptic', duration: 200 },
+        { time: 0.0, type: 'sound', frequency: 1200, oscType: 'sine', duration: 0.5, volume: 0.3 }, // High pitch ring
         { time: 0.8, type: 'flashback', message: 'ERROR: TRAUMA DETECTED', intensity: 2.0 },
         { time: 0.8, type: 'haptic', duration: [100, 50, 100] }, // Haptic pattern
+        { time: 0.8, type: 'sound', frequency: 150, oscType: 'sawtooth', duration: 0.5, volume: 0.7 }, // Error buzz
         { time: 2.0, type: 'calm' },
         { time: 2.0, type: 'text', message: 'Memory Suppressed', duration: 2.0 }
     ]
