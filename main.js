@@ -129,6 +129,13 @@ const MINI_ROUTINES = {
         { time: 0.8, type: 'sound', frequency: 150, oscType: 'sawtooth', duration: 0.5, volume: 0.7 }, // Error buzz
         { time: 2.0, type: 'calm' },
         { time: 2.0, type: 'text', message: 'Memory Suppressed', duration: 2.0 }
+    ],
+    'c': [ // Custom Audio Support
+        { time: 0.0, type: 'text', message: 'Playing External Audio', duration: 2.0 },
+        { time: 0.0, type: 'sound', url: 'https://cdn.freesound.org/previews/339/339809_5923383-lq.mp3', volume: 0.8 },
+        { time: 0.0, type: 'style', value: 3 }, // Heatmap
+        { time: 0.0, type: 'lerp', key: 'growth', value: 1.0, duration: 1.0, ease: 'quadOut' },
+        { time: 2.0, type: 'calm' }
     ]
 };
 
@@ -242,7 +249,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio';
         document.body.appendChild(legend);
 
         // [Phase 4] Narrative Overlay
