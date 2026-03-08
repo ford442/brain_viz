@@ -40,9 +40,26 @@ export class RoutinePlayer {
         // [Phase 2] Easing Support
         this.activeLerps = []; // { key, startVal, endVal, elapsed, duration }
 
+        // [Phase 2] Neuro-Sonification (AudioContext)
+        this.audioContext = null;
+
         // [Phase 3] Extensible Event System
         this.handlers = new Map();
         this.setupDefaultHandlers();
+    }
+
+    initAudio() {
+        if (!this.audioContext) {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.audioContext = new AudioContext();
+            } catch (e) {
+                console.warn("[Routine] Web Audio API not supported:", e);
+            }
+        }
+        if (this.audioContext && this.audioContext.state === 'suspended') {
+            this.audioContext.resume();
+        }
     }
 
     setupDefaultHandlers() {
@@ -204,6 +221,35 @@ export class RoutinePlayer {
             if (navigator.vibrate && evt.duration) {
                 navigator.vibrate(evt.duration);
             }
+        });
+
+        // [Phase 2] Neuro-Sonification (Audio Events)
+        this.registerHandler('sound', (evt) => {
+            this.initAudio();
+            if (!this.audioContext) return;
+
+            const freq = evt.frequency || 440;
+            const type = evt.oscType || 'sine'; // 'sine', 'square', 'sawtooth', 'triangle'
+            const vol = evt.volume !== undefined ? evt.volume : 0.5;
+            const duration = evt.duration || 0.5;
+
+            const osc = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+
+            // Envelope to avoid clicking
+            gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(vol, this.audioContext.currentTime + 0.05);
+            gainNode.gain.setValueAtTime(vol, this.audioContext.currentTime + duration - 0.05);
+            gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + duration);
+
+            osc.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+
+            osc.start(this.audioContext.currentTime);
+            osc.stop(this.audioContext.currentTime + duration);
         });
 
         // [Phase 2] Memory Fragment Flashbacks
