@@ -42,6 +42,7 @@ export class RoutinePlayer {
 
         // [Phase 2] Neuro-Sonification (AudioContext)
         this.audioContext = null;
+        this.audioBuffers = {}; // [Phase 2] Cache for external audio files
 
         // [Phase 3] Extensible Event System
         this.handlers = new Map();
@@ -224,32 +225,71 @@ export class RoutinePlayer {
         });
 
         // [Phase 2] Neuro-Sonification (Audio Events)
-        this.registerHandler('sound', (evt) => {
+        this.registerHandler('sound', async (evt) => {
             this.initAudio();
             if (!this.audioContext) return;
 
-            const freq = evt.frequency || 440;
-            const type = evt.oscType || 'sine'; // 'sine', 'square', 'sawtooth', 'triangle'
             const vol = evt.volume !== undefined ? evt.volume : 0.5;
-            const duration = evt.duration || 0.5;
-
-            const osc = this.audioContext.createOscillator();
             const gainNode = this.audioContext.createGain();
 
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+            if (evt.url) {
+                // Play external audio file
+                let buffer = this.audioBuffers[evt.url];
+                if (!buffer) {
+                    try {
+                        const response = await fetch(evt.url);
+                        const arrayBuffer = await response.arrayBuffer();
+                        buffer = await this.audioContext.decodeAudioData(arrayBuffer);
+                        this.audioBuffers[evt.url] = buffer;
+                    } catch (e) {
+                        console.error(`[Routine] Failed to load audio file: ${evt.url}`, e);
+                        return;
+                    }
+                }
 
-            // Envelope to avoid clicking
-            gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
-            gainNode.gain.linearRampToValueAtTime(vol, this.audioContext.currentTime + 0.05);
-            gainNode.gain.setValueAtTime(vol, this.audioContext.currentTime + duration - 0.05);
-            gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + duration);
+                const source = this.audioContext.createBufferSource();
+                source.buffer = buffer;
 
-            osc.connect(gainNode);
-            gainNode.connect(this.audioContext.destination);
+                // Playback rate adjustment based on global playback speed
+                source.playbackRate.value = this.playbackSpeed;
 
-            osc.start(this.audioContext.currentTime);
-            osc.stop(this.audioContext.currentTime + duration);
+                // Simple envelope if duration is provided, else play full buffer
+                gainNode.gain.setValueAtTime(vol, this.audioContext.currentTime);
+                if (evt.duration) {
+                     gainNode.gain.setValueAtTime(vol, this.audioContext.currentTime + evt.duration - 0.05);
+                     gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + evt.duration);
+                }
+
+                source.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+
+                source.start(this.audioContext.currentTime);
+                if (evt.duration) {
+                     source.stop(this.audioContext.currentTime + evt.duration);
+                }
+            } else {
+                // Play synthesized tone
+                const freq = evt.frequency || 440;
+                const type = evt.oscType || 'sine'; // 'sine', 'square', 'sawtooth', 'triangle'
+                const duration = evt.duration || 0.5;
+
+                const osc = this.audioContext.createOscillator();
+
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+
+                // Envelope to avoid clicking
+                gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(vol, this.audioContext.currentTime + 0.05);
+                gainNode.gain.setValueAtTime(vol, this.audioContext.currentTime + duration - 0.05);
+                gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + duration);
+
+                osc.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+
+                osc.start(this.audioContext.currentTime);
+                osc.stop(this.audioContext.currentTime + duration);
+            }
         });
 
         // [Phase 2] Memory Fragment Flashbacks
