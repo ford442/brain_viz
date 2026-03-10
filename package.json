@@ -12,6 +12,7 @@
     "vite": "^5.0.0"
   },
   "dependencies": {
+    "marked": "^17.0.4",
     "onnxruntime-web": "^1.23.2",
     "playwright": "^1.58.2"
   }
