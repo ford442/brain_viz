@@ -317,6 +317,23 @@ export class RoutinePlayer {
             }, 500);
         });
 
+        // [Phase 2] Dynamic Time Dilation
+        this.registerHandler('speed', (evt) => {
+            if (evt.duration) {
+                this.startLerp({
+                    key: 'playbackSpeed',
+                    value: evt.value,
+                    duration: evt.duration,
+                    ease: evt.ease || 'linear'
+                });
+            } else {
+                this.setPlaybackSpeed(evt.value);
+                if (this.onEvent) {
+                    this.onEvent({ type: 'speed', value: evt.value });
+                }
+            }
+        });
+
         // Text (No-op in engine, handled by UI listener)
         this.registerHandler('text', () => {});
 
@@ -715,7 +732,14 @@ export class RoutinePlayer {
         if (this.activeLerps.length === 0) return;
 
         this.activeLerps = this.activeLerps.filter(lerp => {
-            lerp.elapsed += dt * this.playbackSpeed;
+            // [Phase 2] Dynamic Time Dilation: speed lerps must advance using raw dt,
+            // otherwise lerping to 0 stalls the lerp itself.
+            if (lerp.key === 'playbackSpeed') {
+                lerp.elapsed += dt;
+            } else {
+                lerp.elapsed += dt * this.playbackSpeed;
+            }
+
             const rawProgress = Math.min(1.0, lerp.elapsed / lerp.duration);
 
             const easeFunc = Easing[lerp.ease] || Easing.linear;
@@ -730,6 +754,11 @@ export class RoutinePlayer {
                     this.renderer.setCameraParams({ rotation: { y: currentVal } });
                 } else if (lerp.key === 'cameraZoom') {
                     this.renderer.setCameraParams({ zoom: currentVal });
+                }
+            } else if (lerp.key === 'playbackSpeed') {
+                this.setPlaybackSpeed(currentVal);
+                if (this.onEvent) {
+                    this.onEvent({ type: 'speed', value: currentVal });
                 }
             } else {
                 this.renderer.setParams({ [lerp.key]: currentVal });
@@ -770,10 +799,15 @@ export class RoutinePlayer {
             return;
         }
 
-        const currentVal = this.renderer.params[event.key];
-        if (currentVal === undefined) {
-            console.warn(`[Routine] Cannot lerp unknown param: ${event.key}`);
-            return;
+        let currentVal;
+        if (event.key === 'playbackSpeed') {
+            currentVal = this.playbackSpeed;
+        } else {
+            currentVal = this.renderer.params[event.key];
+            if (currentVal === undefined) {
+                console.warn(`[Routine] Cannot lerp unknown param: ${event.key}`);
+                return;
+            }
         }
 
         this.activeLerps = this.activeLerps.filter(l => l.key !== event.key);

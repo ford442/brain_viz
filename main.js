@@ -136,6 +136,17 @@ const MINI_ROUTINES = {
         { time: 0.0, type: 'style', value: 3 }, // Heatmap
         { time: 0.0, type: 'lerp', key: 'growth', value: 1.0, duration: 1.0, ease: 'quadOut' },
         { time: 2.0, type: 'calm' }
+    ],
+    't': [ // Time Warp (Time Dilation Demo)
+        { time: 0.0, type: 'text', message: 'Time Dilation: Bullet Time', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 10.0, duration: 0.5 },
+        { time: 0.0, type: 'speed', value: 0.1, duration: 2.0, ease: 'quadOut' }, // Slow down time
+        { time: 1.0, type: 'text', message: 'Time Dilation: Fast Forward', duration: 2.0 },
+        { time: 1.0, type: 'speed', value: 3.0, duration: 2.0, ease: 'quadIn' }, // Speed up time
+        { time: 3.0, type: 'text', message: 'Time Dilation: Normal', duration: 2.0 },
+        { time: 3.0, type: 'speed', value: 1.0, duration: 1.0, ease: 'linear' }, // Back to normal
+        { time: 4.0, type: 'calm' }
     ]
 };
 
@@ -249,7 +260,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp';
         document.body.appendChild(legend);
 
         // [Phase 4] Narrative Overlay
@@ -315,6 +326,12 @@ async function init() {
              if (event.type === 'reset') {
                  // Reset might clear buffers but usually doesn't change params,
                  // but if it did, we'd sync here.
+             }
+             if (event.type === 'speed') {
+                 const speedSlider = document.getElementById('routine-speed');
+                 const speedLabel = document.getElementById('routine-speed-label');
+                 if (speedSlider) speedSlider.value = event.value;
+                 if (speedLabel) speedLabel.textContent = `Speed: ${event.value.toFixed(1)}x`;
              }
         };
 
@@ -395,6 +412,7 @@ async function init() {
         speedDiv.style.color = "#aaa";
 
         const speedLabel = document.createElement('span');
+        speedLabel.id = "routine-speed-label";
         speedLabel.textContent = "Speed: 1.0x";
         speedLabel.style.minWidth = "70px";
 
