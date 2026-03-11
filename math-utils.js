@@ -163,3 +163,34 @@ export const Easing = {
         return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
     }
 };
+
+// [Neuro-Weaver] Spline Interpolation (Catmull-Rom)
+// Evaluates a Catmull-Rom spline at parameter t [0, 1] given an array of points (values).
+// The path array should contain at least 2 points.
+export function evaluateSpline(path, t) {
+    if (!path || path.length === 0) return 0;
+    if (path.length === 1) return path[0];
+
+    // Map t to the segment index and local segment parameter
+    const segments = path.length - 1;
+    const scaledT = t * segments;
+    const index = Math.min(Math.floor(scaledT), segments - 1);
+    const localT = scaledT - index;
+
+    // Get the 4 control points
+    const p0 = path[Math.max(0, index - 1)];
+    const p1 = path[index];
+    const p2 = path[Math.min(segments, index + 1)];
+    const p3 = path[Math.min(segments, index + 2)];
+
+    // Catmull-Rom interpolation formula
+    const t2 = localT * localT;
+    const t3 = t2 * localT;
+
+    return 0.5 * (
+        (2 * p1) +
+        (-p0 + p2) * localT +
+        (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 +
+        (-p0 + 3 * p1 - 3 * p2 + p3) * t3
+    );
+}

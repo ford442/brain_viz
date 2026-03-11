@@ -147,6 +147,14 @@ const MINI_ROUTINES = {
         { time: 3.0, type: 'text', message: 'Time Dilation: Normal', duration: 2.0 },
         { time: 3.0, type: 'speed', value: 1.0, duration: 1.0, ease: 'linear' }, // Back to normal
         { time: 4.0, type: 'calm' }
+    ],
+    'p': [ // Spline Path Demo
+        { time: 0.0, type: 'text', message: 'Spline Interpolation...', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 2 },
+        { time: 0.0, type: 'lerp', key: 'flowSpeed', path: [10.0, 1.0, 20.0, 0.5, 4.0], duration: 5.0, ease: 'linear' },
+        { time: 0.0, type: 'lerp', key: 'amplitude', path: [1.5, 0.2, 2.0, 0.1, 0.5], duration: 5.0, ease: 'linear' },
+        { time: 5.0, type: 'calm' },
+        { time: 5.0, type: 'text', message: 'Spline Complete', duration: 2.0 }
     ]
 };
 
@@ -260,7 +268,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp, p=Spline';
         document.body.appendChild(legend);
 
         // [Phase 4] Narrative Overlay
