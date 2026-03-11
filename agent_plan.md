@@ -20,7 +20,8 @@
 - [x] **Dynamic Time Dilation:** Allow routines to modulate their own playback speed (`speed` event) to simulate bullet-time or fast-forward natively.
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 - [x] **Parameter Interpolation/Easing:** Add parameter interpolation to routines.
-- [ ] **Parameter Interpolation/Easing (Spline):** Enhance interpolation with spline paths for complex transitions.
+- [x] **Parameter Interpolation/Easing (Spline):** Enhance interpolation with spline paths for complex transitions.
+- [ ] **Spline Camera Coordinates:** Use splines for complex camera fly-throughs.
 - [x] **Easing & Transitions:** Upgrade `RoutinePlayer` to support linear interpolation (Lerp) for parameters (e.g., slowly ramp `flowSpeed` from 1.0 to 10.0 over 3 seconds).
 - [x] **Dynamic Lighting Control:** Add support for routines to animate directional and ambient lighting attributes.
 - [x] **Camera Director:** Add a `camera` event type to the routine player to orbit/zoom the camera to specific regions of interest during playback.
@@ -84,6 +85,7 @@
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "What if we allowed scripts to trigger external events like Haptic Feedback API?"
 * *Idea:* "Multimodal Embeddings" - Connect an ML backend to translate input text (e.g., from an LLM) into corresponding brain state routines automatically.
+* *Idea:* "Social Media Sentiment" - What if we visualize real-time social media sentiment as brain activity?
 * *Idea:* "Biofeedback Adaptive Audio" - Connect biofeedback metrics (e.g., heart rate) to modulate the pitch, volume, or tempo of the generative audio, creating a sonification of the user's physiological state.
 * *Idea:* "Neuro-feedback loops" - Dynamically adjust playback speed based on user interaction or biofeedback.
 * *Idea:* "Scriptable Sub-titles overlay supporting Markdown" - Allow `text` events to render formatted markdown.

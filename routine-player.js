@@ -1,7 +1,7 @@
 // routine-player.js
 // orchestrates timed sequences of brain activity
 // Refactored for Extensibility (V2.9)
-import { Easing } from './math-utils.js';
+import { Easing, evaluateSpline } from './math-utils.js';
 
 const CAMERA_PRESETS = {
     'frontal': { rotation: { x: 0.1, y: 0 }, zoom: 3.0 },     // Face on
@@ -745,7 +745,13 @@ export class RoutinePlayer {
             const easeFunc = Easing[lerp.ease] || Easing.linear;
             const progress = easeFunc(rawProgress);
 
-            const currentVal = lerp.startVal + (lerp.endVal - lerp.startVal) * progress;
+            let currentVal;
+            if (lerp.path) {
+                // [Phase 2] Parameter Interpolation/Easing (Spline)
+                currentVal = evaluateSpline(lerp.path, progress);
+            } else {
+                currentVal = lerp.startVal + (lerp.endVal - lerp.startVal) * progress;
+            }
 
             if (lerp.isCamera) {
                 if (lerp.key === 'cameraRotX') {
@@ -794,7 +800,12 @@ export class RoutinePlayer {
     startLerp(event) {
         if (!this.renderer.params) return;
 
-        if (isNaN(event.value)) {
+        if (event.value === undefined && (!event.path || !Array.isArray(event.path))) {
+            console.warn(`[Routine] Lerp requires either 'value' or 'path' array for ${event.key}`);
+            return;
+        }
+
+        if (event.value !== undefined && isNaN(event.value)) {
             console.warn(`[Routine] Invalid lerp value for ${event.key}: ${event.value}`);
             return;
         }
@@ -812,16 +823,24 @@ export class RoutinePlayer {
 
         this.activeLerps = this.activeLerps.filter(l => l.key !== event.key);
 
-        this.activeLerps.push({
+        const lerpObj = {
             key: event.key,
             startVal: currentVal,
-            endVal: event.value,
             elapsed: 0,
             duration: event.duration || 1.0,
             ease: event.ease || 'linear'
-        });
+        };
 
-        console.log(`[Routine] Lerp started: ${event.key} -> ${event.value} (${event.duration || 1.0}s)`);
+        if (event.path && Array.isArray(event.path)) {
+            // [Phase 2] Spline Support: Insert current value at the beginning for smooth transition
+            lerpObj.path = [currentVal, ...event.path];
+            console.log(`[Routine] Spline Lerp started: ${event.key} path ${JSON.stringify(lerpObj.path)} (${lerpObj.duration}s)`);
+        } else {
+            lerpObj.endVal = event.value;
+            console.log(`[Routine] Lerp started: ${event.key} -> ${event.value} (${lerpObj.duration}s)`);
+        }
+
+        this.activeLerps.push(lerpObj);
     }
 
     handleCamera(evt) {
