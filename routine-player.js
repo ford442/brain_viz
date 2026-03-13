@@ -868,40 +868,106 @@ export class RoutinePlayer {
 
             this.activeLerps = this.activeLerps.filter(l => !l.isCamera);
 
-            if (params.rotation && params.rotation.x !== undefined) {
+            if (evt.path && Array.isArray(evt.path)) {
+                // Spline path support
+                const pathRotX = [this.renderer.targetRotation.x];
+                const pathRotY = [this.renderer.targetRotation.y];
+                const pathZoom = [this.renderer.targetZoom];
+
+                let prevX = this.renderer.targetRotation.x;
+                let prevY = this.renderer.targetRotation.y;
+                let prevZoom = this.renderer.targetZoom;
+
+                for (const point of evt.path) {
+                    let pointParams = {};
+                    if (typeof point === 'string') {
+                        const preset = CAMERA_PRESETS[point] || this.cameraMap[point] || this.customPresets[point];
+                        if (preset) pointParams = { ...preset };
+                        else console.warn(`[Routine] Unknown camera target in path: ${point}`);
+                    } else {
+                        pointParams = { ...point };
+                    }
+
+                    const px = (pointParams.rotation && pointParams.rotation.x !== undefined) ? pointParams.rotation.x : prevX;
+                    const py = (pointParams.rotation && pointParams.rotation.y !== undefined) ? pointParams.rotation.y : prevY;
+                    const pz = pointParams.zoom !== undefined ? pointParams.zoom : prevZoom;
+
+                    pathRotX.push(px);
+                    pathRotY.push(py);
+                    pathZoom.push(pz);
+
+                    prevX = px;
+                    prevY = py;
+                    prevZoom = pz;
+                }
+
                 this.activeLerps.push({
                     key: 'cameraRotX',
                     startVal: this.renderer.targetRotation.x,
-                    endVal: params.rotation.x,
+                    path: pathRotX,
                     elapsed: 0,
                     duration: duration,
                     isCamera: true,
                     ease: ease
                 });
-            }
 
-            if (params.rotation && params.rotation.y !== undefined) {
                 this.activeLerps.push({
                     key: 'cameraRotY',
                     startVal: this.renderer.targetRotation.y,
-                    endVal: params.rotation.y,
+                    path: pathRotY,
                     elapsed: 0,
                     duration: duration,
                     isCamera: true,
                     ease: ease
                 });
-            }
 
-            if (params.zoom !== undefined) {
                 this.activeLerps.push({
                     key: 'cameraZoom',
                     startVal: this.renderer.targetZoom,
-                    endVal: params.zoom,
+                    path: pathZoom,
                     elapsed: 0,
                     duration: duration,
                     isCamera: true,
                     ease: ease
                 });
+
+            } else {
+                // Standard linear/eased lerp
+                if (params.rotation && params.rotation.x !== undefined) {
+                    this.activeLerps.push({
+                        key: 'cameraRotX',
+                        startVal: this.renderer.targetRotation.x,
+                        endVal: params.rotation.x,
+                        elapsed: 0,
+                        duration: duration,
+                        isCamera: true,
+                        ease: ease
+                    });
+                }
+
+                if (params.rotation && params.rotation.y !== undefined) {
+                    this.activeLerps.push({
+                        key: 'cameraRotY',
+                        startVal: this.renderer.targetRotation.y,
+                        endVal: params.rotation.y,
+                        elapsed: 0,
+                        duration: duration,
+                        isCamera: true,
+                        ease: ease
+                    });
+                }
+
+                if (params.zoom !== undefined) {
+                    this.activeLerps.push({
+                        key: 'cameraZoom',
+                        startVal: this.renderer.targetZoom,
+                        endVal: params.zoom,
+                        elapsed: 0,
+                        duration: duration,
+                        isCamera: true,
+                        ease: ease
+                    });
+                }
             }
             return;
         }

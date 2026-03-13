@@ -21,7 +21,7 @@
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 - [x] **Parameter Interpolation/Easing:** Add parameter interpolation to routines.
 - [x] **Parameter Interpolation/Easing (Spline):** Enhance interpolation with spline paths for complex transitions.
-- [ ] **Spline Camera Coordinates:** Use splines for complex camera fly-throughs.
+- [x] **Spline Camera Coordinates:** Use splines for complex camera fly-throughs.
 - [x] **Easing & Transitions:** Upgrade `RoutinePlayer` to support linear interpolation (Lerp) for parameters (e.g., slowly ramp `flowSpeed` from 1.0 to 10.0 over 3 seconds).
 - [x] **Dynamic Lighting Control:** Add support for routines to animate directional and ambient lighting attributes.
 - [x] **Camera Director:** Add a `camera` event type to the routine player to orbit/zoom the camera to specific regions of interest during playback.
@@ -89,8 +89,10 @@
 * *Idea:* "Biofeedback Adaptive Audio" - Connect biofeedback metrics (e.g., heart rate) to modulate the pitch, volume, or tempo of the generative audio, creating a sonification of the user's physiological state.
 * *Idea:* "Neuro-feedback loops" - Dynamically adjust playback speed based on user interaction or biofeedback.
 * *Idea:* "Scriptable Sub-titles overlay supporting Markdown" - Allow `text` events to render formatted markdown.
+* *Idea:* "Interactive Brain Regions" - Allow users to click on specific brain regions during a routine to branch or alter the sequence dynamically.
 
 ## 📜 Changelog
+* [2026-03-09] - Completed Phase 2 (Spline Camera Coordinates). Modified `camera` event handler in `routine-player.js` to support spline interpolation across multiple targets. Added new mini-routine 'v' to `main.js`. Added "Interactive Brain Regions" to Dream Log.
 * [2026-03-08] - Completed Phase 2 (Custom Audio File Support). Modified `sound` event handler in `routine-player.js` to support playing external audio files via URL. Added new mini-routine 'c' to `main.js` to demonstrate feature. Added "Neuro-feedback loops" to Dream Log.
 * [2026-03-07] - Completed Phase 2 (Neuro-Sonification). Implemented `sound` event handler in `routine-player.js` using the Web Audio API to generate synthesized tones. Added `sound` events to existing mini-routines in `main.js`. Added ideas for "Custom Audio File Support" and "Biofeedback Adaptive Audio" to Dream Log.
 * [2026-03-06] - Completed Phase 2 (Haptic Feedback & Flashbacks). Added `haptic` and `flashback` events to `RoutinePlayer`. Implemented "Memory Flashback" routine in `main.js`. Added "Multimodal Embeddings" to Dream Log.
