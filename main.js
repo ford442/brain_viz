@@ -157,9 +157,11 @@ const MINI_ROUTINES = {
         { time: 5.0, type: 'text', message: 'Spline Complete', duration: 2.0 }
     ],
     'v': [ // Spline Camera Fly-Through Demo
-        { time: 0.0, type: 'text', message: 'Spline Camera Fly-Through...', duration: 3.0 },
-        { time: 0.0, type: 'camera', path: ['frontal', 'temporal', 'occipital', 'parietal', 'frontal'], duration: 8.0, ease: 'sineInOut' },
-        { time: 8.0, type: 'text', message: 'Fly-Through Complete', duration: 2.0 }
+        { time: 0.0, type: 'text', message: 'Spline Camera Fly-Through...', duration: 5.0 },
+        { time: 0.0, type: 'style', value: 2 },
+        { time: 0.0, type: 'camera', path: ['frontal', 'temporal', 'occipital', 'parietal', 'frontal'], duration: 10.0, ease: 'linear' },
+        { time: 10.0, type: 'calm' },
+        { time: 10.0, type: 'text', message: 'Fly-Through Complete', duration: 2.0 }
     ]
 };
 
@@ -273,7 +275,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Flythrough';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through';
         document.body.appendChild(legend);
 
         // [Phase 4] Narrative Overlay
