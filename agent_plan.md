@@ -93,6 +93,10 @@
 
 ## 📜 Changelog
 * [2026-03-09] - Completed Phase 2 (Spline Camera Coordinates). Modified `camera` event handler in `routine-player.js` to support spline interpolation across multiple targets. Added new mini-routine 'v' to `main.js`. Added "Interactive Brain Regions" to Dream Log.
+* *Idea:* "Pathfinding Camera" - Let the camera automatically find a collision-free path between two regions of interest without clipping through the brain mesh.
+
+## 📜 Changelog
+* [2026-03-09] - Completed Phase 2 (Spline Camera Coordinates). Implemented spline path evaluation in `camera` lerp events within `routine-player.js`. Added "Fly-Through" mini-routine to `main.js`.
 * [2026-03-08] - Completed Phase 2 (Custom Audio File Support). Modified `sound` event handler in `routine-player.js` to support playing external audio files via URL. Added new mini-routine 'c' to `main.js` to demonstrate feature. Added "Neuro-feedback loops" to Dream Log.
 * [2026-03-07] - Completed Phase 2 (Neuro-Sonification). Implemented `sound` event handler in `routine-player.js` using the Web Audio API to generate synthesized tones. Added `sound` events to existing mini-routines in `main.js`. Added ideas for "Custom Audio File Support" and "Biofeedback Adaptive Audio" to Dream Log.
 * [2026-03-06] - Completed Phase 2 (Haptic Feedback & Flashbacks). Added `haptic` and `flashback` events to `RoutinePlayer`. Implemented "Memory Flashback" routine in `main.js`. Added "Multimodal Embeddings" to Dream Log.

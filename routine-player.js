@@ -846,14 +846,94 @@ export class RoutinePlayer {
     handleCamera(evt) {
         let params = {};
 
-        if (typeof evt.target === 'string') {
-            const preset = CAMERA_PRESETS[evt.target] || this.cameraMap[evt.target] || this.customPresets[evt.target];
-            if (preset) {
-                params = { ...preset };
-            } else {
-                console.warn(`[Routine] Unknown camera target: ${evt.target}`);
+        const getPresetParams = (target) => {
+            if (typeof target === 'string') {
+                const preset = CAMERA_PRESETS[target] || this.cameraMap[target] || this.customPresets[target];
+                if (preset) {
+                    return { ...preset };
+                } else {
+                    console.warn(`[Routine] Unknown camera target: ${target}`);
+                    return null;
+                }
+            } else if (target && target.rotation) {
+                return target;
             }
-        } else if (evt.rotation) {
+            return null;
+        };
+
+        if (evt.path && Array.isArray(evt.path) && evt.duration && evt.duration > 0 && this.renderer.targetRotation) {
+            console.log(`[Routine] Spline Camera Transition started (${evt.duration}s)`);
+            const duration = evt.duration;
+            const ease = evt.ease || 'linear';
+
+            this.activeLerps = this.activeLerps.filter(l => !l.isCamera);
+
+            let pathX = [this.renderer.targetRotation.x];
+            let pathY = [this.renderer.targetRotation.y];
+            let pathZoom = [this.renderer.targetZoom];
+
+            let hasValidPath = false;
+
+            for (const step of evt.path) {
+                const stepParams = getPresetParams(step);
+                if (stepParams) {
+                    hasValidPath = true;
+                    if (stepParams.rotation && stepParams.rotation.x !== undefined) {
+                        pathX.push(stepParams.rotation.x);
+                    } else {
+                        pathX.push(pathX[pathX.length - 1]);
+                    }
+
+                    if (stepParams.rotation && stepParams.rotation.y !== undefined) {
+                        pathY.push(stepParams.rotation.y);
+                    } else {
+                        pathY.push(pathY[pathY.length - 1]);
+                    }
+
+                    if (stepParams.zoom !== undefined) {
+                        pathZoom.push(stepParams.zoom);
+                    } else {
+                        pathZoom.push(pathZoom[pathZoom.length - 1]);
+                    }
+                }
+            }
+
+            if (hasValidPath) {
+                this.activeLerps.push({
+                    key: 'cameraRotX',
+                    startVal: this.renderer.targetRotation.x,
+                    path: pathX,
+                    elapsed: 0,
+                    duration: duration,
+                    isCamera: true,
+                    ease: ease
+                });
+
+                this.activeLerps.push({
+                    key: 'cameraRotY',
+                    startVal: this.renderer.targetRotation.y,
+                    path: pathY,
+                    elapsed: 0,
+                    duration: duration,
+                    isCamera: true,
+                    ease: ease
+                });
+
+                this.activeLerps.push({
+                    key: 'cameraZoom',
+                    startVal: this.renderer.targetZoom,
+                    path: pathZoom,
+                    elapsed: 0,
+                    duration: duration,
+                    isCamera: true,
+                    ease: ease
+                });
+            }
+            return;
+        }
+
+        params = getPresetParams(evt.target) || {};
+        if (evt.rotation) {
             params.rotation = evt.rotation;
         }
 
@@ -972,7 +1052,7 @@ export class RoutinePlayer {
             return;
         }
 
-        if (this.renderer.setCameraParams) {
+        if (this.renderer.setCameraParams && Object.keys(params).length > 0) {
             this.renderer.setCameraParams(params);
         }
     }
