@@ -240,6 +240,7 @@ async function init() {
         };
 
         const player = new RoutinePlayer(renderer, regionMap, cameraMap);
+        console.log("[Main] RoutinePlayer connected safely.");
 
         // [Phase 3] Extensible Event System Demo
         // Register a custom 'debug' handler to demonstrate the new V2.9 architecture

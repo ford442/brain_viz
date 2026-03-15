@@ -684,9 +684,7 @@ export class RoutinePlayer {
              return;
         }
         // [Safety] Graceful degradation if WebGPU context is invalid or renderer stopped
-        if (this.renderer.isRunning !== undefined && !this.renderer.isRunning) {
-             // Only log if we expect it to be running (avoid log spam if intentionally stopped?)
-             // Actually, if routine is playing but renderer is not, that's an issue.
+        if (typeof this.renderer.isRunning !== 'undefined' && this.renderer.isRunning === false) {
              console.warn("[Routine] Renderer is not running. Stopping routine to prevent memory leaks or crashes.");
              this.stop();
              return;
@@ -779,15 +777,14 @@ export class RoutinePlayer {
 
     // [Event Handling] An extensible event execution mechanism (replaces rigid switch statements)
     executeEvent(event) {
-        const handler = this.handlers.get(event.type);
-        if (handler) {
+        const eventHandler = this.handlers.get(event.type);
+        if (eventHandler) {
             try {
-                handler(event);
-            } catch (err) {
-                console.error(`[Routine] Error executing handler for '${event.type}':`, err);
+                eventHandler(event);
+            } catch (error) {
+                console.error(`[Routine] Error executing handler for '${event.type}':`, error);
             }
         } else {
-            // Fallback for missing handlers, logging a warning to help debug user routines
             console.warn(`[Routine] No handler registered for event type: '${event.type}'`);
         }
 

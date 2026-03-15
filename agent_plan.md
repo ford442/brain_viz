@@ -17,6 +17,8 @@
 
 ### Phase 2: Advanced Choreography
 - [x] **Routine Logic & Extensibility Refactor:** Verified tick() loop uses performance.now(), executeEvent is extensible, and WebGPU context gracefully degrades.
+- [ ] **Parameter Interpolation/Easing**
+- [ ] **Camera Coordinates Map**
 - [x] **Dynamic Time Dilation:** Allow routines to modulate their own playback speed (`speed` event) to simulate bullet-time or fast-forward natively.
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 - [x] **Parameter Interpolation/Easing:** Add parameter interpolation to routines.
@@ -90,6 +92,7 @@
 * *Idea:* "Neuro-feedback loops" - Dynamically adjust playback speed based on user interaction or biofeedback.
 * *Idea:* "Scriptable Sub-titles overlay supporting Markdown" - Allow `text` events to render formatted markdown.
 * *Idea:* "Pathfinding Camera" - Let the camera automatically find a collision-free path between two regions of interest without clipping through the brain mesh.
+* *Idea:* "What if we visualized Serotonin levels as color shifts?"
 
 ## 📜 Changelog
 * [2026-03-09] - Completed Phase 2 (Spline Camera Coordinates). Implemented spline path evaluation in `camera` lerp events within `routine-player.js`. Added "Fly-Through" mini-routine to `main.js`.
