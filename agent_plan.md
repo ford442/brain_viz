@@ -17,7 +17,8 @@
 
 ### Phase 2: Advanced Choreography
 - [x] **Routine Logic & Extensibility Refactor:** Verified tick() loop uses performance.now(), executeEvent is extensible, and WebGPU context gracefully degrades.
-- [ ] **Parameter Interpolation/Easing**
+- [x] **Parameter Interpolation/Easing**
+- [ ] **Interactive Visual Overlays**
 - [ ] **Camera Coordinates Map**
 - [x] **Dynamic Time Dilation:** Allow routines to modulate their own playback speed (`speed` event) to simulate bullet-time or fast-forward natively.
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
@@ -68,6 +69,7 @@
 ---
 
 ## 🧪 "Dream" Log (Future Concepts)
+* *Idea:* "What if we visualized stress levels as brain surface distortion?"
 * *Idea:* "Dynamic Weather Systems" - Allow routines to control global environmental weather effects like rain/fog inside the brain.
 * *Idea:* "Narrative Mode" - Display text overlays synced with brain states (e.g., "Subject recognizes face" -> Temporal Lobe lights up).
 * *Idea:* "Multi-Brain" - Visualize two brains interacting (Mirror Neurons).
