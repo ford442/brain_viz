@@ -162,6 +162,17 @@ const MINI_ROUTINES = {
         { time: 0.0, type: 'camera', path: ['frontal', 'temporal', 'occipital', 'parietal', 'frontal'], duration: 10.0, ease: 'linear' },
         { time: 10.0, type: 'calm' },
         { time: 10.0, type: 'text', message: 'Fly-Through Complete', duration: 2.0 }
+    ],
+    'i': [ // Interactive Visual Overlays Demo
+        { time: 0.0, type: 'text', message: 'Interactive Overlay Initiated...', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 1 }, // Cyber
+        { time: 2.0, type: 'overlay', content: '<h3>SYSTEM HALTED</h3><p>Awaiting user confirmation to proceed with deep scan.</p>', interactive: true, buttonText: 'Authorize Scan' },
+        { time: 2.0, type: 'text', message: 'Waiting for Authorization...', duration: 0.0 },
+        { time: 2.5, type: 'text', message: 'Authorization Accepted. Scanning...', duration: 3.0 },
+        { time: 2.5, type: 'style', value: 2 }, // Connectome
+        { time: 2.5, type: 'camera', target: 'deep', duration: 2.0, ease: 'quadInOut' },
+        { time: 5.5, type: 'calm' },
+        { time: 5.5, type: 'camera', target: 'global', duration: 2.0, ease: 'quadOut' }
     ]
 };
 
@@ -276,7 +287,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive';
         document.body.appendChild(legend);
 
         // [Phase 4] Narrative Overlay
@@ -298,10 +309,61 @@ async function init() {
         });
         document.body.appendChild(narrative);
 
+        // [Phase 2] Interactive Visual Overlay Container
+        const visualOverlay = document.createElement('div');
+        visualOverlay.id = 'visual-overlay';
+        Object.assign(visualOverlay.style, {
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            background: 'rgba(0, 20, 40, 0.9)',
+            border: '2px solid #00aaff',
+            padding: '20px 40px',
+            borderRadius: '10px',
+            color: '#fff',
+            fontFamily: 'monospace',
+            textAlign: 'center',
+            display: 'none',
+            zIndex: '300',
+            boxShadow: '0 0 20px rgba(0, 150, 255, 0.5)'
+        });
+        document.body.appendChild(visualOverlay);
+
         // Sync UI when routine executes events
         let narrativeTimeout = null;
 
         player.onEvent = (event) => {
+             if (event.type === 'overlay') {
+                 if (event.content) {
+                     visualOverlay.innerHTML = event.content;
+                     visualOverlay.style.display = 'block';
+
+                     if (event.interactive) {
+                         player.pause();
+                         const btn = document.createElement('button');
+                         btn.textContent = event.buttonText || 'Continue';
+                         Object.assign(btn.style, {
+                             marginTop: '20px', padding: '10px 20px', background: '#0055aa',
+                             color: 'white', border: 'none', cursor: 'pointer', borderRadius: '4px',
+                             fontFamily: 'monospace', fontSize: '14px'
+                         });
+                         btn.onmouseover = () => btn.style.background = '#0077ff';
+                         btn.onmouseout = () => btn.style.background = '#0055aa';
+                         btn.onclick = () => {
+                             visualOverlay.style.display = 'none';
+                             player.resume();
+                         };
+                         visualOverlay.appendChild(btn);
+                     } else if (event.duration) {
+                         setTimeout(() => {
+                             visualOverlay.style.display = 'none';
+                         }, event.duration * 1000);
+                     }
+                 } else {
+                     visualOverlay.style.display = 'none';
+                 }
+             }
              if (event.type === 'text') {
                  if (event.message) {
                      narrative.textContent = event.message;

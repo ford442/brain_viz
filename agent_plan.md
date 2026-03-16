@@ -18,8 +18,9 @@
 ### Phase 2: Advanced Choreography
 - [x] **Routine Logic & Extensibility Refactor:** Verified tick() loop uses performance.now(), executeEvent is extensible, and WebGPU context gracefully degrades.
 - [x] **Parameter Interpolation/Easing**
-- [ ] **Interactive Visual Overlays**
-- [ ] **Camera Coordinates Map**
+- [x] **Interactive Visual Overlays:** Support HTML/Markdown overlays that can pause execution until user interacts.
+- [x] **Camera Coordinates Map:** (Duplicate) Define explicit regions for better camera angles.
+- [ ] **Branching/Conditional Routines:** Allow routines to branch dynamically based on user interaction or internal state variables.
 - [x] **Dynamic Time Dilation:** Allow routines to modulate their own playback speed (`speed` event) to simulate bullet-time or fast-forward natively.
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 - [x] **Parameter Interpolation/Easing:** Add parameter interpolation to routines.
@@ -99,8 +100,10 @@
 * [2026-03-09] - Completed Phase 2 (Spline Camera Coordinates). Modified `camera` event handler in `routine-player.js` to support spline interpolation across multiple targets. Added new mini-routine 'v' to `main.js`. Added "Interactive Brain Regions" to Dream Log.
 * *Idea:* "Pathfinding Camera" - Let the camera automatically find a collision-free path between two regions of interest without clipping through the brain mesh.
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
+* *Idea:* "Adaptive Routines" - What if routines could adapt based on real-time emotion detection via webcam?
 
 ## 📜 Changelog
+* [2026-03-10] - Completed Phase 2 (Interactive Visual Overlays). Implemented `overlay` event type in `routine-player.js` and `main.js` supporting HTML content and interactive pause/resume logic. Added "Branching/Conditional Routines" to roadmap and emotion detection to Dream Log.
 * [2026-03-09] - Completed Phase 2 (Spline Camera Coordinates). Implemented spline path evaluation in `camera` lerp events within `routine-player.js`. Added "Fly-Through" mini-routine to `main.js`.
 * [2026-03-08] - Completed Phase 2 (Custom Audio File Support). Modified `sound` event handler in `routine-player.js` to support playing external audio files via URL. Added new mini-routine 'c' to `main.js` to demonstrate feature. Added "Neuro-feedback loops" to Dream Log.
 * [2026-03-07] - Completed Phase 2 (Neuro-Sonification). Implemented `sound` event handler in `routine-player.js` using the Web Audio API to generate synthesized tones. Added `sound` events to existing mini-routines in `main.js`. Added ideas for "Custom Audio File Support" and "Biofeedback Adaptive Audio" to Dream Log.

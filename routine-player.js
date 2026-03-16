@@ -337,6 +337,9 @@ export class RoutinePlayer {
         // Text (No-op in engine, handled by UI listener)
         this.registerHandler('text', () => {});
 
+        // [Phase 2] Interactive Visual Overlays
+        this.registerHandler('overlay', () => {}); // Emits event, handled by UI
+
         // Call (Sub-routine expansion happens at load time, runtime calls are warnings)
         this.registerHandler('call', (evt) => {
             console.warn("[Routine] Unexpanded 'call' event encountered at runtime:", evt);
