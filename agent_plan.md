@@ -20,7 +20,8 @@
 - [x] **Parameter Interpolation/Easing**
 - [x] **Interactive Visual Overlays:** Support HTML/Markdown overlays that can pause execution until user interacts.
 - [x] **Camera Coordinates Map:** (Duplicate) Define explicit regions for better camera angles.
-- [ ] **Branching/Conditional Routines:** Allow routines to branch dynamically based on user interaction or internal state variables.
+- [x] **Branching/Conditional Routines:** Allow routines to branch dynamically based on user interaction or internal state variables.
+- [ ] **Routine Variables/Math:** Support variables and basic arithmetic in routine events.
 - [x] **Dynamic Time Dilation:** Allow routines to modulate their own playback speed (`speed` event) to simulate bullet-time or fast-forward natively.
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 - [x] **Parameter Interpolation/Easing:** Add parameter interpolation to routines.
@@ -95,8 +96,10 @@
 * *Idea:* "Neuro-feedback loops" - Dynamically adjust playback speed based on user interaction or biofeedback.
 * *Idea:* "Scriptable Sub-titles overlay supporting Markdown" - Allow `text` events to render formatted markdown.
 * *Idea:* "Interactive Brain Regions" - Allow users to click on specific brain regions during a routine to branch or alter the sequence dynamically.
+* *Idea:* "Interactive Neuro-Storytelling" - A choose-your-own-adventure mode driven by branches and user interaction.
 
 ## 📜 Changelog
+* [2026-03-11] - Completed Phase 2 (Branching/Conditional Routines). Implemented branch event type and internal state. Added mini-routine 'b' to main.js.
 * [2026-03-09] - Completed Phase 2 (Spline Camera Coordinates). Modified `camera` event handler in `routine-player.js` to support spline interpolation across multiple targets. Added new mini-routine 'v' to `main.js`. Added "Interactive Brain Regions" to Dream Log.
 * *Idea:* "Pathfinding Camera" - Let the camera automatically find a collision-free path between two regions of interest without clipping through the brain mesh.
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
