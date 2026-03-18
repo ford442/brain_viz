@@ -36,6 +36,7 @@ export class RoutinePlayer {
         this.lastPauseTime = 0;
         this.subRoutines = {}; // [Phase 2] Sub-Routine System
         this.customPresets = {}; // [Phase 2] Custom Camera Presets
+        this.state = {}; // [Phase 2] Internal State for Branching
 
         // [Phase 2] Easing Support
         this.activeLerps = []; // { key, startVal, endVal, elapsed, duration }
@@ -343,6 +344,36 @@ export class RoutinePlayer {
         // Call (Sub-routine expansion happens at load time, runtime calls are warnings)
         this.registerHandler('call', (evt) => {
             console.warn("[Routine] Unexpanded 'call' event encountered at runtime:", evt);
+        });
+
+        // [Phase 2] Branching/Conditional Routines
+        this.registerHandler('branch', (evt) => {
+            let result = false;
+            if (typeof evt.condition === 'function') {
+                result = evt.condition();
+            } else if (typeof evt.condition === 'string' && evt.condition.startsWith('state.')) {
+                const key = evt.condition.substring(6);
+                result = !!this.state[key];
+            } else {
+                result = !!evt.condition;
+            }
+
+            const target = result ? evt.trueBranch : evt.falseBranch;
+            if (target) {
+                if (this.subRoutines[target]) {
+                    console.log(`[Routine] Branch evaluated to ${result}. Jumping to: ${target}`);
+                    this.playNow(this.subRoutines[target]);
+                } else {
+                    console.warn(`[Routine] Branch target '${target}' not found in subRoutines.`);
+                }
+            }
+        });
+
+        this.registerHandler('state', (evt) => {
+            if (evt.key !== undefined && evt.value !== undefined) {
+                this.state[evt.key] = evt.value;
+                console.log(`[Routine] State updated: ${evt.key} = ${evt.value}`);
+            }
         });
     }
 
@@ -701,10 +732,16 @@ export class RoutinePlayer {
         this.elapsedTime += dt * this.playbackSpeed;
 
         while (this.cursor < this.routine.length) {
+            const currentRoutine = this.routine;
             const event = this.routine[this.cursor];
 
             if (this.elapsedTime >= event.time) {
                 this.executeEvent(event);
+
+                if (this.routine !== currentRoutine) {
+                    break;
+                }
+
                 this.cursor++;
             } else {
                 break;

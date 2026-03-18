@@ -173,6 +173,20 @@ const MINI_ROUTINES = {
         { time: 2.5, type: 'camera', target: 'deep', duration: 2.0, ease: 'quadInOut' },
         { time: 5.5, type: 'calm' },
         { time: 5.5, type: 'camera', target: 'global', duration: 2.0, ease: 'quadOut' }
+    ],
+    'b': [ // Branching Demo
+        { time: 0.0, type: 'text', message: 'Evaluating Brain State...', duration: 2.0 },
+        { time: 2.0, type: 'branch', condition: () => Math.random() > 0.5, trueBranch: 'branch_calm', falseBranch: 'branch_panic' }
+    ],
+    'branch_calm': [
+        { time: 0.0, type: 'text', message: 'State: CALM', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 0 },
+        { time: 0.0, type: 'calm' }
+    ],
+    'branch_panic': [
+        { time: 0.0, type: 'text', message: 'State: PANIC', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 1 },
+        { time: 0.0, type: 'shake', intensity: 0.1, duration: 2.0 }
     ]
 };
 
@@ -287,7 +301,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive, b=Branch';
         document.body.appendChild(legend);
 
         // [Phase 4] Narrative Overlay
