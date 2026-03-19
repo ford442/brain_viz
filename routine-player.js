@@ -375,6 +375,44 @@ export class RoutinePlayer {
                 console.log(`[Routine] State updated: ${evt.key} = ${evt.value}`);
             }
         });
+
+        // [Phase 2] Routine Variables/Math
+        this.registerHandler('math', (evt) => {
+            if (evt.target === undefined || evt.var1 === undefined) {
+                console.warn("[Routine] Math event requires target and var1");
+                return;
+            }
+
+            let val1 = evt.var1;
+            if (typeof evt.var1 === 'string' && evt.var1.startsWith('state.')) {
+                val1 = this.state[evt.var1.substring(6)] || 0;
+            }
+
+            let val2 = evt.var2 !== undefined ? evt.var2 : 0;
+            if (typeof evt.var2 === 'string' && evt.var2.startsWith('state.')) {
+                val2 = this.state[evt.var2.substring(6)] || 0;
+            }
+
+            let result = 0;
+            switch (evt.operator) {
+                case 'add': result = val1 + val2; break;
+                case 'sub': result = val1 - val2; break;
+                case 'mul': result = val1 * val2; break;
+                case 'div': result = val2 !== 0 ? val1 / val2 : 0; break;
+                case 'mod': result = val2 !== 0 ? val1 % val2 : 0; break;
+                default:
+                    console.warn(`[Routine] Unknown math operator: ${evt.operator}`);
+                    result = val1;
+            }
+
+            if (typeof evt.target === 'string' && evt.target.startsWith('state.')) {
+                const stateKey = evt.target.substring(6);
+                this.state[stateKey] = result;
+                console.log(`[Routine] Math executed: ${evt.var1} ${evt.operator} ${evt.var2} = ${result}. Stored in state.${stateKey}`);
+            } else {
+                 console.warn("[Routine] Math target must be a state variable (e.g., 'state.myVar')");
+            }
+        });
     }
 
     /**
@@ -817,21 +855,45 @@ export class RoutinePlayer {
 
     // [Event Handling] An extensible event execution mechanism (replaces rigid switch statements)
     executeEvent(event) {
-        const eventHandler = this.handlers.get(event.type);
+        // Resolve variables (e.g., "$state.myVar")
+        const resolvedEvent = this.resolveEventVariables(event);
+
+        const eventHandler = this.handlers.get(resolvedEvent.type);
         if (eventHandler) {
             try {
-                eventHandler(event);
+                eventHandler(resolvedEvent);
             } catch (error) {
-                console.error(`[Routine] Error executing handler for '${event.type}':`, error);
+                console.error(`[Routine] Error executing handler for '${resolvedEvent.type}':`, error);
             }
         } else {
-            console.warn(`[Routine] No handler registered for event type: '${event.type}'`);
+            console.warn(`[Routine] No handler registered for event type: '${resolvedEvent.type}'`);
         }
 
         // Notify listener (UI sync)
         if (this.onEvent) {
-            this.onEvent(event);
+            this.onEvent(resolvedEvent);
         }
+    }
+
+    resolveEventVariables(event) {
+        const resolved = { ...event };
+        for (const key in resolved) {
+            const value = resolved[key];
+            if (typeof value === 'string' && value.startsWith('$state.')) {
+                const stateKey = value.substring(7);
+                if (this.state[stateKey] !== undefined) {
+                    resolved[key] = this.state[stateKey];
+                } else {
+                    console.warn(`[Routine] Variable '${value}' not found in state.`);
+                }
+            } else if (typeof value === 'string' && value.includes('$state.')) {
+                 // String interpolation support
+                 resolved[key] = value.replace(/\$state\.([a-zA-Z0-9_]+)/g, (match, stateKey) => {
+                     return this.state[stateKey] !== undefined ? this.state[stateKey] : match;
+                 });
+            }
+        }
+        return resolved;
     }
 
     startLerp(event) {
