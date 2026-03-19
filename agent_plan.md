@@ -21,7 +21,7 @@
 - [x] **Interactive Visual Overlays:** Support HTML/Markdown overlays that can pause execution until user interacts.
 - [x] **Camera Coordinates Map:** (Duplicate) Define explicit regions for better camera angles.
 - [x] **Branching/Conditional Routines:** Allow routines to branch dynamically based on user interaction or internal state variables.
-- [ ] **Routine Variables/Math:** Support variables and basic arithmetic in routine events.
+- [x] **Routine Variables/Math:** Support variables and basic arithmetic in routine events.
 - [x] **Dynamic Time Dilation:** Allow routines to modulate their own playback speed (`speed` event) to simulate bullet-time or fast-forward natively.
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 - [x] **Parameter Interpolation/Easing:** Add parameter interpolation to routines.
@@ -91,6 +91,7 @@
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "What if we allowed scripts to trigger external events like Haptic Feedback API?"
 * *Idea:* "Multimodal Embeddings" - Connect an ML backend to translate input text (e.g., from an LLM) into corresponding brain state routines automatically.
+* *Idea:* "What if we mapped real-time stock market data to connectome signal pulses?"
 * *Idea:* "Social Media Sentiment" - What if we visualize real-time social media sentiment as brain activity?
 * *Idea:* "Biofeedback Adaptive Audio" - Connect biofeedback metrics (e.g., heart rate) to modulate the pitch, volume, or tempo of the generative audio, creating a sonification of the user's physiological state.
 * *Idea:* "Neuro-feedback loops" - Dynamically adjust playback speed based on user interaction or biofeedback.
@@ -99,6 +100,7 @@
 * *Idea:* "Interactive Neuro-Storytelling" - A choose-your-own-adventure mode driven by branches and user interaction.
 
 ## 📜 Changelog
+* [2026-03-12] - Completed Phase 2 (Routine Variables/Math). Implemented `math` event type and string interpolation for state variables in `routine-player.js`. Added mini-routine 'w' to `main.js`.
 * [2026-03-11] - Completed Phase 2 (Branching/Conditional Routines). Implemented branch event type and internal state. Added mini-routine 'b' to main.js.
 * [2026-03-09] - Completed Phase 2 (Spline Camera Coordinates). Modified `camera` event handler in `routine-player.js` to support spline interpolation across multiple targets. Added new mini-routine 'v' to `main.js`. Added "Interactive Brain Regions" to Dream Log.
 * *Idea:* "Pathfinding Camera" - Let the camera automatically find a collision-free path between two regions of interest without clipping through the brain mesh.

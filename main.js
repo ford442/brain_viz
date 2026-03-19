@@ -187,6 +187,23 @@ const MINI_ROUTINES = {
         { time: 0.0, type: 'text', message: 'State: PANIC', duration: 2.0 },
         { time: 0.0, type: 'style', value: 1 },
         { time: 0.0, type: 'shake', intensity: 0.1, duration: 2.0 }
+    ],
+    'w': [ // Math/Variables Demo
+        { time: 0.0, type: 'text', message: 'Initializing Variables...', duration: 2.0 },
+        { time: 0.0, type: 'state', key: 'loopCount', value: 0 },
+        { time: 0.0, type: 'state', key: 'baseIntensity', value: 1.5 },
+        { time: 2.0, type: 'call', routine: 'math_loop' }
+    ],
+    'math_loop': [
+        { time: 0.0, type: 'math', operator: 'add', var1: 'state.loopCount', var2: 1, target: 'state.loopCount' },
+        { time: 0.0, type: 'math', operator: 'mul', var1: 'state.baseIntensity', var2: 'state.loopCount', target: 'state.currentIntensity' },
+        { time: 0.0, type: 'text', message: 'Loop $state.loopCount! Intensity: $state.currentIntensity', duration: 1.5 },
+        { time: 0.0, type: 'stimulus', target: 'deep', intensity: '$state.currentIntensity' },
+        { time: 2.0, type: 'branch', condition: () => window.playerState.loopCount < 3, trueBranch: 'math_loop', falseBranch: 'math_end' }
+    ],
+    'math_end': [
+        { time: 0.0, type: 'text', message: 'Math Sequence Complete', duration: 2.0 },
+        { time: 0.0, type: 'calm' }
     ]
 };
 
@@ -268,6 +285,7 @@ async function init() {
 
         const player = new RoutinePlayer(renderer, regionMap, cameraMap);
         console.log("[Main] RoutinePlayer connected safely.");
+        window.playerState = player.state; // Expose for simple inline conditions
 
         // [Phase 3] Extensible Event System Demo
         // Register a custom 'debug' handler to demonstrate the new V2.9 architecture
@@ -301,7 +319,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive, b=Branch';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars';
         document.body.appendChild(legend);
 
         // [Phase 4] Narrative Overlay
