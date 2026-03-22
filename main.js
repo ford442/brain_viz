@@ -890,3 +890,4 @@ function initDirectorTools(renderer, player) {
 }
 
 init();
+// End of main
