@@ -16,6 +16,7 @@
 - [x] **Playback UI:** Add a "Run Sequence" button and a transport clock (Play/Stop/Loop) to the DOM.
 
 ### Phase 2: Advanced Choreography
+- [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
 - [x] **Routine Logic & Extensibility Refactor:** Verified tick() loop uses performance.now(), executeEvent is extensible, and WebGPU context gracefully degrades.
 - [x] **Parameter Interpolation/Easing**
 - [x] **Interactive Visual Overlays:** Support HTML/Markdown overlays that can pause execution until user interacts.
@@ -71,6 +72,7 @@
 ---
 
 ## 🧪 "Dream" Log (Future Concepts)
+* *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "What if we visualized stress levels as brain surface distortion?"
 * *Idea:* "Dynamic Weather Systems" - Allow routines to control global environmental weather effects like rain/fog inside the brain.
 * *Idea:* "Narrative Mode" - Display text overlays synced with brain states (e.g., "Subject recognizes face" -> Temporal Lobe lights up).
