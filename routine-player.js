@@ -38,6 +38,9 @@ export class RoutinePlayer {
         this.customPresets = {}; // [Phase 2] Custom Camera Presets
         this.state = {}; // [Phase 2] Internal State for Branching
 
+        // [Phase 2] Event Synchronization
+        this.waitingForSignal = null; // String name of the signal we are waiting for
+
         // [Phase 2] Easing Support
         this.activeLerps = []; // { key, startVal, endVal, elapsed, duration }
 
@@ -376,6 +379,22 @@ export class RoutinePlayer {
             }
         });
 
+        // [Phase 2] Event Synchronization (Wait/Signal)
+        this.registerHandler('wait', (evt) => {
+            if (evt.signal) {
+                this.waitingForSignal = evt.signal;
+                console.log(`[Routine] Paused execution, waiting for signal: '${evt.signal}'`);
+            } else {
+                console.warn("[Routine] Wait event requires a 'signal' property.");
+            }
+        });
+
+        this.registerHandler('signal', (evt) => {
+            if (evt.signal) {
+                this.triggerSignal(evt.signal);
+            }
+        });
+
         // [Phase 2] Routine Variables/Math
         this.registerHandler('math', (evt) => {
             if (evt.target === undefined || evt.var1 === undefined) {
@@ -426,6 +445,19 @@ export class RoutinePlayer {
             return;
         }
         this.handlers.set(type, callback);
+    }
+
+    /**
+     * Trigger an external signal to resume routines waiting for it.
+     * @param {string} signalName - Name of the signal
+     */
+    triggerSignal(signalName) {
+        console.log(`[Routine] Received signal: '${signalName}'`);
+        if (this.waitingForSignal === signalName) {
+            console.log(`[Routine] Signal '${signalName}' matched. Resuming execution.`);
+            this.waitingForSignal = null;
+            // Ensure we don't stall due to elapsed time mismatch if paused
+        }
     }
 
     get currentTime() {
@@ -708,6 +740,7 @@ export class RoutinePlayer {
         this.lastFrameTime = performance.now();
         this.cursor = 0;
         this.activeLerps = [];
+        this.waitingForSignal = null;
         this.tick();
         console.log("[Routine] Playback started");
     }
@@ -743,6 +776,7 @@ export class RoutinePlayer {
         }
         this.cursor = 0;
         this.activeLerps = [];
+        this.waitingForSignal = null;
         if (this.onEvent) this.onEvent({ type: 'stop' });
     }
 
@@ -767,22 +801,30 @@ export class RoutinePlayer {
         const dt = (now - this.lastFrameTime) / 1000.0;
         this.lastFrameTime = now;
 
-        this.elapsedTime += dt * this.playbackSpeed;
+        // If waiting for a signal, freeze the routine timeline
+        if (this.waitingForSignal === null) {
+            this.elapsedTime += dt * this.playbackSpeed;
 
-        while (this.cursor < this.routine.length) {
-            const currentRoutine = this.routine;
-            const event = this.routine[this.cursor];
+            while (this.cursor < this.routine.length) {
+                const currentRoutine = this.routine;
+                const event = this.routine[this.cursor];
 
-            if (this.elapsedTime >= event.time) {
-                this.executeEvent(event);
+                if (this.elapsedTime >= event.time) {
+                    this.executeEvent(event);
 
-                if (this.routine !== currentRoutine) {
+                    if (this.routine !== currentRoutine) {
+                        break;
+                    }
+
+                    this.cursor++;
+
+                    // Stop executing current batch if we hit a wait event
+                    if (this.waitingForSignal !== null) {
+                        break;
+                    }
+                } else {
                     break;
                 }
-
-                this.cursor++;
-            } else {
-                break;
             }
         }
 

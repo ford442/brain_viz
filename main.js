@@ -204,6 +204,16 @@ const MINI_ROUTINES = {
     'math_end': [
         { time: 0.0, type: 'text', message: 'Math Sequence Complete', duration: 2.0 },
         { time: 0.0, type: 'calm' }
+    ],
+    's': [ // Wait/Signal Demo
+        { time: 0.0, type: 'text', message: 'Waiting for User Signal (Press Space)...', duration: 0.0 },
+        { time: 0.0, type: 'style', value: 1 },
+        { time: 0.0, type: 'wait', signal: 'continue_scan' },
+        { time: 0.0, type: 'text', message: 'Signal Received! Proceeding...', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 2 },
+        { time: 0.0, type: 'camera', target: 'deep', duration: 2.0, ease: 'quadInOut' },
+        { time: 3.0, type: 'calm' },
+        { time: 3.0, type: 'camera', target: 'global', duration: 2.0, ease: 'quadOut' }
     ]
 };
 
@@ -300,6 +310,14 @@ async function init() {
 
         // --- KEYBOARD TRIGGERS ---
         document.addEventListener('keydown', (e) => {
+            // Signal triggering (Spacebar)
+            if (e.code === 'Space') {
+                e.preventDefault();
+                if (player.waitingForSignal === 'continue_scan') {
+                    player.triggerSignal('continue_scan');
+                }
+            }
+
             const routine = MINI_ROUTINES[e.key];
             if (routine) {
                 console.log(`[Main] Triggering Mini-Routine: ${e.key}`);
@@ -319,7 +337,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal';
         document.body.appendChild(legend);
 
         // [Phase 4] Narrative Overlay
