@@ -293,9 +293,10 @@ async function init() {
             'scan': { rotation: { x: 0.8, y: 0.2 }, zoom: 3.0 }
         };
 
+        // Ensure RoutinePlayer expects BrainRenderer instance
         const player = new RoutinePlayer(renderer, regionMap, cameraMap);
-        console.log("[Main] RoutinePlayer connected safely.");
-        window.playerState = player.state; // Expose for simple inline conditions
+        console.log("[Main] Timeline Sequencer Initialized.");
+        window.playerState = player.state; // Share state with global window for inline logic
 
         // [Phase 3] Extensible Event System Demo
         // Register a custom 'debug' handler to demonstrate the new V2.9 architecture
