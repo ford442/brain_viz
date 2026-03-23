@@ -789,11 +789,19 @@ export class RoutinePlayer {
              this.stop();
              return;
         }
-        // [Safety] Graceful degradation if WebGPU context is invalid or renderer stopped
-        if (typeof this.renderer.isRunning !== 'undefined' && this.renderer.isRunning === false) {
-             console.warn("[Routine] Renderer is not running. Stopping routine to prevent memory leaks or crashes.");
+
+        // [Safety] Graceful degradation if WebGPU context is lost or invalid, or renderer stopped
+        if (typeof this.renderer.isRunning !== 'undefined' && !this.renderer.isRunning) {
+             console.warn("[Routine] Renderer is not running. Degrading gracefully to prevent WebGPU crashes.");
              this.stop();
              return;
+        }
+
+        // Safety check: Context invalidation
+        if (this.renderer.device === null) {
+            console.warn("[Routine] WebGPU context is invalid. Stopping player.");
+            this.stop();
+            return;
         }
 
         // [Routine Logic] Ensure the tick() loop uses performance.now() for drift-free timing
@@ -895,23 +903,24 @@ export class RoutinePlayer {
         });
     }
 
-    // [Event Handling] An extensible event execution mechanism (replaces rigid switch statements)
+    // [Event Handling] Extensible Event execution mechanism instead of a rigid switch statement
     executeEvent(event) {
-        // Resolve variables (e.g., "$state.myVar")
+        // Resolve variables via internal state
         const resolvedEvent = this.resolveEventVariables(event);
 
-        const eventHandler = this.handlers.get(resolvedEvent.type);
-        if (eventHandler) {
+        // Fetch registered dynamic handler
+        const handlerFunc = this.handlers.get(resolvedEvent.type);
+        if (handlerFunc) {
             try {
-                eventHandler(resolvedEvent);
-            } catch (error) {
-                console.error(`[Routine] Error executing handler for '${resolvedEvent.type}':`, error);
+                handlerFunc(resolvedEvent);
+            } catch (err) {
+                console.error(`[Routine] Exception in dynamic event handler '${resolvedEvent.type}':`, err);
             }
         } else {
-            console.warn(`[Routine] No handler registered for event type: '${resolvedEvent.type}'`);
+            console.warn(`[Routine] Unknown Event Type: '${resolvedEvent.type}'. The extensible switch statement handler was not found.`);
         }
 
-        // Notify listener (UI sync)
+        // Send UI sync
         if (this.onEvent) {
             this.onEvent(resolvedEvent);
         }
