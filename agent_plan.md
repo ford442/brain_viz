@@ -17,8 +17,8 @@
 
 ### Phase 2: Advanced Choreography
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
-- [ ] **Parameter Interpolation/Easing:** Enhance routines with smooth interpolation.
-- [ ] **Camera Coordinates Map:** Define explicit regions for better camera angles.
+- [x] **Parameter Interpolation/Easing:** Enhance routines with smooth interpolation.
+- [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 - [x] **Routine Logic & Extensibility Refactor:** Verified tick() loop uses performance.now(), executeEvent is extensible, and WebGPU context gracefully degrades.
 - [x] **Parameter Interpolation/Easing**
 - [x] **Interactive Visual Overlays:** Support HTML/Markdown overlays that can pause execution until user interacts.
@@ -75,6 +75,7 @@
 ---
 
 ## 🧪 "Dream" Log (Future Concepts)
+* *Idea:* "Cognitive Load Resolution: What if we visualized cognitive load as variable rendering resolution?"
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "Volumetric Fog" - Introduce a fog shader to give the brain an ethereal, atmospheric depth.
 * *Idea:* "What if we visualized stress levels as brain surface distortion?"

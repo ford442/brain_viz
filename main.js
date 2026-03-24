@@ -296,6 +296,14 @@ async function init() {
         // Ensure RoutinePlayer expects BrainRenderer instance
         const player = new RoutinePlayer(renderer, regionMap, cameraMap);
         console.log("[Main] Timeline Sequencer Initialized.");
+
+        // Hook up WebGPU device lost for player safety
+        if (renderer.device && renderer.device.lost) {
+            renderer.device.lost.then(() => {
+                console.error("[Main] WebGPU Context Lost. Halting routines.");
+                if (player) player.stop();
+            });
+        }
         window.playerState = player.state; // Share state with global window for inline logic
 
         // [Phase 3] Extensible Event System Demo

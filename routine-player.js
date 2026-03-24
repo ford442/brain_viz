@@ -51,6 +51,14 @@ export class RoutinePlayer {
         // [Phase 3] Extensible Event System
         this.handlers = new Map();
         this.setupDefaultHandlers();
+
+        // Safety: WebGPU Context Loss Graceful Degradation
+        if (this.renderer && this.renderer.device && this.renderer.device.lost) {
+             this.renderer.device.lost.then((info) => {
+                 console.warn("[Routine] WebGPU Context Lost detected. Stopping playback.", info);
+                 this.stop();
+             });
+        }
     }
 
     initAudio() {
