@@ -30,6 +30,7 @@
 - [x] **Parameter Interpolation/Easing:** Add parameter interpolation to routines.
 - [x] **Parameter Interpolation/Easing (Spline):** Enhance interpolation with spline paths for complex transitions.
 - [x] **Spline Camera Coordinates:** Use splines for complex camera fly-throughs.
+- [x] **Pathfinding Camera:** Enhance camera transitions with collision avoidance to prevent clipping through the brain mesh during large rotations.
 - [x] **Easing & Transitions:** Upgrade `RoutinePlayer` to support linear interpolation (Lerp) for parameters (e.g., slowly ramp `flowSpeed` from 1.0 to 10.0 over 3 seconds).
 - [x] **Dynamic Lighting Control:** Add support for routines to animate directional and ambient lighting attributes.
 - [x] **Camera Director:** Add a `camera` event type to the routine player to orbit/zoom the camera to specific regions of interest during playback.
@@ -112,7 +113,7 @@
 * [2026-03-12] - Completed Phase 2 (Routine Variables/Math). Implemented `math` event type and string interpolation for state variables in `routine-player.js`. Added mini-routine 'w' to `main.js`.
 * [2026-03-11] - Completed Phase 2 (Branching/Conditional Routines). Implemented branch event type and internal state. Added mini-routine 'b' to main.js.
 * [2026-03-09] - Completed Phase 2 (Spline Camera Coordinates). Modified `camera` event handler in `routine-player.js` to support spline interpolation across multiple targets. Added new mini-routine 'v' to `main.js`. Added "Interactive Brain Regions" to Dream Log.
-* *Idea:* "Pathfinding Camera" - Let the camera automatically find a collision-free path between two regions of interest without clipping through the brain mesh.
+* *Idea:* "Oxytocin Burst" - Visualizing trust and bonding as synchronized pulses across both hemispheres.
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "Adaptive Routines" - What if routines could adapt based on real-time emotion detection via webcam?
 
@@ -126,6 +127,7 @@
 * *Idea:* "Memory Fragmentation: Visualize memory loss as mesh decoupling."
 
 ## 📜 Changelog
+* [2026-03-24] - Completed Phase 2 (Pathfinding Camera). Enhanced `camera` event handler in `routine-player.js` to support collision avoidance via generated spline paths for large rotations. Added 'Orbit Avoid' mini-routine to `main.js` using 'o'.
 * [2026-03-04] - Completed Phase 2 (Neuronal Glitch). Implemented `glitch` event handler in `RoutinePlayer` to simulate data corruption via cinematic params and style toggles. Added "Memory Fragmentation" idea to Dream Log.
 * [2026-03-03] - Completed Phase 2 (Dynamic Lighting Control). Implemented `light` event handler in `RoutinePlayer`, added lighting uniform mapping to `BrainRenderer` and updated shaders. Added "Dynamic Weather Systems" idea to Dream Log.
 * [2026-02-24] - Completed Phase 2 (Parameter Interpolation/Easing). Created a "Deep Breathing" routine in `main.js` that linearly interpolates `growth`, `flowSpeed`, and `amplitude` for a calming visual effect. Added "Haptic Feedback API" idea to Dream Log.

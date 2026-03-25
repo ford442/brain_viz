@@ -1170,41 +1170,97 @@ export class RoutinePlayer {
                 });
 
             } else {
-                // Standard linear/eased lerp
-                if (params.rotation && params.rotation.x !== undefined) {
+                // Standard linear/eased lerp or Pathfinding arc
+                const currentRotX = this.renderer.targetRotation.x;
+                const currentRotY = this.renderer.targetRotation.y;
+                const currentZoom = this.renderer.targetZoom;
+
+                const targetRotX = (params.rotation && params.rotation.x !== undefined) ? params.rotation.x : currentRotX;
+                const targetRotY = (params.rotation && params.rotation.y !== undefined) ? params.rotation.y : currentRotY;
+                const targetZoom = params.zoom !== undefined ? params.zoom : currentZoom;
+
+                const deltaY = Math.abs(targetRotY - currentRotY);
+                const deltaX = Math.abs(targetRotX - currentRotX);
+
+                if (evt.avoidCollision && (deltaY > 2.0 || deltaX > 2.0)) {
+                    // Pathfinding: Create a spline path that arcs outward to avoid clipping through the center
+                    console.log(`[Routine] Pathfinding Camera Transition started (${duration}s) to avoid collision.`);
+                    const midRotX = (currentRotX + targetRotX) / 2.0;
+                    // Slightly offset the midpoint Y rotation to create a nice curve
+                    let midRotY = (currentRotY + targetRotY) / 2.0;
+                    if (Math.abs(currentRotY - targetRotY) > Math.PI) {
+                        midRotY += Math.PI; // Go the other way around if it's shorter
+                    }
+
+                    // Push the zoom out at the midpoint
+                    const maxZoom = Math.max(currentZoom, targetZoom);
+                    const midZoom = maxZoom + 3.0; // Bump out by 3.0 units
+
                     this.activeLerps.push({
                         key: 'cameraRotX',
-                        startVal: this.renderer.targetRotation.x,
-                        endVal: params.rotation.x,
+                        startVal: currentRotX,
+                        path: [currentRotX, midRotX, targetRotX],
                         elapsed: 0,
                         duration: duration,
                         isCamera: true,
                         ease: ease
                     });
-                }
 
-                if (params.rotation && params.rotation.y !== undefined) {
                     this.activeLerps.push({
                         key: 'cameraRotY',
-                        startVal: this.renderer.targetRotation.y,
-                        endVal: params.rotation.y,
+                        startVal: currentRotY,
+                        path: [currentRotY, midRotY, targetRotY],
                         elapsed: 0,
                         duration: duration,
                         isCamera: true,
                         ease: ease
                     });
-                }
 
-                if (params.zoom !== undefined) {
                     this.activeLerps.push({
                         key: 'cameraZoom',
-                        startVal: this.renderer.targetZoom,
-                        endVal: params.zoom,
+                        startVal: currentZoom,
+                        path: [currentZoom, midZoom, targetZoom],
                         elapsed: 0,
                         duration: duration,
                         isCamera: true,
                         ease: ease
                     });
+                } else {
+                    if (params.rotation && params.rotation.x !== undefined) {
+                        this.activeLerps.push({
+                            key: 'cameraRotX',
+                            startVal: currentRotX,
+                            endVal: targetRotX,
+                            elapsed: 0,
+                            duration: duration,
+                            isCamera: true,
+                            ease: ease
+                        });
+                    }
+
+                    if (params.rotation && params.rotation.y !== undefined) {
+                        this.activeLerps.push({
+                            key: 'cameraRotY',
+                            startVal: currentRotY,
+                            endVal: targetRotY,
+                            elapsed: 0,
+                            duration: duration,
+                            isCamera: true,
+                            ease: ease
+                        });
+                    }
+
+                    if (params.zoom !== undefined) {
+                        this.activeLerps.push({
+                            key: 'cameraZoom',
+                            startVal: currentZoom,
+                            endVal: targetZoom,
+                            elapsed: 0,
+                            duration: duration,
+                            isCamera: true,
+                            ease: ease
+                        });
+                    }
                 }
             }
             return;

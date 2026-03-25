@@ -214,6 +214,17 @@ const MINI_ROUTINES = {
         { time: 0.0, type: 'camera', target: 'deep', duration: 2.0, ease: 'quadInOut' },
         { time: 3.0, type: 'calm' },
         { time: 3.0, type: 'camera', target: 'global', duration: 2.0, ease: 'quadOut' }
+    ],
+    'o': [ // Orbit/Avoid Collision Demo
+        { time: 0.0, type: 'text', message: 'Linear Transition (Clipping)', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 2 },
+        { time: 0.0, type: 'camera', target: 'frontal', duration: 0.5 },
+        { time: 2.0, type: 'camera', target: 'occipital', duration: 3.0, ease: 'linear' },
+        { time: 6.0, type: 'text', message: 'Pathfinding Transition (Arcing)', duration: 3.0 },
+        { time: 6.0, type: 'camera', target: 'frontal', duration: 0.5 },
+        { time: 7.0, type: 'camera', target: 'occipital', duration: 4.0, avoidCollision: true, ease: 'quadInOut' },
+        { time: 12.0, type: 'calm' },
+        { time: 12.0, type: 'camera', target: 'global', duration: 2.0 }
     ]
 };
 
@@ -346,7 +357,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid';
         document.body.appendChild(legend);
 
         // [Phase 4] Narrative Overlay
