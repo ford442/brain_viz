@@ -76,6 +76,7 @@
 ---
 
 ## 🧪 "Dream" Log (Future Concepts)
+* *Idea:* "What if we visualized stress levels as brain surface distortion?"
 * *Idea:* "Cognitive Load Resolution: What if we visualized cognitive load as variable rendering resolution?"
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "Volumetric Fog" - Introduce a fog shader to give the brain an ethereal, atmospheric depth.

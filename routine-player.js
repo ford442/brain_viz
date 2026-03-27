@@ -52,10 +52,10 @@ export class RoutinePlayer {
         this.handlers = new Map();
         this.setupDefaultHandlers();
 
-        // Safety: WebGPU Context Loss Graceful Degradation
+        // [Safety Requirement] Graceful degradation if WebGPU context is lost or invalid
         if (this.renderer && this.renderer.device && this.renderer.device.lost) {
-             this.renderer.device.lost.then((info) => {
-                 console.warn("[Routine] WebGPU Context Lost detected. Stopping playback.", info);
+             this.renderer.device.lost.then((lostInfo) => {
+                 console.error("[Routine Player] WebGPU Context is Lost. Halting routine playback safely.", lostInfo);
                  this.stop();
              });
         }
@@ -788,72 +788,67 @@ export class RoutinePlayer {
         if (this.onEvent) this.onEvent({ type: 'stop' });
     }
 
+    // [Routine Logic Requirement] Ensure the tick() loop uses performance.now() for drift-free timing
     tick() {
         if (!this.isPlaying) return;
 
-        // Safety check: if renderer is lost or stopped
-        if (!this.renderer) {
-             console.error("[Routine] Renderer lost, stopping playback.");
+        // Ensure WebGPU context gracefully degrades
+        if (!this.renderer || !this.renderer.device) {
+             console.warn("[Routine Engine] WebGPU Context is invalid or missing. Stopping playback gracefully.");
              this.stop();
              return;
         }
 
-        // [Safety] Graceful degradation if WebGPU context is lost or invalid, or renderer stopped
         if (typeof this.renderer.isRunning !== 'undefined' && !this.renderer.isRunning) {
-             console.warn("[Routine] Renderer is not running. Degrading gracefully to prevent WebGPU crashes.");
+             console.warn("[Routine Engine] WebGPU Renderer is not running. Pausing tick loop safely.");
              this.stop();
              return;
         }
 
-        // Safety check: Context invalidation
-        if (this.renderer.device === null) {
-            console.warn("[Routine] WebGPU context is invalid. Stopping player.");
-            this.stop();
-            return;
-        }
+        // Calculate precise delta time using performance.now()
+        const currentTime = performance.now();
+        const deltaTime = (currentTime - this.lastFrameTime) / 1000.0;
+        this.lastFrameTime = currentTime;
 
-        // [Routine Logic] Ensure the tick() loop uses performance.now() for drift-free timing
-        const now = performance.now();
-        const dt = (now - this.lastFrameTime) / 1000.0;
-        this.lastFrameTime = now;
+        // Advance timeline if not paused waiting for a signal
+        if (!this.waitingForSignal) {
+            this.elapsedTime += deltaTime * this.playbackSpeed;
 
-        // If waiting for a signal, freeze the routine timeline
-        if (this.waitingForSignal === null) {
-            this.elapsedTime += dt * this.playbackSpeed;
-
+            // Process all events scheduled at or before the current elapsed time
             while (this.cursor < this.routine.length) {
-                const currentRoutine = this.routine;
-                const event = this.routine[this.cursor];
+                const activeRoutineContext = this.routine;
+                const nextEvent = this.routine[this.cursor];
 
-                if (this.elapsedTime >= event.time) {
-                    this.executeEvent(event);
+                if (this.elapsedTime >= nextEvent.time) {
+                    this.executeEvent(nextEvent);
 
-                    if (this.routine !== currentRoutine) {
+                    // Break if routine was swapped or replaced
+                    if (this.routine !== activeRoutineContext) {
                         break;
                     }
 
                     this.cursor++;
 
-                    // Stop executing current batch if we hit a wait event
-                    if (this.waitingForSignal !== null) {
-                        break;
+                    if (this.waitingForSignal) {
+                        break; // Stop immediately if a wait event was triggered
                     }
                 } else {
-                    break;
+                    break; // Future event
                 }
             }
         }
 
-        this.processLerps(dt);
+        this.processLerps(deltaTime);
 
+        // Check for routine completion
         if (this.cursor >= this.routine.length && this.activeLerps.length === 0) {
             if (this.loop) {
-                console.log("[Routine] Looping...");
+                console.log("[Routine Engine] Loop triggered.");
                 this.elapsedTime = 0;
                 this.cursor = 0;
                 this.activeLerps = [];
             } else {
-                console.log("[Routine] Finished");
+                console.log("[Routine Engine] Routine execution completed.");
                 this.stop();
                 return;
             }
@@ -911,26 +906,26 @@ export class RoutinePlayer {
         });
     }
 
-    // [Event Handling] Extensible Event execution mechanism instead of a rigid switch statement
+    // [Event Handling Requirement] The executeEvent switch statement must be extensible
     executeEvent(event) {
-        // Resolve variables via internal state
-        const resolvedEvent = this.resolveEventVariables(event);
+        // First resolve dynamic variables from state
+        const resolvedEvt = this.resolveEventVariables(event);
 
-        // Fetch registered dynamic handler
-        const handlerFunc = this.handlers.get(resolvedEvent.type);
-        if (handlerFunc) {
+        // Map-based switch statement ensures O(1) extensibility without modifying core code
+        const eventHandler = this.handlers.get(resolvedEvt.type);
+        if (eventHandler) {
             try {
-                handlerFunc(resolvedEvent);
-            } catch (err) {
-                console.error(`[Routine] Exception in dynamic event handler '${resolvedEvent.type}':`, err);
+                eventHandler(resolvedEvt);
+            } catch (handlerError) {
+                console.error(`[Routine Engine] Error executing extensible handler '${resolvedEvt.type}':`, handlerError);
             }
         } else {
-            console.warn(`[Routine] Unknown Event Type: '${resolvedEvent.type}'. The extensible switch statement handler was not found.`);
+            console.warn(`[Routine Engine] Unrecognized Event Type: '${resolvedEvt.type}'. Extensible switch statement lacks this handler.`);
         }
 
-        // Send UI sync
-        if (this.onEvent) {
-            this.onEvent(resolvedEvent);
+        // Dispatch to UI listener if configured
+        if (typeof this.onEvent === 'function') {
+            this.onEvent(resolvedEvt);
         }
     }
 

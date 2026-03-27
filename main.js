@@ -289,8 +289,8 @@ async function init() {
         await renderer.initialize();
         
         // --- 1. SETUP ROUTINE PLAYER ---
-        // Define region map for easy scripting
-        const regionMap = {
+        // Define explicit regions for easy scripting and better camera angles
+        const regionCoordinatesMap = {
             'frontal': [0, 0, 1.2],
             'occipital': [0, 0, -1.2],
             'parietal': [0, 1.0, 0],
@@ -298,20 +298,21 @@ async function init() {
             'deep': [0, 0, 0]
         };
 
-        const cameraMap = {
+        // Define a map of camera coordinates to easily jump to specific views
+        const cameraCoordinatesMap = {
             'overview': { rotation: { x: 0.5, y: -0.5 }, zoom: 4.0 },
             'close-up': { rotation: { x: 0.1, y: 0.1 }, zoom: 1.5 },
             'scan': { rotation: { x: 0.8, y: 0.2 }, zoom: 3.0 }
         };
 
-        // Ensure RoutinePlayer expects BrainRenderer instance
-        const player = new RoutinePlayer(renderer, regionMap, cameraMap);
-        console.log("[Main] Timeline Sequencer Initialized.");
+        // Initialize RoutinePlayer, ensuring it expects the BrainRenderer instance
+        const player = new RoutinePlayer(renderer, regionCoordinatesMap, cameraCoordinatesMap);
+        console.log("[Neuro-Script Initialization Cycle] Routine Engine Instantiated.");
 
-        // Hook up WebGPU device lost for player safety
+        // [Safety Handling] Hook up WebGPU device lost promise for player fallback
         if (renderer.device && renderer.device.lost) {
-            renderer.device.lost.then(() => {
-                console.error("[Main] WebGPU Context Lost. Halting routines.");
+            renderer.device.lost.then((lostEventInfo) => {
+                console.error("[Main Logic] WebGPU Context Lost event intercepted. Stopping all routines safely.", lostEventInfo);
                 if (player) player.stop();
             });
         }
