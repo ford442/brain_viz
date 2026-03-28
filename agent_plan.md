@@ -16,6 +16,7 @@
 - [x] **Playback UI:** Add a "Run Sequence" button and a transport clock (Play/Stop/Loop) to the DOM.
 
 ### Phase 2: Advanced Choreography
+- [x] **Cognitive Stress Distortion:** Implement `stress` uniform to visualize cognitive load/stress via high-frequency surface vertex displacement.
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
 - [x] **Parameter Interpolation/Easing:** Enhance routines with smooth interpolation.
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
@@ -76,11 +77,10 @@
 ---
 
 ## 🧪 "Dream" Log (Future Concepts)
-* *Idea:* "What if we visualized stress levels as brain surface distortion?"
+* *Idea:* "Brain-Computer Interface (BCI) Training Mode" - A gamified mode where users try to maintain specific brain states (e.g., keeping the `stress` level below a threshold) to complete objectives.
 * *Idea:* "Cognitive Load Resolution: What if we visualized cognitive load as variable rendering resolution?"
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "Volumetric Fog" - Introduce a fog shader to give the brain an ethereal, atmospheric depth.
-* *Idea:* "What if we visualized stress levels as brain surface distortion?"
 * *Idea:* "Dynamic Weather Systems" - Allow routines to control global environmental weather effects like rain/fog inside the brain.
 * *Idea:* "Narrative Mode" - Display text overlays synced with brain states (e.g., "Subject recognizes face" -> Temporal Lobe lights up).
 * *Idea:* "Multi-Brain" - Visualize two brains interacting (Mirror Neurons).
@@ -110,6 +110,7 @@
 * *Idea:* "Interactive Neuro-Storytelling" - A choose-your-own-adventure mode driven by branches and user interaction.
 
 ## 📜 Changelog
+* [2026-03-28] - Completed Phase 2 (Cognitive Stress Distortion). Implemented `stress` uniform in shaders for high-frequency vertex displacement. Added event handler in `routine-player.js` and updated UI/Panic Routine in `main.js`. Added Dream Log idea.
 * [2026-03-13] - Completed Phase 2 (Event Synchronization). Implemented `wait` and `signal` event types in `routine-player.js`. Added mini-routine 's' to `main.js` using Spacebar to trigger signal. Added idea to Dream Log.
 * [2026-03-12] - Completed Phase 2 (Routine Variables/Math). Implemented `math` event type and string interpolation for state variables in `routine-player.js`. Added mini-routine 'w' to `main.js`.
 * [2026-03-11] - Completed Phase 2 (Branching/Conditional Routines). Implemented branch event type and internal state. Added mini-routine 'b' to main.js.
@@ -119,6 +120,7 @@
 * *Idea:* "Adaptive Routines" - What if routines could adapt based on real-time emotion detection via webcam?
 
 ## 📜 Changelog
+* [2026-03-28] - Completed Phase 2 (Cognitive Stress Distortion). Implemented `stress` uniform in shaders for high-frequency vertex displacement. Added event handler in `routine-player.js` and updated UI/Panic Routine in `main.js`. Added Dream Log idea.
 * [2026-03-10] - Completed Phase 2 (Interactive Visual Overlays). Implemented `overlay` event type in `routine-player.js` and `main.js` supporting HTML content and interactive pause/resume logic. Added "Branching/Conditional Routines" to roadmap and emotion detection to Dream Log.
 * [2026-03-09] - Completed Phase 2 (Spline Camera Coordinates). Implemented spline path evaluation in `camera` lerp events within `routine-player.js`. Added "Fly-Through" mini-routine to `main.js`.
 * [2026-03-08] - Completed Phase 2 (Custom Audio File Support). Modified `sound` event handler in `routine-player.js` to support playing external audio files via URL. Added new mini-routine 'c' to `main.js` to demonstrate feature. Added "Neuro-feedback loops" to Dream Log.
@@ -128,6 +130,7 @@
 * *Idea:* "Memory Fragmentation: Visualize memory loss as mesh decoupling."
 
 ## 📜 Changelog
+* [2026-03-28] - Completed Phase 2 (Cognitive Stress Distortion). Implemented `stress` uniform in shaders for high-frequency vertex displacement. Added event handler in `routine-player.js` and updated UI/Panic Routine in `main.js`. Added Dream Log idea.
 * [2026-03-24] - Completed Phase 2 (Pathfinding Camera). Enhanced `camera` event handler in `routine-player.js` to support collision avoidance via generated spline paths for large rotations. Added 'Orbit Avoid' mini-routine to `main.js` using 'o'.
 * [2026-03-04] - Completed Phase 2 (Neuronal Glitch). Implemented `glitch` event handler in `RoutinePlayer` to simulate data corruption via cinematic params and style toggles. Added "Memory Fragmentation" idea to Dream Log.
 * [2026-03-03] - Completed Phase 2 (Dynamic Lighting Control). Implemented `light` event handler in `RoutinePlayer`, added lighting uniform mapping to `BrainRenderer` and updated shaders. Added "Dynamic Weather Systems" idea to Dream Log.
