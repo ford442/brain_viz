@@ -37,6 +37,7 @@
 - [x] **JSON Loader:** Allow loading routines from external `.json` files instead of hardcoded arrays.
 - [x] **Sub-Routine System:** Allow routines to 'call' other named routines (nesting/expansion).
 - [x] **Event Synchronization (Wait/Signal):** Implement `wait` event type to pause routines until an external `signal` is provided.
+- [x] **Interactive Neuro-Storytelling:** Implement `choice` event handler to create a choose-your-own-adventure mode driven by branches and user interaction.
 - [x] **Global Time Dilation:** Add playback speed control (0.1x - 5.0x) to allow slow-motion or fast-forward execution of routines.
 - [x] **Cinematic Camera:** Add `duration` support to `camera` events for smooth, timed transitions.
 - [x] **Non-Linear Easing:** Support quadratic/cubic/sine easing for `lerp` and `camera` events.
@@ -101,6 +102,7 @@
 * *Idea:* "What if we allowed scripts to trigger external events like Haptic Feedback API?"
 * *Idea:* "Multimodal Embeddings" - Connect an ML backend to translate input text (e.g., from an LLM) into corresponding brain state routines automatically.
 * *Idea:* "Wait/Signal Events" - Allow the routine to pause execution until an external signal is received. (Useful for Interactive Neuro-Storytelling).
+* *Idea:* "Dynamic Biofeedback Adaptation" - What if the brain's baseline shake and glitch intensity mapped directly to a user's real-time heart rate variability?
 * *Idea:* "What if we mapped real-time stock market data to connectome signal pulses?"
 * *Idea:* "Social Media Sentiment" - What if we visualize real-time social media sentiment as brain activity?
 * *Idea:* "Biofeedback Adaptive Audio" - Connect biofeedback metrics (e.g., heart rate) to modulate the pitch, volume, or tempo of the generative audio, creating a sonification of the user's physiological state.
@@ -110,6 +112,7 @@
 * *Idea:* "Interactive Neuro-Storytelling" - A choose-your-own-adventure mode driven by branches and user interaction.
 
 ## 📜 Changelog
+* [2026-03-14] - Completed Phase 2 (Interactive Neuro-Storytelling). Implemented `choice` event type in `routine-player.js` to pause execution and render interactive UI branching paths. Added 'q' mini-routine to demonstrate it. Added biofeedback idea to Dream Log.
 * [2026-03-13] - Completed Phase 2 (Event Synchronization). Implemented `wait` and `signal` event types in `routine-player.js`. Added mini-routine 's' to `main.js` using Spacebar to trigger signal. Added idea to Dream Log.
 * [2026-03-12] - Completed Phase 2 (Routine Variables/Math). Implemented `math` event type and string interpolation for state variables in `routine-player.js`. Added mini-routine 'w' to `main.js`.
 * [2026-03-11] - Completed Phase 2 (Branching/Conditional Routines). Implemented branch event type and internal state. Added mini-routine 'b' to main.js.
