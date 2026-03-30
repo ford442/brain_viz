@@ -112,6 +112,21 @@ export class RoutinePlayer {
             this.renderer.resetActivity();
         });
 
+        // [Phase 2] Cognitive Stress Distortion
+        this.registerHandler('stress', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            if (evt.duration) {
+                this.startLerp({
+                    key: 'stress',
+                    value: intensity,
+                    duration: evt.duration,
+                    ease: evt.ease || 'linear'
+                });
+            } else {
+                this.renderer.setParams({ stress: intensity });
+            }
+        });
+
         // [Phase 2] Camera Shake
         this.registerHandler('shake', (evt) => {
             const intensity = evt.intensity !== undefined ? evt.intensity : 0.05;

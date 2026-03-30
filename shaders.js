@@ -110,6 +110,7 @@ struct Uniforms {
     lightDir: vec3<f32>, // [Phase 2] Directional Light
     ambientLight: f32, // [Phase 2] Ambient Light Intensity
     dirIntensity: f32, // [Phase 2] Directional Light Intensity
+    stress: f32, // Cognitive Stress Distortion
 }
 
 struct VertexInput {
@@ -215,6 +216,14 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     else {
         let displacement = input.normal * activity * 0.05;
         finalPos = input.position + displacement;
+
+        // [Phase 2] Cognitive Stress Distortion
+        if (uniforms.stress > 0.0) {
+            let noiseFreq = 15.0;
+            let stressDisp = sin(finalPos.x * noiseFreq + uniforms.time * 10.0) * cos(finalPos.y * noiseFreq + uniforms.time * 8.0) * sin(finalPos.z * noiseFreq);
+            finalPos += input.normal * stressDisp * uniforms.stress * 0.5;
+        }
+
         finalColor = vec3<f32>(0.2, 0.6, 1.0);
 
         // Style 1 (Cyber): Digital Grid
@@ -269,6 +278,7 @@ struct Uniforms {
     lightDir: vec3<f32>, // [Phase 2]
     ambientLight: f32, // [Phase 2]
     dirIntensity: f32, // [Phase 2]
+    stress: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
@@ -345,6 +355,7 @@ struct Uniforms {
     lightDir: vec3<f32>, // [Phase 2]
     ambientLight: f32, // [Phase 2]
     dirIntensity: f32, // [Phase 2]
+    stress: f32,
     focus: f32, // [Phase 7]
     aperture: f32, // [Phase 7]
 }
@@ -581,6 +592,7 @@ struct Uniforms {
     lightDir: vec3<f32>,
     ambientLight: f32,
     dirIntensity: f32,
+    stress: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var tDiffuse: texture_2d<f32>;

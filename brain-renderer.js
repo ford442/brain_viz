@@ -43,7 +43,8 @@ export class BrainRenderer {
             lightDirY: 1.0, // [Phase 2] Directional Light Y
             lightDirZ: 1.0, // [Phase 2] Directional Light Z
             ambientLight: 0.2, // [Phase 2] Ambient Light Intensity
-            dirIntensity: 0.8 // [Phase 2] Directional Light Intensity
+            dirIntensity: 0.8, // [Phase 2] Directional Light Intensity
+            stress: 0.0 // [Phase 2] Cognitive Stress Distortion
         };
 
         // Voxel Grid Settings
@@ -416,6 +417,7 @@ export class BrainRenderer {
         this.params.aberration = 0.0;
         this.params.grain = 0.0;
         this.params.aperture = 0.0;
+        this.params.stress = 0.0;
     }
 
     resetActivity() {
@@ -480,6 +482,7 @@ export class BrainRenderer {
         const OFFSET_LIGHT_DIR = 48;
         const OFFSET_AMBIENT = 51;
         const OFFSET_DIR_INTENSITY = 52;
+        const OFFSET_STRESS = 53;
 
         const uData = new Float32Array(56); // 56 * 4 = 224 bytes
         uData.set(mvp, OFFSET_MVP);
@@ -506,6 +509,7 @@ export class BrainRenderer {
         uData[OFFSET_LIGHT_DIR + 2] = this.params.lightDirZ;
         uData[OFFSET_AMBIENT] = this.params.ambientLight;
         uData[OFFSET_DIR_INTENSITY] = this.params.dirIntensity;
+        uData[OFFSET_STRESS] = this.params.stress;
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         

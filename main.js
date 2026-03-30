@@ -46,7 +46,9 @@ const MINI_ROUTINES = {
     '6': [ // Panic Attack
         { time: 0.0, type: 'text', message: 'PANIC!', duration: 1.0 },
         { time: 0.0, type: 'style', value: 1 }, // Cyber/Glitch
-        { time: 0.0, type: 'shake', intensity: 0.1, duration: 4.0 }, // Big shake
+        { time: 0.0, type: 'shake', intensity: 0.1, duration: 4.0 },
+        { time: 0.0, type: 'stress', intensity: 1.5, duration: 2.0, ease: 'quadOut' },
+        { time: 2.0, type: 'stress', intensity: 0.0, duration: 2.0, ease: 'quadInOut' }, // Big shake
         { time: 0.0, type: 'sound', frequency: 150, oscType: 'sawtooth', duration: 4.0, volume: 0.6 }, // Low rumble
         { time: 0.0, type: 'cinematic', aberration: 1.0, duration: 0.2 }, // [Phase 7] Aberration spike
         { time: 0.0, type: 'cinematic', grain: 0.8, duration: 0.5 }, // [Phase 7] Grain spike
@@ -278,6 +280,7 @@ async function init() {
         sparkle: document.getElementById('sparkle'), // [Phase 5]
         growth: document.getElementById('growth'), // [Phase 6]
         shake: document.getElementById('shake'), // [Phase 2]
+        stress: document.getElementById('stress'), // [Phase 2] Stress Distortion
         aberration: document.getElementById('aberration'), // [Phase 7]
         grain: document.getElementById('grain'), // [Phase 7]
         focus: document.getElementById('focus'), // [Phase 7]
@@ -301,6 +304,7 @@ async function init() {
         sparkle: document.getElementById('val-sparkle'), // [Phase 5]
         growth: document.getElementById('val-growth'), // [Phase 6]
         shake: document.getElementById('val-shake'), // [Phase 2]
+        stress: document.getElementById('val-stress'), // [Phase 2] Stress Distortion
         aberration: document.getElementById('val-aberration'), // [Phase 7]
         grain: document.getElementById('val-grain'), // [Phase 7]
         focus: document.getElementById('val-focus'), // [Phase 7]
@@ -541,7 +545,7 @@ async function init() {
              if (event.type === 'calm') {
                  // Calm state modifies amplitude, frequency, smoothing
                  // We should sync them if they are in the renderer params
-                 ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
+                 ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
                     if (inputs[k]) inputs[k].value = renderer.params[k];
                     if (labels[k]) labels[k].textContent = renderer.params[k].toFixed(2);
                  });
@@ -924,7 +928,7 @@ function initUIControls(renderer, uiInputs, uiLabels) {
 
     document.getElementById('stim-calm')?.addEventListener('click', () => {
         renderer.calmState();
-        ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
+        ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
             if(uiInputs[k]) uiInputs[k].value = renderer.params[k];
             syncParam(k, renderer.params[k]);
         });
