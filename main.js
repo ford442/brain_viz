@@ -227,6 +227,40 @@ const MINI_ROUTINES = {
         { time: 7.0, type: 'camera', target: 'occipital', duration: 4.0, avoidCollision: true, ease: 'quadInOut' },
         { time: 12.0, type: 'calm' },
         { time: 12.0, type: 'camera', target: 'global', duration: 2.0 }
+    ],
+    'q': [ // Interactive Neuro-Storytelling Demo
+        { time: 0.0, type: 'text', message: 'Entering Simulation...', duration: 2.0 },
+        { time: 0.0, type: 'camera', target: 'frontal', duration: 2.0, ease: 'quadOut' },
+        { time: 0.0, type: 'style', value: 1 },
+        { time: 2.0, type: 'choice', message: 'Anomalous signal detected in the temporal lobe. How to proceed?', choices: [
+            { text: 'Investigate Signal', branch: 'q_investigate' },
+            { text: 'Suppress Signal', branch: 'q_suppress' },
+            { text: 'Ignore', branch: 'q_ignore' }
+        ]}
+    ],
+    'q_investigate': [
+        { time: 0.0, type: 'text', message: 'Focusing sensors...', duration: 2.0 },
+        { time: 0.0, type: 'camera', target: 'temporal', duration: 2.0, ease: 'sineInOut' },
+        { time: 0.0, type: 'style', value: 2 },
+        { time: 2.0, type: 'stimulus', target: 'temporal', intensity: 3.0 },
+        { time: 2.5, type: 'text', message: 'Memory fragment recovered.', duration: 3.0 },
+        { time: 6.0, type: 'calm' },
+        { time: 6.0, type: 'camera', target: 'global', duration: 2.0 }
+    ],
+    'q_suppress': [
+        { time: 0.0, type: 'text', message: 'Initiating suppression protocol...', duration: 2.0 },
+        { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 0.5, duration: 2.0 },
+        { time: 0.0, type: 'lerp', key: 'amplitude', value: 0.1, duration: 2.0 },
+        { time: 0.0, type: 'colorShift', value: 0.5, duration: 2.0 },
+        { time: 2.0, type: 'text', message: 'Signal stabilized.', duration: 3.0 },
+        { time: 5.0, type: 'calm' },
+        { time: 5.0, type: 'camera', target: 'global', duration: 2.0 }
+    ],
+    'q_ignore': [
+        { time: 0.0, type: 'text', message: 'Signal ignored. Continuing normal operation.', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 0 },
+        { time: 2.0, type: 'calm' },
+        { time: 2.0, type: 'camera', target: 'global', duration: 2.0 }
     ]
 };
 
@@ -362,7 +396,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice';
         document.body.appendChild(legend);
 
         // [Phase 4] Narrative Overlay
@@ -409,6 +443,46 @@ async function init() {
         let narrativeTimeout = null;
 
         player.onEvent = (event) => {
+             if (event.type === 'choice') {
+                 if (event.choices) {
+                     let html = `<h3>${event.message || 'Make a choice:'}</h3><div style="display:flex; flex-direction:column; gap:10px; margin-top:20px;">`;
+                     event.choices.forEach((c, idx) => {
+                         html += `<button id="choice-btn-${idx}" style="padding: 10px 20px; background: #0055aa; color: white; border: none; cursor: pointer; border-radius: 4px; font-family: monospace; font-size: 14px;">${c.text}</button>`;
+                     });
+                     html += `</div>`;
+
+                     visualOverlay.innerHTML = html;
+                     visualOverlay.style.display = 'block';
+
+                     event.choices.forEach((c, idx) => {
+                         const btn = document.getElementById(`choice-btn-${idx}`);
+                         if (btn) {
+                             btn.onmouseover = () => btn.style.background = '#0077ff';
+                             btn.onmouseout = () => btn.style.background = '#0055aa';
+                             btn.onclick = () => {
+                                 visualOverlay.style.display = 'none';
+
+                                 // Apply state updates if present
+                                 if (c.stateUpdates) {
+                                     for (const [key, val] of Object.entries(c.stateUpdates)) {
+                                         player.state[key] = val;
+                                     }
+                                 }
+
+                                 // Execute branch if present
+                                 if (c.branch && player.subRoutines[c.branch]) {
+                                     console.log(`[UI] Branching to: ${c.branch}`);
+                                     // We use playNow which resets the current routine to the branch
+                                     player.playNow(player.subRoutines[c.branch]);
+                                 } else {
+                                     // Just resume if no branch
+                                     player.resume();
+                                 }
+                             };
+                         }
+                     });
+                 }
+             }
              if (event.type === 'overlay') {
                  if (event.content) {
                      visualOverlay.innerHTML = event.content;

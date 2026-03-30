@@ -367,6 +367,18 @@ export class RoutinePlayer {
         // [Phase 2] Interactive Visual Overlays
         this.registerHandler('overlay', () => {}); // Emits event, handled by UI
 
+        // [Phase 2] Interactive Neuro-Storytelling (Choices)
+        this.registerHandler('choice', (evt) => {
+            // Emits event, handled by UI. UI will render buttons and handle logic.
+            // We just pause here to wait for user input.
+            if (evt.choices && evt.choices.length > 0) {
+                this.pause();
+                console.log("[Routine] Execution paused, waiting for user choice.");
+            } else {
+                console.warn("[Routine] Choice event lacks 'choices' array.");
+            }
+        });
+
         // Call (Sub-routine expansion happens at load time, runtime calls are warnings)
         this.registerHandler('call', (evt) => {
             console.warn("[Routine] Unexpanded 'call' event encountered at runtime:", evt);
