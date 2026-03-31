@@ -39,6 +39,9 @@
 - [x] **Sub-Routine System:** Allow routines to 'call' other named routines (nesting/expansion).
 - [x] **Event Synchronization (Wait/Signal):** Implement `wait` event type to pause routines until an external `signal` is provided.
 - [x] **Interactive Neuro-Storytelling:** Implement `choice` event handler to create a choose-your-own-adventure mode driven by branches and user interaction.
+- [x] **CSS Filters:** Implement `cssFilter` event type in `routine-player.js` to enable fast cinematic effects via CSS filter string.
+- [x] **Scriptable Sub-titles overlay supporting Markdown:** Update the `text` event handler in `main.js` to parse simple Markdown (bold, italic, links).
+- [ ] **UI-Layer Separation for Filters:** Move CSS filter logic to a dedicated UI overlay module.
 - [x] **Global Time Dilation:** Add playback speed control (0.1x - 5.0x) to allow slow-motion or fast-forward execution of routines.
 - [x] **Cinematic Camera:** Add `duration` support to `camera` events for smooth, timed transitions.
 - [x] **Non-Linear Easing:** Support quadratic/cubic/sine easing for `lerp` and `camera` events.
@@ -101,6 +104,7 @@
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "What if we allowed scripts to trigger external events like Haptic Feedback API?"
 * *Idea:* "Multimodal Embeddings" - Connect an ML backend to translate input text (e.g., from an LLM) into corresponding brain state routines automatically.
+* *Idea:* "What if we visualized Cortisol levels as structural decay?"
 * *Idea:* "Wait/Signal Events" - Allow the routine to pause execution until an external signal is received. (Useful for Interactive Neuro-Storytelling).
 * *Idea:* "Dynamic Biofeedback Adaptation" - What if the brain's baseline shake and glitch intensity mapped directly to a user's real-time heart rate variability?
 * *Idea:* "What if we mapped real-time stock market data to connectome signal pulses?"
@@ -112,6 +116,7 @@
 * *Idea:* "Interactive Neuro-Storytelling" - A choose-your-own-adventure mode driven by branches and user interaction.
 
 ## 📜 Changelog
+* [2026-03-29] - Completed Phase 2 (CSS Filters & Markdown Subtitles). Added `cssFilter` event type and updated `text` event to parse Markdown. Added new routine to `main.js`. Added Cortisol idea to Dream Log.
 * [2026-03-28] - Completed Phase 2 (Cognitive Stress Distortion). Implemented `stress` uniform in shaders for high-frequency vertex displacement. Added event handler in `routine-player.js` and updated UI/Panic Routine in `main.js`. Added Dream Log idea.
 * [2026-03-14] - Completed Phase 2 (Interactive Neuro-Storytelling). Implemented `choice` event type in `routine-player.js` to pause execution and render interactive UI branching paths. Added 'q' mini-routine to demonstrate it. Added biofeedback idea to Dream Log.
 * [2026-03-13] - Completed Phase 2 (Event Synchronization). Implemented `wait` and `signal` event types in `routine-player.js`. Added mini-routine 's' to `main.js` using Spacebar to trigger signal. Added idea to Dream Log.
