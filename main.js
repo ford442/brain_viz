@@ -275,8 +275,21 @@ const MINI_ROUTINES = {
     ]
 };
 
+class FilterUIOverlay {
+    constructor(canvas) {
+        this.canvas = canvas;
+    }
+
+    applyFilter(filterString) {
+        if (this.canvas) {
+            this.canvas.style.filter = filterString;
+        }
+    }
+}
+
 async function init() {
     const canvas = document.getElementById('canvas');
+    const filterOverlay = new FilterUIOverlay(canvas);
     const errorDiv = document.getElementById('error');
     
     // UI Elements
@@ -526,7 +539,7 @@ async function init() {
              }
              if (event.type === 'cssFilter') {
                  if (event.filter) {
-                     canvas.style.filter = event.filter;
+                     filterOverlay.applyFilter(event.filter);
                  }
              }
              if (event.type === 'text') {

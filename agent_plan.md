@@ -41,7 +41,7 @@
 - [x] **Interactive Neuro-Storytelling:** Implement `choice` event handler to create a choose-your-own-adventure mode driven by branches and user interaction.
 - [x] **CSS Filters:** Implement `cssFilter` event type in `routine-player.js` to enable fast cinematic effects via CSS filter string.
 - [x] **Scriptable Sub-titles overlay supporting Markdown:** Update the `text` event handler in `main.js` to parse simple Markdown (bold, italic, links).
-- [ ] **UI-Layer Separation for Filters:** Move CSS filter logic to a dedicated UI overlay module.
+- [x] **UI-Layer Separation for Filters:** Move CSS filter logic to a dedicated UI overlay module.
 - [x] **Global Time Dilation:** Add playback speed control (0.1x - 5.0x) to allow slow-motion or fast-forward execution of routines.
 - [x] **Cinematic Camera:** Add `duration` support to `camera` events for smooth, timed transitions.
 - [x] **Non-Linear Easing:** Support quadratic/cubic/sine easing for `lerp` and `camera` events.
@@ -114,6 +114,7 @@
 * *Idea:* "Scriptable Sub-titles overlay supporting Markdown" - Allow `text` events to render formatted markdown.
 * *Idea:* "Interactive Brain Regions" - Allow users to click on specific brain regions during a routine to branch or alter the sequence dynamically.
 * *Idea:* "Interactive Neuro-Storytelling" - A choose-your-own-adventure mode driven by branches and user interaction.
+* *Idea:* "Simulate neurotransmitter diffusion as volumetric fluid dynamics."
 
 ## 📜 Changelog
 * [2026-03-29] - Completed Phase 2 (CSS Filters & Markdown Subtitles). Added `cssFilter` event type and updated `text` event to parse Markdown. Added new routine to `main.js`. Added Cortisol idea to Dream Log.
