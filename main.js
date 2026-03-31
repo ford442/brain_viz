@@ -77,6 +77,17 @@ const MINI_ROUTINES = {
         { time: 0.0, type: 'camera', target: 'iso', duration: 1.5, ease: 'quadInOut' },
         { time: 0.0, type: 'text', message: 'Isometric Projection', duration: 1.5 }
     ],
+    'f': [ // CSS Filter Demo
+        { time: 0.0, type: 'text', message: 'Applying CSS Filters...', duration: 2.0 },
+        { time: 0.0, type: 'cssFilter', filter: 'blur(5px) sepia(0.8)' },
+        { time: 2.0, type: 'text', message: 'High Contrast', duration: 2.0 },
+        { time: 2.0, type: 'cssFilter', filter: 'contrast(200%) hue-rotate(90deg)' },
+        { time: 4.0, type: 'text', message: 'Inverted', duration: 2.0 },
+        { time: 4.0, type: 'cssFilter', filter: 'invert(100%)' },
+        { time: 6.0, type: 'calm' },
+        { time: 6.0, type: 'cssFilter', filter: 'none' },
+        { time: 6.0, type: 'text', message: 'Filters Removed', duration: 2.0 }
+    ],
     '0': [ // Microscope (DoF Demo)
         { time: 0.0, type: 'style', value: 2 }, // Connectome
         { time: 0.0, type: 'text', message: 'Microscopic Analysis', duration: 2.0 },
@@ -396,7 +407,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters';
         document.body.appendChild(legend);
 
         // [Phase 4] Narrative Overlay
@@ -513,9 +524,20 @@ async function init() {
                      visualOverlay.style.display = 'none';
                  }
              }
+             if (event.type === 'cssFilter') {
+                 if (event.filter) {
+                     canvas.style.filter = event.filter;
+                 }
+             }
              if (event.type === 'text') {
                  if (event.message) {
-                     narrative.textContent = event.message;
+                     // Simple Markdown parsing for bold, italic, and links
+                     let htmlMessage = event.message
+                         .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>') // Bold
+                         .replace(/\*([^*]+)\*/g, '<em>$1</em>') // Italic
+                         .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:#00aaff;">$1</a>'); // Links
+
+                     narrative.innerHTML = htmlMessage;
                      narrative.style.opacity = '1';
 
                      if (narrativeTimeout) clearTimeout(narrativeTimeout);

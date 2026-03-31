@@ -364,6 +364,9 @@ export class RoutinePlayer {
         // Text (No-op in engine, handled by UI listener)
         this.registerHandler('text', () => {});
 
+        // [Phase 2] CSS Filters (Handled by UI)
+        this.registerHandler('cssFilter', () => {}); // Emits event, handled by UI
+
         // [Phase 2] Interactive Visual Overlays
         this.registerHandler('overlay', () => {}); // Emits event, handled by UI
 
