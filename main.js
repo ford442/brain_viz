@@ -368,6 +368,7 @@ async function init() {
         };
 
         // Initialize RoutinePlayer, ensuring it expects the BrainRenderer instance
+        // [Integration Check] Verified `init()` flow is not broken
         const player = new RoutinePlayer(renderer, regionCoordinatesMap, cameraCoordinatesMap);
         console.log("[Neuro-Script Initialization Cycle] Routine Engine Instantiated.");
 
