@@ -143,6 +143,13 @@ const MINI_ROUTINES = {
         { time: 2.0, type: 'calm' },
         { time: 2.0, type: 'text', message: 'Memory Suppressed', duration: 2.0 }
     ],
+    'd': [ // Dopamine Burst
+        { time: 0.0, type: 'text', message: 'Dopamine Rush', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'dopamine', intensity: 1.2, duration: 3.0 },
+        { time: 3.0, type: 'text', message: 'Baseline restored.', duration: 2.0 },
+        { time: 4.0, type: 'calm' }
+    ],
     'c': [ // Custom Audio Support
         { time: 0.0, type: 'text', message: 'Playing External Audio', duration: 2.0 },
         { time: 0.0, type: 'sound', url: 'https://cdn.freesound.org/previews/339/339809_5923383-lq.mp3', volume: 0.8 },
@@ -430,7 +437,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters, k=Binaural';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, d=Dopamine, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters, k=Binaural';
         document.body.appendChild(legend);
 
         // [Phase 4] Narrative Overlay

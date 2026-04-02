@@ -167,6 +167,25 @@ export class RoutinePlayer {
             }
         });
 
+        // [Phase 2] Dopamine Burst Routine
+        this.registerHandler('dopamine', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 1.0;
+
+            // Instantly boost flowSpeed and amplitude
+            this.renderer.setParams({
+                flowSpeed: 20.0 * intensity,
+                amplitude: 1.5 * intensity
+            });
+
+            // Fade back
+            if (duration > 0) {
+                const ease = evt.ease || 'quadOut';
+                this.startLerp({ key: 'flowSpeed', value: 4.0, duration: duration, ease: ease });
+                this.startLerp({ key: 'amplitude', value: 0.5, duration: duration, ease: ease });
+            }
+        });
+
         // [Phase 2] Neuronal Glitch (Data Corruption Simulation)
         this.registerHandler('glitch', (evt) => {
             const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
