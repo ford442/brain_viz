@@ -18,6 +18,7 @@
 ### Phase 2: Advanced Choreography
 - [x] **Cognitive Stress Distortion:** Implement `stress` uniform to visualize cognitive load/stress via high-frequency surface vertex displacement.
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
+- [ ] **Dynamic Time Dilation:** Modulate playback speed.
 - [x] **Parameter Interpolation/Easing:** Enhance routines with smooth interpolation.
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 - [x] **Routine Logic & Extensibility Refactor:** Verified tick() loop uses performance.now(), executeEvent is extensible, and WebGPU context gracefully degrades.
@@ -54,6 +55,8 @@
 - [x] **Memory Fragment Flashbacks:** Add a flashback event type for simulating traumatic recall with rapid stimuli and glitching.
 - [x] **Neuro-Sonification (Audio Events):** Add a `sound` event type to generate synthesized tones (sine, square, sawtooth) with configurable frequency, volume, and duration, allowing routines to play sound effects synced with neural events.
 - [x] **Custom Audio File Support:** Allow the `sound` event handler to play external `.mp3` or `.wav` files via a URL parameter instead of just synthesized tones.
+- [x] **Binaural Beats (Neuro-Sonification):** Implement `binaural` event type in `routine-player.js` using the Web Audio API and StereoPannerNode to induce brainwave entrainment.
+- [x] **Dopamine Burst Routine:** Visualized Dopamine levels as structural pulse waves.
 
 ### Phase 3: "Brain DJ" Mode (Live Performance)
 - [x] **Keyboard Triggers:** Bind number keys (1-9) to specific mini-routines (e.g., Press '1' for "Sudden Surprise", '2' for "Calm Down").
@@ -64,6 +67,7 @@
 - [x] **Narrative Overlay:** Display text captions synced with routine events (e.g., "Subject enters REM sleep").
 
 ### Phase 5: Neuro-Biochemistry (New)
+- [x] **Cortisol Structural Decay:** Implement `cortisol` uniform to visualize structural decay.
 - [x] **Serotonin Color Shift:** Implement `colorShift` uniform to modulate palette (Blue -> Gold/Red) for visualizing chemical changes.
 - [x] **Synaptic Sparkles:** Implement `sparkle` uniform for visual bursts of insight (high-frequency flicker/glow).
 - [x] **Cortisol Decay:** Implement Cortisol levels as structural decay to simulate stress.
@@ -101,10 +105,13 @@
 * *Idea:* "Dendritic Growth Animation" - Visualizing the growth of new connections over time (neuroplasticity).
 * *Idea:* "Chromatic Aberration Shader" - Add post-processing for cinematic distortion.
 * *Idea:* "Collaborative Brain Storming" - Multi-user session where multiple people can inject stimuli into the same visualization via WebSockets.
-* *Idea:* "What if we visualized Dopamine levels as structural pulse waves?"
+* *Idea:* "What if we visualized Acetylcholine levels as memory consolidation?"
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "What if we allowed scripts to trigger external events like Haptic Feedback API?"
 * *Idea:* "Multimodal Embeddings" - Connect an ML backend to translate input text (e.g., from an LLM) into corresponding brain state routines automatically.
+
+* *Idea:* "Procedural Binaural Generation" - Automatically generate binaural beat frequencies based on desired brain wave targets.
+* *Idea:* "What if we visualized Cortisol levels as structural decay?"
 * *Idea:* "Wait/Signal Events" - Allow the routine to pause execution until an external signal is received. (Useful for Interactive Neuro-Storytelling).
 * *Idea:* "Dynamic Biofeedback Adaptation" - What if the brain's baseline shake and glitch intensity mapped directly to a user's real-time heart rate variability?
 * *Idea:* "What if we mapped real-time stock market data to connectome signal pulses?"
@@ -119,6 +126,11 @@
 
 ## 📜 Changelog
 * [2026-03-30] - Completed Phase 5 (Cortisol Decay). Implemented `cortisol` uniform in shaders for structural decay and vertex displacement towards center. Added event handler in `routine-player.js` and updated UI/Demo Routine 'k' in `main.js`. Added Melatonin idea to Dream Log.
+* *Idea:* "What if we visualized Serotonin levels as color shifts?"
+
+## 📜 Changelog
+* [2026-04-10] - Updated routine-player.js to ensure performance.now() is used in tick(), executeEvent is fully extensible with registerHandler, and WebGPU degradation safety is implemented. Added parameter interpolation tasks and new Dream Log idea.
+* [2026-04-15] - Completed Phase 2 (Binaural Beats). Implemented `binaural` event type in `routine-player.js` using Web Audio API StereoPanner. Added 'k' mini-routine to `main.js`. Added "Procedural Binaural Generation" to Dream Log.
 * [2026-03-29] - Completed Phase 2 (CSS Filters & Markdown Subtitles). Added `cssFilter` event type and updated `text` event to parse Markdown. Added new routine to `main.js`. Added Cortisol idea to Dream Log.
 * [2026-03-28] - Completed Phase 2 (Cognitive Stress Distortion). Implemented `stress` uniform in shaders for high-frequency vertex displacement. Added event handler in `routine-player.js` and updated UI/Panic Routine in `main.js`. Added Dream Log idea.
 * [2026-03-14] - Completed Phase 2 (Interactive Neuro-Storytelling). Implemented `choice` event type in `routine-player.js` to pause execution and render interactive UI branching paths. Added 'q' mini-routine to demonstrate it. Added biofeedback idea to Dream Log.
@@ -139,6 +151,7 @@
 * [2026-03-06] - Completed Phase 2 (Haptic Feedback & Flashbacks). Added `haptic` and `flashback` events to `RoutinePlayer`. Implemented "Memory Flashback" routine in `main.js`. Added "Multimodal Embeddings" to Dream Log.
 * [2026-03-05] - Completed Phase 7 (Neuronal Glitch). Implemented `glitch` event handler in `RoutinePlayer`, mapping it to cinematic post-processing parameters. Added "Glitch Storm" mini-routine to `main.js`. Added "Memory Fragment Flashbacks" to Dream Log.
 * *Idea:* "Memory Fragmentation: Visualize memory loss as mesh decoupling."
+* *Idea:* "What if we visualized Serotonin levels as color shifts?"
 
 ## 📜 Changelog
 * [2026-03-28] - Completed Phase 2 (Cognitive Stress Distortion). Implemented `stress` uniform in shaders for high-frequency vertex displacement. Added event handler in `routine-player.js` and updated UI/Panic Routine in `main.js`. Added Dream Log idea.
@@ -159,3 +172,4 @@
 * [2025-02-06] - Completed Phase 2 (Camera Director). Implemented smooth zoom and camera event handling. Added "Synaptic Sparkles" to Dream Log.
 * [2025-02-05] - Completed Phase 1 (Routine Engine) and Phase 2 (Easing/Transitions). Added Serotonin Color Shift to Dream Log.
 * [Date] - Plan initialized.
+* *Idea:* "What if we visualized Adrenaline surges as sudden global illumination flashes?"

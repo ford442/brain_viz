@@ -165,6 +165,12 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     if (uniforms.style >= 2.0 && uniforms.style < 3.0) {
         finalPos = input.position;
 
+        // [Phase 5] Cortisol Structural Decay
+        if (uniforms.cortisol > 0.0) {
+            let decayFactor = 1.0 - (uniforms.cortisol * 0.3);
+            finalPos *= max(0.0, decayFactor);
+        }
+
         var baseColor = vec3<f32>(0.05, 0.1, 0.15); // Dark Blue Base
         var pulseColor = vec3<f32>(0.0, 0.8, 1.0); // Cyan Pulse
 
@@ -217,6 +223,12 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     else {
         let displacement = input.normal * activity * 0.05;
         finalPos = input.position + displacement;
+
+        // [Phase 5] Cortisol Structural Decay
+        if (uniforms.cortisol > 0.0) {
+            let decayFactor = 1.0 - (uniforms.cortisol * 0.3);
+            finalPos *= max(0.0, decayFactor);
+        }
 
         // [Phase 2] Cognitive Stress Distortion
         if (uniforms.stress > 0.0) {
@@ -420,12 +432,11 @@ fn main_soma(input: VertexInput) -> VertexOutput {
     if (length(input.instancePos) > uniforms.growth * 1.8) {
         scale = 0.0;
     }
-
-    // [Phase 5] Cortisol Decay: Shrink somas
+    // [Phase 5] Cortisol Structural Decay: Scale inward and simulate breakdown
     if (uniforms.cortisol > 0.0) {
-        scale *= max(0.0, 1.0 - uniforms.cortisol);
+        let decayFactor = 1.0 - (uniforms.cortisol * 0.8);
+        scale *= max(0.0, decayFactor);
     }
-
     let pos = (input.position * scale) + input.instancePos;
 
     output.worldPos = (uniforms.modelMatrix * vec4<f32>(pos, 1.0)).xyz;

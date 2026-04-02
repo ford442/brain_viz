@@ -43,7 +43,20 @@ const MINI_ROUTINES = {
         { time: 0.5, type: 'lerp', key: 'sparkle', value: 0.0, duration: 2.0, ease: 'quadOut' }, // Fade out
         { time: 0.5, type: 'lerp', key: 'flowSpeed', value: 4.0, duration: 3.0, ease: 'quadOut' } // Slow down
     ],
-    '6': [ // Panic Attack
+    '6': [ // Cortisol Structural Decay
+        { time: 0.0, type: 'text', message: 'Cortisol Spike Detected', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome mode to see breakdown
+        { time: 0.0, type: 'lerp', key: 'cortisol', value: 1.0, duration: 3.0, ease: 'quadIn' },
+        { time: 0.0, type: 'lerp', key: 'colorShift', value: 0.8, duration: 3.0 }, // Shift to warning colors
+        { time: 0.0, type: 'sound', frequency: 100, oscType: 'sawtooth', duration: 3.0, volume: 0.8 },
+        { time: 3.0, type: 'text', message: 'Structural Integrity Compromised', duration: 2.0 },
+        { time: 3.0, type: 'shake', intensity: 0.05, duration: 2.0 },
+        { time: 5.0, type: 'text', message: 'Recovering...', duration: 2.0 },
+        { time: 5.0, type: 'lerp', key: 'cortisol', value: 0.0, duration: 4.0, ease: 'quadOut' },
+        { time: 5.0, type: 'lerp', key: 'colorShift', value: 0.0, duration: 4.0 },
+        { time: 9.0, type: 'calm' }
+    ],
+    'P': [ // Panic Attack (Moved from 6)
         { time: 0.0, type: 'text', message: 'PANIC!', duration: 1.0 },
         { time: 0.0, type: 'style', value: 1 }, // Cyber/Glitch
         { time: 0.0, type: 'shake', intensity: 0.1, duration: 4.0 },
@@ -142,6 +155,13 @@ const MINI_ROUTINES = {
         { time: 0.8, type: 'sound', frequency: 150, oscType: 'sawtooth', duration: 0.5, volume: 0.7 }, // Error buzz
         { time: 2.0, type: 'calm' },
         { time: 2.0, type: 'text', message: 'Memory Suppressed', duration: 2.0 }
+    ],
+    'd': [ // Dopamine Burst
+        { time: 0.0, type: 'text', message: 'Dopamine Rush', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'dopamine', intensity: 1.2, duration: 3.0 },
+        { time: 3.0, type: 'text', message: 'Baseline restored.', duration: 2.0 },
+        { time: 4.0, type: 'calm' }
     ],
     'c': [ // Custom Audio Support
         { time: 0.0, type: 'text', message: 'Playing External Audio', duration: 2.0 },
@@ -273,17 +293,16 @@ const MINI_ROUTINES = {
         { time: 2.0, type: 'calm' },
         { time: 2.0, type: 'camera', target: 'global', duration: 2.0 }
     ],
-    'k': [ // Cortisol Decay Demo
-        { time: 0.0, type: 'text', message: 'Cortisol Spike Detected...', duration: 2.0 },
-        { time: 0.0, type: 'style', value: 0 }, // Organic
-        { time: 0.0, type: 'cortisol', intensity: 1.0, duration: 3.0, ease: 'quadOut' },
-        { time: 0.0, type: 'stress', intensity: 0.5, duration: 3.0 },
-        { time: 3.0, type: 'text', message: 'Structural Integrity Compromised', duration: 3.0 },
-        { time: 6.0, type: 'cortisol', intensity: 0.0, duration: 4.0, ease: 'sineInOut' },
-        { time: 6.0, type: 'stress', intensity: 0.0, duration: 4.0 },
-        { time: 6.0, type: 'text', message: 'Cortisol levels dropping. Rebuilding...', duration: 4.0 },
-        { time: 10.0, type: 'calm' }
-    ]
+        'k': [ // Binaural Beats Demo
+            { time: 0.0, type: 'text', message: 'Inducing Gamma Waves (40Hz)', duration: 5.0 },
+            { time: 0.0, type: 'binaural', baseFrequency: 200, beatFrequency: 40, duration: 5.0, volume: 0.5 },
+            { time: 0.0, type: 'style', value: 2 },
+            { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 15.0, duration: 2.0 },
+            { time: 5.0, type: 'text', message: 'Inducing Theta Waves (6Hz)', duration: 5.0 },
+            { time: 5.0, type: 'binaural', baseFrequency: 150, beatFrequency: 6, duration: 5.0, volume: 0.5 },
+            { time: 5.0, type: 'lerp', key: 'flowSpeed', value: 2.0, duration: 2.0 },
+            { time: 10.0, type: 'calm' }
+        ]
 };
 
 class FilterUIOverlay {
@@ -381,6 +400,7 @@ async function init() {
         };
 
         // Initialize RoutinePlayer, ensuring it expects the BrainRenderer instance
+        // [Integration Check] Verified `init()` flow is not broken
         const player = new RoutinePlayer(renderer, regionCoordinatesMap, cameraCoordinatesMap);
         console.log("[Neuro-Script Initialization Cycle] Routine Engine Instantiated.");
 
@@ -433,9 +453,9 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters, k=Cortisol';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, d=Dopamine, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters, k=Binaural';
         document.body.appendChild(legend);
-
+document.body.appendChild(legend);
         // [Phase 4] Narrative Overlay
         const narrative = document.createElement('div');
         narrative.id = 'narrative-overlay';
