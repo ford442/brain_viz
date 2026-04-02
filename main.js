@@ -293,16 +293,16 @@ const MINI_ROUTINES = {
         { time: 2.0, type: 'calm' },
         { time: 2.0, type: 'camera', target: 'global', duration: 2.0 }
     ],
-    'k': [ // Binaural Beats Demo
-        { time: 0.0, type: 'text', message: 'Inducing Gamma Waves (40Hz)', duration: 5.0 },
-        { time: 0.0, type: 'binaural', baseFrequency: 200, beatFrequency: 40, duration: 5.0, volume: 0.5 },
-        { time: 0.0, type: 'style', value: 2 },
-        { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 15.0, duration: 2.0 },
-        { time: 5.0, type: 'text', message: 'Inducing Theta Waves (6Hz)', duration: 5.0 },
-        { time: 5.0, type: 'binaural', baseFrequency: 150, beatFrequency: 6, duration: 5.0, volume: 0.5 },
-        { time: 5.0, type: 'lerp', key: 'flowSpeed', value: 2.0, duration: 2.0 },
-        { time: 10.0, type: 'calm' }
-    ]
+        'k': [ // Binaural Beats Demo
+            { time: 0.0, type: 'text', message: 'Inducing Gamma Waves (40Hz)', duration: 5.0 },
+            { time: 0.0, type: 'binaural', baseFrequency: 200, beatFrequency: 40, duration: 5.0, volume: 0.5 },
+            { time: 0.0, type: 'style', value: 2 },
+            { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 15.0, duration: 2.0 },
+            { time: 5.0, type: 'text', message: 'Inducing Theta Waves (6Hz)', duration: 5.0 },
+            { time: 5.0, type: 'binaural', baseFrequency: 150, beatFrequency: 6, duration: 5.0, volume: 0.5 },
+            { time: 5.0, type: 'lerp', key: 'flowSpeed', value: 2.0, duration: 2.0 },
+            { time: 10.0, type: 'calm' }
+        ]
 };
 
 class FilterUIOverlay {
@@ -335,6 +335,7 @@ async function init() {
         growth: document.getElementById('growth'), // [Phase 6]
         shake: document.getElementById('shake'), // [Phase 2]
         stress: document.getElementById('stress'), // [Phase 2] Stress Distortion
+        cortisol: document.getElementById('cortisol'), // [Phase 5] Cortisol Decay
         aberration: document.getElementById('aberration'), // [Phase 7]
         grain: document.getElementById('grain'), // [Phase 7]
         focus: document.getElementById('focus'), // [Phase 7]
@@ -359,6 +360,7 @@ async function init() {
         growth: document.getElementById('val-growth'), // [Phase 6]
         shake: document.getElementById('val-shake'), // [Phase 2]
         stress: document.getElementById('val-stress'), // [Phase 2] Stress Distortion
+        cortisol: document.getElementById('val-cortisol'), // [Phase 5] Cortisol Decay
         aberration: document.getElementById('val-aberration'), // [Phase 7]
         grain: document.getElementById('val-grain'), // [Phase 7]
         focus: document.getElementById('val-focus'), // [Phase 7]
@@ -450,10 +452,9 @@ async function init() {
         legend.style.padding = '8px';
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
-legend.style.pointerEvents = 'none';
-
-legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, d=Dopamine, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters, k=Binaural';
-
+        legend.style.pointerEvents = 'none';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, d=Dopamine, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters, k=Binaural';
+        document.body.appendChild(legend);
 document.body.appendChild(legend);
         // [Phase 4] Narrative Overlay
         const narrative = document.createElement('div');
@@ -612,7 +613,7 @@ document.body.appendChild(legend);
              if (event.type === 'calm') {
                  // Calm state modifies amplitude, frequency, smoothing
                  // We should sync them if they are in the renderer params
-                 ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
+                 ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'cortisol', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
                     if (inputs[k]) inputs[k].value = renderer.params[k];
                     if (labels[k]) labels[k].textContent = renderer.params[k].toFixed(2);
                  });
@@ -995,7 +996,7 @@ function initUIControls(renderer, uiInputs, uiLabels) {
 
     document.getElementById('stim-calm')?.addEventListener('click', () => {
         renderer.calmState();
-        ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
+        ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'cortisol', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
             if(uiInputs[k]) uiInputs[k].value = renderer.params[k];
             syncParam(k, renderer.params[k]);
         });

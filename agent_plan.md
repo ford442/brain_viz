@@ -70,6 +70,7 @@
 - [x] **Cortisol Structural Decay:** Implement `cortisol` uniform to visualize structural decay.
 - [x] **Serotonin Color Shift:** Implement `colorShift` uniform to modulate palette (Blue -> Gold/Red) for visualizing chemical changes.
 - [x] **Synaptic Sparkles:** Implement `sparkle` uniform for visual bursts of insight (high-frequency flicker/glow).
+- [x] **Cortisol Decay:** Implement Cortisol levels as structural decay to simulate stress.
 
 ### Phase 6: Structural Dynamics
 - [x] **Dendritic Growth Animation:** Implement `growth` uniform to control the maximum render radius of the brain structure, simulating organic growth.
@@ -121,6 +122,10 @@
 * *Idea:* "Interactive Brain Regions" - Allow users to click on specific brain regions during a routine to branch or alter the sequence dynamically.
 * *Idea:* "Interactive Neuro-Storytelling" - A choose-your-own-adventure mode driven by branches and user interaction.
 * *Idea:* "Simulate neurotransmitter diffusion as volumetric fluid dynamics."
+* *Idea:* "What if we visualized Melatonin levels as a slow desaturation and temporal blurring effect?"
+
+## 📜 Changelog
+* [2026-03-30] - Completed Phase 5 (Cortisol Decay). Implemented `cortisol` uniform in shaders for structural decay and vertex displacement towards center. Added event handler in `routine-player.js` and updated UI/Demo Routine 'k' in `main.js`. Added Melatonin idea to Dream Log.
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 
 ## 📜 Changelog

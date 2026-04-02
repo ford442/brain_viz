@@ -228,7 +228,7 @@ export class BrainRenderer {
         // Layout:
         // MVP (64), Model (64), Time(4), Style(4), Pad(8), ClipPlane(16)
         this.uniformBuffer = this.device.createBuffer({
-            size: 240, // Increased size for new uniform
+            size: 228,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         });
 
@@ -467,6 +467,8 @@ export class BrainRenderer {
         // [48-50]: LightDir (12 bytes)
         // [51]: AmbientLight (4 bytes)
         // [52]: DirIntensity (4 bytes)
+        // [53]: Stress (4 bytes)
+        // [54]: Cortisol (4 bytes)
 
         const OFFSET_MVP = 0;
         const OFFSET_MODEL = 16;
@@ -487,7 +489,7 @@ export class BrainRenderer {
         const OFFSET_STRESS = 53;
         const OFFSET_CORTISOL = 54;
 
-        const uData = new Float32Array(60); // Expand size for new uniform
+        const uData = new Float32Array(57); // 57 * 4 = 228 bytes
         uData.set(mvp, OFFSET_MVP);
         uData.set(model, OFFSET_MODEL);
         uData[OFFSET_TIME] = this.time;
