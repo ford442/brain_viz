@@ -54,6 +54,7 @@
 - [x] **Memory Fragment Flashbacks:** Add a flashback event type for simulating traumatic recall with rapid stimuli and glitching.
 - [x] **Neuro-Sonification (Audio Events):** Add a `sound` event type to generate synthesized tones (sine, square, sawtooth) with configurable frequency, volume, and duration, allowing routines to play sound effects synced with neural events.
 - [x] **Custom Audio File Support:** Allow the `sound` event handler to play external `.mp3` or `.wav` files via a URL parameter instead of just synthesized tones.
+- [x] **Dopamine Burst Routine:** Visualized Dopamine levels as structural pulse waves.
 
 ### Phase 3: "Brain DJ" Mode (Live Performance)
 - [x] **Keyboard Triggers:** Bind number keys (1-9) to specific mini-routines (e.g., Press '1' for "Sudden Surprise", '2' for "Calm Down").
@@ -100,7 +101,7 @@
 * *Idea:* "Dendritic Growth Animation" - Visualizing the growth of new connections over time (neuroplasticity).
 * *Idea:* "Chromatic Aberration Shader" - Add post-processing for cinematic distortion.
 * *Idea:* "Collaborative Brain Storming" - Multi-user session where multiple people can inject stimuli into the same visualization via WebSockets.
-* *Idea:* "What if we visualized Dopamine levels as structural pulse waves?"
+* *Idea:* "What if we visualized Acetylcholine levels as memory consolidation?"
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "What if we allowed scripts to trigger external events like Haptic Feedback API?"
 * *Idea:* "Multimodal Embeddings" - Connect an ML backend to translate input text (e.g., from an LLM) into corresponding brain state routines automatically.
