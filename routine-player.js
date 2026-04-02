@@ -167,6 +167,25 @@ export class RoutinePlayer {
             }
         });
 
+        // [Phase 2] Dopamine Burst Routine
+        this.registerHandler('dopamine', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 1.0;
+
+            // Instantly boost flowSpeed and amplitude
+            this.renderer.setParams({
+                flowSpeed: 20.0 * intensity,
+                amplitude: 1.5 * intensity
+            });
+
+            // Fade back
+            if (duration > 0) {
+                const ease = evt.ease || 'quadOut';
+                this.startLerp({ key: 'flowSpeed', value: 4.0, duration: duration, ease: ease });
+                this.startLerp({ key: 'amplitude', value: 0.5, duration: duration, ease: ease });
+            }
+        });
+
         // [Phase 2] Neuronal Glitch (Data Corruption Simulation)
         this.registerHandler('glitch', (evt) => {
             const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
@@ -249,6 +268,48 @@ export class RoutinePlayer {
             if (navigator.vibrate && evt.duration) {
                 navigator.vibrate(evt.duration);
             }
+        });
+
+        // [Phase 2] Neuro-Sonification (Binaural Beats)
+        this.registerHandler('binaural', async (evt) => {
+            this.initAudio();
+            if (!this.audioContext) return;
+
+            const baseFreq = evt.baseFrequency || 440;
+            const beatFreq = evt.beatFrequency || 40;
+            const duration = evt.duration || 5.0;
+            const vol = evt.volume !== undefined ? evt.volume : 0.5;
+
+            const gainNode = this.audioContext.createGain();
+            const oscL = this.audioContext.createOscillator();
+            const oscR = this.audioContext.createOscillator();
+            const panL = this.audioContext.createStereoPanner();
+            const panR = this.audioContext.createStereoPanner();
+
+            oscL.type = evt.oscType || 'sine';
+            oscR.type = evt.oscType || 'sine';
+
+            oscL.frequency.setValueAtTime(baseFreq - (beatFreq / 2), this.audioContext.currentTime);
+            oscR.frequency.setValueAtTime(baseFreq + (beatFreq / 2), this.audioContext.currentTime);
+
+            panL.pan.value = -1;
+            panR.pan.value = 1;
+
+            oscL.connect(panL);
+            oscR.connect(panR);
+            panL.connect(gainNode);
+            panR.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+
+            gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(vol, this.audioContext.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(vol, this.audioContext.currentTime + duration - 0.1);
+            gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + duration);
+
+            oscL.start(this.audioContext.currentTime);
+            oscR.start(this.audioContext.currentTime);
+            oscL.stop(this.audioContext.currentTime + duration);
+            oscR.stop(this.audioContext.currentTime + duration);
         });
 
         // [Phase 2] Neuro-Sonification (Audio Events)
