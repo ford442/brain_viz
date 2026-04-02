@@ -111,6 +111,7 @@ struct Uniforms {
     ambientLight: f32, // [Phase 2] Ambient Light Intensity
     dirIntensity: f32, // [Phase 2] Directional Light Intensity
     stress: f32, // Cognitive Stress Distortion
+    cortisol: f32, // [Phase 5] Cortisol Structural Decay
 }
 
 struct VertexInput {
@@ -224,6 +225,13 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
             finalPos += input.normal * stressDisp * uniforms.stress * 0.5;
         }
 
+        // [Phase 5] Cortisol Structural Decay
+        if (uniforms.cortisol > 0.0) {
+            // Decay structural integrity based on cortisol level (shrinks vertices inward, especially higher activity areas)
+            let decayErosion = uniforms.cortisol * 0.2 * (1.0 - activity);
+            finalPos -= input.normal * decayErosion;
+        }
+
         finalColor = vec3<f32>(0.2, 0.6, 1.0);
 
         // Style 1 (Cyber): Digital Grid
@@ -279,6 +287,7 @@ struct Uniforms {
     ambientLight: f32, // [Phase 2]
     dirIntensity: f32, // [Phase 2]
     stress: f32,
+    cortisol: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
@@ -356,6 +365,7 @@ struct Uniforms {
     ambientLight: f32, // [Phase 2]
     dirIntensity: f32, // [Phase 2]
     stress: f32,
+    cortisol: f32,
     focus: f32, // [Phase 7]
     aperture: f32, // [Phase 7]
 }
@@ -409,6 +419,11 @@ fn main_soma(input: VertexInput) -> VertexOutput {
     // [Phase 6] Dendritic Growth: Hide instances outside radius
     if (length(input.instancePos) > uniforms.growth * 1.8) {
         scale = 0.0;
+    }
+
+    // [Phase 5] Cortisol Decay: Shrink somas
+    if (uniforms.cortisol > 0.0) {
+        scale *= max(0.0, 1.0 - uniforms.cortisol);
     }
 
     let pos = (input.position * scale) + input.instancePos;
@@ -593,6 +608,7 @@ struct Uniforms {
     ambientLight: f32,
     dirIntensity: f32,
     stress: f32,
+    cortisol: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var tDiffuse: texture_2d<f32>;

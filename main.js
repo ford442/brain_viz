@@ -272,6 +272,17 @@ const MINI_ROUTINES = {
         { time: 0.0, type: 'style', value: 0 },
         { time: 2.0, type: 'calm' },
         { time: 2.0, type: 'camera', target: 'global', duration: 2.0 }
+    ],
+    'k': [ // Cortisol Decay Demo
+        { time: 0.0, type: 'text', message: 'Cortisol Spike Detected...', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 0 }, // Organic
+        { time: 0.0, type: 'cortisol', intensity: 1.0, duration: 3.0, ease: 'quadOut' },
+        { time: 0.0, type: 'stress', intensity: 0.5, duration: 3.0 },
+        { time: 3.0, type: 'text', message: 'Structural Integrity Compromised', duration: 3.0 },
+        { time: 6.0, type: 'cortisol', intensity: 0.0, duration: 4.0, ease: 'sineInOut' },
+        { time: 6.0, type: 'stress', intensity: 0.0, duration: 4.0 },
+        { time: 6.0, type: 'text', message: 'Cortisol levels dropping. Rebuilding...', duration: 4.0 },
+        { time: 10.0, type: 'calm' }
     ]
 };
 
@@ -305,6 +316,7 @@ async function init() {
         growth: document.getElementById('growth'), // [Phase 6]
         shake: document.getElementById('shake'), // [Phase 2]
         stress: document.getElementById('stress'), // [Phase 2] Stress Distortion
+        cortisol: document.getElementById('cortisol'), // [Phase 5] Cortisol Decay
         aberration: document.getElementById('aberration'), // [Phase 7]
         grain: document.getElementById('grain'), // [Phase 7]
         focus: document.getElementById('focus'), // [Phase 7]
@@ -329,6 +341,7 @@ async function init() {
         growth: document.getElementById('val-growth'), // [Phase 6]
         shake: document.getElementById('val-shake'), // [Phase 2]
         stress: document.getElementById('val-stress'), // [Phase 2] Stress Distortion
+        cortisol: document.getElementById('val-cortisol'), // [Phase 5] Cortisol Decay
         aberration: document.getElementById('val-aberration'), // [Phase 7]
         grain: document.getElementById('val-grain'), // [Phase 7]
         focus: document.getElementById('val-focus'), // [Phase 7]
@@ -420,7 +433,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters, k=Cortisol';
         document.body.appendChild(legend);
 
         // [Phase 4] Narrative Overlay
@@ -580,7 +593,7 @@ async function init() {
              if (event.type === 'calm') {
                  // Calm state modifies amplitude, frequency, smoothing
                  // We should sync them if they are in the renderer params
-                 ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
+                 ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'cortisol', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
                     if (inputs[k]) inputs[k].value = renderer.params[k];
                     if (labels[k]) labels[k].textContent = renderer.params[k].toFixed(2);
                  });
@@ -963,7 +976,7 @@ function initUIControls(renderer, uiInputs, uiLabels) {
 
     document.getElementById('stim-calm')?.addEventListener('click', () => {
         renderer.calmState();
-        ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
+        ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'cortisol', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
             if(uiInputs[k]) uiInputs[k].value = renderer.params[k];
             syncParam(k, renderer.params[k]);
         });

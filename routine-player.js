@@ -127,6 +127,21 @@ export class RoutinePlayer {
             }
         });
 
+        // [Phase 5] Cortisol Structural Decay
+        this.registerHandler('cortisol', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            if (evt.duration) {
+                this.startLerp({
+                    key: 'cortisol',
+                    value: intensity,
+                    duration: evt.duration,
+                    ease: evt.ease || 'linear'
+                });
+            } else {
+                this.renderer.setParams({ cortisol: intensity });
+            }
+        });
+
         // [Phase 2] Camera Shake
         this.registerHandler('shake', (evt) => {
             const intensity = evt.intensity !== undefined ? evt.intensity : 0.05;
