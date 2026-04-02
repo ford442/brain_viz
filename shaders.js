@@ -111,6 +111,7 @@ struct Uniforms {
     ambientLight: f32, // [Phase 2] Ambient Light Intensity
     dirIntensity: f32, // [Phase 2] Directional Light Intensity
     stress: f32, // Cognitive Stress Distortion
+    cortisol: f32,
 }
 
 struct VertexInput {
@@ -164,6 +165,12 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     if (uniforms.style >= 2.0 && uniforms.style < 3.0) {
         finalPos = input.position;
 
+        // [Phase 5] Cortisol Structural Decay
+        if (uniforms.cortisol > 0.0) {
+            let decayFactor = 1.0 - (uniforms.cortisol * 0.3);
+            finalPos *= max(0.0, decayFactor);
+        }
+
         var baseColor = vec3<f32>(0.05, 0.1, 0.15); // Dark Blue Base
         var pulseColor = vec3<f32>(0.0, 0.8, 1.0); // Cyan Pulse
 
@@ -216,6 +223,12 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     else {
         let displacement = input.normal * activity * 0.05;
         finalPos = input.position + displacement;
+
+        // [Phase 5] Cortisol Structural Decay
+        if (uniforms.cortisol > 0.0) {
+            let decayFactor = 1.0 - (uniforms.cortisol * 0.3);
+            finalPos *= max(0.0, decayFactor);
+        }
 
         // [Phase 2] Cognitive Stress Distortion
         if (uniforms.stress > 0.0) {
@@ -279,6 +292,7 @@ struct Uniforms {
     ambientLight: f32, // [Phase 2]
     dirIntensity: f32, // [Phase 2]
     stress: f32,
+    cortisol: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
@@ -356,6 +370,7 @@ struct Uniforms {
     ambientLight: f32, // [Phase 2]
     dirIntensity: f32, // [Phase 2]
     stress: f32,
+    cortisol: f32,
     focus: f32, // [Phase 7]
     aperture: f32, // [Phase 7]
 }
@@ -409,6 +424,12 @@ fn main_soma(input: VertexInput) -> VertexOutput {
     // [Phase 6] Dendritic Growth: Hide instances outside radius
     if (length(input.instancePos) > uniforms.growth * 1.8) {
         scale = 0.0;
+    }
+
+    // [Phase 5] Cortisol Structural Decay: Scale inward and simulate breakdown
+    if (uniforms.cortisol > 0.0) {
+        let decayFactor = 1.0 - (uniforms.cortisol * 0.8);
+        scale *= max(0.0, decayFactor);
     }
 
     let pos = (input.position * scale) + input.instancePos;
@@ -593,6 +614,7 @@ struct Uniforms {
     ambientLight: f32,
     dirIntensity: f32,
     stress: f32,
+    cortisol: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var tDiffuse: texture_2d<f32>;

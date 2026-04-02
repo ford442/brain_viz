@@ -64,6 +64,7 @@
 - [x] **Narrative Overlay:** Display text captions synced with routine events (e.g., "Subject enters REM sleep").
 
 ### Phase 5: Neuro-Biochemistry (New)
+- [x] **Cortisol Structural Decay:** Implement `cortisol` uniform to visualize structural decay.
 - [x] **Serotonin Color Shift:** Implement `colorShift` uniform to modulate palette (Blue -> Gold/Red) for visualizing chemical changes.
 - [x] **Synaptic Sparkles:** Implement `sparkle` uniform for visual bursts of insight (high-frequency flicker/glow).
 
@@ -104,7 +105,7 @@
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "What if we allowed scripts to trigger external events like Haptic Feedback API?"
 * *Idea:* "Multimodal Embeddings" - Connect an ML backend to translate input text (e.g., from an LLM) into corresponding brain state routines automatically.
-* *Idea:* "What if we visualized Cortisol levels as structural decay?"
+
 * *Idea:* "Wait/Signal Events" - Allow the routine to pause execution until an external signal is received. (Useful for Interactive Neuro-Storytelling).
 * *Idea:* "Dynamic Biofeedback Adaptation" - What if the brain's baseline shake and glitch intensity mapped directly to a user's real-time heart rate variability?
 * *Idea:* "What if we mapped real-time stock market data to connectome signal pulses?"
@@ -157,3 +158,4 @@
 * [2025-02-06] - Completed Phase 2 (Camera Director). Implemented smooth zoom and camera event handling. Added "Synaptic Sparkles" to Dream Log.
 * [2025-02-05] - Completed Phase 1 (Routine Engine) and Phase 2 (Easing/Transitions). Added Serotonin Color Shift to Dream Log.
 * [Date] - Plan initialized.
+* *Idea:* "What if we visualized Adrenaline surges as sudden global illumination flashes?"

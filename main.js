@@ -43,7 +43,20 @@ const MINI_ROUTINES = {
         { time: 0.5, type: 'lerp', key: 'sparkle', value: 0.0, duration: 2.0, ease: 'quadOut' }, // Fade out
         { time: 0.5, type: 'lerp', key: 'flowSpeed', value: 4.0, duration: 3.0, ease: 'quadOut' } // Slow down
     ],
-    '6': [ // Panic Attack
+    '6': [ // Cortisol Structural Decay
+        { time: 0.0, type: 'text', message: 'Cortisol Spike Detected', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome mode to see breakdown
+        { time: 0.0, type: 'lerp', key: 'cortisol', value: 1.0, duration: 3.0, ease: 'quadIn' },
+        { time: 0.0, type: 'lerp', key: 'colorShift', value: 0.8, duration: 3.0 }, // Shift to warning colors
+        { time: 0.0, type: 'sound', frequency: 100, oscType: 'sawtooth', duration: 3.0, volume: 0.8 },
+        { time: 3.0, type: 'text', message: 'Structural Integrity Compromised', duration: 2.0 },
+        { time: 3.0, type: 'shake', intensity: 0.05, duration: 2.0 },
+        { time: 5.0, type: 'text', message: 'Recovering...', duration: 2.0 },
+        { time: 5.0, type: 'lerp', key: 'cortisol', value: 0.0, duration: 4.0, ease: 'quadOut' },
+        { time: 5.0, type: 'lerp', key: 'colorShift', value: 0.0, duration: 4.0 },
+        { time: 9.0, type: 'calm' }
+    ],
+    'P': [ // Panic Attack (Moved from 6)
         { time: 0.0, type: 'text', message: 'PANIC!', duration: 1.0 },
         { time: 0.0, type: 'style', value: 1 }, // Cyber/Glitch
         { time: 0.0, type: 'shake', intensity: 0.1, duration: 4.0 },
@@ -420,7 +433,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Cortisol, P=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters';
         document.body.appendChild(legend);
 
         // [Phase 4] Narrative Overlay
