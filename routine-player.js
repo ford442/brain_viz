@@ -251,6 +251,48 @@ export class RoutinePlayer {
             }
         });
 
+        // [Phase 2] Neuro-Sonification (Binaural Beats)
+        this.registerHandler('binaural', async (evt) => {
+            this.initAudio();
+            if (!this.audioContext) return;
+
+            const baseFreq = evt.baseFrequency || 440;
+            const beatFreq = evt.beatFrequency || 40;
+            const duration = evt.duration || 5.0;
+            const vol = evt.volume !== undefined ? evt.volume : 0.5;
+
+            const gainNode = this.audioContext.createGain();
+            const oscL = this.audioContext.createOscillator();
+            const oscR = this.audioContext.createOscillator();
+            const panL = this.audioContext.createStereoPanner();
+            const panR = this.audioContext.createStereoPanner();
+
+            oscL.type = evt.oscType || 'sine';
+            oscR.type = evt.oscType || 'sine';
+
+            oscL.frequency.setValueAtTime(baseFreq - (beatFreq / 2), this.audioContext.currentTime);
+            oscR.frequency.setValueAtTime(baseFreq + (beatFreq / 2), this.audioContext.currentTime);
+
+            panL.pan.value = -1;
+            panR.pan.value = 1;
+
+            oscL.connect(panL);
+            oscR.connect(panR);
+            panL.connect(gainNode);
+            panR.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+
+            gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(vol, this.audioContext.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(vol, this.audioContext.currentTime + duration - 0.1);
+            gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + duration);
+
+            oscL.start(this.audioContext.currentTime);
+            oscR.start(this.audioContext.currentTime);
+            oscL.stop(this.audioContext.currentTime + duration);
+            oscR.stop(this.audioContext.currentTime + duration);
+        });
+
         // [Phase 2] Neuro-Sonification (Audio Events)
         this.registerHandler('sound', async (evt) => {
             this.initAudio();

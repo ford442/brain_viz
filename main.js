@@ -272,6 +272,16 @@ const MINI_ROUTINES = {
         { time: 0.0, type: 'style', value: 0 },
         { time: 2.0, type: 'calm' },
         { time: 2.0, type: 'camera', target: 'global', duration: 2.0 }
+    ],
+    'k': [ // Binaural Beats Demo
+        { time: 0.0, type: 'text', message: 'Inducing Gamma Waves (40Hz)', duration: 5.0 },
+        { time: 0.0, type: 'binaural', baseFrequency: 200, beatFrequency: 40, duration: 5.0, volume: 0.5 },
+        { time: 0.0, type: 'style', value: 2 },
+        { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 15.0, duration: 2.0 },
+        { time: 5.0, type: 'text', message: 'Inducing Theta Waves (6Hz)', duration: 5.0 },
+        { time: 5.0, type: 'binaural', baseFrequency: 150, beatFrequency: 6, duration: 5.0, volume: 0.5 },
+        { time: 5.0, type: 'lerp', key: 'flowSpeed', value: 2.0, duration: 2.0 },
+        { time: 10.0, type: 'calm' }
     ]
 };
 
@@ -420,7 +430,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters, k=Binaural';
         document.body.appendChild(legend);
 
         // [Phase 4] Narrative Overlay
