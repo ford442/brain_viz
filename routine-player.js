@@ -884,8 +884,11 @@ export class RoutinePlayer {
         if (!this.isPlaying) return;
 
         // Ensure WebGPU context gracefully degrades
-        if (!this.renderer || !this.renderer.device) {
-             console.warn("[Routine Engine] WebGPU Context is invalid or missing. Stopping playback gracefully.");
+        const isDeviceLost = this.renderer && this.renderer.device && this.renderer.device.lost;
+        const rendererMissing = !this.renderer || !this.renderer.device;
+
+        if (rendererMissing || isDeviceLost) {
+             console.warn("[Routine Engine] WebGPU Context is invalid or lost. Stopping playback gracefully.");
              this.stop();
              return;
         }
@@ -896,11 +899,10 @@ export class RoutinePlayer {
              return;
         }
 
-        // Calculate precise delta time using performance.now()
-        // [Safety Requirement] Ensure drift-free timing is working
-        const currentTime = performance.now();
-        const deltaTime = (currentTime - this.lastFrameTime) / 1000.0;
-        this.lastFrameTime = currentTime;
+        // Calculate precise delta time using performance.now() to prevent drift
+        const now = performance.now();
+        const deltaTime = (now - this.lastFrameTime) / 1000.0;
+        this.lastFrameTime = now;
 
         // Advance timeline if not paused waiting for a signal
         if (!this.waitingForSignal) {
@@ -1003,16 +1005,16 @@ export class RoutinePlayer {
         // First resolve dynamic variables from state
         const resolvedEvt = this.resolveEventVariables(event);
 
-        // Map-based switch statement ensures O(1) extensibility without modifying core code
-        const eventHandler = this.handlers.get(resolvedEvt.type);
-        if (eventHandler) {
+        // Extensible mapping pattern
+        if (this.handlers.has(resolvedEvt.type)) {
+            const eventHandler = this.handlers.get(resolvedEvt.type);
             try {
                 eventHandler(resolvedEvt);
             } catch (handlerError) {
                 console.error(`[Routine Engine] Error executing extensible handler '${resolvedEvt.type}':`, handlerError);
             }
         } else {
-            console.warn(`[Routine Engine] Unrecognized Event Type: '${resolvedEvt.type}'. Extensible switch statement lacks this handler.`);
+            console.warn(`[Routine Engine] Unrecognized Event Type: '${resolvedEvt.type}'. Extensible registry lacks this handler.`);
         }
 
         // Dispatch to UI listener if configured
