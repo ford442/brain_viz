@@ -44,7 +44,8 @@ export class BrainRenderer {
             lightDirZ: 1.0, // [Phase 2] Directional Light Z
             ambientLight: 0.2, // [Phase 2] Ambient Light Intensity
             dirIntensity: 0.8, // [Phase 2] Directional Light Intensity
-            stress: 0.0 // [Phase 2] Cognitive Stress Distortion
+            stress: 0.0, // [Phase 2] Cognitive Stress Distortion
+            cortisol: 0.0 // [Phase 5] Cortisol Structural Decay
         };
 
         // Voxel Grid Settings
@@ -227,7 +228,7 @@ export class BrainRenderer {
         // Layout:
         // MVP (64), Model (64), Time(4), Style(4), Pad(8), ClipPlane(16)
         this.uniformBuffer = this.device.createBuffer({
-            size: 224,
+            size: 240, // Increased size for new uniform
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         });
 
@@ -418,6 +419,7 @@ export class BrainRenderer {
         this.params.grain = 0.0;
         this.params.aperture = 0.0;
         this.params.stress = 0.0;
+        this.params.cortisol = 0.0;
     }
 
     resetActivity() {
@@ -483,8 +485,9 @@ export class BrainRenderer {
         const OFFSET_AMBIENT = 51;
         const OFFSET_DIR_INTENSITY = 52;
         const OFFSET_STRESS = 53;
+        const OFFSET_CORTISOL = 54;
 
-        const uData = new Float32Array(56); // 56 * 4 = 224 bytes
+        const uData = new Float32Array(60); // Expand size for new uniform
         uData.set(mvp, OFFSET_MVP);
         uData.set(model, OFFSET_MODEL);
         uData[OFFSET_TIME] = this.time;
@@ -510,6 +513,7 @@ export class BrainRenderer {
         uData[OFFSET_AMBIENT] = this.params.ambientLight;
         uData[OFFSET_DIR_INTENSITY] = this.params.dirIntensity;
         uData[OFFSET_STRESS] = this.params.stress;
+        uData[OFFSET_CORTISOL] = this.params.cortisol;
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         
