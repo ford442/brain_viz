@@ -897,6 +897,7 @@ export class RoutinePlayer {
         }
 
         // Calculate precise delta time using performance.now()
+        // [Safety Requirement] Ensure drift-free timing is working
         const currentTime = performance.now();
         const deltaTime = (currentTime - this.lastFrameTime) / 1000.0;
         this.lastFrameTime = currentTime;

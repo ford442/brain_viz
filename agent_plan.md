@@ -18,6 +18,7 @@
 ### Phase 2: Advanced Choreography
 - [x] **Cognitive Stress Distortion:** Implement `stress` uniform to visualize cognitive load/stress via high-frequency surface vertex displacement.
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
+- [ ] **Dynamic Time Dilation:** Modulate playback speed.
 - [x] **Parameter Interpolation/Easing:** Enhance routines with smooth interpolation.
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 - [x] **Routine Logic & Extensibility Refactor:** Verified tick() loop uses performance.now(), executeEvent is extensible, and WebGPU context gracefully degrades.
@@ -141,6 +142,7 @@
 * [2026-03-06] - Completed Phase 2 (Haptic Feedback & Flashbacks). Added `haptic` and `flashback` events to `RoutinePlayer`. Implemented "Memory Flashback" routine in `main.js`. Added "Multimodal Embeddings" to Dream Log.
 * [2026-03-05] - Completed Phase 7 (Neuronal Glitch). Implemented `glitch` event handler in `RoutinePlayer`, mapping it to cinematic post-processing parameters. Added "Glitch Storm" mini-routine to `main.js`. Added "Memory Fragment Flashbacks" to Dream Log.
 * *Idea:* "Memory Fragmentation: Visualize memory loss as mesh decoupling."
+* *Idea:* "What if we visualized Serotonin levels as color shifts?"
 
 ## 📜 Changelog
 * [2026-03-28] - Completed Phase 2 (Cognitive Stress Distortion). Implemented `stress` uniform in shaders for high-frequency vertex displacement. Added event handler in `routine-player.js` and updated UI/Panic Routine in `main.js`. Added Dream Log idea.
