@@ -87,9 +87,19 @@ export class RoutinePlayer {
             this.renderer.injectStimulus(coords[0], coords[1], coords[2], evt.intensity || 1.0);
         });
 
-        // Style Change
+        // Style Change (instant snap)
         this.registerHandler('style', (evt) => {
             this.renderer.setParams({ style: evt.value });
+        });
+
+        // Mode Transition (animated cross-fade via style lerp)
+        this.registerHandler('mode-transition', (evt) => {
+            this.startLerp({
+                key: 'style',
+                value: evt.toMode,
+                duration: evt.duration !== undefined ? evt.duration : 1.5,
+                ease: evt.ease || 'sineInOut'
+            });
         });
 
         // Parameter Update
