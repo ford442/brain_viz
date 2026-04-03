@@ -22,7 +22,8 @@ export class BrainRenderer {
         this.targetZoom = 3.5; // [Neuro-Weaver] Smooth Zoom Target
         this.time = 0;
         this.isRunning = false;
-        
+        this.tensorPlaybackMode = false; // [BCI] When true, compute shader skipped; TensorPlayer drives the voxel buffer
+
         this.params = {
             frequency: 2.0,
             amplitude: 0.5,
@@ -170,10 +171,10 @@ export class BrainRenderer {
             fragment: {
                 module: this.device.createShaderModule({ code: fragmentShader }),
                 entryPoint: 'main',
-                targets: [{ format: format, blend: { color: { srcFactor: 'src-alpha', dstFactor: 'one-minus-src-alpha', operation: 'add' }, alpha: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha', operation: 'add' } } }]
+                targets: [{ format: format, blend: { color: { srcFactor: 'src-alpha', dstFactor: 'one', operation: 'add' }, alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' } } }]
             },
             primitive: { topology: 'triangle-list', cullMode: 'none' },
-            depthStencil: { depthWriteEnabled: true, depthCompare: 'less', format: 'depth32float' }
+            depthStencil: { depthWriteEnabled: false, depthCompare: 'less', format: 'depth32float' }
         });
 
         // --- PIPELINE 2: FIBERS ---
@@ -571,12 +572,15 @@ export class BrainRenderer {
         this.updateUniforms();
         
         const commandEncoder = this.device.createCommandEncoder();
-        
-        const computePass = commandEncoder.beginComputePass();
-        computePass.setPipeline(this.computePipeline);
-        computePass.setBindGroup(0, this.computeBindGroup);
-        computePass.dispatchWorkgroups(Math.ceil(this.voxelBufferSize / 64));
-        computePass.end();
+
+        // Skip physics simulation when tensor playback is driving the voxel buffer directly
+        if (!this.tensorPlaybackMode) {
+            const computePass = commandEncoder.beginComputePass();
+            computePass.setPipeline(this.computePipeline);
+            computePass.setBindGroup(0, this.computeBindGroup);
+            computePass.dispatchWorkgroups(Math.ceil(this.voxelBufferSize / 64));
+            computePass.end();
+        }
         
         // --- PASS 1: RENDER SCENE TO TEXTURE ---
         const renderPass = commandEncoder.beginRenderPass({
@@ -633,6 +637,12 @@ export class BrainRenderer {
 
         this.device.queue.submit([commandEncoder.finish()]);
         requestAnimationFrame(() => this.render());
+    }
+
+    // [BCI] Direct tensor injection — bypasses compute shader physics.
+    // Used by TensorPlayer to stream pre-recorded or real-time BCI data frames.
+    setVoxelData(float32Array) {
+        this.device.queue.writeBuffer(this.tensorBuffer, 0, float32Array);
     }
 
     start() { this.isRunning = true; this.render(); }

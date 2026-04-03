@@ -321,9 +321,19 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
     // [Phase 6] Dendritic Growth: Discard outside growth radius
     if (input.distToCenter > uniforms.growth * 1.8) { discard; }
 
-    // [Neuro-Weaver] Style 3.0: Return Heatmap Color (calculated in Vertex Shader)
-    // Renders the volumetric thermal gradient based on tensor activity
-    if (uniforms.style >= 3.0) { return vec4<f32>(input.color, 1.0); }
+    // Shared view-dependent calculations for frosted-glass translucency
+    let normal = normalize(input.normal);
+    let viewDir = normalize(vec3<f32>(0.0, 0.0, 5.0) - input.worldPos);
+    let NdotV = abs(dot(normal, viewDir));
+    let rim = pow(1.0 - NdotV, 3.0);
+
+    // [Neuro-Weaver] Style 3.0: Translucent Heatmap Shell
+    // Activity-weighted alpha so hot regions glow through the skin; quiet zones nearly invisible
+    if (uniforms.style >= 3.0) {
+        let heatAlpha = 0.06 + (input.activity * 0.45);
+        let rimBoost = smoothstep(0.4, 1.0, rim) * 0.18;
+        return vec4<f32>(input.color, clamp(heatAlpha + rimBoost, 0.0, 0.72));
+    }
 
     if (uniforms.style >= 2.0) {
         // [Neuro-Weaver] Style 2.0: Translucent Fibers with activity glow
@@ -331,14 +341,13 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
         let alpha = 0.3 + (input.activity * 0.2) + (input.signal * 0.8);
         return vec4<f32>(input.color, alpha);
     }
-    
-    let normal = normalize(input.normal);
-    let viewDir = normalize(vec3<f32>(0.0, 0.0, 5.0) - input.worldPos);
-    let NdotV = abs(dot(normal, viewDir));
-    let rim = pow(1.0 - NdotV, 3.0);
-    let baseAlpha = 0.02;
-    let rimAlpha = smoothstep(0.6, 1.0, rim);
-    let finalAlpha = baseAlpha + rimAlpha * 0.5;
+
+    // [Neuro-Weaver] Frosted-glass skin for modes 0 (Organic) and 1 (Cyber)
+    // Low base alpha + rim silhouette + activity punch-through = see-through glass effect
+    let rimAlpha = smoothstep(0.5, 1.0, rim);
+    let glassAlpha = 0.04 + rimAlpha * 0.22;
+    let activityAlpha = input.activity * 0.18;
+    let finalAlpha = clamp(glassAlpha + activityAlpha, 0.0, 0.35);
 
     // [Phase 2] Dynamic Lighting Control
     let NdotL = max(0.0, dot(input.normal, normalize(uniforms.lightDir)));
@@ -348,7 +357,7 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
     var col = input.color * (ambient + diffuse);
     col += vec3<f32>(0.8) * rimAlpha;
 
-    // Journal: "Using mix() for color based on activity looks better than additive blending."
+    // Activity glow punches through glass where brain is active
     let activityGlowColor = vec3<f32>(0.5, 0.8, 1.0);
     let mixFactor = clamp(input.activity * 1.5 * rimAlpha, 0.0, 1.0);
     col = mix(col, activityGlowColor, mixFactor);
