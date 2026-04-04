@@ -182,6 +182,17 @@ const MINI_ROUTINES = {
         { time: 3.0, type: 'speed', value: 1.0, duration: 1.0, ease: 'linear' }, // Back to normal
         { time: 4.0, type: 'calm' }
     ],
+    'x': [ // Advanced Time Modulation Demo
+        { time: 0.0, type: 'text', message: 'Advanced Time Dilation: Modulate Speed...', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 15.0, duration: 1.0 },
+        { time: 0.0, type: 'modulate_speed', targetSpeed: 0.2, duration: 3.0, ease: 'sineInOut' },
+        { time: 3.0, type: 'text', message: 'Time Rebounding...', duration: 2.0 },
+        { time: 3.0, type: 'modulate_speed', targetSpeed: 4.0, duration: 2.0, ease: 'quadIn' },
+        { time: 5.0, type: 'text', message: 'Time Stabilized.', duration: 2.0 },
+        { time: 5.0, type: 'modulate_speed', targetSpeed: 1.0, duration: 2.0, ease: 'quadOut' },
+        { time: 7.0, type: 'calm' }
+    ],
     'p': [ // Spline Path Demo
         { time: 0.0, type: 'text', message: 'Spline Interpolation...', duration: 2.0 },
         { time: 0.0, type: 'style', value: 2 },
@@ -479,7 +490,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, d=Dopamine, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters, k=Binaural, n=Neuro-Cinema';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, d=Dopamine, m=Memory, c=Custom Audio, t=Time Warp, x=Time Mod, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters, k=Binaural, n=Neuro-Cinema';
         document.body.appendChild(legend);
         // [Phase 4] Narrative Overlay
         const narrative = document.createElement('div');
