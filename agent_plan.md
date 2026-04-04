@@ -18,7 +18,7 @@
 ### Phase 2: Advanced Choreography
 - [x] **Cognitive Stress Distortion:** Implement `stress` uniform to visualize cognitive load/stress via high-frequency surface vertex displacement.
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
-- [ ] **Dynamic Time Dilation:** Modulate playback speed.
+- [x] **Dynamic Time Dilation:** Modulate playback speed.
 - [x] **Parameter Interpolation/Easing:** Enhance routines with smooth interpolation.
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 - [x] **Routine Logic & Extensibility Refactor:** Verified tick() loop uses performance.now(), executeEvent is extensible, and WebGPU context gracefully degrades.
@@ -109,6 +109,7 @@
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "What if we allowed scripts to trigger external events like Haptic Feedback API?"
 * *Idea:* "Multimodal Embeddings" - Connect an ML backend to translate input text (e.g., from an LLM) into corresponding brain state routines automatically.
+* *Idea:* "What if we visualized environmental noise as background ambient lighting shifts?"
 
 * *Idea:* "Procedural Binaural Generation" - Automatically generate binaural beat frequencies based on desired brain wave targets.
 * *Idea:* "What if we visualized Cortisol levels as structural decay?"

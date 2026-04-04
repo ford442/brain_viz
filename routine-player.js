@@ -265,6 +265,11 @@ export class RoutinePlayer {
             }
         });
 
+        // Modulate Playback Speed (Dynamic Time Dilation Advanced)
+        this.registerHandler('modulate_speed', (evt) => {
+            this.modulatePlaybackSpeed(evt.targetSpeed, evt.duration, evt.ease);
+        });
+
         // Neuronal Glitch (Data Corruption Simulation)
         this.registerHandler('glitch', (evt) => {
             const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
@@ -591,6 +596,16 @@ export class RoutinePlayer {
     setPlaybackSpeed(speed) {
         this.playbackSpeed = Math.max(0.1, Math.min(5.0, speed));
         console.log(`[Routine] Playback Speed: ${this.playbackSpeed.toFixed(1)}x`);
+    }
+
+    modulatePlaybackSpeed(targetSpeed, duration = 1.0, ease = 'linear') {
+        console.log(`[Routine] Modulating Playback Speed to ${targetSpeed}x over ${duration}s`);
+        this.startLerp({
+            key: 'playbackSpeed',
+            value: targetSpeed,
+            duration: duration,
+            ease: ease
+        });
     }
 
     get duration() {
