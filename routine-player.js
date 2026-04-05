@@ -211,6 +211,29 @@ export class RoutinePlayer {
             }
         });
 
+        // [Phase 2] Adrenaline Surge
+        this.registerHandler('adrenaline', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 1.0;
+
+            // Instantly boost light intensity, flow speed, and shift color
+            this.renderer.setParams({
+                dirIntensity: 3.0 * intensity,
+                ambientLight: 0.8 * intensity,
+                flowSpeed: 25.0 * intensity,
+                colorShift: 1.0 // Shift to warm/bright colors
+            });
+
+            // Fade back
+            if (duration > 0) {
+                const ease = evt.ease || 'quadOut';
+                this.startLerp({ key: 'dirIntensity', value: 0.8, duration: duration, ease: ease });
+                this.startLerp({ key: 'ambientLight', value: 0.2, duration: duration, ease: ease });
+                this.startLerp({ key: 'flowSpeed', value: 4.0, duration: duration, ease: ease });
+                this.startLerp({ key: 'colorShift', value: 0.0, duration: duration, ease: ease });
+            }
+        });
+
         // [Phase 2] Neuronal Glitch (Data Corruption Simulation)
         this.registerHandler('glitch', (evt) => {
             const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;

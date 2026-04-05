@@ -16,6 +16,7 @@
 - [x] **Playback UI:** Add a "Run Sequence" button and a transport clock (Play/Stop/Loop) to the DOM.
 
 ### Phase 2: Advanced Choreography
+- [x] **Adrenaline Surge Routine:** Implement adrenaline event handler in `routine-player.js` to simulate global illumination flashes and increased flow speed.
 - [x] **Cognitive Stress Distortion:** Implement `stress` uniform to visualize cognitive load/stress via high-frequency surface vertex displacement.
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
 - [x] **Dynamic Time Dilation:** Modulate playback speed.
@@ -109,6 +110,7 @@
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "What if we allowed scripts to trigger external events like Haptic Feedback API?"
 * *Idea:* "Multimodal Embeddings" - Connect an ML backend to translate input text (e.g., from an LLM) into corresponding brain state routines automatically.
+* *Idea:* "Hormonal Flow Physics" - What if we visualize hormonal flows like Oxytocin as a slow, warm wave using procedural volumetric fluid dynamics rather than just parameter shifts?
 * *Idea:* "What if we visualized environmental noise as background ambient lighting shifts?"
 
 * *Idea:* "Procedural Binaural Generation" - Automatically generate binaural beat frequencies based on desired brain wave targets.
@@ -126,6 +128,7 @@
 * *Idea:* "What if we visualized Melatonin levels as a slow desaturation and temporal blurring effect?"
 
 ## 📜 Changelog
+* [2026-05-01] - Added Adrenaline Surge event (`adrenaline`) to `routine-player.js`. Bound routine to 'a' key in `main.js` and updated legend. Added "Hormonal Flow Physics" idea to Dream Log.
 * [2026-03-30] - Completed Phase 5 (Cortisol Decay). Implemented `cortisol` uniform in shaders for structural decay and vertex displacement towards center. Added event handler in `routine-player.js` and updated UI/Demo Routine 'k' in `main.js`. Added Melatonin idea to Dream Log.
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 
