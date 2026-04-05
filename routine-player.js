@@ -458,6 +458,31 @@ export class RoutinePlayer {
             }, 500);
         });
 
+        // [Phase 2] Oxytocin Burst
+        this.registerHandler('oxytocin', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 2.0;
+
+            // Trigger stimulus on both hemispheres symmetrically
+            this.executeEvent({ type: 'stimulus', target: [-0.8, 0.0, 0.0], intensity: intensity * 2.0 });
+            this.executeEvent({ type: 'stimulus', target: [0.8, 0.0, 0.0], intensity: intensity * 2.0 });
+
+            // Instantly apply warm color shift and slow, flowing speed
+            this.renderer.setParams({
+                flowSpeed: 2.0 * intensity,
+                colorShift: 0.3 * intensity, // Warm/golden tone
+                amplitude: 0.8 * intensity
+            });
+
+            // Slowly fade back to normal
+            if (duration > 0) {
+                const ease = evt.ease || 'sineInOut';
+                this.startLerp({ key: 'flowSpeed', value: 4.0, duration: duration, ease: ease });
+                this.startLerp({ key: 'colorShift', value: 0.0, duration: duration, ease: ease });
+                this.startLerp({ key: 'amplitude', value: 0.5, duration: duration, ease: ease });
+            }
+        });
+
         // [Phase 2] Dynamic Time Dilation
         this.registerHandler('speed', (evt) => {
             if (evt.duration) {
