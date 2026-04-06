@@ -164,6 +164,15 @@ const MINI_ROUTINES = {
         { time: 3.0, type: 'text', message: 'Baseline restored.', duration: 2.0 },
         { time: 4.0, type: 'calm' }
     ],
+    'e': [ // Endorphin Rush
+        { time: 0.0, type: 'text', message: 'Endorphin Rush: Immunity to Stress', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'stress', intensity: 2.0, duration: 0.0 }, // simulate prior stress
+        { time: 0.0, type: 'shake', intensity: 0.1, duration: 0.0 }, // simulate prior shake
+        { time: 1.0, type: 'text', message: 'Releasing Endorphins...', duration: 2.0 },
+        { time: 1.0, type: 'endorphin', duration: 4.0 },
+        { time: 5.0, type: 'calm' }
+    ],
     'a': [ // Adrenaline Surge
         { time: 0.0, type: 'text', message: 'Adrenaline Surge!', duration: 2.0 },
         { time: 0.0, type: 'style', value: 2 }, // Connectome
@@ -506,7 +515,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, d=Dopamine, a=Adrenaline, m=Memory, c=Custom Audio, t=Time Warp, x=Time Mod, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters, k=Binaural, y=Oxytocin, n=Neuro-Cinema';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, d=Dopamine, e=Endorphin, a=Adrenaline, m=Memory, c=Custom Audio, t=Time Warp, x=Time Mod, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters, k=Binaural, y=Oxytocin, n=Neuro-Cinema';
         document.body.appendChild(legend);
         // [Phase 4] Narrative Overlay
         const narrative = document.createElement('div');

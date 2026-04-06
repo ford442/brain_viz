@@ -59,6 +59,7 @@
 - [x] **Custom Audio File Support:** Allow the `sound` event handler to play external `.mp3` or `.wav` files via a URL parameter instead of just synthesized tones.
 - [x] **Binaural Beats (Neuro-Sonification):** Implement `binaural` event type in `routine-player.js` using the Web Audio API and StereoPannerNode to induce brainwave entrainment.
 - [x] **Dopamine Burst Routine:** Visualized Dopamine levels as structural pulse waves.
+- [x] **Endorphin Rush Routine:** Visualizing temporary immunity to stress/shake events by suppressing distortion parameters.
 
 ### Phase 3: "Brain DJ" Mode (Live Performance)
 - [x] **Keyboard Triggers:** Bind number keys (1-9) to specific mini-routines (e.g., Press '1' for "Sudden Surprise", '2' for "Calm Down").
@@ -128,8 +129,10 @@
 * *Idea:* "Interactive Neuro-Storytelling" - A choose-your-own-adventure mode driven by branches and user interaction.
 * *Idea:* "Simulate neurotransmitter diffusion as volumetric fluid dynamics."
 * *Idea:* "What if we visualized Melatonin levels as a slow desaturation and temporal blurring effect?"
+* *Idea:* "What if we visualized GABA as a global deceleration of neural pulses?"
 
 ## 📜 Changelog
+* [2026-05-02] - Completed Phase 2 (Endorphin Rush). Implemented `endorphin` event handler in `routine-player.js` to temporarily suppress stress/shake parameters. Bound to 'e' key in `main.js`. Added GABA idea to Dream Log.
 * [2026-05-01] - Added Adrenaline Surge event (`adrenaline`) to `routine-player.js`. Bound routine to 'a' key in `main.js` and updated legend. Added "Hormonal Flow Physics" idea to Dream Log.
 * [2026-03-30] - Completed Phase 5 (Cortisol Decay). Implemented `cortisol` uniform in shaders for structural decay and vertex displacement towards center. Added event handler in `routine-player.js` and updated UI/Demo Routine 'k' in `main.js`. Added Melatonin idea to Dream Log.
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"

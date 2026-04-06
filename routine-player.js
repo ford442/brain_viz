@@ -211,6 +211,24 @@ export class RoutinePlayer {
             }
         });
 
+        // [Phase 2] Endorphin Rush
+        this.registerHandler('endorphin', (evt) => {
+            const duration = evt.duration || 3.0;
+
+            // Instantly suppress stress and shake
+            this.renderer.setParams({
+                stress: 0.0,
+                shake: 0.0,
+                colorShift: 0.2 // Slight soothing shift
+            });
+
+            // Smoothly restore or keep low over duration
+            if (duration > 0) {
+                const ease = evt.ease || 'quadInOut';
+                this.startLerp({ key: 'colorShift', value: 0.0, duration: duration, ease: ease });
+            }
+        });
+
         // [Phase 2] Adrenaline Surge
         this.registerHandler('adrenaline', (evt) => {
             const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
