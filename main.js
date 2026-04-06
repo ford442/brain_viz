@@ -323,6 +323,14 @@ const MINI_ROUTINES = {
             { time: 5.0, type: 'lerp', key: 'flowSpeed', value: 2.0, duration: 2.0 },
             { time: 10.0, type: 'calm' }
         ],
+    'y': [ // Oxytocin Burst
+        { time: 0.0, type: 'text', message: 'Oxytocin Release: Bonding & Trust', duration: 3.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'sound', frequency: 528, oscType: 'sine', duration: 3.0, volume: 0.4 }, // 528Hz Love Frequency
+        { time: 0.0, type: 'oxytocin', intensity: 1.5, duration: 4.0 },
+        { time: 4.0, type: 'text', message: 'Connection established.', duration: 2.0 },
+        { time: 5.0, type: 'calm' }
+    ],
     'n': [ // Neuro-Cinema: Dramatic animated mode-shifting narrative
         { time: 0.0,  type: 'text',   message: 'Neural Deep Scan — Initializing', duration: 3.0 },
         { time: 0.0,  type: 'style',  value: 0 },
@@ -498,7 +506,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, d=Dopamine, a=Adrenaline, m=Memory, c=Custom Audio, t=Time Warp, x=Time Mod, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters, k=Binaural, n=Neuro-Cinema';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, d=Dopamine, a=Adrenaline, m=Memory, c=Custom Audio, t=Time Warp, x=Time Mod, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters, k=Binaural, y=Oxytocin, n=Neuro-Cinema';
         document.body.appendChild(legend);
         // [Phase 4] Narrative Overlay
         const narrative = document.createElement('div');
