@@ -229,6 +229,24 @@ export class RoutinePlayer {
             }
         });
 
+
+        // [Phase 5] Melatonin Sleep Onset
+        this.registerHandler('melatonin', (evt) => {
+            const duration = evt.duration || 5.0;
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+
+            // Smoothly decrease temporal activity and energy
+            this.startLerp({ key: 'flowSpeed', value: 1.0, duration: duration, ease: 'sineOut' });
+            this.startLerp({ key: 'amplitude', value: 0.1, duration: duration, ease: 'sineOut' });
+
+            // Simulate blurring effect
+            this.startLerp({ key: 'aperture', value: 0.8 * intensity, duration: duration, ease: 'sineOut' });
+            this.startLerp({ key: 'focus', value: 0.5, duration: duration, ease: 'sineOut' });
+
+            // Slow desaturation
+            this.startLerp({ key: 'colorShift', value: -0.5 * intensity, duration: duration, ease: 'sineOut' });
+        });
+
         // [Phase 2] Adrenaline Surge
         this.registerHandler('adrenaline', (evt) => {
             const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;

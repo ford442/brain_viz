@@ -164,6 +164,14 @@ const MINI_ROUTINES = {
         { time: 3.0, type: 'text', message: 'Baseline restored.', duration: 2.0 },
         { time: 4.0, type: 'calm' }
     ],
+
+    'j': [ // Melatonin Sleep Onset
+        { time: 0.0, type: 'text', message: 'Melatonin Release: Sleep Onset', duration: 4.0 },
+        { time: 0.0, type: 'style', value: 0 }, // Organic
+        { time: 0.0, type: 'melatonin', duration: 5.0 },
+        { time: 6.0, type: 'calm' },
+        { time: 6.0, type: 'text', message: 'Deep Sleep', duration: 2.0 }
+    ],
     'e': [ // Endorphin Rush
         { time: 0.0, type: 'text', message: 'Endorphin Rush: Immunity to Stress', duration: 2.0 },
         { time: 0.0, type: 'style', value: 2 }, // Connectome
@@ -515,7 +523,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, d=Dopamine, e=Endorphin, a=Adrenaline, m=Memory, c=Custom Audio, t=Time Warp, x=Time Mod, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters, k=Binaural, y=Oxytocin, n=Neuro-Cinema';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, d=Dopamine, e=Endorphin, j=Melatonin, a=Adrenaline, m=Memory, c=Custom Audio, t=Time Warp, x=Time Mod, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters, k=Binaural, y=Oxytocin, n=Neuro-Cinema';
         document.body.appendChild(legend);
         // [Phase 4] Narrative Overlay
         const narrative = document.createElement('div');
