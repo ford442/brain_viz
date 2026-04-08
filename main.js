@@ -348,6 +348,14 @@ const MINI_ROUTINES = {
         { time: 4.0, type: 'text', message: 'Connection established.', duration: 2.0 },
         { time: 5.0, type: 'calm' }
     ],
+    'h': [ // GABA Deceleration
+        { time: 0.0, type: 'text', message: 'GABA Release: Decelerating Pulses...', duration: 3.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'gaba', intensity: 1.5, duration: 4.0 },
+        { time: 5.0, type: 'text', message: 'System Relaxed.', duration: 2.0 },
+        { time: 6.0, type: 'lerp', key: 'playbackSpeed', value: 1.0, duration: 2.0, ease: 'quadInOut' },
+        { time: 6.0, type: 'calm' }
+    ],
     'n': [ // Neuro-Cinema: Dramatic animated mode-shifting narrative
         { time: 0.0,  type: 'text',   message: 'Neural Deep Scan — Initializing', duration: 3.0 },
         { time: 0.0,  type: 'style',  value: 0 },
@@ -523,7 +531,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, d=Dopamine, e=Endorphin, j=Melatonin, a=Adrenaline, m=Memory, c=Custom Audio, t=Time Warp, x=Time Mod, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters, k=Binaural, y=Oxytocin, n=Neuro-Cinema';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, d=Dopamine, e=Endorphin, j=Melatonin, a=Adrenaline, m=Memory, c=Custom Audio, t=Time Warp, x=Time Mod, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters, k=Binaural, y=Oxytocin, h=GABA, n=Neuro-Cinema';
         document.body.appendChild(legend);
         // [Phase 4] Narrative Overlay
         const narrative = document.createElement('div');
