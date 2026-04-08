@@ -230,6 +230,18 @@ export class RoutinePlayer {
         });
 
 
+        // [Phase 5] GABA Deceleration
+        this.registerHandler('gaba', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 3.0;
+
+            // Smoothly decrease flow speed and global playback speed to simulate deceleration
+            this.startLerp({ key: 'flowSpeed', value: 0.5 * (2.0 - intensity), duration: duration, ease: 'quadOut' });
+            this.startLerp({ key: 'playbackSpeed', value: 0.5 * (2.0 - intensity), duration: duration, ease: 'quadOut' });
+            // Calm colors
+            this.startLerp({ key: 'colorShift', value: -0.2 * intensity, duration: duration, ease: 'quadOut' });
+        });
+
         // [Phase 5] Melatonin Sleep Onset
         this.registerHandler('melatonin', (evt) => {
             const duration = evt.duration || 5.0;

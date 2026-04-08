@@ -70,6 +70,7 @@
 - [x] **Narrative Overlay:** Display text captions synced with routine events (e.g., "Subject enters REM sleep").
 
 ### Phase 5: Neuro-Biochemistry (New)
+- [x] **GABA Deceleration:** Implement `gaba` event handler to visualize GABA as a global deceleration of neural pulses.
 - [x] **Melatonin Sleep Onset:** Implement `melatonin` event handler to visualize sleep onset as temporal blurring and slow desaturation.
 - [x] **Cortisol Structural Decay:** Implement `cortisol` uniform to visualize structural decay.
 - [x] **Serotonin Color Shift:** Implement `colorShift` uniform to modulate palette (Blue -> Gold/Red) for visualizing chemical changes.
@@ -132,8 +133,10 @@
 * *Idea:* "Simulate neurotransmitter diffusion as volumetric fluid dynamics."
 * *Idea:* "What if we visualized Melatonin levels as a slow desaturation and temporal blurring effect?"
 * *Idea:* "What if we visualized GABA as a global deceleration of neural pulses?"
+* *Idea:* "What if we visualized Acetylcholine levels as memory consolidation?"
 
 ## 📜 Changelog
+* [2026-05-03] - Completed Phase 5 (GABA Deceleration). Implemented `gaba` event handler in `routine-player.js` to simulate global deceleration of neural pulses and playback speed. Bound to 'h' key in `main.js`. Added Acetylcholine idea to Dream Log.
 * [2026-04-07] - Completed Phase 5 (Melatonin Sleep Onset). Implemented `melatonin` event handler in `routine-player.js` to simulate sleep onset via blurring and desaturation. Bound to 'j' key in `main.js`. Added Noradrenaline idea to Dream Log.
 * [2026-05-02] - Completed Phase 2 (Endorphin Rush). Implemented `endorphin` event handler in `routine-player.js` to temporarily suppress stress/shake parameters. Bound to 'e' key in `main.js`. Added GABA idea to Dream Log.
 * [2026-05-01] - Added Adrenaline Surge event (`adrenaline`) to `routine-player.js`. Bound routine to 'a' key in `main.js` and updated legend. Added "Hormonal Flow Physics" idea to Dream Log.
