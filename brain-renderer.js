@@ -583,9 +583,8 @@ export class BrainRenderer {
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         
-        // Compute Uniforms layout:
-        // time, voxelDim, frequency, amplitude, spikeThreshold, smoothing, style, padding,
-        // stimulusPos(vec3), stimulusActive, hypoxiaStress, metabolicRate, mitochondrialFunction, padding.
+        // Compute Uniforms layout (64 bytes total):
+        // 32 bytes scalar block + 16 bytes stimulus block + 12 bytes hypoxia block + 4 bytes trailing padding.
         const cBuf = new ArrayBuffer(COMPUTE_UNIFORM_BUFFER_SIZE);
         const dv = new DataView(cBuf);
         dv.setFloat32(0, this.time, true);
