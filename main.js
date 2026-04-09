@@ -1164,18 +1164,42 @@ async function init() {
         // -----------------------------
 
         const inferenceEngine = new InferenceEngine();
-        const aiEnabled = await inferenceEngine.initialize();
 
         // [Existing AI Button Code preserved...]
         let aiMode = false;
+        let aiEnabled = false;
+        let aiLoading = false;
         const aiToggle = document.createElement('button');
         aiToggle.textContent = 'Enable AI "Dreaming"';
         aiToggle.style.background = '#424';
         aiToggle.style.borderColor = '#d0d';
         aiToggle.style.color = '#eaffea';
         aiToggle.style.marginTop = "5px";
-        aiToggle.onclick = () => {
+        aiToggle.onclick = async () => {
+            if (aiLoading) return;
+
+            if (!aiMode && !aiEnabled) {
+                aiLoading = true;
+                aiToggle.disabled = true;
+                aiToggle.textContent = 'Loading AI Model...';
+
+                try {
+                    aiEnabled = await inferenceEngine.initialize();
+                } finally {
+                    aiLoading = false;
+                    aiToggle.disabled = false;
+                }
+
+                if (!aiEnabled) {
+                    aiToggle.textContent = 'AI Load Failed - Retry';
+                    aiToggle.style.background = '#533';
+                    aiToggle.title = inferenceEngine.lastError?.message || 'Check the browser console and network tab for ONNX runtime asset loading errors.';
+                    return;
+                }
+            }
+
             aiMode = !aiMode;
+            aiToggle.title = '';
             aiToggle.textContent = aiMode ? 'Disable AI Mode' : 'Enable AI "Dreaming"';
             aiToggle.style.background = aiMode ? '#626' : '#424';
             // Stop routine if AI starts

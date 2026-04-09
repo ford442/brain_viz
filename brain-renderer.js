@@ -4,6 +4,13 @@ import { BrainGeometry } from './brain-geometry.js';
 import { vertexShader, fragmentShader, computeShader, somaVertexShader, somaFragmentShader, postVertexShader, postFragmentShader } from './shaders.js';
 import { Mat4 } from './math-utils.js';
 
+const RENDER_UNIFORM_FLOAT_COUNT = 60;
+const UNIFORM_BUFFER_ALIGNMENT = 256;
+const RENDER_UNIFORM_BUFFER_SIZE = Math.ceil(
+    (RENDER_UNIFORM_FLOAT_COUNT * Float32Array.BYTES_PER_ELEMENT) / UNIFORM_BUFFER_ALIGNMENT
+) * UNIFORM_BUFFER_ALIGNMENT;
+const COMPUTE_UNIFORM_BUFFER_SIZE = 64;
+
 export class BrainRenderer {
     constructor(canvas) {
         this.canvas = canvas;
@@ -237,18 +244,16 @@ export class BrainRenderer {
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
         });
 
-        // Uniforms (Size increased for ClipPlane)
-        // 56 floats (224 bytes)
-        // Layout:
-        // MVP (64), Model (64), Time(4), Style(4), Pad(8), ClipPlane(16)
+        // Render uniforms: 2 mat4s (32 floats) + scalar block (28 floats including padding) = 60 floats / 240 bytes.
+        // The buffer is padded to 256 bytes to satisfy WebGPU uniform buffer alignment requirements.
         this.uniformBuffer = this.device.createBuffer({
-            size: 228,
+            size: RENDER_UNIFORM_BUFFER_SIZE,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         });
 
-        // V2.2 Fix: Increased to 64 bytes for std140 alignment of stimulusActive (offset 48)
+        // Compute uniforms: TensorParams is 64 bytes after alignment.
         this.computeUniformBuffer = this.device.createBuffer({
-            size: 64,
+            size: COMPUTE_UNIFORM_BUFFER_SIZE,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         });
     }
@@ -543,7 +548,7 @@ export class BrainRenderer {
         const OFFSET_METABOLIC_RATE = 58;
         const OFFSET_MITOCHONDRIAL = 59;
 
-        const uData = new Float32Array(62); // 62 * 4 = 248 bytes (added 5 altitude params)
+        const uData = new Float32Array(RENDER_UNIFORM_FLOAT_COUNT);
         uData.set(mvp, OFFSET_MVP);
         uData.set(model, OFFSET_MODEL);
         uData[OFFSET_TIME] = this.time;
@@ -578,8 +583,9 @@ export class BrainRenderer {
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         
-        // Compute Uniforms (60 floats = 240 bytes) - Stimulus + Hypoxia Data
-        const cBuf = new ArrayBuffer(240);
+        // Compute Uniforms layout (64 bytes total):
+        // 32 bytes scalar block + 16 bytes stimulus block + 12 bytes hypoxia block + 4 bytes trailing padding.
+        const cBuf = new ArrayBuffer(COMPUTE_UNIFORM_BUFFER_SIZE);
         const dv = new DataView(cBuf);
         dv.setFloat32(0, this.time, true);
         dv.setUint32(4, this.voxelDim, true);
