@@ -39,11 +39,13 @@ const HELPERS = `
             flowBias = -1.0;
             oxygenSensitivity = 1.8; // Executive function degrades first
         }
-        // Occipital Lobe: Fast processing, visual inputs, more resistant
+        // Occipital Lobe: Fast processing, visual inputs
+        // [Scientific Fix] Occipital is NOT particularly resistant - it's at terminal
+        // PCA branches (watershed zone) and can be vulnerable to hypoxia
         else if (worldPosition.z < -0.5) {
             decay = 0.92;
             diffusion = 0.04;
-            oxygenSensitivity = 0.9; // Slightly resistant to hypoxia
+            oxygenSensitivity = 1.0; // Neutral - not resistant, at watershed zone
         }
         // Temporal Lobe: Auditory/Memory, memory centers vulnerable
         else if (abs(worldPosition.x) > 0.8) {
@@ -210,6 +212,9 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
         var pulseColor = vec3<f32>(0.0, 0.8, 1.0); // Cyan Pulse
 
         // [Phase 5] Serotonin Color Shift (Blue -> Gold/Red)
+        // [Scientific Note] This is a METAPHORICAL visualization - serotonin affects
+        // neuromodulation and gain control, not actual color perception. The warm
+        // shift represents mood/altered state, not literal visual processing.
         if (uniforms.colorShift > 0.0) {
              let warmBase = vec3<f32>(0.2, 0.05, 0.05); // Deep Red
              let warmPulse = vec3<f32>(1.0, 0.8, 0.2); // Gold

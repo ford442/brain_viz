@@ -29,7 +29,7 @@ this.params.oxygenLevel = Math.max(0.3, 1.0 - (altFraction * 0.7));
 | Scale height denominator | 44330 | Standard atmosphere | ✅ |
 | Pressure at 8000m | ~35% relative | 35.1% calculated | ✅ |
 
-**Conclusion:** The barometric formula is mathematically correct. The linear approximation (1.0 → 0.3) is reasonable for visualization purposes, though actual O2 partial pressure at 8000m is ~35% of sea level, not 30%.
+**Conclusion:** ✅ **FIXED** - Changed minimum oxygen level from 0.3 to 0.35 to match actual barometric calculation (35600/101325 ≈ 35% at 8000m). The linear approximation now uses 0.65 decrement factor instead of 0.7.
 
 ---
 
@@ -72,11 +72,11 @@ this.params.oxygenLevel = Math.max(0.3, 1.0 - (altFraction * 0.7));
 - Executive function regions are indeed among the most susceptible to hypoperfusion
 - App's 1.8x sensitivity is within plausible range
 
-**Occipital "Resistance": ⚠️ QUESTIONABLE**
-- The visual cortex (occipital lobe) is **NOT particularly resistant** to hypoxia
-- Located at terminal ends of posterior cerebral arteries (watershed zone)
-- Studies show occipital lobe CAN be **selectively vulnerable** in hypoxic-ischemic encephalopathy
-- Granular cells in striate cortex may be **less resistant** to hypoxic injury
+**Occipital "Resistance": ✅ FIXED**
+- ~~The visual cortex (occipital lobe) is **NOT particularly resistant** to hypoxia~~
+- ~~Located at terminal ends of posterior cerebral arteries (watershed zone)~~
+- **FIXED:** Changed `oxygenSensitivity` from 0.9 to 1.0 (neutral)
+- Added scientific comment explaining watershed zone vulnerability
 
 **Most Vulnerable Regions (per research):**
 1. Caudate body / Putamen (basal ganglia) - NOT modeled
@@ -117,7 +117,7 @@ this.params.oxygenLevel = Math.max(0.3, 1.0 - (altFraction * 0.7));
 - No direct link between serotonin and "gold/red" color perception
 - Serotonin affects mood, arousal, and sensory processing - NOT color vision directly
 
-**Conclusion:** The color shift is an **artistic/metaphorical representation** rather than scientific accuracy. Consider documenting this as a visualization convention.
+**Conclusion:** ✅ **FIXED** - Added scientific documentation comment in shaders.js explaining that the color shift is a metaphorical representation of neuromodulatory effects on mood/arousal, not literal color perception.
 
 ---
 
@@ -174,15 +174,15 @@ this.params.oxygenLevel = Math.max(0.3, 1.0 - (altFraction * 0.7));
 
 ---
 
-## Summary of Recommendations
+## Summary of Recommendations - STATUS: ✅ COMPLETED
 
-| Issue | Severity | Recommendation |
-|-------|----------|----------------|
-| Occipital hypoxia resistance | Minor | Change sensitivity from 0.9 to ~1.0 |
-| Missing basal ganglia | Minor | Consider adding caudate/putamen as highly vulnerable |
-| Missing hippocampus | Minor | Consider adding hippocampus for memory/hypoxia modeling |
-| Serotonin color shift | Info | Document as metaphorical, not literal |
-| Oxygen at 8000m | Minor | Consider using 0.35 instead of 0.3 for accuracy |
+| Issue | Severity | Recommendation | Status |
+|-------|----------|----------------|--------|
+| Occipital hypoxia resistance | Minor | Change sensitivity from 0.9 to ~1.0 | ✅ FIXED in shaders.js |
+| Missing basal ganglia | Minor | Consider adding caudate/putamen as highly vulnerable | ⏸️ Deferred (major feature) |
+| Missing hippocampus | Minor | Consider adding hippocampus for memory/hypoxia modeling | ⏸️ Deferred (major feature) |
+| Serotonin color shift | Info | Document as metaphorical, not literal | ✅ FIXED in shaders.js |
+| Oxygen at 8000m | Minor | Consider using 0.35 instead of 0.3 for accuracy | ✅ FIXED in brain-renderer.js |
 
 ---
 

@@ -404,9 +404,11 @@ export class BrainRenderer {
         const alt = this.params.altitude;
 
         // Barometric formula: O2 = 0.21 * (1 - altitude/44330)^5.255
-        // Simplified linear approximation: 1.0 at 0m → 0.3 at 8000m
+        // Simplified linear approximation: 1.0 at 0m → 0.35 at 8000m
+        // [Scientific Fix] Changed from 0.3 to 0.35 to match actual barometric calculation
+        // At 8000m, atmospheric pressure is ~35% of sea level (35600/101325 Pa)
         const altFraction = Math.min(1.0, alt / 8000);
-        this.params.oxygenLevel = Math.max(0.3, 1.0 - (altFraction * 0.7));
+        this.params.oxygenLevel = Math.max(0.35, 1.0 - (altFraction * 0.65));
 
         // Hypoxia stress: sigmoid curve, peak response at 4000-5000m
         let stressCurve;
