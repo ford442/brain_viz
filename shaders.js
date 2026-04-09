@@ -25,31 +25,36 @@ const HELPERS = `
     // [Neuro-Weaver] Refactored: Region Physics Logic (Renamed for V2.7)
     // Returns vec3(decay, diffusion, flowBias)
     // [Neuro-Weaver] Defines anatomical zones: Frontal, Occipital, Temporal, Parietal
+    // With regional sensitivity to hypoxia
     fn getRegionPhysics(worldPosition: vec3<f32>, style: f32) -> vec3<f32> {
         var decay = 0.96;
         var diffusion = 0.1;
         var flowBias = 0.0;
+        var oxygenSensitivity = 1.0; // Regional vulnerability to hypoxia
 
-        // Frontal Lobe: High retention for complex thought
+        // Frontal Lobe: High retention for complex thought, MOST vulnerable to hypoxia
         if (worldPosition.z > 0.5) {
             decay = 0.998; // [Neuro-Weaver] V2.6: Hyper-retention for deep thought
             diffusion = 0.15;
-            // [Neuro-Weaver] Directional Flow: Signals drift from Frontal towards Occipital
             flowBias = -1.0;
+            oxygenSensitivity = 1.8; // Executive function degrades first
         }
-        // Occipital Lobe: Fast processing, visual inputs
+        // Occipital Lobe: Fast processing, visual inputs, more resistant
         else if (worldPosition.z < -0.5) {
             decay = 0.92;
             diffusion = 0.04;
+            oxygenSensitivity = 0.9; // Slightly resistant to hypoxia
         }
-        // Temporal Lobe: Auditory/Memory
+        // Temporal Lobe: Auditory/Memory, memory centers vulnerable
         else if (abs(worldPosition.x) > 0.8) {
             decay = 0.95;
+            oxygenSensitivity = 1.2; // Memory vulnerable to hypoxia
         }
-        // Parietal Lobe: Sensory integration
+        // Parietal Lobe: Sensory integration, baseline sensitivity
         else if (worldPosition.y > 0.6) {
             decay = 0.94;
             diffusion = 0.12;
+            oxygenSensitivity = 1.0;
         }
 
         // Cyber Mode (Style 1): Digital signal logic
@@ -58,6 +63,9 @@ const HELPERS = `
             decay = 0.92;
             flowBias = 0.0;
         }
+
+        // Store sensitivity multiplier in flowBias for later use
+        // (Will be applied when hypoxia physics is calculated)
         return vec3<f32>(decay, diffusion, flowBias);
     }
 
@@ -87,6 +95,27 @@ const HELPERS = `
             return mix(c2, c3, (activity - 0.5) * 2.0);
         }
     }
+
+    // Hypoxia Physics: Returns (decayModifier, diffusionModifier, frequencyBoost)
+    // Modulates neural signals based on oxygen availability and metabolic stress
+    fn getHypoxiaPhysics(hypoxiaStress: f32, metabolicRate: f32, mitochondrialFunc: f32) -> vec3<f32> {
+        // Decay increases with metabolic demand but limited by mitochondrial function
+        // Signals burn out faster from ATP depletion
+        let basalDecay = 0.96;
+        let decayBoost = hypoxiaStress * 0.08 * metabolicRate * (1.0 - mitochondrialFunc);
+        let decayMod = basalDecay - decayBoost;
+
+        // Diffusion DECREASES with hypoxia (impaired axonal transport)
+        // Cut diffusion by up to 50% at severe hypoxia
+        let diffusionPenalty = hypoxiaStress * 0.5;
+        let diffusionMod = max(0.01, 1.0 - diffusionPenalty);
+
+        // Frequency modulation: initial boost (hyperventilation), then depression
+        // Peak response around 50% hypoxia stress
+        let freqBoost = hypoxiaStress * 2.0 * (1.0 - hypoxiaStress * 0.5);
+
+        return vec3<f32>(decayMod, diffusionMod, freqBoost);
+    }
 `;
 
 export const vertexShader = `
@@ -112,6 +141,12 @@ struct Uniforms {
     dirIntensity: f32, // [Phase 2] Directional Light Intensity
     stress: f32, // Cognitive Stress Distortion
     cortisol: f32, // [Phase 5] Cortisol Structural Decay
+    // Altitude/Hypoxia Parameters
+    altitude: f32, // Altitude in meters
+    oxygenLevel: f32, // Oxygen saturation (1.0-0.3)
+    hypoxiaStress: f32, // Cellular stress response
+    metabolicRate: f32, // ATP consumption multiplier
+    mitochondrialFunction: f32, // ATP synthesis efficiency
 }
 
 struct VertexInput {
@@ -261,6 +296,19 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
         }
     }
 
+    // Apply cyanosis color shift from hypoxia (oxygen deprivation)
+    if (uniforms.hypoxiaStress > 0.1) {
+        let cyanosisShift = uniforms.hypoxiaStress * 0.6; // Up to 60% shift at severe hypoxia
+        let cyanosisColor = vec3<f32>(0.3, 0.4, 0.7); // Cyanotic blue/purple
+        finalColor = mix(finalColor, cyanosisColor, cyanosisShift);
+
+        // At extreme hypoxia (>0.8), add a purple tint
+        if (uniforms.hypoxiaStress > 0.8) {
+            let deepCyanosis = vec3<f32>(0.5, 0.2, 0.7); // Deep purple
+            finalColor = mix(finalColor, deepCyanosis, (uniforms.hypoxiaStress - 0.8) * 2.0);
+        }
+    }
+
     output.position = uniforms.mvpMatrix * vec4<f32>(finalPos, 1.0);
     output.worldPos = (uniforms.modelMatrix * vec4<f32>(finalPos, 1.0)).xyz;
     output.normal = normalize((uniforms.modelMatrix * vec4<f32>(finalNormal, 0.0)).xyz);
@@ -300,6 +348,12 @@ struct Uniforms {
     dirIntensity: f32, // [Phase 2]
     stress: f32,
     cortisol: f32,
+    // Altitude/Hypoxia Parameters
+    altitude: f32,
+    oxygenLevel: f32,
+    hypoxiaStress: f32,
+    metabolicRate: f32,
+    mitochondrialFunction: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
@@ -511,6 +565,11 @@ struct TensorParams {
     // V2.2 Stimulus Fields (offset 32)
     stimulusPos: vec3<f32>,
     stimulusActive: f32,
+    // Altitude/Hypoxia parameters for compute shader physics
+    hypoxiaStress: f32,
+    metabolicRate: f32,
+    mitochondrialFunction: f32,
+    // Padding for alignment
 }
 
 @group(0) @binding(0) var<storage, read_write> activityTensor: array<f32>;
@@ -543,9 +602,14 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     // Defines anatomical zones for varying signal decay and diffusion properties.
     // [Neuro-Weaver] Refactored: Use helper function
     let physics = getRegionPhysics(worldPosition, params.style);
-    let decay = physics.x;
-    let diffusion = physics.y;
+    var decay = physics.x;
+    var diffusion = physics.y;
     let flowBias = physics.z;
+
+    // Apply hypoxia physics modulation
+    let hypoxiaPhysics = getHypoxiaPhysics(params.hypoxiaStress, params.metabolicRate, params.mitochondrialFunction);
+    decay *= hypoxiaPhysics.x;      // Accelerated decay under hypoxia
+    diffusion *= hypoxiaPhysics.y;  // Reduced signal propagation
 
     // [Neuro-Weaver V2.8] Diffusion Step (6-Neighbor Laplacian)
     var neighborSum = 0.0;
@@ -583,7 +647,10 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
         // Calculate distance from stimulus center
         let d = distance(worldPosition, params.stimulusPos);
         // Use wider Gaussian for more organic impact
-        let signal = gaussian_pulse(d, 0.5);
+        var signal = gaussian_pulse(d, 0.5);
+
+        // Hypoxia dampens stimulus response (brain less responsive to stimuli)
+        signal *= params.mitochondrialFunction;
 
         // Accumulate signal if above threshold
         if (signal > 0.01) {
