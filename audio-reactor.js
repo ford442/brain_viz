@@ -141,5 +141,27 @@ export class AudioReactor {
              renderer.injectStimulus(x, y, z, this.treble * 2.0);
              this.lastBeatTime = now;
         }
+
+        // --- ALTITUDE/HYPOXIA AUDIO REACTIVITY ---
+        // Only activate altitude reactivity when altitude is already elevated
+        if (renderer.params.altitude > 2000) {
+            // Bass: indicates pressure/breathing difficulty
+            // Maps to altitude: 0-4000m range from audio bass
+            const altitudeFromBass = this.bass * 4000;
+            const targetAlt = Math.min(8000, 2000 + altitudeFromBass);
+            renderer.params.altitude += (targetAlt - renderer.params.altitude) * 0.05;
+            renderer.updateAltitudeState();
+
+            // Treble: metabolism intensity under hypoxia
+            // Maps to metabolic rate: 1.0-1.8 multiplier
+            const metabolicFromTreble = 1.0 + (this.treble * 0.8);
+            renderer.params.metabolicRate += (metabolicFromTreble - renderer.params.metabolicRate) * 0.1;
+
+            // Mid-range: oxygen recovery (inverse relationship)
+            // Affects mitochondrial function
+            const oxygenRecovery = 1.0 - (this.mid * 0.3);
+            const newMitochondrial = Math.max(0.3, oxygenRecovery * renderer.params.mitochondrialFunction);
+            renderer.params.mitochondrialFunction += (newMitochondrial - renderer.params.mitochondrialFunction) * 0.1;
+        }
     }
 }

@@ -1,0 +1,35 @@
+[
+  { "time": 0.0, "type": "reset" },
+  { "time": 0.0, "type": "text", "message": "Altitude Simulation Starting...", "duration": 2.0 },
+  { "time": 1.0, "type": "camera", "target": "iso", "zoom": 3.0 },
+
+  { "time": 2.0, "type": "text", "message": "Sea Level: Baseline Neural Activity", "duration": 2.0 },
+  { "time": 2.0, "type": "stimulus", "target": "frontal", "intensity": 1.0 },
+
+  { "time": 5.0, "type": "text", "message": "Ascending to 2000m (Mild Hypoxia)...", "duration": 3.0 },
+  { "time": 5.0, "type": "lerp", "key": "altitude", "value": 2000, "duration": 5.0 },
+  { "time": 5.0, "type": "lerp", "key": "flowSpeed", "value": 3.5, "duration": 5.0 },
+  { "time": 7.0, "type": "stimulus", "target": "frontal", "intensity": 1.2 },
+
+  { "time": 11.0, "type": "text", "message": "Ascending to 5500m (Moderate-Severe)...", "duration": 3.0 },
+  { "time": 11.0, "type": "lerp", "key": "altitude", "value": 5500, "duration": 6.0 },
+  { "time": 11.0, "type": "lerp", "key": "flowSpeed", "value": 1.5, "duration": 6.0 },
+  { "time": 11.0, "type": "lerp", "key": "grain", "value": 0.5, "duration": 6.0 },
+  { "time": 13.0, "type": "cinematic", "aberration": 0.8, "duration": 4.0 },
+  { "time": 14.0, "type": "stimulus", "target": "temporal", "intensity": 1.5 },
+  { "time": 15.0, "type": "stimulus", "target": "parietal", "intensity": 1.3 },
+
+  { "time": 18.0, "type": "text", "message": "Entering Critical Zone (8000m+)...", "duration": 2.0 },
+  { "time": 18.0, "type": "lerp", "key": "altitude", "value": 8200, "duration": 4.0 },
+  { "time": 18.0, "type": "lerp", "key": "flowSpeed", "value": 0.8, "duration": 4.0 },
+  { "time": 18.0, "type": "shake", "intensity": 0.15, "duration": 4.0 },
+
+  { "time": 22.0, "type": "text", "message": "Descent Beginning (Oxygen Restoration)...", "duration": 3.0 },
+  { "time": 22.0, "type": "lerp", "key": "altitude", "value": 0, "duration": 8.0, "ease": "quadOut" },
+  { "time": 22.0, "type": "lerp", "key": "flowSpeed", "value": 4.0, "duration": 8.0, "ease": "quadOut" },
+  { "time": 22.0, "type": "lerp", "key": "grain", "value": 0.0, "duration": 8.0 },
+  { "time": 22.0, "type": "lerp", "key": "shake", "value": 0.0, "duration": 8.0 },
+
+  { "time": 30.0, "type": "text", "message": "Recovery Complete", "duration": 2.0 },
+  { "time": 30.0, "type": "calm" }
+]

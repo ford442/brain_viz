@@ -380,6 +380,40 @@ const MINI_ROUTINES = {
         { time: 13.0, type: 'lerp',   key: 'flowSpeed', value: 4.0, duration: 2.0 },
         { time: 15.5, type: 'calm' },
         { time: 15.5, type: 'text',   message: 'Scan complete.', duration: 2.0 }
+    ],
+    'A': [ // Altitude Ascent (climb to 5,500m with progression)
+        { time: 0.0, type: 'text', message: 'Ascending to High Altitude...', duration: 3.0 },
+        { time: 0.0, type: 'camera', target: 'iso', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome to see degradation
+        { time: 0.0, type: 'lerp', key: 'altitude', value: 5500, duration: 8.0, ease: 'quadIn' },
+        { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 2.0, duration: 8.0 }, // Slowed cognition
+        { time: 1.0, type: 'stimulus', target: 'frontal', intensity: 1.5 }, // Frontal impact
+        { time: 2.0, type: 'stimulus', target: 'temporal', intensity: 1.0 },
+        { time: 3.0, type: 'stimulus', target: 'parietal', intensity: 0.8 },
+        { time: 8.0, type: 'text', message: 'Severe Hypoxia Detected', duration: 2.0 },
+        { time: 8.0, type: 'cinematic', grain: 0.6, duration: 2.0 } // Perceptual fog
+    ],
+    'D': [ // Descent (recovery to sea level)
+        { time: 0.0, type: 'text', message: 'Descending to Sea Level...', duration: 4.0 },
+        { time: 0.0, type: 'lerp', key: 'altitude', value: 0, duration: 8.0, ease: 'quadOut' },
+        { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 4.0, duration: 8.0, ease: 'quadOut' },
+        { time: 0.0, type: 'lerp', key: 'grain', value: 0.0, duration: 8.0 },
+        { time: 8.0, type: 'text', message: 'Oxygen Saturation Restored', duration: 2.0 },
+        { time: 8.0, type: 'calm' }
+    ],
+    'H': [ // Hypoxic Crisis (acute severe altitude)
+        { time: 0.0, type: 'text', message: 'HYPOXIC CRISIS!', duration: 1.5 },
+        { time: 0.0, type: 'param', key: 'altitude', value: 8500 }, // Extreme
+        { time: 0.0, type: 'shake', intensity: 0.2, duration: 5.0 },
+        { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 1.0, duration: 2.0 }, // Shutdown
+        { time: 0.0, type: 'lerp', key: 'aberration', value: 1.5, duration: 2.0 },
+        { time: 0.0, type: 'lerp', key: 'grain', value: 0.9, duration: 2.0 },
+        { time: 0.0, type: 'lerp', key: 'colorShift', value: 1.0, duration: 1.0 }, // Cyanotic shift
+        { time: 2.0, type: 'stimulus', target: 'deep', intensity: 2.0 }, // Emergency response
+        { time: 5.0, type: 'text', message: 'Initiating Emergency Descent...', duration: 2.0 },
+        { time: 5.0, type: 'lerp', key: 'altitude', value: 0, duration: 6.0, ease: 'quadOut' },
+        { time: 5.0, type: 'lerp', key: 'shake', value: 0.0, duration: 6.0 },
+        { time: 11.0, type: 'calm' }
     ]
 };
 
@@ -423,6 +457,9 @@ async function init() {
         lightDirX: document.getElementById('lightDirX'), // [Phase 2]
         lightDirY: document.getElementById('lightDirY'), // [Phase 2]
         lightDirZ: document.getElementById('lightDirZ'), // [Phase 2]
+        altitude: document.getElementById('altitude'), // Altitude/Hypoxia
+        oxygen: document.getElementById('oxygen'), // Altitude/Hypoxia (read-only)
+        metabolicRate: document.getElementById('metabolic'), // Altitude/Hypoxia
         style: document.getElementById('style-mode')
     };
     
@@ -447,7 +484,10 @@ async function init() {
         dirIntensity: document.getElementById('val-dirIntensity'), // [Phase 2]
         lightDirX: document.getElementById('val-lightDirX'), // [Phase 2]
         lightDirY: document.getElementById('val-lightDirY'), // [Phase 2]
-        lightDirZ: document.getElementById('val-lightDirZ') // [Phase 2]
+        lightDirZ: document.getElementById('val-lightDirZ'), // [Phase 2]
+        altitude: document.getElementById('val-altitude'), // Altitude/Hypoxia
+        oxygen: document.getElementById('val-oxygen'), // Altitude/Hypoxia (read-only)
+        metabolicRate: document.getElementById('val-metabolic') // Altitude/Hypoxia
     };
     
     if (!navigator.gpu) {
@@ -1278,6 +1318,25 @@ function initUIControls(renderer, uiInputs, uiLabels) {
                 if(uiInputs[pKey]) uiInputs[pKey].value = activePreset[pKey];
                 syncParam(pKey, activePreset[pKey]);
             });
+        });
+    }
+
+    // Altitude/Hypoxia Special Handler
+    const altitudeInput = document.getElementById('altitude');
+    if (altitudeInput) {
+        altitudeInput.addEventListener('input', (evt) => {
+            const altVal = parseFloat(evt.target.value);
+            renderer.setParams({ altitude: altVal });
+            renderer.updateAltitudeState();
+
+            // Update UI labels
+            const val = uiInputs.altitude;
+            if (labels.altitude) labels.altitude.textContent = altVal.toFixed(0);
+            if (labels.oxygen) labels.oxygen.textContent = renderer.params.oxygenLevel.toFixed(2);
+            if (labels.metabolicRate) labels.metabolicRate.textContent = renderer.params.metabolicRate.toFixed(2);
+
+            // Sync read-only oxygen slider
+            if (uiInputs.oxygen) uiInputs.oxygen.value = renderer.params.oxygenLevel;
         });
     }
 

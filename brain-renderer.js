@@ -46,7 +46,13 @@ export class BrainRenderer {
             ambientLight: 0.2, // [Phase 2] Ambient Light Intensity
             dirIntensity: 0.8, // [Phase 2] Directional Light Intensity
             stress: 0.0, // [Phase 2] Cognitive Stress Distortion
-            cortisol: 0.0 // [Phase 5] Cortisol Structural Decay
+            cortisol: 0.0, // [Phase 5] Cortisol Structural Decay
+            // Altitude/Hypoxia Simulation Parameters
+            altitude: 0.0, // Altitude in meters (0-8000)
+            oxygenLevel: 1.0, // Oxygen saturation (1.0-0.3)
+            hypoxiaStress: 0.0, // Cellular stress response (0.0-1.0)
+            metabolicRate: 1.0, // ATP consumption multiplier (0.5-2.0)
+            mitochondrialFunction: 1.0 // ATP synthesis efficiency (0.0-1.0)
         };
 
         // Voxel Grid Settings
@@ -60,7 +66,14 @@ export class BrainRenderer {
             pos: [0, 0, 0],
             active: 0.0
         };
-        
+
+        // Altitude/Hypoxia Internal State
+        // Tracks activation time for cumulative hypoxia effects
+        this._altitudeInternal = {
+            activationTime: 0,
+            lastAltitude: 0.0
+        };
+
         this.renderTarget = null;
         this.sampler = null;
         this.postBindGroup = null;
@@ -380,6 +393,41 @@ export class BrainRenderer {
 
     setParams(newParams) { this.params = { ...this.params, ...newParams }; }
 
+    // Altitude/Hypoxia Physiological State Update
+    // Derives hypoxia parameters from altitude input using barometric formulas
+    updateAltitudeState() {
+        const alt = this.params.altitude;
+
+        // Barometric formula: O2 = 0.21 * (1 - altitude/44330)^5.255
+        // Simplified linear approximation: 1.0 at 0m → 0.3 at 8000m
+        const altFraction = Math.min(1.0, alt / 8000);
+        this.params.oxygenLevel = Math.max(0.3, 1.0 - (altFraction * 0.7));
+
+        // Hypoxia stress: sigmoid curve, peak response at 4000-5000m
+        let stressCurve;
+        if (altFraction > 0.5) {
+            stressCurve = 1.0 / (1.0 + Math.exp(-10 * (altFraction - 0.5)));
+        } else {
+            stressCurve = altFraction * 0.2;
+        }
+        this.params.hypoxiaStress = stressCurve;
+
+        // Metabolic rate: hypoxia increases ATP demand
+        this.params.metabolicRate = 1.0 + (this.params.hypoxiaStress * 1.0);
+
+        // Mitochondrial function: declines with sustained hypoxia
+        if (this.params.hypoxiaStress > 0.5) {
+            this._altitudeInternal.activationTime += this.isRunning ? 1.0 : 0.0;
+            const sustainedPenalty = Math.max(0.3, 1.0 - (this._altitudeInternal.activationTime / 1800.0)); // 30 min = 1800 frames @ 60fps
+            this.params.mitochondrialFunction = sustainedPenalty;
+        } else {
+            this._altitudeInternal.activationTime = 0;
+            this.params.mitochondrialFunction = 1.0;
+        }
+
+        this._altitudeInternal.lastAltitude = alt;
+    }
+
     // [Neuro-Weaver] Task: Stimulus Injection (Refactored V2.7)
     // Writes target coordinates to a temporary state, which is uploaded
     // to the Compute Shader uniforms in the next render cycle.
@@ -489,8 +537,13 @@ export class BrainRenderer {
         const OFFSET_DIR_INTENSITY = 52;
         const OFFSET_STRESS = 53;
         const OFFSET_CORTISOL = 54;
+        const OFFSET_ALTITUDE = 55;
+        const OFFSET_OXYGEN = 56;
+        const OFFSET_HYPOXIA_STRESS = 57;
+        const OFFSET_METABOLIC_RATE = 58;
+        const OFFSET_MITOCHONDRIAL = 59;
 
-        const uData = new Float32Array(57); // 57 * 4 = 228 bytes
+        const uData = new Float32Array(62); // 62 * 4 = 248 bytes (added 5 altitude params)
         uData.set(mvp, OFFSET_MVP);
         uData.set(model, OFFSET_MODEL);
         uData[OFFSET_TIME] = this.time;
@@ -517,11 +570,16 @@ export class BrainRenderer {
         uData[OFFSET_DIR_INTENSITY] = this.params.dirIntensity;
         uData[OFFSET_STRESS] = this.params.stress;
         uData[OFFSET_CORTISOL] = this.params.cortisol;
+        uData[OFFSET_ALTITUDE] = this.params.altitude;
+        uData[OFFSET_OXYGEN] = this.params.oxygenLevel;
+        uData[OFFSET_HYPOXIA_STRESS] = this.params.hypoxiaStress;
+        uData[OFFSET_METABOLIC_RATE] = this.params.metabolicRate;
+        uData[OFFSET_MITOCHONDRIAL] = this.params.mitochondrialFunction;
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         
-        // Compute Uniforms (64 bytes) - Stimulus Data is here
-        const cBuf = new ArrayBuffer(64);
+        // Compute Uniforms (60 floats = 240 bytes) - Stimulus + Hypoxia Data
+        const cBuf = new ArrayBuffer(240);
         const dv = new DataView(cBuf);
         dv.setFloat32(0, this.time, true);
         dv.setUint32(4, this.voxelDim, true);
@@ -541,6 +599,14 @@ export class BrainRenderer {
         dv.setFloat32(40, this.stimulus.pos[2], true);
 
         dv.setFloat32(44, this.stimulus.active, true);
+
+        // Altitude/Hypoxia parameters for compute shader
+        // Offset 48: hypoxiaStress
+        // Offset 52: metabolicRate
+        // Offset 56: mitochondrialFunction
+        dv.setFloat32(48, this.params.hypoxiaStress, true);
+        dv.setFloat32(52, this.params.metabolicRate, true);
+        dv.setFloat32(56, this.params.mitochondrialFunction, true);
 
         // Upload to GPU
         this.device.queue.writeBuffer(this.computeUniformBuffer, 0, cBuf);
@@ -569,6 +635,7 @@ export class BrainRenderer {
         }
 
         this.time += 0.016;
+        this.updateAltitudeState(); // Update altitude/hypoxia parameters before uniforms
         this.updateUniforms();
         
         const commandEncoder = this.device.createCommandEncoder();
