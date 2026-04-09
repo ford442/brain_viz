@@ -1193,11 +1193,13 @@ async function init() {
                 if (!aiEnabled) {
                     aiToggle.textContent = 'AI Load Failed - Retry';
                     aiToggle.style.background = '#533';
+                    aiToggle.title = inferenceEngine.lastError?.message || 'Check the browser console and network tab for ONNX runtime asset loading errors.';
                     return;
                 }
             }
 
             aiMode = !aiMode;
+            aiToggle.title = '';
             aiToggle.textContent = aiMode ? 'Disable AI Mode' : 'Enable AI "Dreaming"';
             aiToggle.style.background = aiMode ? '#626' : '#424';
             // Stop routine if AI starts

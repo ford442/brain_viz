@@ -579,7 +579,9 @@ export class BrainRenderer {
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         
-        // Compute Uniforms (64 bytes) - Stimulus + Hypoxia Data
+        // Compute Uniforms layout:
+        // time, voxelDim, frequency, amplitude, spikeThreshold, smoothing, style, padding,
+        // stimulusPos(vec3), stimulusActive, hypoxiaStress, metabolicRate, mitochondrialFunction, padding.
         const cBuf = new ArrayBuffer(COMPUTE_UNIFORM_BUFFER_SIZE);
         const dv = new DataView(cBuf);
         dv.setFloat32(0, this.time, true);

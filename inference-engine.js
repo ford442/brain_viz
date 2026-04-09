@@ -5,13 +5,15 @@ import ortWasmBinaryUrl from 'onnxruntime-web/ort-wasm-simd-threaded.jsep.wasm?u
 
 const MODEL_FILE_NAME = 'squeezenet1.1.onnx';
 const DEFAULT_MODEL_PATH = `${import.meta.env.BASE_URL}${MODEL_FILE_NAME}`;
+const MAX_WORKER_THREADS = 4;
 
 ort.env.wasm.wasmPaths = {
     mjs: ortWasmModuleUrl,
     wasm: ortWasmBinaryUrl
 };
+// Cap worker count to keep the optional AI loop from over-consuming browser resources.
 ort.env.wasm.numThreads = globalThis.crossOriginIsolated
-    ? Math.max(1, Math.min(navigator.hardwareConcurrency || 1, 4))
+    ? Math.max(1, Math.min(navigator.hardwareConcurrency || 1, MAX_WORKER_THREADS))
     : 1;
 
 export class InferenceEngine {
@@ -21,6 +23,7 @@ export class InferenceEngine {
         this.inputName = null;
         this.outputName = null;
         this.initializingPromise = null;
+        this.lastError = null;
     }
 
     async initialize(modelPath = DEFAULT_MODEL_PATH) {
@@ -50,11 +53,13 @@ export class InferenceEngine {
             this.inputName = this.session.inputNames[0];
             this.outputName = this.session.outputNames[0];
             this.isRunning = true;
+            this.lastError = null;
             console.log('Model loaded successfully');
             return true;
         } catch (e) {
             this.session = null;
             this.isRunning = false;
+            this.lastError = e;
             console.error('Failed to init inference engine:', e);
             return false;
         }
