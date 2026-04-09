@@ -241,7 +241,7 @@ export class BrainRenderer {
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
         });
 
-        // Render uniforms: WGSL struct size is 240 bytes after 16-byte padding.
+        // Render uniforms: 2 mat4s (32 floats) + scalar block (28 floats including padding) = 60 floats / 240 bytes.
         this.uniformBuffer = this.device.createBuffer({
             size: RENDER_UNIFORM_BUFFER_SIZE,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST

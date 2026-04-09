@@ -1191,7 +1191,7 @@ async function init() {
                 }
 
                 if (!aiEnabled) {
-                    aiToggle.textContent = 'Retry AI "Dreaming"';
+                    aiToggle.textContent = 'AI Load Failed - Retry';
                     aiToggle.style.background = '#533';
                     return;
                 }

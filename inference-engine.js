@@ -3,7 +3,8 @@ import * as ort from 'onnxruntime-web';
 import ortWasmModuleUrl from 'onnxruntime-web/ort-wasm-simd-threaded.jsep.mjs?url';
 import ortWasmBinaryUrl from 'onnxruntime-web/ort-wasm-simd-threaded.jsep.wasm?url';
 
-const DEFAULT_MODEL_PATH = `${import.meta.env.BASE_URL}squeezenet1.1.onnx`;
+const MODEL_FILE_NAME = 'squeezenet1.1.onnx';
+const DEFAULT_MODEL_PATH = `${import.meta.env.BASE_URL}${MODEL_FILE_NAME}`;
 
 ort.env.wasm.wasmPaths = {
     mjs: ortWasmModuleUrl,
