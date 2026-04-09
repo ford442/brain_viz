@@ -5,7 +5,10 @@ import { vertexShader, fragmentShader, computeShader, somaVertexShader, somaFrag
 import { Mat4 } from './math-utils.js';
 
 const RENDER_UNIFORM_FLOAT_COUNT = 60;
-const RENDER_UNIFORM_BUFFER_SIZE = RENDER_UNIFORM_FLOAT_COUNT * Float32Array.BYTES_PER_ELEMENT;
+const UNIFORM_BUFFER_ALIGNMENT = 256;
+const RENDER_UNIFORM_BUFFER_SIZE = Math.ceil(
+    (RENDER_UNIFORM_FLOAT_COUNT * Float32Array.BYTES_PER_ELEMENT) / UNIFORM_BUFFER_ALIGNMENT
+) * UNIFORM_BUFFER_ALIGNMENT;
 const COMPUTE_UNIFORM_BUFFER_SIZE = 64;
 
 export class BrainRenderer {
@@ -242,6 +245,7 @@ export class BrainRenderer {
         });
 
         // Render uniforms: 2 mat4s (32 floats) + scalar block (28 floats including padding) = 60 floats / 240 bytes.
+        // The buffer is padded to 256 bytes to satisfy WebGPU uniform buffer alignment requirements.
         this.uniformBuffer = this.device.createBuffer({
             size: RENDER_UNIFORM_BUFFER_SIZE,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST

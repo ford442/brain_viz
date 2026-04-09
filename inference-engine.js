@@ -12,9 +12,9 @@ ort.env.wasm.wasmPaths = {
     wasm: ortWasmBinaryUrl
 };
 // Cap worker count to keep the optional AI loop from over-consuming browser resources.
-ort.env.wasm.numThreads = globalThis.crossOriginIsolated
-    ? Math.max(1, Math.min(navigator.hardwareConcurrency || 1, MAX_WORKER_THREADS))
-    : 1;
+const availableThreadCount = navigator.hardwareConcurrency || 1;
+const preferredThreadCount = Math.max(1, Math.min(availableThreadCount, MAX_WORKER_THREADS));
+ort.env.wasm.numThreads = globalThis.crossOriginIsolated ? preferredThreadCount : 1;
 
 export class InferenceEngine {
     constructor() {
