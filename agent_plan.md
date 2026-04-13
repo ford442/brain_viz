@@ -72,6 +72,7 @@
 - [x] **Narrative Overlay:** Display text captions synced with routine events (e.g., "Subject enters REM sleep").
 
 ### Phase 5: Neuro-Biochemistry (New)
+- [x] **Noradrenaline Spike:** Implement `noradrenaline` event handler to visualize Noradrenaline as a sudden spike in connectome frequency and global alertness.
 - [x] **GABA Deceleration:** Implement `gaba` event handler to visualize GABA as a global deceleration of neural pulses.
 - [x] **Melatonin Sleep Onset:** Implement `melatonin` event handler to visualize sleep onset as temporal blurring and slow desaturation.
 - [x] **Cortisol Structural Decay:** Implement `cortisol` uniform to visualize structural decay.
@@ -93,7 +94,7 @@
 ---
 
 ## 🧪 "Dream" Log (Future Concepts)
-* *Idea:* "Visualizing Noradrenaline as a sudden spike in connectome frequency and global alertness."
+
 * *Idea:* "Brain-Computer Interface (BCI) Training Mode" - A gamified mode where users try to maintain specific brain states (e.g., keeping the `stress` level below a threshold) to complete objectives.
 * *Idea:* "Cognitive Load Resolution: What if we visualized cognitive load as variable rendering resolution?"
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
@@ -139,7 +140,10 @@
 
 * *Idea:* "What if we visualized the Default Mode Network as a low-frequency hum during idle states?"
 
+* *Idea:* "What if we visualized Histamine release as a localized inflammatory response/color shift?"
+
 ## 📜 Changelog
+* [2026-04-13] - Completed Phase 5 (Noradrenaline Spike). Implemented `noradrenaline` event handler in `routine-player.js` to simulate global alertness via connectome frequency and flow speed. Bound to 'u' key in `main.js`. Added Histamine idea to Dream Log.
 * [2026-04-12] - Completed "Architecture & Innovation" step. Marked parameter interpolation and camera coordinate map tasks as complete. Added Default Mode Network idea to Dream Log.
 
 * [2026-05-03] - Completed Phase 5 (GABA Deceleration). Implemented `gaba` event handler in `routine-player.js` to simulate global deceleration of neural pulses and playback speed. Bound to 'h' key in `main.js`. Added Acetylcholine idea to Dream Log.
