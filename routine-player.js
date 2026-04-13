@@ -52,10 +52,13 @@ export class RoutinePlayer {
         this.handlers = new Map();
         this.setupDefaultHandlers();
 
+        this._deviceLost = false;
+
         // [Safety Requirement] Graceful degradation if WebGPU context is lost or invalid
         if (this.renderer && this.renderer.device && this.renderer.device.lost) {
              this.renderer.device.lost.then((lostInfo) => {
                  console.error("[Routine Player] WebGPU Context is Lost. Halting routine playback safely.", lostInfo);
+                 this._deviceLost = true;
                  this.stop();
              });
         }
@@ -257,6 +260,27 @@ export class RoutinePlayer {
 
             // Slow desaturation
             this.startLerp({ key: 'colorShift', value: -0.5 * intensity, duration: duration, ease: 'sineOut' });
+        });
+
+        // [Phase 5] Noradrenaline Spike
+        this.registerHandler('noradrenaline', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 2.0;
+
+            // Instantly boost flowSpeed, amplitude, and frequency for global alertness
+            this.renderer.setParams({
+                flowSpeed: 25.0 * intensity,
+                amplitude: 1.5 * intensity,
+                frequency: 15.0 * intensity
+            });
+
+            // Fade back
+            if (duration > 0) {
+                const ease = evt.ease || 'quadOut';
+                this.startLerp({ key: 'flowSpeed', value: 4.0, duration: duration, ease: ease });
+                this.startLerp({ key: 'amplitude', value: 0.5, duration: duration, ease: ease });
+                this.startLerp({ key: 'frequency', value: 2.0, duration: duration, ease: ease });
+            }
         });
 
         // [Phase 2] Adrenaline Surge
@@ -1020,7 +1044,7 @@ export class RoutinePlayer {
         if (!this.isPlaying) return;
 
         // Ensure WebGPU context gracefully degrades
-        const isDeviceLost = this.renderer && this.renderer.device && this.renderer.device.lost;
+        const isDeviceLost = this._deviceLost;
         const rendererMissing = !this.renderer || !this.renderer.device;
 
         if (rendererMissing || isDeviceLost) {
