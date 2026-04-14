@@ -574,7 +574,11 @@ struct TensorParams {
     hypoxiaStress: f32,
     metabolicRate: f32,
     mitochondrialFunction: f32,
-    // Padding for alignment
+    // Padding to 64 bytes is handled, now adding environmental hazards
+    pad1: f32,
+    electricalActive: f32,
+    mercuryActive: f32,
+    pad2: vec2<f32>,
 }
 
 @group(0) @binding(0) var<storage, read_write> activityTensor: array<f32>;
@@ -661,6 +665,25 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
         if (signal > 0.01) {
             val += params.stimulusActive * signal;
         }
+    }
+
+    // [Neuro-Weaver] Electrical Exposure
+    if (params.electricalActive > 0.0) {
+        // High frequency global random spikes
+        let noise = fract(sin(dot(worldPosition.xy, vec2(12.9898, 78.233))) * 43758.5453);
+        if (noise > 0.95) {
+            val += params.electricalActive * 5.0;
+        }
+    }
+
+    // [Neuro-Weaver] Mercury Vapor Exposure
+    if (params.mercuryActive > 0.0) {
+        // Accumulates in Occipital/Parietal regions
+        let d_merc = distance(worldPosition, vec3<f32>(0.0, 0.0, -1.2));
+        var mercSignal = gaussian_pulse(d_merc, 1.2);
+        val += params.mercuryActive * mercSignal * 0.5;
+        // Simulate accumulation and structural degradation by reducing decay drastically
+        decay = min(decay, 0.999);
     }
 
     val *= decay;
