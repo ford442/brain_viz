@@ -9,7 +9,7 @@ const UNIFORM_BUFFER_ALIGNMENT = 256;
 const RENDER_UNIFORM_BUFFER_SIZE = Math.ceil(
     (RENDER_UNIFORM_FLOAT_COUNT * Float32Array.BYTES_PER_ELEMENT) / UNIFORM_BUFFER_ALIGNMENT
 ) * UNIFORM_BUFFER_ALIGNMENT;
-const COMPUTE_UNIFORM_BUFFER_SIZE = 64;
+const COMPUTE_UNIFORM_BUFFER_SIZE = 80;
 
 export class BrainRenderer {
     constructor(canvas) {
@@ -71,7 +71,9 @@ export class BrainRenderer {
         // Stores position and intensity for compute shader injection
         this.stimulus = {
             pos: [0, 0, 0],
-            active: 0.0
+            active: 0.0,
+            electricalActive: 0.0,
+            mercuryActive: 0.0
         };
 
         // Altitude/Hypoxia Internal State
@@ -461,6 +463,18 @@ export class BrainRenderer {
         console.log(`[Neuro-Weaver] Stimulus Injected: Pos(${targetX.toFixed(2)}, ${targetY.toFixed(2)}, ${targetZ.toFixed(2)}) Intensity(${intensity.toFixed(2)})`);
     }
 
+    injectElectrical(intensity, duration) {
+        if (isNaN(intensity)) return;
+        this.stimulus.electricalActive = Math.max(0.0, intensity);
+        console.log(`[Neuro-Weaver] Electrical Stimulus Injected: Intensity(${intensity.toFixed(2)})`);
+    }
+
+    injectMercury(intensity, duration) {
+        if (isNaN(intensity)) return;
+        this.stimulus.mercuryActive = Math.max(0.0, intensity);
+        console.log(`[Neuro-Weaver] Mercury Stimulus Injected: Intensity(${intensity.toFixed(2)})`);
+    }
+
     calmState() {
         // Clear all activity by resetting parameters to a "Calm" state.
         // Setting amplitude low prevents new chaotic waves.
@@ -616,12 +630,22 @@ export class BrainRenderer {
         dv.setFloat32(52, this.params.metabolicRate, true);
         dv.setFloat32(56, this.params.mitochondrialFunction, true);
 
+        // Environmental Hazard variables
+        dv.setFloat32(64, this.stimulus.electricalActive, true);
+        dv.setFloat32(68, this.stimulus.mercuryActive, true);
+
         // Upload to GPU
         this.device.queue.writeBuffer(this.computeUniformBuffer, 0, cBuf);
 
         // Auto-reset pulse (single frame injection)
         if (this.stimulus.active > 0) {
              this.stimulus.active = 0.0;
+        }
+        if (this.stimulus.electricalActive > 0) {
+             this.stimulus.electricalActive = 0.0;
+        }
+        if (this.stimulus.mercuryActive > 0) {
+             this.stimulus.mercuryActive = 0.0;
         }
     }
 

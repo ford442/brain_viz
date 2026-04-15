@@ -1396,6 +1396,28 @@ function initUIControls(renderer, uiInputs, uiLabels) {
         renderer.injectStimulus((Math.random()-0.5)*2, (Math.random()-0.5)*2, (Math.random()-0.5)*2, 1.0);
     });
 
+    document.getElementById('stim-electrical')?.addEventListener('click', () => {
+        const intensity = parseFloat(document.getElementById('hazard-intensity').value) / 100.0;
+        const duration = parseFloat(document.getElementById('hazard-duration').value);
+        renderer.injectElectrical(intensity, duration);
+        const styleMode = document.getElementById('style-mode');
+        if (styleMode) {
+            styleMode.value = '1'; // Cyber
+            styleMode.dispatchEvent(new Event('change'));
+        }
+    });
+
+    document.getElementById('stim-mercury')?.addEventListener('click', () => {
+        const intensity = parseFloat(document.getElementById('hazard-intensity').value) / 100.0;
+        const duration = parseFloat(document.getElementById('hazard-duration').value);
+        renderer.injectMercury(intensity, duration);
+        const styleMode = document.getElementById('style-mode');
+        if (styleMode) {
+            styleMode.value = '3'; // Heatmap
+            styleMode.dispatchEvent(new Event('change'));
+        }
+    });
+
     document.getElementById('stim-calm')?.addEventListener('click', () => {
         renderer.calmState();
         ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'cortisol', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {

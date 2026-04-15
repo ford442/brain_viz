@@ -184,6 +184,20 @@
         <!-- [V2.5] Controls: Region Stimulation -->
         <!-- [Neuro-Weaver] Region-Specific Stimulus Injection Buttons -->
         <label style="margin-bottom:10px; color:#fff">Inject Stimulus</label>
+
+        <!-- Environmental Exposure Buttons -->
+        <button id="stim-electrical" class="stim-btn" style="background:#442; border-color:#ff4; color:#ffc">Electrical Exposure</button>
+        <button id="stim-mercury" class="stim-btn" style="background:#242; border-color:#4f4; color:#cfc">Vapor/Mercury Exposure</button>
+
+        <div class="control-group">
+            <label>Hazard Intensity <span id="val-hazard-intensity" class="value">50</span></label>
+            <input type="range" id="hazard-intensity" min="0" max="100" step="1" value="50">
+        </div>
+        <div class="control-group">
+            <label>Hazard Duration (s) <span id="val-hazard-duration" class="value">5</span></label>
+            <input type="range" id="hazard-duration" min="0" max="10" step="1" value="5">
+        </div>
+        <hr style="border-top: 1px dashed #444; margin: 8px 0;">
         <button id="stim-frontal" class="stim-btn" type="button">Frontal Lobe (Cognition)</button>
         <button id="stim-parietal" class="stim-btn" type="button">Parietal Lobe (Sensory)</button>
         <button id="stim-temporal" class="stim-btn" type="button">Temporal Lobe (Memory)</button>
