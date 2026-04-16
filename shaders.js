@@ -25,31 +25,38 @@ const HELPERS = `
     // [Neuro-Weaver] Refactored: Region Physics Logic (Renamed for V2.7)
     // Returns vec3(decay, diffusion, flowBias)
     // [Neuro-Weaver] Defines anatomical zones: Frontal, Occipital, Temporal, Parietal
+    // With regional sensitivity to hypoxia
     fn getRegionPhysics(worldPosition: vec3<f32>, style: f32) -> vec3<f32> {
         var decay = 0.96;
         var diffusion = 0.1;
         var flowBias = 0.0;
+        var oxygenSensitivity = 1.0; // Regional vulnerability to hypoxia
 
-        // Frontal Lobe: High retention for complex thought
+        // Frontal Lobe: High retention for complex thought, MOST vulnerable to hypoxia
         if (worldPosition.z > 0.5) {
             decay = 0.998; // [Neuro-Weaver] V2.6: Hyper-retention for deep thought
             diffusion = 0.15;
-            // [Neuro-Weaver] Directional Flow: Signals drift from Frontal towards Occipital
             flowBias = -1.0;
+            oxygenSensitivity = 1.8; // Executive function degrades first
         }
         // Occipital Lobe: Fast processing, visual inputs
+        // [Scientific Fix] Occipital is NOT particularly resistant - it's at terminal
+        // PCA branches (watershed zone) and can be vulnerable to hypoxia
         else if (worldPosition.z < -0.5) {
             decay = 0.92;
             diffusion = 0.04;
+            oxygenSensitivity = 1.0; // Neutral - not resistant, at watershed zone
         }
-        // Temporal Lobe: Auditory/Memory
+        // Temporal Lobe: Auditory/Memory, memory centers vulnerable
         else if (abs(worldPosition.x) > 0.8) {
             decay = 0.95;
+            oxygenSensitivity = 1.2; // Memory vulnerable to hypoxia
         }
-        // Parietal Lobe: Sensory integration
+        // Parietal Lobe: Sensory integration, baseline sensitivity
         else if (worldPosition.y > 0.6) {
             decay = 0.94;
             diffusion = 0.12;
+            oxygenSensitivity = 1.0;
         }
 
         // Cyber Mode (Style 1): Digital signal logic
@@ -58,6 +65,9 @@ const HELPERS = `
             decay = 0.92;
             flowBias = 0.0;
         }
+
+        // Store sensitivity multiplier in flowBias for later use
+        // (Will be applied when hypoxia physics is calculated)
         return vec3<f32>(decay, diffusion, flowBias);
     }
 
@@ -87,6 +97,27 @@ const HELPERS = `
             return mix(c2, c3, (activity - 0.5) * 2.0);
         }
     }
+
+    // Hypoxia Physics: Returns (decayModifier, diffusionModifier, frequencyBoost)
+    // Modulates neural signals based on oxygen availability and metabolic stress
+    fn getHypoxiaPhysics(hypoxiaStress: f32, metabolicRate: f32, mitochondrialFunc: f32) -> vec3<f32> {
+        // Decay increases with metabolic demand but limited by mitochondrial function
+        // Signals burn out faster from ATP depletion
+        let basalDecay = 0.96;
+        let decayBoost = hypoxiaStress * 0.08 * metabolicRate * (1.0 - mitochondrialFunc);
+        let decayMod = basalDecay - decayBoost;
+
+        // Diffusion DECREASES with hypoxia (impaired axonal transport)
+        // Cut diffusion by up to 50% at severe hypoxia
+        let diffusionPenalty = hypoxiaStress * 0.5;
+        let diffusionMod = max(0.01, 1.0 - diffusionPenalty);
+
+        // Frequency modulation: initial boost (hyperventilation), then depression
+        // Peak response around 50% hypoxia stress
+        let freqBoost = hypoxiaStress * 2.0 * (1.0 - hypoxiaStress * 0.5);
+
+        return vec3<f32>(decayMod, diffusionMod, freqBoost);
+    }
 `;
 
 export const vertexShader = `
@@ -110,6 +141,14 @@ struct Uniforms {
     lightDir: vec3<f32>, // [Phase 2] Directional Light
     ambientLight: f32, // [Phase 2] Ambient Light Intensity
     dirIntensity: f32, // [Phase 2] Directional Light Intensity
+    stress: f32, // Cognitive Stress Distortion
+    cortisol: f32, // [Phase 5] Cortisol Structural Decay
+    // Altitude/Hypoxia Parameters
+    altitude: f32, // Altitude in meters
+    oxygenLevel: f32, // Oxygen saturation (1.0-0.3)
+    hypoxiaStress: f32, // Cellular stress response
+    metabolicRate: f32, // ATP consumption multiplier
+    mitochondrialFunction: f32, // ATP synthesis efficiency
 }
 
 struct VertexInput {
@@ -163,10 +202,19 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     if (uniforms.style >= 2.0 && uniforms.style < 3.0) {
         finalPos = input.position;
 
+        // [Phase 5] Cortisol Structural Decay
+        if (uniforms.cortisol > 0.0) {
+            let decayFactor = 1.0 - (uniforms.cortisol * 0.3);
+            finalPos *= max(0.0, decayFactor);
+        }
+
         var baseColor = vec3<f32>(0.05, 0.1, 0.15); // Dark Blue Base
         var pulseColor = vec3<f32>(0.0, 0.8, 1.0); // Cyan Pulse
 
         // [Phase 5] Serotonin Color Shift (Blue -> Gold/Red)
+        // [Scientific Note] This is a METAPHORICAL visualization - serotonin affects
+        // neuromodulation and gain control, not actual color perception. The warm
+        // shift represents mood/altered state, not literal visual processing.
         if (uniforms.colorShift > 0.0) {
              let warmBase = vec3<f32>(0.2, 0.05, 0.05); // Deep Red
              let warmPulse = vec3<f32>(1.0, 0.8, 0.2); // Gold
@@ -215,6 +263,27 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     else {
         let displacement = input.normal * activity * 0.05;
         finalPos = input.position + displacement;
+
+        // [Phase 5] Cortisol Structural Decay
+        if (uniforms.cortisol > 0.0) {
+            let decayFactor = 1.0 - (uniforms.cortisol * 0.3);
+            finalPos *= max(0.0, decayFactor);
+        }
+
+        // [Phase 2] Cognitive Stress Distortion
+        if (uniforms.stress > 0.0) {
+            let noiseFreq = 15.0;
+            let stressDisp = sin(finalPos.x * noiseFreq + uniforms.time * 10.0) * cos(finalPos.y * noiseFreq + uniforms.time * 8.0) * sin(finalPos.z * noiseFreq);
+            finalPos += input.normal * stressDisp * uniforms.stress * 0.5;
+        }
+
+        // [Phase 5] Cortisol Structural Decay
+        if (uniforms.cortisol > 0.0) {
+            // Decay structural integrity based on cortisol level (shrinks vertices inward, especially higher activity areas)
+            let decayErosion = uniforms.cortisol * 0.2 * (1.0 - activity);
+            finalPos -= input.normal * decayErosion;
+        }
+
         finalColor = vec3<f32>(0.2, 0.6, 1.0);
 
         // Style 1 (Cyber): Digital Grid
@@ -229,6 +298,19 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
             if (gridLine > 0.5) {
                 finalColor += vec3<f32>(0.6, 1.0, 0.8) * activity * 2.0;
             }
+        }
+    }
+
+    // Apply cyanosis color shift from hypoxia (oxygen deprivation)
+    if (uniforms.hypoxiaStress > 0.1) {
+        let cyanosisShift = uniforms.hypoxiaStress * 0.6; // Up to 60% shift at severe hypoxia
+        let cyanosisColor = vec3<f32>(0.3, 0.4, 0.7); // Cyanotic blue/purple
+        finalColor = mix(finalColor, cyanosisColor, cyanosisShift);
+
+        // At extreme hypoxia (>0.8), add a purple tint
+        if (uniforms.hypoxiaStress > 0.8) {
+            let deepCyanosis = vec3<f32>(0.5, 0.2, 0.7); // Deep purple
+            finalColor = mix(finalColor, deepCyanosis, (uniforms.hypoxiaStress - 0.8) * 2.0);
         }
     }
 
@@ -269,6 +351,14 @@ struct Uniforms {
     lightDir: vec3<f32>, // [Phase 2]
     ambientLight: f32, // [Phase 2]
     dirIntensity: f32, // [Phase 2]
+    stress: f32,
+    cortisol: f32,
+    // Altitude/Hypoxia Parameters
+    altitude: f32,
+    oxygenLevel: f32,
+    hypoxiaStress: f32,
+    metabolicRate: f32,
+    mitochondrialFunction: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
@@ -290,9 +380,19 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
     // [Phase 6] Dendritic Growth: Discard outside growth radius
     if (input.distToCenter > uniforms.growth * 1.8) { discard; }
 
-    // [Neuro-Weaver] Style 3.0: Return Heatmap Color (calculated in Vertex Shader)
-    // Renders the volumetric thermal gradient based on tensor activity
-    if (uniforms.style >= 3.0) { return vec4<f32>(input.color, 1.0); }
+    // Shared view-dependent calculations for frosted-glass translucency
+    let normal = normalize(input.normal);
+    let viewDir = normalize(vec3<f32>(0.0, 0.0, 5.0) - input.worldPos);
+    let NdotV = abs(dot(normal, viewDir));
+    let rim = pow(1.0 - NdotV, 3.0);
+
+    // [Neuro-Weaver] Style 3.0: Translucent Heatmap Shell
+    // Activity-weighted alpha so hot regions glow through the skin; quiet zones nearly invisible
+    if (uniforms.style >= 3.0) {
+        let heatAlpha = 0.06 + (input.activity * 0.45);
+        let rimBoost = smoothstep(0.4, 1.0, rim) * 0.18;
+        return vec4<f32>(input.color, clamp(heatAlpha + rimBoost, 0.0, 0.72));
+    }
 
     if (uniforms.style >= 2.0) {
         // [Neuro-Weaver] Style 2.0: Translucent Fibers with activity glow
@@ -300,14 +400,13 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
         let alpha = 0.3 + (input.activity * 0.2) + (input.signal * 0.8);
         return vec4<f32>(input.color, alpha);
     }
-    
-    let normal = normalize(input.normal);
-    let viewDir = normalize(vec3<f32>(0.0, 0.0, 5.0) - input.worldPos);
-    let NdotV = abs(dot(normal, viewDir));
-    let rim = pow(1.0 - NdotV, 3.0);
-    let baseAlpha = 0.02;
-    let rimAlpha = smoothstep(0.6, 1.0, rim);
-    let finalAlpha = baseAlpha + rimAlpha * 0.5;
+
+    // [Neuro-Weaver] Frosted-glass skin for modes 0 (Organic) and 1 (Cyber)
+    // Low base alpha + rim silhouette + activity punch-through = see-through glass effect
+    let rimAlpha = smoothstep(0.5, 1.0, rim);
+    let glassAlpha = 0.04 + rimAlpha * 0.22;
+    let activityAlpha = input.activity * 0.18;
+    let finalAlpha = clamp(glassAlpha + activityAlpha, 0.0, 0.35);
 
     // [Phase 2] Dynamic Lighting Control
     let NdotL = max(0.0, dot(input.normal, normalize(uniforms.lightDir)));
@@ -317,7 +416,7 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
     var col = input.color * (ambient + diffuse);
     col += vec3<f32>(0.8) * rimAlpha;
 
-    // Journal: "Using mix() for color based on activity looks better than additive blending."
+    // Activity glow punches through glass where brain is active
     let activityGlowColor = vec3<f32>(0.5, 0.8, 1.0);
     let mixFactor = clamp(input.activity * 1.5 * rimAlpha, 0.0, 1.0);
     col = mix(col, activityGlowColor, mixFactor);
@@ -345,6 +444,8 @@ struct Uniforms {
     lightDir: vec3<f32>, // [Phase 2]
     ambientLight: f32, // [Phase 2]
     dirIntensity: f32, // [Phase 2]
+    stress: f32,
+    cortisol: f32,
     focus: f32, // [Phase 7]
     aperture: f32, // [Phase 7]
 }
@@ -399,7 +500,11 @@ fn main_soma(input: VertexInput) -> VertexOutput {
     if (length(input.instancePos) > uniforms.growth * 1.8) {
         scale = 0.0;
     }
-
+    // [Phase 5] Cortisol Structural Decay: Scale inward and simulate breakdown
+    if (uniforms.cortisol > 0.0) {
+        let decayFactor = 1.0 - (uniforms.cortisol * 0.8);
+        scale *= max(0.0, decayFactor);
+    }
     let pos = (input.position * scale) + input.instancePos;
 
     output.worldPos = (uniforms.modelMatrix * vec4<f32>(pos, 1.0)).xyz;
@@ -465,6 +570,15 @@ struct TensorParams {
     // V2.2 Stimulus Fields (offset 32)
     stimulusPos: vec3<f32>,
     stimulusActive: f32,
+    // Altitude/Hypoxia parameters for compute shader physics
+    hypoxiaStress: f32,
+    metabolicRate: f32,
+    mitochondrialFunction: f32,
+    // Padding to 64 bytes is handled, now adding environmental hazards
+    pad1: f32,
+    electricalActive: f32,
+    mercuryActive: f32,
+    pad2: vec2<f32>,
 }
 
 @group(0) @binding(0) var<storage, read_write> activityTensor: array<f32>;
@@ -497,9 +611,14 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     // Defines anatomical zones for varying signal decay and diffusion properties.
     // [Neuro-Weaver] Refactored: Use helper function
     let physics = getRegionPhysics(worldPosition, params.style);
-    let decay = physics.x;
-    let diffusion = physics.y;
+    var decay = physics.x;
+    var diffusion = physics.y;
     let flowBias = physics.z;
+
+    // Apply hypoxia physics modulation
+    let hypoxiaPhysics = getHypoxiaPhysics(params.hypoxiaStress, params.metabolicRate, params.mitochondrialFunction);
+    decay *= hypoxiaPhysics.x;      // Accelerated decay under hypoxia
+    diffusion *= hypoxiaPhysics.y;  // Reduced signal propagation
 
     // [Neuro-Weaver V2.8] Diffusion Step (6-Neighbor Laplacian)
     var neighborSum = 0.0;
@@ -537,12 +656,34 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
         // Calculate distance from stimulus center
         let d = distance(worldPosition, params.stimulusPos);
         // Use wider Gaussian for more organic impact
-        let signal = gaussian_pulse(d, 0.5);
+        var signal = gaussian_pulse(d, 0.5);
+
+        // Hypoxia dampens stimulus response (brain less responsive to stimuli)
+        signal *= params.mitochondrialFunction;
 
         // Accumulate signal if above threshold
         if (signal > 0.01) {
             val += params.stimulusActive * signal;
         }
+    }
+
+    // [Neuro-Weaver] Electrical Exposure
+    if (params.electricalActive > 0.0) {
+        // High frequency global random spikes
+        let noise = fract(sin(dot(worldPosition.xy, vec2(12.9898, 78.233))) * 43758.5453);
+        if (noise > 0.95) {
+            val += params.electricalActive * 5.0;
+        }
+    }
+
+    // [Neuro-Weaver] Mercury Vapor Exposure
+    if (params.mercuryActive > 0.0) {
+        // Accumulates in Occipital/Parietal regions
+        let d_merc = distance(worldPosition, vec3<f32>(0.0, 0.0, -1.2));
+        var mercSignal = gaussian_pulse(d_merc, 1.2);
+        val += params.mercuryActive * mercSignal * 0.5;
+        // Simulate accumulation and structural degradation by reducing decay drastically
+        decay = min(decay, 0.999);
     }
 
     val *= decay;
@@ -581,6 +722,8 @@ struct Uniforms {
     lightDir: vec3<f32>,
     ambientLight: f32,
     dirIntensity: f32,
+    stress: f32,
+    cortisol: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var tDiffuse: texture_2d<f32>;

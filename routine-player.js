@@ -38,6 +38,9 @@ export class RoutinePlayer {
         this.customPresets = {}; // [Phase 2] Custom Camera Presets
         this.state = {}; // [Phase 2] Internal State for Branching
 
+        // [Phase 2] Event Synchronization
+        this.waitingForSignal = null; // String name of the signal we are waiting for
+
         // [Phase 2] Easing Support
         this.activeLerps = []; // { key, startVal, endVal, elapsed, duration }
 
@@ -48,6 +51,17 @@ export class RoutinePlayer {
         // [Phase 3] Extensible Event System
         this.handlers = new Map();
         this.setupDefaultHandlers();
+
+        this._deviceLost = false;
+
+        // [Safety Requirement] Graceful degradation if WebGPU context is lost or invalid
+        if (this.renderer && this.renderer.device && this.renderer.device.lost) {
+             this.renderer.device.lost.then((lostInfo) => {
+                 console.error("[Routine Player] WebGPU Context is Lost. Halting routine playback safely.", lostInfo);
+                 this._deviceLost = true;
+                 this.stop();
+             });
+        }
     }
 
     initAudio() {
@@ -76,9 +90,19 @@ export class RoutinePlayer {
             this.renderer.injectStimulus(coords[0], coords[1], coords[2], evt.intensity || 1.0);
         });
 
-        // Style Change
+        // Style Change (instant snap)
         this.registerHandler('style', (evt) => {
             this.renderer.setParams({ style: evt.value });
+        });
+
+        // Mode Transition (animated cross-fade via style lerp)
+        this.registerHandler('mode-transition', (evt) => {
+            this.startLerp({
+                key: 'style',
+                value: evt.toMode,
+                duration: evt.duration !== undefined ? evt.duration : 1.5,
+                ease: evt.ease || 'sineInOut'
+            });
         });
 
         // Parameter Update
@@ -99,6 +123,36 @@ export class RoutinePlayer {
         // Reset Activity
         this.registerHandler('reset', () => {
             this.renderer.resetActivity();
+        });
+
+        // [Phase 2] Cognitive Stress Distortion
+        this.registerHandler('stress', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            if (evt.duration) {
+                this.startLerp({
+                    key: 'stress',
+                    value: intensity,
+                    duration: evt.duration,
+                    ease: evt.ease || 'linear'
+                });
+            } else {
+                this.renderer.setParams({ stress: intensity });
+            }
+        });
+
+        // [Phase 5] Cortisol Structural Decay
+        this.registerHandler('cortisol', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            if (evt.duration) {
+                this.startLerp({
+                    key: 'cortisol',
+                    value: intensity,
+                    duration: evt.duration,
+                    ease: evt.ease || 'linear'
+                });
+            } else {
+                this.renderer.setParams({ cortisol: intensity });
+            }
         });
 
         // [Phase 2] Camera Shake
@@ -138,6 +192,117 @@ export class RoutinePlayer {
             if (evt.dirZ !== undefined) {
                 if (evt.duration) this.startLerp({ key: 'lightDirZ', value: evt.dirZ, duration: evt.duration, ease: evt.ease });
                 else this.renderer.setParams({ lightDirZ: evt.dirZ });
+            }
+        });
+
+        // [Phase 2] Dopamine Burst Routine
+        this.registerHandler('dopamine', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 1.0;
+
+            // Instantly boost flowSpeed and amplitude
+            this.renderer.setParams({
+                flowSpeed: 20.0 * intensity,
+                amplitude: 1.5 * intensity
+            });
+
+            // Fade back
+            if (duration > 0) {
+                const ease = evt.ease || 'quadOut';
+                this.startLerp({ key: 'flowSpeed', value: 4.0, duration: duration, ease: ease });
+                this.startLerp({ key: 'amplitude', value: 0.5, duration: duration, ease: ease });
+            }
+        });
+
+        // [Phase 2] Endorphin Rush
+        this.registerHandler('endorphin', (evt) => {
+            const duration = evt.duration || 3.0;
+
+            // Instantly suppress stress and shake
+            this.renderer.setParams({
+                stress: 0.0,
+                shake: 0.0,
+                colorShift: 0.2 // Slight soothing shift
+            });
+
+            // Smoothly restore or keep low over duration
+            if (duration > 0) {
+                const ease = evt.ease || 'quadInOut';
+                this.startLerp({ key: 'colorShift', value: 0.0, duration: duration, ease: ease });
+            }
+        });
+
+
+        // [Phase 5] GABA Deceleration
+        this.registerHandler('gaba', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 3.0;
+
+            // Smoothly decrease flow speed and global playback speed to simulate deceleration
+            this.startLerp({ key: 'flowSpeed', value: 0.5 * (2.0 - intensity), duration: duration, ease: 'quadOut' });
+            this.startLerp({ key: 'playbackSpeed', value: 0.5 * (2.0 - intensity), duration: duration, ease: 'quadOut' });
+            // Calm colors
+            this.startLerp({ key: 'colorShift', value: -0.2 * intensity, duration: duration, ease: 'quadOut' });
+        });
+
+        // [Phase 5] Melatonin Sleep Onset
+        this.registerHandler('melatonin', (evt) => {
+            const duration = evt.duration || 5.0;
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+
+            // Smoothly decrease temporal activity and energy
+            this.startLerp({ key: 'flowSpeed', value: 1.0, duration: duration, ease: 'sineOut' });
+            this.startLerp({ key: 'amplitude', value: 0.1, duration: duration, ease: 'sineOut' });
+
+            // Simulate blurring effect
+            this.startLerp({ key: 'aperture', value: 0.8 * intensity, duration: duration, ease: 'sineOut' });
+            this.startLerp({ key: 'focus', value: 0.5, duration: duration, ease: 'sineOut' });
+
+            // Slow desaturation
+            this.startLerp({ key: 'colorShift', value: -0.5 * intensity, duration: duration, ease: 'sineOut' });
+        });
+
+        // [Phase 5] Noradrenaline Spike
+        this.registerHandler('noradrenaline', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 2.0;
+
+            // Instantly boost flowSpeed, amplitude, and frequency for global alertness
+            this.renderer.setParams({
+                flowSpeed: 25.0 * intensity,
+                amplitude: 1.5 * intensity,
+                frequency: 15.0 * intensity
+            });
+
+            // Fade back
+            if (duration > 0) {
+                const ease = evt.ease || 'quadOut';
+                this.startLerp({ key: 'flowSpeed', value: 4.0, duration: duration, ease: ease });
+                this.startLerp({ key: 'amplitude', value: 0.5, duration: duration, ease: ease });
+                this.startLerp({ key: 'frequency', value: 2.0, duration: duration, ease: ease });
+            }
+        });
+
+        // [Phase 2] Adrenaline Surge
+        this.registerHandler('adrenaline', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 1.0;
+
+            // Instantly boost light intensity, flow speed, and shift color
+            this.renderer.setParams({
+                dirIntensity: 3.0 * intensity,
+                ambientLight: 0.8 * intensity,
+                flowSpeed: 25.0 * intensity,
+                colorShift: 1.0 // Shift to warm/bright colors
+            });
+
+            // Fade back
+            if (duration > 0) {
+                const ease = evt.ease || 'quadOut';
+                this.startLerp({ key: 'dirIntensity', value: 0.8, duration: duration, ease: ease });
+                this.startLerp({ key: 'ambientLight', value: 0.2, duration: duration, ease: ease });
+                this.startLerp({ key: 'flowSpeed', value: 4.0, duration: duration, ease: ease });
+                this.startLerp({ key: 'colorShift', value: 0.0, duration: duration, ease: ease });
             }
         });
 
@@ -195,6 +360,11 @@ export class RoutinePlayer {
             }
         });
 
+        // Modulate Playback Speed (Dynamic Time Dilation Advanced)
+        this.registerHandler('modulate_speed', (evt) => {
+            this.modulatePlaybackSpeed(evt.targetSpeed, evt.duration, evt.ease);
+        });
+
         // Neuronal Glitch (Data Corruption Simulation)
         this.registerHandler('glitch', (evt) => {
             const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
@@ -223,6 +393,48 @@ export class RoutinePlayer {
             if (navigator.vibrate && evt.duration) {
                 navigator.vibrate(evt.duration);
             }
+        });
+
+        // [Phase 2] Neuro-Sonification (Binaural Beats)
+        this.registerHandler('binaural', async (evt) => {
+            this.initAudio();
+            if (!this.audioContext) return;
+
+            const baseFreq = evt.baseFrequency || 440;
+            const beatFreq = evt.beatFrequency || 40;
+            const duration = evt.duration || 5.0;
+            const vol = evt.volume !== undefined ? evt.volume : 0.5;
+
+            const gainNode = this.audioContext.createGain();
+            const oscL = this.audioContext.createOscillator();
+            const oscR = this.audioContext.createOscillator();
+            const panL = this.audioContext.createStereoPanner();
+            const panR = this.audioContext.createStereoPanner();
+
+            oscL.type = evt.oscType || 'sine';
+            oscR.type = evt.oscType || 'sine';
+
+            oscL.frequency.setValueAtTime(baseFreq - (beatFreq / 2), this.audioContext.currentTime);
+            oscR.frequency.setValueAtTime(baseFreq + (beatFreq / 2), this.audioContext.currentTime);
+
+            panL.pan.value = -1;
+            panR.pan.value = 1;
+
+            oscL.connect(panL);
+            oscR.connect(panR);
+            panL.connect(gainNode);
+            panR.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+
+            gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(vol, this.audioContext.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(vol, this.audioContext.currentTime + duration - 0.1);
+            gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + duration);
+
+            oscL.start(this.audioContext.currentTime);
+            oscR.start(this.audioContext.currentTime);
+            oscL.stop(this.audioContext.currentTime + duration);
+            oscR.stop(this.audioContext.currentTime + duration);
         });
 
         // [Phase 2] Neuro-Sonification (Audio Events)
@@ -318,6 +530,31 @@ export class RoutinePlayer {
             }, 500);
         });
 
+        // [Phase 2] Oxytocin Burst
+        this.registerHandler('oxytocin', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 2.0;
+
+            // Trigger stimulus on both hemispheres symmetrically
+            this.executeEvent({ type: 'stimulus', target: [-0.8, 0.0, 0.0], intensity: intensity * 2.0 });
+            this.executeEvent({ type: 'stimulus', target: [0.8, 0.0, 0.0], intensity: intensity * 2.0 });
+
+            // Instantly apply warm color shift and slow, flowing speed
+            this.renderer.setParams({
+                flowSpeed: 2.0 * intensity,
+                colorShift: 0.3 * intensity, // Warm/golden tone
+                amplitude: 0.8 * intensity
+            });
+
+            // Slowly fade back to normal
+            if (duration > 0) {
+                const ease = evt.ease || 'sineInOut';
+                this.startLerp({ key: 'flowSpeed', value: 4.0, duration: duration, ease: ease });
+                this.startLerp({ key: 'colorShift', value: 0.0, duration: duration, ease: ease });
+                this.startLerp({ key: 'amplitude', value: 0.5, duration: duration, ease: ease });
+            }
+        });
+
         // [Phase 2] Dynamic Time Dilation
         this.registerHandler('speed', (evt) => {
             if (evt.duration) {
@@ -338,8 +575,23 @@ export class RoutinePlayer {
         // Text (No-op in engine, handled by UI listener)
         this.registerHandler('text', () => {});
 
+        // [Phase 2] CSS Filters (Handled by UI)
+        this.registerHandler('cssFilter', () => {}); // Emits event, handled by UI
+
         // [Phase 2] Interactive Visual Overlays
         this.registerHandler('overlay', () => {}); // Emits event, handled by UI
+
+        // [Phase 2] Interactive Neuro-Storytelling (Choices)
+        this.registerHandler('choice', (evt) => {
+            // Emits event, handled by UI. UI will render buttons and handle logic.
+            // We just pause here to wait for user input.
+            if (evt.choices && evt.choices.length > 0) {
+                this.pause();
+                console.log("[Routine] Execution paused, waiting for user choice.");
+            } else {
+                console.warn("[Routine] Choice event lacks 'choices' array.");
+            }
+        });
 
         // Call (Sub-routine expansion happens at load time, runtime calls are warnings)
         this.registerHandler('call', (evt) => {
@@ -373,6 +625,22 @@ export class RoutinePlayer {
             if (evt.key !== undefined && evt.value !== undefined) {
                 this.state[evt.key] = evt.value;
                 console.log(`[Routine] State updated: ${evt.key} = ${evt.value}`);
+            }
+        });
+
+        // [Phase 2] Event Synchronization (Wait/Signal)
+        this.registerHandler('wait', (evt) => {
+            if (evt.signal) {
+                this.waitingForSignal = evt.signal;
+                console.log(`[Routine] Paused execution, waiting for signal: '${evt.signal}'`);
+            } else {
+                console.warn("[Routine] Wait event requires a 'signal' property.");
+            }
+        });
+
+        this.registerHandler('signal', (evt) => {
+            if (evt.signal) {
+                this.triggerSignal(evt.signal);
             }
         });
 
@@ -428,6 +696,19 @@ export class RoutinePlayer {
         this.handlers.set(type, callback);
     }
 
+    /**
+     * Trigger an external signal to resume routines waiting for it.
+     * @param {string} signalName - Name of the signal
+     */
+    triggerSignal(signalName) {
+        console.log(`[Routine] Received signal: '${signalName}'`);
+        if (this.waitingForSignal === signalName) {
+            console.log(`[Routine] Signal '${signalName}' matched. Resuming execution.`);
+            this.waitingForSignal = null;
+            // Ensure we don't stall due to elapsed time mismatch if paused
+        }
+    }
+
     get currentTime() {
         return this.elapsedTime;
     }
@@ -435,6 +716,16 @@ export class RoutinePlayer {
     setPlaybackSpeed(speed) {
         this.playbackSpeed = Math.max(0.1, Math.min(5.0, speed));
         console.log(`[Routine] Playback Speed: ${this.playbackSpeed.toFixed(1)}x`);
+    }
+
+    modulatePlaybackSpeed(targetSpeed, duration = 1.0, ease = 'linear') {
+        console.log(`[Routine] Modulating Playback Speed to ${targetSpeed}x over ${duration}s`);
+        this.startLerp({
+            key: 'playbackSpeed',
+            value: targetSpeed,
+            duration: duration,
+            ease: ease
+        });
     }
 
     get duration() {
@@ -708,6 +999,7 @@ export class RoutinePlayer {
         this.lastFrameTime = performance.now();
         this.cursor = 0;
         this.activeLerps = [];
+        this.waitingForSignal = null;
         this.tick();
         console.log("[Routine] Playback started");
     }
@@ -743,59 +1035,74 @@ export class RoutinePlayer {
         }
         this.cursor = 0;
         this.activeLerps = [];
+        this.waitingForSignal = null;
         if (this.onEvent) this.onEvent({ type: 'stop' });
     }
 
+    // [Routine Logic Requirement] Ensure the tick() loop uses performance.now() for drift-free timing
     tick() {
         if (!this.isPlaying) return;
 
-        // Safety check: if renderer is lost or stopped
-        if (!this.renderer) {
-             console.error("[Routine] Renderer lost, stopping playback.");
-             this.stop();
-             return;
-        }
-        // [Safety] Graceful degradation if WebGPU context is invalid or renderer stopped
-        if (typeof this.renderer.isRunning !== 'undefined' && this.renderer.isRunning === false) {
-             console.warn("[Routine] Renderer is not running. Stopping routine to prevent memory leaks or crashes.");
+        // Ensure WebGPU context gracefully degrades
+        const isDeviceLost = this._deviceLost;
+        const rendererMissing = !this.renderer || !this.renderer.device;
+
+        if (rendererMissing || isDeviceLost) {
+             console.warn("[Routine Engine] WebGPU Context is invalid or lost. Stopping playback gracefully.");
              this.stop();
              return;
         }
 
-        // [Routine Logic] Ensure the tick() loop uses performance.now() for drift-free timing
+        if (typeof this.renderer.isRunning !== 'undefined' && !this.renderer.isRunning) {
+             console.warn("[Routine Engine] WebGPU Renderer is not running. Pausing tick loop safely.");
+             this.stop();
+             return;
+        }
+
+        // Calculate precise delta time using performance.now() to prevent drift
         const now = performance.now();
-        const dt = (now - this.lastFrameTime) / 1000.0;
+        const deltaTime = (now - this.lastFrameTime) / 1000.0;
         this.lastFrameTime = now;
 
-        this.elapsedTime += dt * this.playbackSpeed;
+        // Advance timeline if not paused waiting for a signal
+        if (!this.waitingForSignal) {
+            this.elapsedTime += deltaTime * this.playbackSpeed;
 
-        while (this.cursor < this.routine.length) {
-            const currentRoutine = this.routine;
-            const event = this.routine[this.cursor];
+            // Process all events scheduled at or before the current elapsed time
+            while (this.cursor < this.routine.length) {
+                const activeRoutineContext = this.routine;
+                const nextEvent = this.routine[this.cursor];
 
-            if (this.elapsedTime >= event.time) {
-                this.executeEvent(event);
+                if (this.elapsedTime >= nextEvent.time) {
+                    this.executeEvent(nextEvent);
 
-                if (this.routine !== currentRoutine) {
-                    break;
+                    // Break if routine was swapped or replaced
+                    if (this.routine !== activeRoutineContext) {
+                        break;
+                    }
+
+                    this.cursor++;
+
+                    if (this.waitingForSignal) {
+                        break; // Stop immediately if a wait event was triggered
+                    }
+                } else {
+                    break; // Future event
                 }
-
-                this.cursor++;
-            } else {
-                break;
             }
         }
 
-        this.processLerps(dt);
+        this.processLerps(deltaTime);
 
+        // Check for routine completion
         if (this.cursor >= this.routine.length && this.activeLerps.length === 0) {
             if (this.loop) {
-                console.log("[Routine] Looping...");
+                console.log("[Routine Engine] Loop triggered.");
                 this.elapsedTime = 0;
                 this.cursor = 0;
                 this.activeLerps = [];
             } else {
-                console.log("[Routine] Finished");
+                console.log("[Routine Engine] Routine execution completed.");
                 this.stop();
                 return;
             }
@@ -853,25 +1160,26 @@ export class RoutinePlayer {
         });
     }
 
-    // [Event Handling] An extensible event execution mechanism (replaces rigid switch statements)
+    // [Event Handling Requirement] The executeEvent switch statement must be extensible
     executeEvent(event) {
-        // Resolve variables (e.g., "$state.myVar")
-        const resolvedEvent = this.resolveEventVariables(event);
+        // First resolve dynamic variables from state
+        const resolvedEvt = this.resolveEventVariables(event);
 
-        const eventHandler = this.handlers.get(resolvedEvent.type);
-        if (eventHandler) {
+        // Extensible mapping pattern
+        if (this.handlers.has(resolvedEvt.type)) {
+            const eventHandler = this.handlers.get(resolvedEvt.type);
             try {
-                eventHandler(resolvedEvent);
-            } catch (error) {
-                console.error(`[Routine] Error executing handler for '${resolvedEvent.type}':`, error);
+                eventHandler(resolvedEvt);
+            } catch (handlerError) {
+                console.error(`[Routine Engine] Error executing extensible handler '${resolvedEvt.type}':`, handlerError);
             }
         } else {
-            console.warn(`[Routine] No handler registered for event type: '${resolvedEvent.type}'`);
+            console.warn(`[Routine Engine] Unrecognized Event Type: '${resolvedEvt.type}'. Extensible registry lacks this handler.`);
         }
 
-        // Notify listener (UI sync)
-        if (this.onEvent) {
-            this.onEvent(resolvedEvent);
+        // Dispatch to UI listener if configured
+        if (typeof this.onEvent === 'function') {
+            this.onEvent(resolvedEvt);
         }
     }
 
@@ -1111,41 +1419,97 @@ export class RoutinePlayer {
                 });
 
             } else {
-                // Standard linear/eased lerp
-                if (params.rotation && params.rotation.x !== undefined) {
+                // Standard linear/eased lerp or Pathfinding arc
+                const currentRotX = this.renderer.targetRotation.x;
+                const currentRotY = this.renderer.targetRotation.y;
+                const currentZoom = this.renderer.targetZoom;
+
+                const targetRotX = (params.rotation && params.rotation.x !== undefined) ? params.rotation.x : currentRotX;
+                const targetRotY = (params.rotation && params.rotation.y !== undefined) ? params.rotation.y : currentRotY;
+                const targetZoom = params.zoom !== undefined ? params.zoom : currentZoom;
+
+                const deltaY = Math.abs(targetRotY - currentRotY);
+                const deltaX = Math.abs(targetRotX - currentRotX);
+
+                if (evt.avoidCollision && (deltaY > 2.0 || deltaX > 2.0)) {
+                    // Pathfinding: Create a spline path that arcs outward to avoid clipping through the center
+                    console.log(`[Routine] Pathfinding Camera Transition started (${duration}s) to avoid collision.`);
+                    const midRotX = (currentRotX + targetRotX) / 2.0;
+                    // Slightly offset the midpoint Y rotation to create a nice curve
+                    let midRotY = (currentRotY + targetRotY) / 2.0;
+                    if (Math.abs(currentRotY - targetRotY) > Math.PI) {
+                        midRotY += Math.PI; // Go the other way around if it's shorter
+                    }
+
+                    // Push the zoom out at the midpoint
+                    const maxZoom = Math.max(currentZoom, targetZoom);
+                    const midZoom = maxZoom + 3.0; // Bump out by 3.0 units
+
                     this.activeLerps.push({
                         key: 'cameraRotX',
-                        startVal: this.renderer.targetRotation.x,
-                        endVal: params.rotation.x,
+                        startVal: currentRotX,
+                        path: [currentRotX, midRotX, targetRotX],
                         elapsed: 0,
                         duration: duration,
                         isCamera: true,
                         ease: ease
                     });
-                }
 
-                if (params.rotation && params.rotation.y !== undefined) {
                     this.activeLerps.push({
                         key: 'cameraRotY',
-                        startVal: this.renderer.targetRotation.y,
-                        endVal: params.rotation.y,
+                        startVal: currentRotY,
+                        path: [currentRotY, midRotY, targetRotY],
                         elapsed: 0,
                         duration: duration,
                         isCamera: true,
                         ease: ease
                     });
-                }
 
-                if (params.zoom !== undefined) {
                     this.activeLerps.push({
                         key: 'cameraZoom',
-                        startVal: this.renderer.targetZoom,
-                        endVal: params.zoom,
+                        startVal: currentZoom,
+                        path: [currentZoom, midZoom, targetZoom],
                         elapsed: 0,
                         duration: duration,
                         isCamera: true,
                         ease: ease
                     });
+                } else {
+                    if (params.rotation && params.rotation.x !== undefined) {
+                        this.activeLerps.push({
+                            key: 'cameraRotX',
+                            startVal: currentRotX,
+                            endVal: targetRotX,
+                            elapsed: 0,
+                            duration: duration,
+                            isCamera: true,
+                            ease: ease
+                        });
+                    }
+
+                    if (params.rotation && params.rotation.y !== undefined) {
+                        this.activeLerps.push({
+                            key: 'cameraRotY',
+                            startVal: currentRotY,
+                            endVal: targetRotY,
+                            elapsed: 0,
+                            duration: duration,
+                            isCamera: true,
+                            ease: ease
+                        });
+                    }
+
+                    if (params.zoom !== undefined) {
+                        this.activeLerps.push({
+                            key: 'cameraZoom',
+                            startVal: currentZoom,
+                            endVal: targetZoom,
+                            elapsed: 0,
+                            duration: duration,
+                            isCamera: true,
+                            ease: ease
+                        });
+                    }
                 }
             }
             return;
@@ -1156,3 +1520,4 @@ export class RoutinePlayer {
         }
     }
 }
+// End of routine player

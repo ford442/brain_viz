@@ -4,6 +4,7 @@ import { BrainRenderer } from './brain-renderer.js';
 import { InferenceEngine } from './inference-engine.js';
 import { RoutinePlayer } from './routine-player.js'; // [NEW]
 import { AudioReactor } from './audio-reactor.js';   // [NEW]
+import { TensorPlayer, BUILTIN_PATTERNS } from './tensor-player.js'; // [BCI]
 
 // [Phase 3] Keyboard Triggered Routines
 const MINI_ROUTINES = {
@@ -43,10 +44,25 @@ const MINI_ROUTINES = {
         { time: 0.5, type: 'lerp', key: 'sparkle', value: 0.0, duration: 2.0, ease: 'quadOut' }, // Fade out
         { time: 0.5, type: 'lerp', key: 'flowSpeed', value: 4.0, duration: 3.0, ease: 'quadOut' } // Slow down
     ],
-    '6': [ // Panic Attack
+    '6': [ // Cortisol Structural Decay
+        { time: 0.0, type: 'text', message: 'Cortisol Spike Detected', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome mode to see breakdown
+        { time: 0.0, type: 'lerp', key: 'cortisol', value: 1.0, duration: 3.0, ease: 'quadIn' },
+        { time: 0.0, type: 'lerp', key: 'colorShift', value: 0.8, duration: 3.0 }, // Shift to warning colors
+        { time: 0.0, type: 'sound', frequency: 100, oscType: 'sawtooth', duration: 3.0, volume: 0.8 },
+        { time: 3.0, type: 'text', message: 'Structural Integrity Compromised', duration: 2.0 },
+        { time: 3.0, type: 'shake', intensity: 0.05, duration: 2.0 },
+        { time: 5.0, type: 'text', message: 'Recovering...', duration: 2.0 },
+        { time: 5.0, type: 'lerp', key: 'cortisol', value: 0.0, duration: 4.0, ease: 'quadOut' },
+        { time: 5.0, type: 'lerp', key: 'colorShift', value: 0.0, duration: 4.0 },
+        { time: 9.0, type: 'calm' }
+    ],
+    'P': [ // Panic Attack (Moved from 6)
         { time: 0.0, type: 'text', message: 'PANIC!', duration: 1.0 },
         { time: 0.0, type: 'style', value: 1 }, // Cyber/Glitch
-        { time: 0.0, type: 'shake', intensity: 0.1, duration: 4.0 }, // Big shake
+        { time: 0.0, type: 'shake', intensity: 0.1, duration: 4.0 },
+        { time: 0.0, type: 'stress', intensity: 1.5, duration: 2.0, ease: 'quadOut' },
+        { time: 2.0, type: 'stress', intensity: 0.0, duration: 2.0, ease: 'quadInOut' }, // Big shake
         { time: 0.0, type: 'sound', frequency: 150, oscType: 'sawtooth', duration: 4.0, volume: 0.6 }, // Low rumble
         { time: 0.0, type: 'cinematic', aberration: 1.0, duration: 0.2 }, // [Phase 7] Aberration spike
         { time: 0.0, type: 'cinematic', grain: 0.8, duration: 0.5 }, // [Phase 7] Grain spike
@@ -74,6 +90,17 @@ const MINI_ROUTINES = {
     '9': [ // Isometric View
         { time: 0.0, type: 'camera', target: 'iso', duration: 1.5, ease: 'quadInOut' },
         { time: 0.0, type: 'text', message: 'Isometric Projection', duration: 1.5 }
+    ],
+    'f': [ // CSS Filter Demo
+        { time: 0.0, type: 'text', message: 'Applying CSS Filters...', duration: 2.0 },
+        { time: 0.0, type: 'cssFilter', filter: 'blur(5px) sepia(0.8)' },
+        { time: 2.0, type: 'text', message: 'High Contrast', duration: 2.0 },
+        { time: 2.0, type: 'cssFilter', filter: 'contrast(200%) hue-rotate(90deg)' },
+        { time: 4.0, type: 'text', message: 'Inverted', duration: 2.0 },
+        { time: 4.0, type: 'cssFilter', filter: 'invert(100%)' },
+        { time: 6.0, type: 'calm' },
+        { time: 6.0, type: 'cssFilter', filter: 'none' },
+        { time: 6.0, type: 'text', message: 'Filters Removed', duration: 2.0 }
     ],
     '0': [ // Microscope (DoF Demo)
         { time: 0.0, type: 'style', value: 2 }, // Connectome
@@ -130,6 +157,46 @@ const MINI_ROUTINES = {
         { time: 2.0, type: 'calm' },
         { time: 2.0, type: 'text', message: 'Memory Suppressed', duration: 2.0 }
     ],
+    'd': [ // Dopamine Burst
+        { time: 0.0, type: 'text', message: 'Dopamine Rush', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'dopamine', intensity: 1.2, duration: 3.0 },
+        { time: 3.0, type: 'text', message: 'Baseline restored.', duration: 2.0 },
+        { time: 4.0, type: 'calm' }
+    ],
+
+    'j': [ // Melatonin Sleep Onset
+        { time: 0.0, type: 'text', message: 'Melatonin Release: Sleep Onset', duration: 4.0 },
+        { time: 0.0, type: 'style', value: 0 }, // Organic
+        { time: 0.0, type: 'melatonin', duration: 5.0 },
+        { time: 6.0, type: 'calm' },
+        { time: 6.0, type: 'text', message: 'Deep Sleep', duration: 2.0 }
+    ],
+    'e': [ // Endorphin Rush
+        { time: 0.0, type: 'text', message: 'Endorphin Rush: Immunity to Stress', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'stress', intensity: 2.0, duration: 0.0 }, // simulate prior stress
+        { time: 0.0, type: 'shake', intensity: 0.1, duration: 0.0 }, // simulate prior shake
+        { time: 1.0, type: 'text', message: 'Releasing Endorphins...', duration: 2.0 },
+        { time: 1.0, type: 'endorphin', duration: 4.0 },
+        { time: 5.0, type: 'calm' }
+    ],
+    'u': [ // Noradrenaline Spike
+        { time: 0.0, type: 'text', message: 'Noradrenaline Spike: Global Alertness!', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'sound', frequency: 1200, oscType: 'square', duration: 0.3, volume: 0.6 },
+        { time: 0.0, type: 'noradrenaline', intensity: 1.5, duration: 3.0 },
+        { time: 3.0, type: 'text', message: 'Alertness returning to baseline.', duration: 2.0 },
+        { time: 4.0, type: 'calm' }
+    ],
+    'a': [ // Adrenaline Surge
+        { time: 0.0, type: 'text', message: 'Adrenaline Surge!', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'sound', frequency: 800, oscType: 'sawtooth', duration: 0.5, volume: 0.8 },
+        { time: 0.0, type: 'adrenaline', intensity: 1.5, duration: 4.0 },
+        { time: 4.0, type: 'text', message: 'Stabilized.', duration: 2.0 },
+        { time: 5.0, type: 'calm' }
+    ],
     'c': [ // Custom Audio Support
         { time: 0.0, type: 'text', message: 'Playing External Audio', duration: 2.0 },
         { time: 0.0, type: 'sound', url: 'https://cdn.freesound.org/previews/339/339809_5923383-lq.mp3', volume: 0.8 },
@@ -147,6 +214,17 @@ const MINI_ROUTINES = {
         { time: 3.0, type: 'text', message: 'Time Dilation: Normal', duration: 2.0 },
         { time: 3.0, type: 'speed', value: 1.0, duration: 1.0, ease: 'linear' }, // Back to normal
         { time: 4.0, type: 'calm' }
+    ],
+    'x': [ // Advanced Time Modulation Demo
+        { time: 0.0, type: 'text', message: 'Advanced Time Dilation: Modulate Speed...', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 15.0, duration: 1.0 },
+        { time: 0.0, type: 'modulate_speed', targetSpeed: 0.2, duration: 3.0, ease: 'sineInOut' },
+        { time: 3.0, type: 'text', message: 'Time Rebounding...', duration: 2.0 },
+        { time: 3.0, type: 'modulate_speed', targetSpeed: 4.0, duration: 2.0, ease: 'quadIn' },
+        { time: 5.0, type: 'text', message: 'Time Stabilized.', duration: 2.0 },
+        { time: 5.0, type: 'modulate_speed', targetSpeed: 1.0, duration: 2.0, ease: 'quadOut' },
+        { time: 7.0, type: 'calm' }
     ],
     'p': [ // Spline Path Demo
         { time: 0.0, type: 'text', message: 'Spline Interpolation...', duration: 2.0 },
@@ -210,11 +288,164 @@ const MINI_ROUTINES = {
     'math_end': [
         { time: 0.0, type: 'text', message: 'Math Sequence Complete', duration: 2.0 },
         { time: 0.0, type: 'calm' }
+    ],
+    's': [ // Wait/Signal Demo
+        { time: 0.0, type: 'text', message: 'Waiting for User Signal (Press Space)...', duration: 0.0 },
+        { time: 0.0, type: 'style', value: 1 },
+        { time: 0.0, type: 'wait', signal: 'continue_scan' },
+        { time: 0.0, type: 'text', message: 'Signal Received! Proceeding...', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 2 },
+        { time: 0.0, type: 'camera', target: 'deep', duration: 2.0, ease: 'quadInOut' },
+        { time: 3.0, type: 'calm' },
+        { time: 3.0, type: 'camera', target: 'global', duration: 2.0, ease: 'quadOut' }
+    ],
+    'o': [ // Orbit/Avoid Collision Demo
+        { time: 0.0, type: 'text', message: 'Linear Transition (Clipping)', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 2 },
+        { time: 0.0, type: 'camera', target: 'frontal', duration: 0.5 },
+        { time: 2.0, type: 'camera', target: 'occipital', duration: 3.0, ease: 'linear' },
+        { time: 6.0, type: 'text', message: 'Pathfinding Transition (Arcing)', duration: 3.0 },
+        { time: 6.0, type: 'camera', target: 'frontal', duration: 0.5 },
+        { time: 7.0, type: 'camera', target: 'occipital', duration: 4.0, avoidCollision: true, ease: 'quadInOut' },
+        { time: 12.0, type: 'calm' },
+        { time: 12.0, type: 'camera', target: 'global', duration: 2.0 }
+    ],
+    'q': [ // Interactive Neuro-Storytelling Demo
+        { time: 0.0, type: 'text', message: 'Entering Simulation...', duration: 2.0 },
+        { time: 0.0, type: 'camera', target: 'frontal', duration: 2.0, ease: 'quadOut' },
+        { time: 0.0, type: 'style', value: 1 },
+        { time: 2.0, type: 'choice', message: 'Anomalous signal detected in the temporal lobe. How to proceed?', choices: [
+            { text: 'Investigate Signal', branch: 'q_investigate' },
+            { text: 'Suppress Signal', branch: 'q_suppress' },
+            { text: 'Ignore', branch: 'q_ignore' }
+        ]}
+    ],
+    'q_investigate': [
+        { time: 0.0, type: 'text', message: 'Focusing sensors...', duration: 2.0 },
+        { time: 0.0, type: 'camera', target: 'temporal', duration: 2.0, ease: 'sineInOut' },
+        { time: 0.0, type: 'style', value: 2 },
+        { time: 2.0, type: 'stimulus', target: 'temporal', intensity: 3.0 },
+        { time: 2.5, type: 'text', message: 'Memory fragment recovered.', duration: 3.0 },
+        { time: 6.0, type: 'calm' },
+        { time: 6.0, type: 'camera', target: 'global', duration: 2.0 }
+    ],
+    'q_suppress': [
+        { time: 0.0, type: 'text', message: 'Initiating suppression protocol...', duration: 2.0 },
+        { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 0.5, duration: 2.0 },
+        { time: 0.0, type: 'lerp', key: 'amplitude', value: 0.1, duration: 2.0 },
+        { time: 0.0, type: 'colorShift', value: 0.5, duration: 2.0 },
+        { time: 2.0, type: 'text', message: 'Signal stabilized.', duration: 3.0 },
+        { time: 5.0, type: 'calm' },
+        { time: 5.0, type: 'camera', target: 'global', duration: 2.0 }
+    ],
+    'q_ignore': [
+        { time: 0.0, type: 'text', message: 'Signal ignored. Continuing normal operation.', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 0 },
+        { time: 2.0, type: 'calm' },
+        { time: 2.0, type: 'camera', target: 'global', duration: 2.0 }
+    ],
+        'k': [ // Binaural Beats Demo
+            { time: 0.0, type: 'text', message: 'Inducing Gamma Waves (40Hz)', duration: 5.0 },
+            { time: 0.0, type: 'binaural', baseFrequency: 200, beatFrequency: 40, duration: 5.0, volume: 0.5 },
+            { time: 0.0, type: 'style', value: 2 },
+            { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 15.0, duration: 2.0 },
+            { time: 5.0, type: 'text', message: 'Inducing Theta Waves (6Hz)', duration: 5.0 },
+            { time: 5.0, type: 'binaural', baseFrequency: 150, beatFrequency: 6, duration: 5.0, volume: 0.5 },
+            { time: 5.0, type: 'lerp', key: 'flowSpeed', value: 2.0, duration: 2.0 },
+            { time: 10.0, type: 'calm' }
+        ],
+    'y': [ // Oxytocin Burst
+        { time: 0.0, type: 'text', message: 'Oxytocin Release: Bonding & Trust', duration: 3.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'sound', frequency: 528, oscType: 'sine', duration: 3.0, volume: 0.4 }, // 528Hz Love Frequency
+        { time: 0.0, type: 'oxytocin', intensity: 1.5, duration: 4.0 },
+        { time: 4.0, type: 'text', message: 'Connection established.', duration: 2.0 },
+        { time: 5.0, type: 'calm' }
+    ],
+    'h': [ // GABA Deceleration
+        { time: 0.0, type: 'text', message: 'GABA Release: Decelerating Pulses...', duration: 3.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'gaba', intensity: 1.5, duration: 4.0 },
+        { time: 5.0, type: 'text', message: 'System Relaxed.', duration: 2.0 },
+        { time: 6.0, type: 'lerp', key: 'playbackSpeed', value: 1.0, duration: 2.0, ease: 'quadInOut' },
+        { time: 6.0, type: 'calm' }
+    ],
+    'n': [ // Neuro-Cinema: Dramatic animated mode-shifting narrative
+        { time: 0.0,  type: 'text',   message: 'Neural Deep Scan — Initializing', duration: 3.0 },
+        { time: 0.0,  type: 'style',  value: 0 },
+        { time: 0.0,  type: 'camera', target: 'global', duration: 1.5 },
+        { time: 0.0,  type: 'lerp',   key: 'flowSpeed', value: 3.0, duration: 1.0 },
+        { time: 0.5,  type: 'stimulus', target: 'deep', intensity: 2.0 },
+        { time: 1.5,  type: 'stimulus', target: 'frontal', intensity: 1.5 },
+        { time: 2.5,  type: 'text',   message: 'Organic cortex mapped — switching to fiber view', duration: 3.5 },
+        { time: 3.0,  type: 'mode-transition', toMode: 2, duration: 2.0, ease: 'sineInOut' },
+        { time: 3.0,  type: 'lerp',   key: 'flowSpeed', value: 10.0, duration: 2.0, ease: 'quadIn' },
+        { time: 4.0,  type: 'stimulus', target: 'temporal', intensity: 2.0 },
+        { time: 4.5,  type: 'stimulus', target: 'parietal', intensity: 2.0 },
+        { time: 5.5,  type: 'text',   message: 'Connectome active — propagation cascade', duration: 3.5 },
+        { time: 7.0,  type: 'camera', target: 'deep', zoom: 5.0, duration: 2.0, ease: 'quadOut' },
+        { time: 8.5,  type: 'text',   message: 'Thermal gradient — metabolic demand', duration: 3.5 },
+        { time: 9.0,  type: 'mode-transition', toMode: 3, duration: 2.5, ease: 'sineInOut' },
+        { time: 9.0,  type: 'stimulus', target: 'frontal', intensity: 3.0 },
+        { time: 10.0, type: 'camera', target: 'global', duration: 2.0, ease: 'quadOut' },
+        { time: 11.5, type: 'stimulus', target: 'occipital', intensity: 2.5 },
+        { time: 12.0, type: 'text',   message: 'Returning to surface — scan complete', duration: 3.5 },
+        { time: 13.0, type: 'mode-transition', toMode: 0, duration: 2.5, ease: 'sineInOut' },
+        { time: 13.0, type: 'lerp',   key: 'flowSpeed', value: 4.0, duration: 2.0 },
+        { time: 15.5, type: 'calm' },
+        { time: 15.5, type: 'text',   message: 'Scan complete.', duration: 2.0 }
+    ],
+    'A': [ // Altitude Ascent (climb to 5,500m with progression)
+        { time: 0.0, type: 'text', message: 'Ascending to High Altitude...', duration: 3.0 },
+        { time: 0.0, type: 'camera', target: 'iso', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome to see degradation
+        { time: 0.0, type: 'lerp', key: 'altitude', value: 5500, duration: 8.0, ease: 'quadIn' },
+        { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 2.0, duration: 8.0 }, // Slowed cognition
+        { time: 1.0, type: 'stimulus', target: 'frontal', intensity: 1.5 }, // Frontal impact
+        { time: 2.0, type: 'stimulus', target: 'temporal', intensity: 1.0 },
+        { time: 3.0, type: 'stimulus', target: 'parietal', intensity: 0.8 },
+        { time: 8.0, type: 'text', message: 'Severe Hypoxia Detected', duration: 2.0 },
+        { time: 8.0, type: 'cinematic', grain: 0.6, duration: 2.0 } // Perceptual fog
+    ],
+    'D': [ // Descent (recovery to sea level)
+        { time: 0.0, type: 'text', message: 'Descending to Sea Level...', duration: 4.0 },
+        { time: 0.0, type: 'lerp', key: 'altitude', value: 0, duration: 8.0, ease: 'quadOut' },
+        { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 4.0, duration: 8.0, ease: 'quadOut' },
+        { time: 0.0, type: 'lerp', key: 'grain', value: 0.0, duration: 8.0 },
+        { time: 8.0, type: 'text', message: 'Oxygen Saturation Restored', duration: 2.0 },
+        { time: 8.0, type: 'calm' }
+    ],
+    'H': [ // Hypoxic Crisis (acute severe altitude)
+        { time: 0.0, type: 'text', message: 'HYPOXIC CRISIS!', duration: 1.5 },
+        { time: 0.0, type: 'param', key: 'altitude', value: 8500 }, // Extreme
+        { time: 0.0, type: 'shake', intensity: 0.2, duration: 5.0 },
+        { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 1.0, duration: 2.0 }, // Shutdown
+        { time: 0.0, type: 'lerp', key: 'aberration', value: 1.5, duration: 2.0 },
+        { time: 0.0, type: 'lerp', key: 'grain', value: 0.9, duration: 2.0 },
+        { time: 0.0, type: 'lerp', key: 'colorShift', value: 1.0, duration: 1.0 }, // Cyanotic shift
+        { time: 2.0, type: 'stimulus', target: 'deep', intensity: 2.0 }, // Emergency response
+        { time: 5.0, type: 'text', message: 'Initiating Emergency Descent...', duration: 2.0 },
+        { time: 5.0, type: 'lerp', key: 'altitude', value: 0, duration: 6.0, ease: 'quadOut' },
+        { time: 5.0, type: 'lerp', key: 'shake', value: 0.0, duration: 6.0 },
+        { time: 11.0, type: 'calm' }
     ]
 };
 
+class FilterUIOverlay {
+    constructor(canvas) {
+        this.canvas = canvas;
+    }
+
+    applyFilter(filterString) {
+        if (this.canvas) {
+            this.canvas.style.filter = filterString;
+        }
+    }
+}
+
 async function init() {
     const canvas = document.getElementById('canvas');
+    const filterOverlay = new FilterUIOverlay(canvas);
     const errorDiv = document.getElementById('error');
     
     // UI Elements
@@ -229,7 +460,8 @@ async function init() {
         sparkle: document.getElementById('sparkle'), // [Phase 5]
         growth: document.getElementById('growth'), // [Phase 6]
         shake: document.getElementById('shake'), // [Phase 2]
-        stress: document.getElementById('stress'), // [Phase 2]
+        stress: document.getElementById('stress'), // [Phase 2] Stress Distortion
+        cortisol: document.getElementById('cortisol'), // [Phase 5] Cortisol Decay
         aberration: document.getElementById('aberration'), // [Phase 7]
         grain: document.getElementById('grain'), // [Phase 7]
         focus: document.getElementById('focus'), // [Phase 7]
@@ -239,6 +471,9 @@ async function init() {
         lightDirX: document.getElementById('lightDirX'), // [Phase 2]
         lightDirY: document.getElementById('lightDirY'), // [Phase 2]
         lightDirZ: document.getElementById('lightDirZ'), // [Phase 2]
+        altitude: document.getElementById('altitude'), // Altitude/Hypoxia
+        oxygen: document.getElementById('oxygen'), // Altitude/Hypoxia (read-only)
+        metabolicRate: document.getElementById('metabolic'), // Altitude/Hypoxia
         style: document.getElementById('style-mode')
     };
     
@@ -253,7 +488,8 @@ async function init() {
         sparkle: document.getElementById('val-sparkle'), // [Phase 5]
         growth: document.getElementById('val-growth'), // [Phase 6]
         shake: document.getElementById('val-shake'), // [Phase 2]
-        stress: document.getElementById('val-stress'), // [Phase 2]
+        stress: document.getElementById('val-stress'), // [Phase 2] Stress Distortion
+        cortisol: document.getElementById('val-cortisol'), // [Phase 5] Cortisol Decay
         aberration: document.getElementById('val-aberration'), // [Phase 7]
         grain: document.getElementById('val-grain'), // [Phase 7]
         focus: document.getElementById('val-focus'), // [Phase 7]
@@ -262,7 +498,10 @@ async function init() {
         dirIntensity: document.getElementById('val-dirIntensity'), // [Phase 2]
         lightDirX: document.getElementById('val-lightDirX'), // [Phase 2]
         lightDirY: document.getElementById('val-lightDirY'), // [Phase 2]
-        lightDirZ: document.getElementById('val-lightDirZ') // [Phase 2]
+        lightDirZ: document.getElementById('val-lightDirZ'), // [Phase 2]
+        altitude: document.getElementById('val-altitude'), // Altitude/Hypoxia
+        oxygen: document.getElementById('val-oxygen'), // Altitude/Hypoxia (read-only)
+        metabolicRate: document.getElementById('val-metabolic') // Altitude/Hypoxia
     };
     
     if (!navigator.gpu) {
@@ -276,8 +515,8 @@ async function init() {
         await renderer.initialize();
         
         // --- 1. SETUP ROUTINE PLAYER ---
-        // Define region map for easy scripting
-        const regionMap = {
+        // Define explicit regions for easy scripting and better camera angles
+        const regionCoordinatesMap = {
             'frontal': [0, 0, 1.2],
             'occipital': [0, 0, -1.2],
             'parietal': [0, 1.0, 0],
@@ -285,15 +524,26 @@ async function init() {
             'deep': [0, 0, 0]
         };
 
-        const cameraMap = {
+        // Define a map of camera coordinates to easily jump to specific views
+        const cameraCoordinatesMap = {
             'overview': { rotation: { x: 0.5, y: -0.5 }, zoom: 4.0 },
             'close-up': { rotation: { x: 0.1, y: 0.1 }, zoom: 1.5 },
             'scan': { rotation: { x: 0.8, y: 0.2 }, zoom: 3.0 }
         };
 
-        const player = new RoutinePlayer(renderer, regionMap, cameraMap);
-        console.log("[Main] RoutinePlayer connected safely.");
-        window.playerState = player.state; // Expose for simple inline conditions
+        // Initialize RoutinePlayer, ensuring it expects the BrainRenderer instance
+        // [Integration Check] Verified `init()` flow is not broken
+        const player = new RoutinePlayer(renderer, regionCoordinatesMap, cameraCoordinatesMap);
+        console.log("[Neuro-Script Initialization Cycle] Routine Engine Instantiated.");
+
+        // [Safety Handling] Hook up WebGPU device lost promise for player fallback
+        if (renderer.device && renderer.device.lost) {
+            renderer.device.lost.then((lostEventInfo) => {
+                console.error("[Main Logic] WebGPU Context Lost event intercepted. Stopping all routines safely.", lostEventInfo);
+                if (player) player.stop();
+            });
+        }
+        window.playerState = player.state; // Share state with global window for inline logic
 
         // [Phase 3] Extensible Event System Demo
         // Register a custom 'debug' handler to demonstrate the new V2.9 architecture
@@ -308,6 +558,14 @@ async function init() {
 
         // --- KEYBOARD TRIGGERS ---
         document.addEventListener('keydown', (e) => {
+            // Signal triggering (Spacebar)
+            if (e.code === 'Space') {
+                e.preventDefault();
+                if (player.waitingForSignal === 'continue_scan') {
+                    player.triggerSignal('continue_scan');
+                }
+            }
+
             const routine = MINI_ROUTINES[e.key];
             if (routine) {
                 console.log(`[Main] Triggering Mini-Routine: ${e.key}`);
@@ -327,9 +585,8 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, m=Memory, c=Custom Audio, t=Time Warp, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, d=Dopamine, e=Endorphin, j=Melatonin, a=Adrenaline, u=Noradrenaline, m=Memory, c=Custom Audio, t=Time Warp, x=Time Mod, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters, k=Binaural, y=Oxytocin, h=GABA, n=Neuro-Cinema';
         document.body.appendChild(legend);
-
         // [Phase 4] Narrative Overlay
         const narrative = document.createElement('div');
         narrative.id = 'narrative-overlay';
@@ -374,6 +631,46 @@ async function init() {
         let narrativeTimeout = null;
 
         player.onEvent = (event) => {
+             if (event.type === 'choice') {
+                 if (event.choices) {
+                     let html = `<h3>${event.message || 'Make a choice:'}</h3><div style="display:flex; flex-direction:column; gap:10px; margin-top:20px;">`;
+                     event.choices.forEach((c, idx) => {
+                         html += `<button id="choice-btn-${idx}" style="padding: 10px 20px; background: #0055aa; color: white; border: none; cursor: pointer; border-radius: 4px; font-family: monospace; font-size: 14px;">${c.text}</button>`;
+                     });
+                     html += `</div>`;
+
+                     visualOverlay.innerHTML = html;
+                     visualOverlay.style.display = 'block';
+
+                     event.choices.forEach((c, idx) => {
+                         const btn = document.getElementById(`choice-btn-${idx}`);
+                         if (btn) {
+                             btn.onmouseover = () => btn.style.background = '#0077ff';
+                             btn.onmouseout = () => btn.style.background = '#0055aa';
+                             btn.onclick = () => {
+                                 visualOverlay.style.display = 'none';
+
+                                 // Apply state updates if present
+                                 if (c.stateUpdates) {
+                                     for (const [key, val] of Object.entries(c.stateUpdates)) {
+                                         player.state[key] = val;
+                                     }
+                                 }
+
+                                 // Execute branch if present
+                                 if (c.branch && player.subRoutines[c.branch]) {
+                                     console.log(`[UI] Branching to: ${c.branch}`);
+                                     // We use playNow which resets the current routine to the branch
+                                     player.playNow(player.subRoutines[c.branch]);
+                                 } else {
+                                     // Just resume if no branch
+                                     player.resume();
+                                 }
+                             };
+                         }
+                     });
+                 }
+             }
              if (event.type === 'overlay') {
                  if (event.content) {
                      visualOverlay.innerHTML = event.content;
@@ -404,9 +701,20 @@ async function init() {
                      visualOverlay.style.display = 'none';
                  }
              }
+             if (event.type === 'cssFilter') {
+                 if (event.filter) {
+                     filterOverlay.applyFilter(event.filter);
+                 }
+             }
              if (event.type === 'text') {
                  if (event.message) {
-                     narrative.textContent = event.message;
+                     // Simple Markdown parsing for bold, italic, and links
+                     let htmlMessage = event.message
+                         .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>') // Bold
+                         .replace(/\*([^*]+)\*/g, '<em>$1</em>') // Italic
+                         .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:#00aaff;">$1</a>'); // Links
+
+                     narrative.innerHTML = htmlMessage;
                      narrative.style.opacity = '1';
 
                      if (narrativeTimeout) clearTimeout(narrativeTimeout);
@@ -436,7 +744,7 @@ async function init() {
              if (event.type === 'calm') {
                  // Calm state modifies amplitude, frequency, smoothing
                  // We should sync them if they are in the renderer params
-                 ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
+                 ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'cortisol', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
                     if (inputs[k]) inputs[k].value = renderer.params[k];
                     if (labels[k]) labels[k].textContent = renderer.params[k].toFixed(2);
                  });
@@ -637,20 +945,275 @@ async function init() {
         controls.appendChild(routineContainer);
 
         // -----------------------------
+        // [BCI] Tensor Data Player Panel
+        // -----------------------------
+        const tensorPlayer = new TensorPlayer(renderer);
+
+        const bciContainer = document.createElement('div');
+        bciContainer.style.marginTop = '10px';
+        bciContainer.style.paddingTop = '10px';
+        bciContainer.style.borderTop = '1px solid #444';
+
+        const bciTitle = document.createElement('div');
+        bciTitle.textContent = 'BCI Tensor Playback';
+        bciTitle.style.color = '#00ffaa';
+        bciTitle.style.fontSize = '12px';
+        bciTitle.style.fontWeight = 'bold';
+        bciTitle.style.marginBottom = '6px';
+        bciContainer.appendChild(bciTitle);
+
+        // Built-in pattern selector
+        const bciPatternSelect = document.createElement('select');
+        bciPatternSelect.style.width = '100%';
+        bciPatternSelect.style.marginBottom = '5px';
+        bciPatternSelect.style.background = '#1a2a3a';
+        bciPatternSelect.style.color = '#ddd';
+        bciPatternSelect.style.border = '1px solid #444';
+        bciPatternSelect.style.padding = '3px';
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = '';
+        defaultOpt.textContent = '— Built-in Patterns —';
+        bciPatternSelect.appendChild(defaultOpt);
+        BUILTIN_PATTERNS.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            opt.textContent = p.label;
+            opt.title = p.description;
+            bciPatternSelect.appendChild(opt);
+        });
+        bciContainer.appendChild(bciPatternSelect);
+
+        // Transport row
+        const bciTransport = document.createElement('div');
+        bciTransport.style.display = 'flex';
+        bciTransport.style.gap = '4px';
+        bciTransport.style.marginBottom = '5px';
+
+        const bciPlay = document.createElement('button');
+        bciPlay.textContent = '▶';
+        bciPlay.title = 'Play BCI data';
+        bciPlay.style.flex = '1';
+        bciPlay.style.background = '#005522';
+        bciPlay.style.color = '#00ffaa';
+
+        const bciPause = document.createElement('button');
+        bciPause.textContent = '⏸';
+        bciPause.title = 'Pause';
+        bciPause.style.flex = '1';
+        bciPause.style.background = '#334';
+
+        const bciStop = document.createElement('button');
+        bciStop.textContent = '⏹';
+        bciStop.title = 'Stop & restore physics';
+        bciStop.style.flex = '1';
+        bciStop.style.background = '#330011';
+        bciStop.style.color = '#ff5566';
+
+        bciTransport.appendChild(bciPlay);
+        bciTransport.appendChild(bciPause);
+        bciTransport.appendChild(bciStop);
+        bciContainer.appendChild(bciTransport);
+
+        // Speed control
+        const bciSpeedRow = document.createElement('div');
+        bciSpeedRow.style.display = 'flex';
+        bciSpeedRow.style.gap = '8px';
+        bciSpeedRow.style.alignItems = 'center';
+        bciSpeedRow.style.fontSize = '11px';
+        bciSpeedRow.style.color = '#aaa';
+        bciSpeedRow.style.marginBottom = '5px';
+
+        const bciSpeedLabel = document.createElement('span');
+        bciSpeedLabel.textContent = '1.0×';
+        bciSpeedLabel.style.minWidth = '32px';
+
+        const bciSpeedSlider = document.createElement('input');
+        bciSpeedSlider.type = 'range';
+        bciSpeedSlider.min = '0.1';
+        bciSpeedSlider.max = '4.0';
+        bciSpeedSlider.step = '0.1';
+        bciSpeedSlider.value = '1.0';
+        bciSpeedSlider.style.flex = '1';
+        bciSpeedSlider.addEventListener('input', (e) => {
+            const v = parseFloat(e.target.value);
+            tensorPlayer.setSpeed(v);
+            bciSpeedLabel.textContent = v.toFixed(1) + '×';
+        });
+
+        bciSpeedRow.appendChild(document.createTextNode('Speed: '));
+        bciSpeedRow.appendChild(bciSpeedSlider);
+        bciSpeedRow.appendChild(bciSpeedLabel);
+        bciContainer.appendChild(bciSpeedRow);
+
+        // Frame scrubber + counter
+        const bciScrubRow = document.createElement('div');
+        bciScrubRow.style.display = 'flex';
+        bciScrubRow.style.gap = '6px';
+        bciScrubRow.style.alignItems = 'center';
+        bciScrubRow.style.marginBottom = '5px';
+
+        const bciScrubber = document.createElement('input');
+        bciScrubber.type = 'range';
+        bciScrubber.min = '0';
+        bciScrubber.max = '1';
+        bciScrubber.value = '0';
+        bciScrubber.style.flex = '1';
+
+        const bciFrameLabel = document.createElement('span');
+        bciFrameLabel.textContent = '0/0';
+        bciFrameLabel.style.fontSize = '10px';
+        bciFrameLabel.style.color = '#888';
+        bciFrameLabel.style.minWidth = '48px';
+
+        bciScrubber.addEventListener('input', (e) => {
+            tensorPlayer.seek(parseInt(e.target.value));
+        });
+
+        bciScrubRow.appendChild(bciScrubber);
+        bciScrubRow.appendChild(bciFrameLabel);
+        bciContainer.appendChild(bciScrubRow);
+
+        // File loader (custom .bin / .npy / .csv)
+        const bciFileLabel = document.createElement('label');
+        bciFileLabel.textContent = 'Load tensor file (.bin / .npy / .csv)';
+        bciFileLabel.style.fontSize = '11px';
+        bciFileLabel.style.color = '#888';
+        bciContainer.appendChild(bciFileLabel);
+
+        const bciFileInput = document.createElement('input');
+        bciFileInput.type = 'file';
+        bciFileInput.accept = '.bin,.npy,.csv';
+        bciFileInput.style.width = '100%';
+        bciFileInput.style.color = '#aaa';
+        bciFileInput.style.fontSize = '11px';
+        bciFileInput.style.marginTop = '3px';
+        bciContainer.appendChild(bciFileInput);
+
+        controls.appendChild(bciContainer);
+
+        // TensorPlayer callbacks
+        tensorPlayer.onFrameChange = (frame, total) => {
+            bciFrameLabel.textContent = `${frame}/${total}`;
+            if (total > 1) {
+                bciScrubber.max = total - 1;
+                bciScrubber.value = frame;
+            }
+        };
+        tensorPlayer.onPlayStateChange = (playing) => {
+            bciPlay.textContent = playing ? '⏸' : '▶';
+            bciPlay.style.background = playing ? '#005588' : '#005522';
+        };
+
+        // BCI transport button handlers
+        let bciGenerating = false;
+        const loadAndPlayPattern = async (patternId) => {
+            const pattern = BUILTIN_PATTERNS.find(p => p.id === patternId);
+            if (!pattern) return;
+            if (bciGenerating) return;
+            bciGenerating = true;
+            bciPlay.textContent = '⏳';
+            bciPlay.disabled = true;
+            try {
+                // Switch renderer to the pattern's suggested mode
+                renderer.setParams({ style: pattern.suggestedMode });
+                if (inputs.style) inputs.style.value = pattern.suggestedMode;
+                const frames = await Promise.resolve(pattern.generate(tensorPlayer));
+                tensorPlayer.loadFrames(frames);
+                tensorPlayer.play();
+            } finally {
+                bciGenerating = false;
+                bciPlay.disabled = false;
+            }
+        };
+
+        bciPlay.onclick = async () => {
+            if (tensorPlayer.isPlaying) {
+                tensorPlayer.pause();
+            } else if (tensorPlayer.totalFrames > 0) {
+                tensorPlayer.play();
+            } else {
+                const patternId = bciPatternSelect.value;
+                if (patternId) {
+                    await loadAndPlayPattern(patternId);
+                } else {
+                    // Default: alpha waves
+                    await loadAndPlayPattern('alpha-waves');
+                    bciPatternSelect.value = 'alpha-waves';
+                }
+            }
+        };
+
+        bciPause.onclick = () => tensorPlayer.pause();
+        bciStop.onclick = () => {
+            tensorPlayer.stop();
+            bciScrubber.value = 0;
+        };
+
+        bciPatternSelect.addEventListener('change', async (e) => {
+            if (!e.target.value) return;
+            await loadAndPlayPattern(e.target.value);
+        });
+
+        bciFileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            try {
+                let frames;
+                if (file.name.endsWith('.npy')) {
+                    frames = await tensorPlayer.loadNPY(file);
+                } else if (file.name.endsWith('.csv')) {
+                    frames = await tensorPlayer.loadCSVSeries(file);
+                } else {
+                    frames = await tensorPlayer.loadBinary(file);
+                }
+                tensorPlayer.loadFrames(frames);
+                tensorPlayer.play();
+                bciPatternSelect.value = ''; // deselect built-in
+            } catch (err) {
+                console.error('[TensorPlayer] Failed to load file:', err);
+                alert('Failed to load tensor file: ' + err.message);
+            }
+        });
+
+        // -----------------------------
 
         const inferenceEngine = new InferenceEngine();
-        const aiEnabled = await inferenceEngine.initialize();
 
         // [Existing AI Button Code preserved...]
         let aiMode = false;
+        let aiEnabled = false;
+        let aiLoading = false;
         const aiToggle = document.createElement('button');
         aiToggle.textContent = 'Enable AI "Dreaming"';
         aiToggle.style.background = '#424';
         aiToggle.style.borderColor = '#d0d';
         aiToggle.style.color = '#eaffea';
         aiToggle.style.marginTop = "5px";
-        aiToggle.onclick = () => {
+        aiToggle.onclick = async () => {
+            if (aiLoading) return;
+
+            if (!aiMode && !aiEnabled) {
+                aiLoading = true;
+                aiToggle.disabled = true;
+                aiToggle.textContent = 'Loading AI Model...';
+
+                try {
+                    aiEnabled = await inferenceEngine.initialize();
+                } finally {
+                    aiLoading = false;
+                    aiToggle.disabled = false;
+                }
+
+                if (!aiEnabled) {
+                    aiToggle.textContent = 'AI Load Failed - Retry';
+                    aiToggle.style.background = '#533';
+                    aiToggle.title = inferenceEngine.lastError?.message || 'Check the browser console and network tab for ONNX runtime asset loading errors.';
+                    return;
+                }
+            }
+
             aiMode = !aiMode;
+            aiToggle.title = '';
             aiToggle.textContent = aiMode ? 'Disable AI Mode' : 'Enable AI "Dreaming"';
             aiToggle.style.background = aiMode ? '#626' : '#424';
             // Stop routine if AI starts
@@ -684,7 +1247,10 @@ async function init() {
         const directorLabels = initDirectorTools(renderer, player);
 
         // UI & Audio Loop
-        const updateLoop = () => {
+        const updateLoop = (timestamp) => {
+            // 0. BCI Tensor Playback
+            tensorPlayer.update(timestamp);
+
             // 1. Audio Reactivity
             if (audioReactor.isActive) {
                 audioReactor.update(renderer);
@@ -723,7 +1289,7 @@ async function init() {
 
             requestAnimationFrame(updateLoop);
         };
-        updateLoop();
+        requestAnimationFrame(updateLoop);
 
         // AI Loop
         const classMap = new Float32Array(1000 * 3);
@@ -793,6 +1359,25 @@ function initUIControls(renderer, uiInputs, uiLabels) {
         });
     }
 
+    // Altitude/Hypoxia Special Handler
+    const altitudeInput = document.getElementById('altitude');
+    if (altitudeInput) {
+        altitudeInput.addEventListener('input', (evt) => {
+            const altVal = parseFloat(evt.target.value);
+            renderer.setParams({ altitude: altVal });
+            renderer.updateAltitudeState();
+
+            // Update UI labels
+            const val = uiInputs.altitude;
+            if (labels.altitude) labels.altitude.textContent = altVal.toFixed(0);
+            if (labels.oxygen) labels.oxygen.textContent = renderer.params.oxygenLevel.toFixed(2);
+            if (labels.metabolicRate) labels.metabolicRate.textContent = renderer.params.metabolicRate.toFixed(2);
+
+            // Sync read-only oxygen slider
+            if (uiInputs.oxygen) uiInputs.oxygen.value = renderer.params.oxygenLevel;
+        });
+    }
+
     // [Neuro-Weaver] Stimulus Button Event Listeners
     // Maps UI buttons to 3D brain coordinates for injection
     const regions = [
@@ -817,9 +1402,31 @@ function initUIControls(renderer, uiInputs, uiLabels) {
         renderer.injectStimulus((Math.random()-0.5)*2, (Math.random()-0.5)*2, (Math.random()-0.5)*2, 1.0);
     });
 
+    document.getElementById('stim-electrical')?.addEventListener('click', () => {
+        const intensity = parseFloat(document.getElementById('hazard-intensity').value) / 100.0;
+        const duration = parseFloat(document.getElementById('hazard-duration').value);
+        renderer.injectElectrical(intensity, duration);
+        const styleMode = document.getElementById('style-mode');
+        if (styleMode) {
+            styleMode.value = '1'; // Cyber
+            styleMode.dispatchEvent(new Event('change'));
+        }
+    });
+
+    document.getElementById('stim-mercury')?.addEventListener('click', () => {
+        const intensity = parseFloat(document.getElementById('hazard-intensity').value) / 100.0;
+        const duration = parseFloat(document.getElementById('hazard-duration').value);
+        renderer.injectMercury(intensity, duration);
+        const styleMode = document.getElementById('style-mode');
+        if (styleMode) {
+            styleMode.value = '3'; // Heatmap
+            styleMode.dispatchEvent(new Event('change'));
+        }
+    });
+
     document.getElementById('stim-calm')?.addEventListener('click', () => {
         renderer.calmState();
-        ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
+        ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'cortisol', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
             if(uiInputs[k]) uiInputs[k].value = renderer.params[k];
             syncParam(k, renderer.params[k]);
         });
@@ -898,3 +1505,4 @@ function initDirectorTools(renderer, player) {
 }
 
 init();
+// End of main

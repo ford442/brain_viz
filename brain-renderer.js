@@ -4,6 +4,13 @@ import { BrainGeometry } from './brain-geometry.js';
 import { vertexShader, fragmentShader, computeShader, somaVertexShader, somaFragmentShader, postVertexShader, postFragmentShader } from './shaders.js';
 import { Mat4 } from './math-utils.js';
 
+const RENDER_UNIFORM_FLOAT_COUNT = 60;
+const UNIFORM_BUFFER_ALIGNMENT = 256;
+const RENDER_UNIFORM_BUFFER_SIZE = Math.ceil(
+    (RENDER_UNIFORM_FLOAT_COUNT * Float32Array.BYTES_PER_ELEMENT) / UNIFORM_BUFFER_ALIGNMENT
+) * UNIFORM_BUFFER_ALIGNMENT;
+const COMPUTE_UNIFORM_BUFFER_SIZE = 80;
+
 export class BrainRenderer {
     constructor(canvas) {
         this.canvas = canvas;
@@ -22,7 +29,8 @@ export class BrainRenderer {
         this.targetZoom = 3.5; // [Neuro-Weaver] Smooth Zoom Target
         this.time = 0;
         this.isRunning = false;
-        
+        this.tensorPlaybackMode = false; // [BCI] When true, compute shader skipped; TensorPlayer drives the voxel buffer
+
         this.params = {
             frequency: 2.0,
             amplitude: 0.5,
@@ -43,7 +51,15 @@ export class BrainRenderer {
             lightDirY: 1.0, // [Phase 2] Directional Light Y
             lightDirZ: 1.0, // [Phase 2] Directional Light Z
             ambientLight: 0.2, // [Phase 2] Ambient Light Intensity
-            dirIntensity: 0.8 // [Phase 2] Directional Light Intensity
+            dirIntensity: 0.8, // [Phase 2] Directional Light Intensity
+            stress: 0.0, // [Phase 2] Cognitive Stress Distortion
+            cortisol: 0.0, // [Phase 5] Cortisol Structural Decay
+            // Altitude/Hypoxia Simulation Parameters
+            altitude: 0.0, // Altitude in meters (0-8000)
+            oxygenLevel: 1.0, // Oxygen saturation (1.0-0.3)
+            hypoxiaStress: 0.0, // Cellular stress response (0.0-1.0)
+            metabolicRate: 1.0, // ATP consumption multiplier (0.5-2.0)
+            mitochondrialFunction: 1.0 // ATP synthesis efficiency (0.0-1.0)
         };
 
         // Voxel Grid Settings
@@ -55,9 +71,18 @@ export class BrainRenderer {
         // Stores position and intensity for compute shader injection
         this.stimulus = {
             pos: [0, 0, 0],
-            active: 0.0
+            active: 0.0,
+            electricalActive: 0.0,
+            mercuryActive: 0.0
         };
-        
+
+        // Altitude/Hypoxia Internal State
+        // Tracks activation time for cumulative hypoxia effects
+        this._altitudeInternal = {
+            activationTime: 0,
+            lastAltitude: 0.0
+        };
+
         this.renderTarget = null;
         this.sampler = null;
         this.postBindGroup = null;
@@ -168,10 +193,10 @@ export class BrainRenderer {
             fragment: {
                 module: this.device.createShaderModule({ code: fragmentShader }),
                 entryPoint: 'main',
-                targets: [{ format: format, blend: { color: { srcFactor: 'src-alpha', dstFactor: 'one-minus-src-alpha', operation: 'add' }, alpha: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha', operation: 'add' } } }]
+                targets: [{ format: format, blend: { color: { srcFactor: 'src-alpha', dstFactor: 'one', operation: 'add' }, alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' } } }]
             },
             primitive: { topology: 'triangle-list', cullMode: 'none' },
-            depthStencil: { depthWriteEnabled: true, depthCompare: 'less', format: 'depth32float' }
+            depthStencil: { depthWriteEnabled: false, depthCompare: 'less', format: 'depth32float' }
         });
 
         // --- PIPELINE 2: FIBERS ---
@@ -221,18 +246,16 @@ export class BrainRenderer {
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
         });
 
-        // Uniforms (Size increased for ClipPlane)
-        // 56 floats (224 bytes)
-        // Layout:
-        // MVP (64), Model (64), Time(4), Style(4), Pad(8), ClipPlane(16)
+        // Render uniforms: 2 mat4s (32 floats) + scalar block (28 floats including padding) = 60 floats / 240 bytes.
+        // The buffer is padded to 256 bytes to satisfy WebGPU uniform buffer alignment requirements.
         this.uniformBuffer = this.device.createBuffer({
-            size: 224,
+            size: RENDER_UNIFORM_BUFFER_SIZE,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         });
 
-        // V2.2 Fix: Increased to 64 bytes for std140 alignment of stimulusActive (offset 48)
+        // Compute uniforms: TensorParams is 64 bytes after alignment.
         this.computeUniformBuffer = this.device.createBuffer({
-            size: 64,
+            size: COMPUTE_UNIFORM_BUFFER_SIZE,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         });
     }
@@ -377,6 +400,43 @@ export class BrainRenderer {
 
     setParams(newParams) { this.params = { ...this.params, ...newParams }; }
 
+    // Altitude/Hypoxia Physiological State Update
+    // Derives hypoxia parameters from altitude input using barometric formulas
+    updateAltitudeState() {
+        const alt = this.params.altitude;
+
+        // Barometric formula: O2 = 0.21 * (1 - altitude/44330)^5.255
+        // Simplified linear approximation: 1.0 at 0m → 0.35 at 8000m
+        // [Scientific Fix] Changed from 0.3 to 0.35 to match actual barometric calculation
+        // At 8000m, atmospheric pressure is ~35% of sea level (35600/101325 Pa)
+        const altFraction = Math.min(1.0, alt / 8000);
+        this.params.oxygenLevel = Math.max(0.35, 1.0 - (altFraction * 0.65));
+
+        // Hypoxia stress: sigmoid curve, peak response at 4000-5000m
+        let stressCurve;
+        if (altFraction > 0.5) {
+            stressCurve = 1.0 / (1.0 + Math.exp(-10 * (altFraction - 0.5)));
+        } else {
+            stressCurve = altFraction * 0.2;
+        }
+        this.params.hypoxiaStress = stressCurve;
+
+        // Metabolic rate: hypoxia increases ATP demand
+        this.params.metabolicRate = 1.0 + (this.params.hypoxiaStress * 1.0);
+
+        // Mitochondrial function: declines with sustained hypoxia
+        if (this.params.hypoxiaStress > 0.5) {
+            this._altitudeInternal.activationTime += this.isRunning ? 1.0 : 0.0;
+            const sustainedPenalty = Math.max(0.3, 1.0 - (this._altitudeInternal.activationTime / 1800.0)); // 30 min = 1800 frames @ 60fps
+            this.params.mitochondrialFunction = sustainedPenalty;
+        } else {
+            this._altitudeInternal.activationTime = 0;
+            this.params.mitochondrialFunction = 1.0;
+        }
+
+        this._altitudeInternal.lastAltitude = alt;
+    }
+
     // [Neuro-Weaver] Task: Stimulus Injection (Refactored V2.7)
     // Writes target coordinates to a temporary state, which is uploaded
     // to the Compute Shader uniforms in the next render cycle.
@@ -403,6 +463,18 @@ export class BrainRenderer {
         console.log(`[Neuro-Weaver] Stimulus Injected: Pos(${targetX.toFixed(2)}, ${targetY.toFixed(2)}, ${targetZ.toFixed(2)}) Intensity(${intensity.toFixed(2)})`);
     }
 
+    injectElectrical(intensity, duration) {
+        if (isNaN(intensity)) return;
+        this.stimulus.electricalActive = Math.max(0.0, intensity);
+        console.log(`[Neuro-Weaver] Electrical Stimulus Injected: Intensity(${intensity.toFixed(2)})`);
+    }
+
+    injectMercury(intensity, duration) {
+        if (isNaN(intensity)) return;
+        this.stimulus.mercuryActive = Math.max(0.0, intensity);
+        console.log(`[Neuro-Weaver] Mercury Stimulus Injected: Intensity(${intensity.toFixed(2)})`);
+    }
+
     calmState() {
         // Clear all activity by resetting parameters to a "Calm" state.
         // Setting amplitude low prevents new chaotic waves.
@@ -416,6 +488,8 @@ export class BrainRenderer {
         this.params.aberration = 0.0;
         this.params.grain = 0.0;
         this.params.aperture = 0.0;
+        this.params.stress = 0.0;
+        this.params.cortisol = 0.0;
     }
 
     resetActivity() {
@@ -463,6 +537,8 @@ export class BrainRenderer {
         // [48-50]: LightDir (12 bytes)
         // [51]: AmbientLight (4 bytes)
         // [52]: DirIntensity (4 bytes)
+        // [53]: Stress (4 bytes)
+        // [54]: Cortisol (4 bytes)
 
         const OFFSET_MVP = 0;
         const OFFSET_MODEL = 16;
@@ -480,8 +556,15 @@ export class BrainRenderer {
         const OFFSET_LIGHT_DIR = 48;
         const OFFSET_AMBIENT = 51;
         const OFFSET_DIR_INTENSITY = 52;
+        const OFFSET_STRESS = 53;
+        const OFFSET_CORTISOL = 54;
+        const OFFSET_ALTITUDE = 55;
+        const OFFSET_OXYGEN = 56;
+        const OFFSET_HYPOXIA_STRESS = 57;
+        const OFFSET_METABOLIC_RATE = 58;
+        const OFFSET_MITOCHONDRIAL = 59;
 
-        const uData = new Float32Array(56); // 56 * 4 = 224 bytes
+        const uData = new Float32Array(RENDER_UNIFORM_FLOAT_COUNT);
         uData.set(mvp, OFFSET_MVP);
         uData.set(model, OFFSET_MODEL);
         uData[OFFSET_TIME] = this.time;
@@ -506,11 +589,19 @@ export class BrainRenderer {
         uData[OFFSET_LIGHT_DIR + 2] = this.params.lightDirZ;
         uData[OFFSET_AMBIENT] = this.params.ambientLight;
         uData[OFFSET_DIR_INTENSITY] = this.params.dirIntensity;
+        uData[OFFSET_STRESS] = this.params.stress;
+        uData[OFFSET_CORTISOL] = this.params.cortisol;
+        uData[OFFSET_ALTITUDE] = this.params.altitude;
+        uData[OFFSET_OXYGEN] = this.params.oxygenLevel;
+        uData[OFFSET_HYPOXIA_STRESS] = this.params.hypoxiaStress;
+        uData[OFFSET_METABOLIC_RATE] = this.params.metabolicRate;
+        uData[OFFSET_MITOCHONDRIAL] = this.params.mitochondrialFunction;
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         
-        // Compute Uniforms (64 bytes) - Stimulus Data is here
-        const cBuf = new ArrayBuffer(64);
+        // Compute Uniforms layout (64 bytes total):
+        // 32 bytes scalar block + 16 bytes stimulus block + 12 bytes hypoxia block + 4 bytes trailing padding.
+        const cBuf = new ArrayBuffer(COMPUTE_UNIFORM_BUFFER_SIZE);
         const dv = new DataView(cBuf);
         dv.setFloat32(0, this.time, true);
         dv.setUint32(4, this.voxelDim, true);
@@ -531,12 +622,30 @@ export class BrainRenderer {
 
         dv.setFloat32(44, this.stimulus.active, true);
 
+        // Altitude/Hypoxia parameters for compute shader
+        // Offset 48: hypoxiaStress
+        // Offset 52: metabolicRate
+        // Offset 56: mitochondrialFunction
+        dv.setFloat32(48, this.params.hypoxiaStress, true);
+        dv.setFloat32(52, this.params.metabolicRate, true);
+        dv.setFloat32(56, this.params.mitochondrialFunction, true);
+
+        // Environmental Hazard variables
+        dv.setFloat32(64, this.stimulus.electricalActive, true);
+        dv.setFloat32(68, this.stimulus.mercuryActive, true);
+
         // Upload to GPU
         this.device.queue.writeBuffer(this.computeUniformBuffer, 0, cBuf);
 
         // Auto-reset pulse (single frame injection)
         if (this.stimulus.active > 0) {
              this.stimulus.active = 0.0;
+        }
+        if (this.stimulus.electricalActive > 0) {
+             this.stimulus.electricalActive = 0.0;
+        }
+        if (this.stimulus.mercuryActive > 0) {
+             this.stimulus.mercuryActive = 0.0;
         }
     }
 
@@ -558,15 +667,19 @@ export class BrainRenderer {
         }
 
         this.time += 0.016;
+        this.updateAltitudeState(); // Update altitude/hypoxia parameters before uniforms
         this.updateUniforms();
         
         const commandEncoder = this.device.createCommandEncoder();
-        
-        const computePass = commandEncoder.beginComputePass();
-        computePass.setPipeline(this.computePipeline);
-        computePass.setBindGroup(0, this.computeBindGroup);
-        computePass.dispatchWorkgroups(Math.ceil(this.voxelBufferSize / 64));
-        computePass.end();
+
+        // Skip physics simulation when tensor playback is driving the voxel buffer directly
+        if (!this.tensorPlaybackMode) {
+            const computePass = commandEncoder.beginComputePass();
+            computePass.setPipeline(this.computePipeline);
+            computePass.setBindGroup(0, this.computeBindGroup);
+            computePass.dispatchWorkgroups(Math.ceil(this.voxelBufferSize / 64));
+            computePass.end();
+        }
         
         // --- PASS 1: RENDER SCENE TO TEXTURE ---
         const renderPass = commandEncoder.beginRenderPass({
@@ -623,6 +736,12 @@ export class BrainRenderer {
 
         this.device.queue.submit([commandEncoder.finish()]);
         requestAnimationFrame(() => this.render());
+    }
+
+    // [BCI] Direct tensor injection — bypasses compute shader physics.
+    // Used by TensorPlayer to stream pre-recorded or real-time BCI data frames.
+    setVoxelData(float32Array) {
+        this.device.queue.writeBuffer(this.tensorBuffer, 0, float32Array);
     }
 
     start() { this.isRunning = true; this.render(); }
