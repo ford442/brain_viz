@@ -188,6 +188,12 @@ const MINI_ROUTINES = {
         { time: 0.0, type: 'style', value: 1 },
         { time: 0.0, type: 'shake', intensity: 0.1, duration: 2.0 }
     ],
+    's': [ // Stress Spike
+        { time: 0.0, type: 'text', message: 'Stress Level Critical', duration: 2.0 },
+        { time: 0.0, type: 'lerp', key: 'stress', value: 1.0, duration: 2.0, ease: 'quadOut' },
+        { time: 2.0, type: 'lerp', key: 'stress', value: 0.0, duration: 3.0, ease: 'quadInOut' },
+        { time: 5.0, type: 'calm' }
+    ],
     'w': [ // Math/Variables Demo
         { time: 0.0, type: 'text', message: 'Initializing Variables...', duration: 2.0 },
         { time: 0.0, type: 'state', key: 'loopCount', value: 0 },
@@ -223,6 +229,7 @@ async function init() {
         sparkle: document.getElementById('sparkle'), // [Phase 5]
         growth: document.getElementById('growth'), // [Phase 6]
         shake: document.getElementById('shake'), // [Phase 2]
+        stress: document.getElementById('stress'), // [Phase 2]
         aberration: document.getElementById('aberration'), // [Phase 7]
         grain: document.getElementById('grain'), // [Phase 7]
         focus: document.getElementById('focus'), // [Phase 7]
@@ -246,6 +253,7 @@ async function init() {
         sparkle: document.getElementById('val-sparkle'), // [Phase 5]
         growth: document.getElementById('val-growth'), // [Phase 6]
         shake: document.getElementById('val-shake'), // [Phase 2]
+        stress: document.getElementById('val-stress'), // [Phase 2]
         aberration: document.getElementById('val-aberration'), // [Phase 7]
         grain: document.getElementById('val-grain'), // [Phase 7]
         focus: document.getElementById('val-focus'), // [Phase 7]
@@ -428,7 +436,7 @@ async function init() {
              if (event.type === 'calm') {
                  // Calm state modifies amplitude, frequency, smoothing
                  // We should sync them if they are in the renderer params
-                 ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
+                 ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
                     if (inputs[k]) inputs[k].value = renderer.params[k];
                     if (labels[k]) labels[k].textContent = renderer.params[k].toFixed(2);
                  });
@@ -811,7 +819,7 @@ function initUIControls(renderer, uiInputs, uiLabels) {
 
     document.getElementById('stim-calm')?.addEventListener('click', () => {
         renderer.calmState();
-        ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
+        ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
             if(uiInputs[k]) uiInputs[k].value = renderer.params[k];
             syncParam(k, renderer.params[k]);
         });
