@@ -266,6 +266,12 @@ const MINI_ROUTINES = {
         { time: 0.0, type: 'style', value: 1 },
         { time: 0.0, type: 'shake', intensity: 0.1, duration: 2.0 }
     ],
+    's': [ // Stress Spike
+        { time: 0.0, type: 'text', message: 'Stress Level Critical', duration: 2.0 },
+        { time: 0.0, type: 'lerp', key: 'stress', value: 1.0, duration: 2.0, ease: 'quadOut' },
+        { time: 2.0, type: 'lerp', key: 'stress', value: 0.0, duration: 3.0, ease: 'quadInOut' },
+        { time: 5.0, type: 'calm' }
+    ],
     'w': [ // Math/Variables Demo
         { time: 0.0, type: 'text', message: 'Initializing Variables...', duration: 2.0 },
         { time: 0.0, type: 'state', key: 'loopCount', value: 0 },
