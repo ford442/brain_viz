@@ -42,15 +42,20 @@ Unlike surface-only visualizations, this engine maintains a **32x32x32 3D Storag
     *   `Compute Shader`: Handles physics/signal logic (Diffusion, Decay).
 
 ## 🚀 Running Locally
-1.  **Install Dependencies:**
+1.  **Clone (shallow recommended):**
+    The repository contains large binary assets (WASM, ONNX models, verification media). For a faster clone, use:
+    ```bash
+    git clone --depth 1 https://github.com/ford442/brain_viz.git
+    ```
+2.  **Install Dependencies:**
     ```bash
     npm install
     ```
-2.  **Start Dev Server:**
+3.  **Start Dev Server:**
     ```bash
     npm run dev
     ```
-3.  **Open in Browser:**
+4.  **Open in Browser:**
     Navigate to the URL provided (usually `http://localhost:5173`).
     *Requires a browser with WebGPU support (Chrome 113+, Edge, etc.).*
 

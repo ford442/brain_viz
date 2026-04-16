@@ -60,6 +60,7 @@
 
 ## 4. Inherent Limitations & "Here be Dragons"
 
+*   **Repository Size / Clone Performance:** The `.git` pack is ~32 MB because `node_modules` was accidentally committed to history early in the project and because large binaries (WASM runtimes, ONNX models, verification videos) are stored directly in the repo. To avoid downloading historical bloat, use shallow clones (`git clone --depth 1`). Future large binaries are tracked via Git LFS (see `.gitattributes`).
 *   **WebGPU Only:** The app will strictly **not work** on older browsers or devices without WebGPU support. There is no WebGL fallback.
 *   **No TypeScript:** The codebase is pure JS. You must rely on JSDoc or inference. **Do not introduce TS syntax** (types, interfaces) into `.js` files.
 *   **Build Artifacts:** Do not edit files in `dist/`. Edit source files and run `npm run dev` to test.
