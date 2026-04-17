@@ -72,6 +72,7 @@
 - [x] **Narrative Overlay:** Display text captions synced with routine events (e.g., "Subject enters REM sleep").
 
 ### Phase 5: Neuro-Biochemistry (New)
+- [x] **Acetylcholine Memory Consolidation:** Implement `acetylcholine` event handler to simulate memory consolidation by interpolating `sparkle` and `flowSpeed`.
 - [x] **Noradrenaline Spike:** Implement `noradrenaline` event handler to visualize Noradrenaline as a sudden spike in connectome frequency and global alertness.
 - [x] **GABA Deceleration:** Implement `gaba` event handler to visualize GABA as a global deceleration of neural pulses.
 - [x] **Melatonin Sleep Onset:** Implement `melatonin` event handler to visualize sleep onset as temporal blurring and slow desaturation.
@@ -121,6 +122,7 @@
 * *Idea:* "Endorphin Rush" - Visualizing temporary immunity to stress/shake events by suppressing distortion parameters.
 * *Idea:* "Hormonal Flow Physics" - What if we visualize hormonal flows like Oxytocin as a slow, warm wave using procedural volumetric fluid dynamics rather than just parameter shifts?
 * *Idea:* "What if we visualized environmental noise as background ambient lighting shifts?"
+* *Idea:* "What if we visualize immune cell migration as particle streams during an inflammatory response?"
 
 * *Idea:* "Procedural Binaural Generation" - Automatically generate binaural beat frequencies based on desired brain wave targets.
 * *Idea:* "What if we visualized Cortisol levels as structural decay?"
@@ -143,6 +145,7 @@
 * *Idea:* "What if we visualized Histamine release as a localized inflammatory response/color shift?"
 
 ## 📜 Changelog
+* [2026-05-04] - Completed Phase 5 (Acetylcholine Memory Consolidation). Implemented `acetylcholine` event handler in `routine-player.js` to simulate memory consolidation via `sparkle` and `flowSpeed`. Bound to 'r' key in `main.js`. Added immune cell migration idea to Dream Log.
 * [2026-04-13] - Completed Phase 5 (Noradrenaline Spike). Implemented `noradrenaline` event handler in `routine-player.js` to simulate global alertness via connectome frequency and flow speed. Bound to 'u' key in `main.js`. Added Histamine idea to Dream Log.
 * [2026-04-12] - Completed "Architecture & Innovation" step. Marked parameter interpolation and camera coordinate map tasks as complete. Added Default Mode Network idea to Dream Log.
 

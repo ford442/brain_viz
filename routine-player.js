@@ -262,6 +262,27 @@ export class RoutinePlayer {
             this.startLerp({ key: 'colorShift', value: -0.5 * intensity, duration: duration, ease: 'sineOut' });
         });
 
+        // [Phase 5] Acetylcholine Memory Consolidation
+        this.registerHandler('acetylcholine', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 3.0;
+
+            // Instantly boost sparkle and slightly increase flowSpeed
+            this.renderer.setParams({
+                sparkle: 1.0 * intensity,
+                flowSpeed: 8.0 * intensity,
+                colorShift: 0.5 * intensity
+            });
+
+            // Slowly fade back to normal
+            if (duration > 0) {
+                const ease = evt.ease || 'sineInOut';
+                this.startLerp({ key: 'sparkle', value: 0.0, duration: duration, ease: ease });
+                this.startLerp({ key: 'flowSpeed', value: 4.0, duration: duration, ease: ease });
+                this.startLerp({ key: 'colorShift', value: 0.0, duration: duration, ease: ease });
+            }
+        });
+
         // [Phase 5] Noradrenaline Spike
         this.registerHandler('noradrenaline', (evt) => {
             const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
