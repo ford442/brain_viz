@@ -551,6 +551,40 @@ export class RoutinePlayer {
             }, 500);
         });
 
+        // [Phase 2] Default Mode Network (DMN)
+        this.registerHandler('dmn', (evt) => {
+            const intensity = evt.intensity || 1.0;
+            const duration = evt.duration || 5.0;
+
+            // Instantly apply color shift and start low frequency hum, smooth flow
+            this.renderer.setParams({
+                colorShift: -0.2 * intensity
+            });
+
+            this.startLerp({ key: 'frequency', value: 0.5 * intensity, duration: duration * 0.5, ease: 'easeInOutSine' });
+            this.startLerp({ key: 'amplitude', value: 0.2 * intensity, duration: duration * 0.5, ease: 'easeInOutSine' });
+            this.startLerp({ key: 'flowSpeed', value: 0.3 * intensity, duration: duration * 0.5, ease: 'easeInOutSine' });
+
+            if (this.routine) {
+                const revertTime = this.elapsedTime + duration;
+
+                const revertEvents = [
+                    { time: revertTime, type: 'lerp', key: 'frequency', value: 1.0, duration: duration * 0.5, ease: 'easeInOutSine' },
+                    { time: revertTime, type: 'lerp', key: 'amplitude', value: 1.0, duration: duration * 0.5, ease: 'easeInOutSine' },
+                    { time: revertTime, type: 'lerp', key: 'flowSpeed', value: 1.0, duration: duration * 0.5, ease: 'easeInOutSine' },
+                    { time: revertTime, type: 'lerp', key: 'colorShift', value: 0.0, duration: duration * 0.5, ease: 'easeInOutSine' }
+                ];
+
+                // Insert events keeping chronological order
+                let insertIdx = this.currentEventIndex;
+                while (insertIdx < this.routine.length && this.routine[insertIdx].time < revertTime) {
+                    insertIdx++;
+                }
+
+                this.routine.splice(insertIdx, 0, ...revertEvents);
+            }
+        });
+
         // [Phase 2] Oxytocin Burst
         this.registerHandler('oxytocin', (evt) => {
             const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
