@@ -8,6 +8,14 @@ import { TensorPlayer, BUILTIN_PATTERNS } from './tensor-player.js'; // [BCI]
 
 // [Phase 3] Keyboard Triggered Routines
 const MINI_ROUTINES = {
+    'z': [ // Default Mode Network
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'camera', target: 'isometric', duration: 2.0 },
+        { time: 0.0, type: 'dmn', intensity: 1.0, duration: 4.0 },
+        { time: 0.1, type: 'text', message: 'Entering Default Mode Network (Idle)', duration: 4.0 },
+        { time: 4.5, type: 'style', value: 0 } // Revert to Organic
+    ],
+
     '1': [ // Surprise
         { time: 0.0, type: 'style', value: 2 }, // Connectome
         { time: 0.0, type: 'param', key: 'frequency', value: 12.0 },
@@ -592,7 +600,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, d=Dopamine, e=Endorphin, j=Melatonin, a=Adrenaline, u=Noradrenaline, m=Memory, c=Custom Audio, t=Time Warp, x=Time Mod, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters, k=Binaural, y=Oxytocin, r=Acetylcholine, h=GABA, n=Neuro-Cinema';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, d=Dopamine, e=Endorphin, j=Melatonin, a=Adrenaline, u=Noradrenaline, m=Memory, c=Custom Audio, t=Time Warp, x=Time Mod, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters, k=Binaural, y=Oxytocin, r=Acetylcholine, h=GABA, n=Neuro-Cinema, z=Default Mode Network';
         document.body.appendChild(legend);
         // [Phase 4] Narrative Overlay
         const narrative = document.createElement('div');
