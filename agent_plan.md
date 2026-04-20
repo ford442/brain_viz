@@ -63,6 +63,7 @@
 - [x] **Binaural Beats (Neuro-Sonification):** Implement `binaural` event type in `routine-player.js` using the Web Audio API and StereoPannerNode to induce brainwave entrainment.
 - [x] **Dopamine Burst Routine:** Visualized Dopamine levels as structural pulse waves.
 - [x] **Endorphin Rush Routine:** Visualizing temporary immunity to stress/shake events by suppressing distortion parameters.
+- [x] **Histamine Inflammatory Response:** Implement `histamine` event handler to simulate localized inflammatory response via color shift and swelling.
 
 ### Phase 3: "Brain DJ" Mode (Live Performance)
 - [x] **Keyboard Triggers:** Bind number keys (1-9) to specific mini-routines (e.g., Press '1' for "Sudden Surprise", '2' for "Calm Down").
@@ -84,6 +85,7 @@
 
 ### Phase 6: Structural Dynamics
 - [x] **Dendritic Growth Animation:** Implement `growth` uniform to control the maximum render radius of the brain structure, simulating organic growth.
+- [ ] **Procedural Volumetric Fluid Dynamics:** Simulate neurotransmitter diffusion using volumetric rendering.
 
 ### Phase 7: Cinematic Post-Processing
 - [x] **Chromatic Aberration & Film Grain:** Implement a post-processing pipeline for cinematic effects (RGB split, noise).
@@ -97,6 +99,7 @@
 
 ## 🧪 "Dream" Log (Future Concepts)
 
+* *Idea:* "What if we visualized glial cell cleanup processes after an inflammatory response?"
 * *Idea:* "Brain-Computer Interface (BCI) Training Mode" - A gamified mode where users try to maintain specific brain states (e.g., keeping the `stress` level below a threshold) to complete objectives.
 * *Idea:* "Cognitive Load Resolution: What if we visualized cognitive load as variable rendering resolution?"
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
