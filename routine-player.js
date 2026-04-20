@@ -262,6 +262,31 @@ export class RoutinePlayer {
             this.startLerp({ key: 'colorShift', value: -0.5 * intensity, duration: duration, ease: 'sineOut' });
         });
 
+        // [Phase 2] Histamine Inflammatory Response
+        this.registerHandler('histamine', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 3.0;
+
+            if (evt.target) {
+                this.executeEvent({ type: 'stimulus', target: evt.target, intensity: intensity * 2.0 });
+            }
+
+            // Inflammatory response: warm/red color shift, slight swelling (growth), and agitation (flowSpeed)
+            this.renderer.setParams({
+                colorShift: 0.8 * intensity, // Shift towards red
+                growth: 1.2 * intensity, // Slight swelling
+                flowSpeed: 8.0 * intensity // Agitation
+            });
+
+            // Fade back
+            if (duration > 0) {
+                const ease = evt.ease || 'quadOut';
+                this.startLerp({ key: 'colorShift', value: 0.0, duration: duration, ease: ease });
+                this.startLerp({ key: 'growth', value: 1.0, duration: duration, ease: ease });
+                this.startLerp({ key: 'flowSpeed', value: 4.0, duration: duration, ease: ease });
+            }
+        });
+
         // [Phase 5] Acetylcholine Memory Consolidation
         this.registerHandler('acetylcholine', (evt) => {
             const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
