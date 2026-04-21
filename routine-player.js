@@ -233,6 +233,27 @@ export class RoutinePlayer {
         });
 
 
+        // [Phase 5] Glial Cell Cleanup
+        this.registerHandler('glial_cleanup', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 4.0;
+
+            // Instantly apply cool/blue color shift and slight sparkle to simulate active cleanup
+            this.renderer.setParams({
+                colorShift: -0.6 * intensity, // Shift towards cool/blue
+                sparkle: 0.5 * intensity
+            });
+
+            // Gradually reduce swelling (growth) and agitations
+            if (duration > 0) {
+                const ease = evt.ease || 'quadOut';
+                this.startLerp({ key: 'growth', value: 1.0, duration: duration, ease: ease });
+                this.startLerp({ key: 'flowSpeed', value: 4.0, duration: duration, ease: ease });
+                this.startLerp({ key: 'colorShift', value: 0.0, duration: duration, ease: ease });
+                this.startLerp({ key: 'sparkle', value: 0.0, duration: duration, ease: ease });
+            }
+        });
+
         // [Phase 5] GABA Deceleration
         this.registerHandler('gaba', (evt) => {
             const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
