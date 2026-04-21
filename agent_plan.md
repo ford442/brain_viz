@@ -64,6 +64,7 @@
 - [x] **Dopamine Burst Routine:** Visualized Dopamine levels as structural pulse waves.
 - [x] **Endorphin Rush Routine:** Visualizing temporary immunity to stress/shake events by suppressing distortion parameters.
 - [x] **Histamine Inflammatory Response:** Implement `histamine` event handler to simulate localized inflammatory response via color shift and swelling.
+- [x] **Glial Cell Cleanup:** Implement `glial_cleanup` event handler to simulate glial cells repairing structural tissue after inflammation, utilizing cool color shift and reducing swelling parameters.
 
 ### Phase 3: "Brain DJ" Mode (Live Performance)
 - [x] **Keyboard Triggers:** Bind number keys (1-9) to specific mini-routines (e.g., Press '1' for "Sudden Surprise", '2' for "Calm Down").
@@ -99,7 +100,7 @@
 
 ## 🧪 "Dream" Log (Future Concepts)
 
-* *Idea:* "What if we visualized glial cell cleanup processes after an inflammatory response?"
+* *Idea:* "What if we visualized myelin sheath degradation in neurodegenerative conditions?"
 * *Idea:* "Brain-Computer Interface (BCI) Training Mode" - A gamified mode where users try to maintain specific brain states (e.g., keeping the `stress` level below a threshold) to complete objectives.
 * *Idea:* "Cognitive Load Resolution: What if we visualized cognitive load as variable rendering resolution?"
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
@@ -189,6 +190,7 @@
 * *Idea:* "Neuromodulation Interface" - What if we allowed users to connect external API data to drive these neuromodulators directly?
 
 ## 📜 Changelog
+* [2026-05-05] - Completed Phase 2 (Glial Cell Cleanup). Implemented `glial_cleanup` event handler in `routine-player.js` to simulate post-inflammatory structural repair. Bound to 'C' key in `main.js`. Added myelin degradation idea to Dream Log.
 * [2026-04-18] - Completed Phase 2 (Default Mode Network). Implemented `dmn` event handler in `routine-player.js` to simulate the DMN via `frequency`, `amplitude`, and `flowSpeed`. Bound to 'z' key in `main.js`. Added Neuromodulation Interface idea to Dream Log.
 * [2026-03-28] - Completed Phase 2 (Cognitive Stress Distortion). Implemented `stress` uniform in shaders for high-frequency vertex displacement. Added event handler in `routine-player.js` and updated UI/Panic Routine in `main.js`. Added Dream Log idea.
 * [2026-03-24] - Completed Phase 2 (Pathfinding Camera). Enhanced `camera` event handler in `routine-player.js` to support collision avoidance via generated spline paths for large rotations. Added 'Orbit Avoid' mini-routine to `main.js` using 'o'.

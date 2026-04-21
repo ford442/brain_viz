@@ -450,6 +450,14 @@ const MINI_ROUTINES = {
         { time: 0.0, type: 'histamine', target: 'frontal', intensity: 1.5, duration: 4.0 },
         { time: 4.0, type: 'text', message: 'Inflammation subsiding.', duration: 2.0 },
         { time: 5.0, type: 'calm' }
+    ],
+    'C': [ // Glial Cell Cleanup
+        { time: 0.0, type: 'text', message: 'Activating Glial Cells: Cleanup Process', duration: 3.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'histamine', target: 'frontal', intensity: 1.0, duration: 0.0 }, // Pre-existing inflammation
+        { time: 1.0, type: 'glial_cleanup', intensity: 1.5, duration: 5.0 },
+        { time: 6.0, type: 'text', message: 'Tissue repaired.', duration: 2.0 },
+        { time: 7.0, type: 'calm' }
     ]
 };
 
@@ -607,7 +615,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, d=Dopamine, e=Endorphin, j=Melatonin, a=Adrenaline, u=Noradrenaline, m=Memory, c=Custom Audio, t=Time Warp, x=Time Mod, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters, k=Binaural, y=Oxytocin, r=Acetylcholine, h=GABA, n=Neuro-Cinema, z=Default Mode Network, I=Inflammation';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, d=Dopamine, e=Endorphin, j=Melatonin, a=Adrenaline, u=Noradrenaline, m=Memory, c=Custom Audio, t=Time Warp, x=Time Mod, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters, k=Binaural, y=Oxytocin, r=Acetylcholine, h=GABA, n=Neuro-Cinema, z=Default Mode Network, I=Inflammation, C=Glial Cleanup';
         document.body.appendChild(legend);
         // [Phase 4] Narrative Overlay
         const narrative = document.createElement('div');
