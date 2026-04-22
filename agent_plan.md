@@ -148,6 +148,7 @@
 * *Idea:* "What if we visualized the Default Mode Network as a low-frequency hum during idle states?"
 
 * *Idea:* "What if we visualized Histamine release as a localized inflammatory response/color shift?"
+* *Idea:* "What if we visualized Serotonin levels as color shifts?"
 
 
 
