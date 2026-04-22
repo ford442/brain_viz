@@ -1154,6 +1154,14 @@ export class RoutinePlayer {
              return;
         }
 
+        // Additional explicit check for the lost promise to prevent crashing if it gets lost mid-tick
+        if (this.renderer && this.renderer.device && this.renderer.device.lost) {
+             this.renderer.device.lost.then(() => {
+                 this._deviceLost = true;
+                 this.stop();
+             });
+        }
+
         if (typeof this.renderer.isRunning !== 'undefined' && !this.renderer.isRunning) {
              console.warn("[Routine Engine] WebGPU Renderer is not running. Pausing tick loop safely.");
              this.stop();

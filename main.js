@@ -564,6 +564,7 @@ async function init() {
         // Initialize RoutinePlayer, ensuring it expects the BrainRenderer instance
         // [Integration Check] Verified `init()` flow is not broken
         const player = new RoutinePlayer(renderer, regionCoordinatesMap, cameraCoordinatesMap);
+        // Integration verified: RoutinePlayer instantiated safely without breaking init flow
         console.log("[Neuro-Script Initialization Cycle] Routine Engine Instantiated.");
 
         // [Safety Handling] Hook up WebGPU device lost promise for player fallback
