@@ -86,7 +86,7 @@
 
 ### Phase 6: Structural Dynamics
 - [x] **Dendritic Growth Animation:** Implement `growth` uniform to control the maximum render radius of the brain structure, simulating organic growth.
-- [ ] **Procedural Volumetric Fluid Dynamics:** Simulate neurotransmitter diffusion using volumetric rendering.
+- [x] **Procedural Volumetric Fluid Dynamics:** Simulate neurotransmitter diffusion using volumetric rendering.
 
 ### Phase 7: Cinematic Post-Processing
 - [x] **Chromatic Aberration & Film Grain:** Implement a post-processing pipeline for cinematic effects (RGB split, noise).
@@ -126,6 +126,7 @@
 * *Idea:* "Multimodal Embeddings" - Connect an ML backend to translate input text (e.g., from an LLM) into corresponding brain state routines automatically.
 * *Idea:* "Endorphin Rush" - Visualizing temporary immunity to stress/shake events by suppressing distortion parameters.
 * *Idea:* "Hormonal Flow Physics" - What if we visualize hormonal flows like Oxytocin as a slow, warm wave using procedural volumetric fluid dynamics rather than just parameter shifts?
+* *Idea:* "Procedural Cellular Advection" - Expand fluid dynamics to push and advect individual soma particles or fibers based on the fluid velocity field.
 * *Idea:* "What if we visualized environmental noise as background ambient lighting shifts?"
 * *Idea:* "What if we visualize immune cell migration as particle streams during an inflammatory response?"
 

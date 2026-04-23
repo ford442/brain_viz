@@ -140,6 +140,21 @@ export class RoutinePlayer {
             }
         });
 
+        // [Phase 6] Procedural Volumetric Fluid Dynamics
+        this.registerHandler('fluid', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            if (evt.duration) {
+                this.startLerp({
+                    key: 'fluidActive',
+                    value: intensity,
+                    duration: evt.duration,
+                    ease: evt.ease || 'linear'
+                });
+            } else {
+                this.renderer.setParams({ fluidActive: intensity });
+            }
+        });
+
         // [Phase 5] Cortisol Structural Decay
         this.registerHandler('cortisol', (evt) => {
             const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;

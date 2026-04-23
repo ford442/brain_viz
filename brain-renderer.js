@@ -54,6 +54,7 @@ export class BrainRenderer {
             dirIntensity: 0.8, // [Phase 2] Directional Light Intensity
             stress: 0.0, // [Phase 2] Cognitive Stress Distortion
             cortisol: 0.0, // [Phase 5] Cortisol Structural Decay
+            fluidActive: 0.0, // [Phase 6] Procedural Volumetric Fluid Dynamics
             // Altitude/Hypoxia Simulation Parameters
             altitude: 0.0, // Altitude in meters (0-8000)
             oxygenLevel: 1.0, // Oxygen saturation (1.0-0.3)
@@ -630,7 +631,8 @@ export class BrainRenderer {
         dv.setFloat32(52, this.params.metabolicRate, true);
         dv.setFloat32(56, this.params.mitochondrialFunction, true);
 
-        // Environmental Hazard variables
+        // Fluid Dynamics and Environmental Hazard variables
+        dv.setFloat32(60, this.params.fluidActive, true);
         dv.setFloat32(64, this.stimulus.electricalActive, true);
         dv.setFloat32(68, this.stimulus.mercuryActive, true);
 
