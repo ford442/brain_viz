@@ -575,7 +575,7 @@ struct TensorParams {
     metabolicRate: f32,
     mitochondrialFunction: f32,
     // Padding to 64 bytes is handled, now adding environmental hazards
-    pad1: f32,
+    fluidActive: f32,
     electricalActive: f32,
     mercuryActive: f32,
     pad2: vec2<f32>,
@@ -649,6 +649,33 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
 
     let avg = neighborSum / max(1.0, neighborCount);
     val = mix(val, avg, diffusion);
+
+    // Procedural Volumetric Fluid Dynamics (Advection)
+    // Simulates neurotransmitter diffusion using volumetric rendering
+    if (params.fluidActive > 0.0) {
+        // Create a procedural velocity field (swirling advection)
+        let timeSpeed = params.time * 2.0;
+        let flowVelocity = vec3<f32>(
+            sin(worldPosition.y * 3.0 + timeSpeed) * cos(worldPosition.z * 2.0 - timeSpeed),
+            cos(worldPosition.x * 3.0 - timeSpeed) * sin(worldPosition.z * 2.0 + timeSpeed),
+            sin(worldPosition.x * 2.0 + timeSpeed) * cos(worldPosition.y * 3.0 - timeSpeed)
+        ) * 0.5 * params.fluidActive;
+
+        // Determine coordinates to sample "upstream" density from
+        let samplePos = worldPosition - flowVelocity;
+
+        // Convert sample pos back to grid coordinates
+        let normalizedSamplePos = (samplePos / BRAIN_RANGE) * 0.5 + 0.5;
+        let sx = u32(clamp(normalizedSamplePos.x * f32(dim), 0.0, f32(dim - 1u)));
+        let sy = u32(clamp(normalizedSamplePos.y * f32(dim), 0.0, f32(dim - 1u)));
+        let sz = u32(clamp(normalizedSamplePos.z * f32(dim), 0.0, f32(dim - 1u)));
+
+        let upstreamIndex = getIndex(sx, sy, sz);
+        let upstreamVal = activityTensor[upstreamIndex];
+
+        // Advect: mix current value with upstream value based on fluidActive intensity
+        val = mix(val, upstreamVal, min(1.0, params.fluidActive * 0.5));
+    }
 
     // [Neuro-Weaver] 2. Stimulus Injection
     // Direct voxel manipulation from CPU events (injected via uniforms)
