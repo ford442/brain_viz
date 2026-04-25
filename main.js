@@ -39,10 +39,9 @@ const MINI_ROUTINES = {
     '4': [ // Serotonin Surge
         { time: 0.0, type: 'text', message: 'Serotonin Flood...', duration: 2.0 },
         { time: 0.0, type: 'style', value: 2 }, // Connectome
-        { time: 0.0, type: 'lerp', key: 'colorShift', value: 1.0, duration: 2.0, ease: 'sineInOut' },
-        { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 8.0, duration: 2.0, ease: 'cubicIn' },
-        { time: 3.0, type: 'lerp', key: 'colorShift', value: 0.0, duration: 3.0, ease: 'sineInOut' },
-        { time: 3.0, type: 'lerp', key: 'flowSpeed', value: 4.0, duration: 3.0, ease: 'quadOut' }
+        { time: 0.0, type: 'serotonin', intensity: 2.0, duration: 3.0 },
+        { time: 3.0, type: 'text', message: 'Serotonin stabilized.', duration: 2.0 },
+        { time: 5.0, type: 'calm' }
     ],
     '5': [ // Epiphany (Sparkles)
         { time: 0.0, type: 'style', value: 2 }, // Connectome

@@ -16,6 +16,7 @@
 - [x] **Playback UI:** Add a "Run Sequence" button and a transport clock (Play/Stop/Loop) to the DOM.
 
 ### Phase 2: Advanced Choreography
+- [x] **Serotonin Color Shift:** Implement `serotonin` event handler in `routine-player.js` to simulate serotonin flood via `colorShift` and `flowSpeed`.
 - [x] **Default Mode Network (DMN) Routine:** Visualize the Default Mode Network as a low-frequency hum during idle states.
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
@@ -103,7 +104,7 @@
 * *Idea:* "What if we visualized myelin sheath degradation in neurodegenerative conditions?"
 * *Idea:* "Brain-Computer Interface (BCI) Training Mode" - A gamified mode where users try to maintain specific brain states (e.g., keeping the `stress` level below a threshold) to complete objectives.
 * *Idea:* "Cognitive Load Resolution: What if we visualized cognitive load as variable rendering resolution?"
-* *Idea:* "What if we visualized Serotonin levels as color shifts?"
+* *Idea:* "What if we visualized Endocannabinoids as an enhanced state of flow and appetite?"
 * *Idea:* "Volumetric Fog" - Introduce a fog shader to give the brain an ethereal, atmospheric depth.
 * *Idea:* "Dynamic Weather Systems" - Allow routines to control global environmental weather effects like rain/fog inside the brain.
 * *Idea:* "Narrative Mode" - Display text overlays synced with brain states (e.g., "Subject recognizes face" -> Temporal Lobe lights up).
