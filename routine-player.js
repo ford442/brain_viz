@@ -155,6 +155,38 @@ export class RoutinePlayer {
             }
         });
 
+        // [Phase 2] Serotonin Color Shift
+        this.registerHandler('serotonin', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 3.0;
+
+            // Gradually shift color toward serotonin representation and speed up flow
+            this.startLerp({ key: 'colorShift', value: 0.5 * intensity, duration: 2.0, ease: 'sineInOut' });
+            this.startLerp({ key: 'flowSpeed', value: 8.0 * intensity, duration: 2.0, ease: 'cubicIn' });
+
+            // Smoothly fade back after full surge is reached
+            if (duration > 0) {
+                const ease = evt.ease || 'sineInOut';
+
+                // Keep chronological ordering for reverting the values back to normal
+                if (this.routine) {
+                    const revertTime = this.elapsedTime + 2.0;
+
+                    const revertEvents = [
+                        { time: revertTime, type: 'lerp', key: 'colorShift', value: 0.0, duration: duration, ease: ease },
+                        { time: revertTime, type: 'lerp', key: 'flowSpeed', value: 4.0, duration: duration, ease: 'quadOut' }
+                    ];
+
+                    let insertIdx = this.currentEventIndex || this.cursor;
+                    while (insertIdx < this.routine.length && this.routine[insertIdx].time < revertTime) {
+                        insertIdx++;
+                    }
+
+                    this.routine.splice(insertIdx, 0, ...revertEvents);
+                }
+            }
+        });
+
         // [Phase 5] Cortisol Structural Decay
         this.registerHandler('cortisol', (evt) => {
             const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
