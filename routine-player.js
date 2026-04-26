@@ -355,6 +355,19 @@ export class RoutinePlayer {
             }
         });
 
+        // [Phase 2] Environmental Hazards
+        this.registerHandler('electrical', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 1.0;
+            this.renderer.injectElectrical(intensity, duration);
+        });
+
+        this.registerHandler('mercury', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 1.0;
+            this.renderer.injectMercury(intensity, duration);
+        });
+
         // [Phase 5] Acetylcholine Memory Consolidation
         this.registerHandler('acetylcholine', (evt) => {
             const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
