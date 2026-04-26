@@ -16,6 +16,7 @@
 - [x] **Playback UI:** Add a "Run Sequence" button and a transport clock (Play/Stop/Loop) to the DOM.
 
 ### Phase 2: Advanced Choreography
+- [x] **Environmental Hazards:** Implement electrical and mercury event handlers.
 - [x] **Serotonin Color Shift:** Implement `serotonin` event handler in `routine-player.js` to simulate serotonin flood via `colorShift` and `flowSpeed`.
 - [x] **Default Mode Network (DMN) Routine:** Visualize the Default Mode Network as a low-frequency hum during idle states.
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
@@ -101,6 +102,7 @@
 
 ## 🧪 "Dream" Log (Future Concepts)
 
+* *Idea:* "What if we visualized long-term heavy metal accumulation as permanent structural alterations?"
 * *Idea:* "What if we visualized myelin sheath degradation in neurodegenerative conditions?"
 * *Idea:* "Brain-Computer Interface (BCI) Training Mode" - A gamified mode where users try to maintain specific brain states (e.g., keeping the `stress` level below a threshold) to complete objectives.
 * *Idea:* "Cognitive Load Resolution: What if we visualized cognitive load as variable rendering resolution?"
