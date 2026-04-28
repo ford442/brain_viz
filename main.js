@@ -161,7 +161,7 @@ const MINI_ROUTINES = {
         { time: 12.0, type: 'text', message: 'Default Lights', duration: 2.0 },
         { time: 12.0, type: 'light', dirX: 1.0, dirY: 1.0, dirZ: 1.0, dirIntensity: 0.8, ambient: 0.2, duration: 2.0 }
     ],
-    'g': [ // Glitch Storm
+    'G': [ // Glitch Storm
         { time: 0.0, type: 'text', message: 'DATA CORRUPTION DETECTED', duration: 2.0 },
         { time: 0.0, type: 'glitch', intensity: 1.0, autoRestore: false },
         { time: 0.2, type: 'glitch', intensity: 1.5, autoRestore: true },
@@ -190,6 +190,14 @@ const MINI_ROUTINES = {
         { time: 4.0, type: 'calm' }
     ],
 
+
+    'B': [ // Endocannabinoid Flow
+        { time: 0.0, type: 'text', message: 'Endocannabinoid Release: Flow & Appetite', duration: 4.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'endocannabinoid', duration: 5.0 },
+        { time: 6.0, type: 'text', message: 'Baseline restored.', duration: 2.0 },
+        { time: 7.0, type: 'calm' }
+    ],
     'j': [ // Melatonin Sleep Onset
         { time: 0.0, type: 'text', message: 'Melatonin Release: Sleep Onset', duration: 4.0 },
         { time: 0.0, type: 'style', value: 0 }, // Organic
@@ -314,7 +322,7 @@ const MINI_ROUTINES = {
         { time: 0.0, type: 'text', message: 'Math Sequence Complete', duration: 2.0 },
         { time: 0.0, type: 'calm' }
     ],
-    's': [ // Wait/Signal Demo
+    'S': [ // Wait/Signal Demo
         { time: 0.0, type: 'text', message: 'Waiting for User Signal (Press Space)...', duration: 0.0 },
         { time: 0.0, type: 'style', value: 1 },
         { time: 0.0, type: 'wait', signal: 'continue_scan' },
@@ -648,7 +656,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Fog, d=Dopamine, e=Endorphin, E=Electrical, M=Mercury, j=Melatonin, a=Adrenaline, u=Noradrenaline, m=Memory, c=Custom Audio, t=Time Warp, x=Time Mod, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters, k=Binaural, y=Oxytocin, r=Acetylcholine, h=GABA, n=Neuro-Cinema, z=Default Mode Network, I=Inflammation, C=Glial Cleanup, F=Fluid Dynamics';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Fog, d=Dopamine, e=Endorphin, E=Electrical, M=Mercury, j=Melatonin, a=Adrenaline, u=Noradrenaline, m=Memory, c=Custom Audio, t=Time Warp, x=Time Mod, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, o=Orbit Avoid, q=Choice, f=Filters, k=Binaural, y=Oxytocin, r=Acetylcholine, h=GABA, n=Neuro-Cinema, z=Default Mode Network, I=Inflammation, C=Glial Cleanup, F=Fluid Dynamics, B=Endocannabinoid, G=Glitch, S=Signal';
         document.body.appendChild(legend);
         // [Phase 4] Narrative Overlay
         const narrative = document.createElement('div');

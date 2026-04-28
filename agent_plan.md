@@ -68,6 +68,10 @@
 - [x] **Histamine Inflammatory Response:** Implement `histamine` event handler to simulate localized inflammatory response via color shift and swelling.
 - [x] **Glial Cell Cleanup:** Implement `glial_cleanup` event handler to simulate glial cells repairing structural tissue after inflammation, utilizing cool color shift and reducing swelling parameters.
 
+- [x] **Endocannabinoid State Routine:** Implement endocannabinoid event handler to visualize enhanced flow and appetite.
+- [ ] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
+- [ ] **Camera Coordinates Map:** Define explicit regions for better camera angles.
+
 ### Phase 3: "Brain DJ" Mode (Live Performance)
 - [x] **Keyboard Triggers:** Bind number keys (1-9) to specific mini-routines (e.g., Press '1' for "Sudden Surprise", '2' for "Calm Down").
 - [x] **Audio Reactivity:** Connect the Web Audio API to drive `amplitude` and `stimulus` intensity based on microphone input or music.
@@ -102,6 +106,7 @@
 
 ## 🧪 "Dream" Log (Future Concepts)
 
+*Idea:* "What if we visualized neuroplasticity as real-time growth of new connections?"
 * *Idea:* "What if we visualized long-term heavy metal accumulation as permanent structural alterations?"
 * *Idea:* "What if we visualized myelin sheath degradation in neurodegenerative conditions?"
 * *Idea:* "Brain-Computer Interface (BCI) Training Mode" - A gamified mode where users try to maintain specific brain states (e.g., keeping the `stress` level below a threshold) to complete objectives.
