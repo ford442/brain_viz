@@ -313,6 +313,25 @@ export class RoutinePlayer {
             this.startLerp({ key: 'colorShift', value: -0.2 * intensity, duration: duration, ease: 'quadOut' });
         });
 
+
+        // [Phase 5] Endocannabinoids
+        this.registerHandler('endocannabinoid', (evt) => {
+            const duration = evt.duration || 5.0;
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+
+            // Suppress stress/shake, moderate flowSpeed, increase amplitude slightly
+            this.renderer.setParams({
+                stress: 0.0,
+                shake: 0.0
+            });
+
+            this.startLerp({ key: 'flowSpeed', value: 6.0 * intensity, duration: duration, ease: 'sineOut' });
+            this.startLerp({ key: 'amplitude', value: 0.8 * intensity, duration: duration, ease: 'sineOut' });
+
+            // Warm, pleasant color shift
+            this.startLerp({ key: 'colorShift', value: 0.3 * intensity, duration: duration, ease: 'sineOut' });
+        });
+
         // [Phase 5] Melatonin Sleep Onset
         this.registerHandler('melatonin', (evt) => {
             const duration = evt.duration || 5.0;
