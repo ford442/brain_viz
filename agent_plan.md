@@ -107,7 +107,6 @@
 * *Idea:* "Brain-Computer Interface (BCI) Training Mode" - A gamified mode where users try to maintain specific brain states (e.g., keeping the `stress` level below a threshold) to complete objectives.
 * *Idea:* "Cognitive Load Resolution: What if we visualized cognitive load as variable rendering resolution?"
 * *Idea:* "What if we visualized Endocannabinoids as an enhanced state of flow and appetite?"
-* *Idea:* "Volumetric Fog" - Introduce a fog shader to give the brain an ethereal, atmospheric depth.
 * *Idea:* "Dynamic Weather Systems" - Allow routines to control global environmental weather effects like rain/fog inside the brain.
 * *Idea:* "Narrative Mode" - Display text overlays synced with brain states (e.g., "Subject recognizes face" -> Temporal Lobe lights up).
 * *Idea:* "Multi-Brain" - Visualize two brains interacting (Mirror Neurons).
@@ -132,6 +131,7 @@
 * *Idea:* "Procedural Cellular Advection" - Expand fluid dynamics to push and advect individual soma particles or fibers based on the fluid velocity field.
 * *Idea:* "What if we visualized environmental noise as background ambient lighting shifts?"
 * *Idea:* "What if we visualize immune cell migration as particle streams during an inflammatory response?"
+* *Idea:* "Neuron Pulse Trail Length: Add a parameter to control the decay tail length of connectome pulses to simulate different signal speeds."
 
 * *Idea:* "Procedural Binaural Generation" - Automatically generate binaural beat frequencies based on desired brain wave targets.
 * *Idea:* "What if we visualized Cortisol levels as structural decay?"
@@ -196,6 +196,7 @@
 
 ## 📜 Changelog
 * [2026-05-05] - Completed Phase 2 (Glial Cell Cleanup). Implemented `glial_cleanup` event handler in `routine-player.js` to simulate post-inflammatory structural repair. Bound to 'C' key in `main.js`. Added myelin degradation idea to Dream Log.
+* [2026-05-06] - Completed "Volumetric Fog" Dream Log idea. Added `fogDensity` uniform with correct alignment in shaders, bound it to UI and renderer, and added 'g' shortcut in `main.js`. Added "Neuron Pulse Trail Length" idea to Dream Log.
 * [2026-04-18] - Completed Phase 2 (Default Mode Network). Implemented `dmn` event handler in `routine-player.js` to simulate the DMN via `frequency`, `amplitude`, and `flowSpeed`. Bound to 'z' key in `main.js`. Added Neuromodulation Interface idea to Dream Log.
 * [2026-03-28] - Completed Phase 2 (Cognitive Stress Distortion). Implemented `stress` uniform in shaders for high-frequency vertex displacement. Added event handler in `routine-player.js` and updated UI/Panic Routine in `main.js`. Added Dream Log idea.
 * [2026-03-24] - Completed Phase 2 (Pathfinding Camera). Enhanced `camera` event handler in `routine-player.js` to support collision avoidance via generated spline paths for large rotations. Added 'Orbit Avoid' mini-routine to `main.js` using 'o'.

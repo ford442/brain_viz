@@ -110,6 +110,12 @@ const MINI_ROUTINES = {
         { time: 0.0, type: 'camera', target: 'iso', duration: 1.5, ease: 'quadInOut' },
         { time: 0.0, type: 'text', message: 'Isometric Projection', duration: 1.5 }
     ],
+    'g': [ // Volumetric Fog Demo
+        { time: 0.0, type: 'style', value: 0 },
+        { time: 0.0, type: 'text', message: 'Atmospheric Depth...', duration: 2.0 },
+        { time: 0.0, type: 'lerp', key: 'fogDensity', value: 0.5, duration: 2.0, ease: 'quadOut' },
+        { time: 3.0, type: 'lerp', key: 'fogDensity', value: 0.0, duration: 2.0, ease: 'quadIn' }
+    ],
     'f': [ // CSS Filter Demo
         { time: 0.0, type: 'text', message: 'Applying CSS Filters...', duration: 2.0 },
         { time: 0.0, type: 'cssFilter', filter: 'blur(5px) sepia(0.8)' },
@@ -515,6 +521,7 @@ async function init() {
         stress: document.getElementById('stress'), // [Phase 2] Stress Distortion
         cortisol: document.getElementById('cortisol'), // [Phase 5] Cortisol Decay
         fluidActive: document.getElementById('fluidActive'), // [Phase 6] Fluid Dynamics
+        fogDensity: document.getElementById('fogDensity'),
         aberration: document.getElementById('aberration'), // [Phase 7]
         grain: document.getElementById('grain'), // [Phase 7]
         focus: document.getElementById('focus'), // [Phase 7]
@@ -544,6 +551,7 @@ async function init() {
         stress: document.getElementById('val-stress'), // [Phase 2] Stress Distortion
         cortisol: document.getElementById('val-cortisol'), // [Phase 5] Cortisol Decay
         fluidActive: document.getElementById('val-fluidActive'), // [Phase 6] Fluid Dynamics
+        fogDensity: document.getElementById('val-fogDensity'),
         aberration: document.getElementById('val-aberration'), // [Phase 7]
         grain: document.getElementById('val-grain'), // [Phase 7]
         focus: document.getElementById('val-focus'), // [Phase 7]
@@ -640,7 +648,7 @@ async function init() {
         legend.style.fontFamily = 'monospace';
         legend.style.fontSize = '12px';
         legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Glitch, d=Dopamine, e=Endorphin, E=Electrical, M=Mercury, j=Melatonin, a=Adrenaline, u=Noradrenaline, m=Memory, c=Custom Audio, t=Time Warp, x=Time Mod, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters, k=Binaural, y=Oxytocin, r=Acetylcholine, h=GABA, n=Neuro-Cinema, z=Default Mode Network, I=Inflammation, C=Glial Cleanup, F=Fluid Dynamics';
+        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Fog, d=Dopamine, e=Endorphin, E=Electrical, M=Mercury, j=Melatonin, a=Adrenaline, u=Noradrenaline, m=Memory, c=Custom Audio, t=Time Warp, x=Time Mod, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, s=Signal, o=Orbit Avoid, q=Choice, f=Filters, k=Binaural, y=Oxytocin, r=Acetylcholine, h=GABA, n=Neuro-Cinema, z=Default Mode Network, I=Inflammation, C=Glial Cleanup, F=Fluid Dynamics';
         document.body.appendChild(legend);
         // [Phase 4] Narrative Overlay
         const narrative = document.createElement('div');
@@ -799,7 +807,7 @@ async function init() {
              if (event.type === 'calm') {
                  // Calm state modifies amplitude, frequency, smoothing
                  // We should sync them if they are in the renderer params
-                 ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'cortisol', 'fluidActive', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
+                 ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'cortisol', 'fluidActive', 'fogDensity', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
                     if (inputs[k]) inputs[k].value = renderer.params[k];
                     if (labels[k]) labels[k].textContent = renderer.params[k].toFixed(2);
                  });
@@ -1481,7 +1489,7 @@ function initUIControls(renderer, uiInputs, uiLabels) {
 
     document.getElementById('stim-calm')?.addEventListener('click', () => {
         renderer.calmState();
-        ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'cortisol', 'fluidActive', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
+        ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'cortisol', 'fluidActive', 'fogDensity', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
             if(uiInputs[k]) uiInputs[k].value = renderer.params[k];
             syncParam(k, renderer.params[k]);
         });
