@@ -4,7 +4,7 @@ import { BrainGeometry } from './brain-geometry.js';
 import { vertexShader, fragmentShader, computeShader, somaVertexShader, somaFragmentShader, postVertexShader, postFragmentShader } from './shaders.js';
 import { Mat4 } from './math-utils.js';
 
-const RENDER_UNIFORM_FLOAT_COUNT = 60;
+const RENDER_UNIFORM_FLOAT_COUNT = 64;
 const UNIFORM_BUFFER_ALIGNMENT = 256;
 const RENDER_UNIFORM_BUFFER_SIZE = Math.ceil(
     (RENDER_UNIFORM_FLOAT_COUNT * Float32Array.BYTES_PER_ELEMENT) / UNIFORM_BUFFER_ALIGNMENT
@@ -60,7 +60,8 @@ export class BrainRenderer {
             oxygenLevel: 1.0, // Oxygen saturation (1.0-0.3)
             hypoxiaStress: 0.0, // Cellular stress response (0.0-1.0)
             metabolicRate: 1.0, // ATP consumption multiplier (0.5-2.0)
-            mitochondrialFunction: 1.0 // ATP synthesis efficiency (0.0-1.0)
+            mitochondrialFunction: 1.0, // ATP synthesis efficiency (0.0-1.0)
+            fogDensity: 0.0 // Volumetric Fog
         };
 
         // Voxel Grid Settings
@@ -564,6 +565,8 @@ export class BrainRenderer {
         const OFFSET_HYPOXIA_STRESS = 57;
         const OFFSET_METABOLIC_RATE = 58;
         const OFFSET_MITOCHONDRIAL = 59;
+        const OFFSET_FOG_DENSITY = 60;
+        const OFFSET_ZOOM = 61;
 
         const uData = new Float32Array(RENDER_UNIFORM_FLOAT_COUNT);
         uData.set(mvp, OFFSET_MVP);
@@ -597,6 +600,8 @@ export class BrainRenderer {
         uData[OFFSET_HYPOXIA_STRESS] = this.params.hypoxiaStress;
         uData[OFFSET_METABOLIC_RATE] = this.params.metabolicRate;
         uData[OFFSET_MITOCHONDRIAL] = this.params.mitochondrialFunction;
+        uData[OFFSET_FOG_DENSITY] = this.params.fogDensity;
+        uData[OFFSET_ZOOM] = this.zoom;
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         

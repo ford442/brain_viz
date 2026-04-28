@@ -149,6 +149,10 @@ struct Uniforms {
     hypoxiaStress: f32, // Cellular stress response
     metabolicRate: f32, // ATP consumption multiplier
     mitochondrialFunction: f32, // ATP synthesis efficiency
+    fogDensity: f32, // Volumetric Fog
+    zoom: f32, // Camera zoom for distance math
+    pad1: f32, // Padding
+    pad2: f32, // Padding
 }
 
 struct VertexInput {
@@ -359,6 +363,10 @@ struct Uniforms {
     hypoxiaStress: f32,
     metabolicRate: f32,
     mitochondrialFunction: f32,
+    fogDensity: f32,
+    zoom: f32,
+    pad1: f32,
+    pad2: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
@@ -421,6 +429,13 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
     let mixFactor = clamp(input.activity * 1.5 * rimAlpha, 0.0, 1.0);
     col = mix(col, activityGlowColor, mixFactor);
 
+    // Apply volumetric fog based on fragment depth
+    let cameraPos = vec3<f32>(0.0, 0.0, uniforms.zoom);
+    let depth = length(input.worldPos - cameraPos);
+    let fogFactor = exp(-uniforms.fogDensity * depth * 0.5);
+    let fogColor = vec3<f32>(0.02, 0.02, 0.05); // Deep space background color
+    col = mix(fogColor, col, clamp(fogFactor, 0.0, 1.0));
+
     return vec4<f32>(col, clamp(finalAlpha, 0.0, 1.0));
 }
 `;
@@ -448,6 +463,10 @@ struct Uniforms {
     cortisol: f32,
     focus: f32, // [Phase 7]
     aperture: f32, // [Phase 7]
+    fogDensity: f32,
+    zoom: f32,
+    pad1: f32,
+    pad2: f32,
 }
 
 struct VertexInput {
@@ -540,6 +559,36 @@ fn main_soma(input: VertexInput) -> VertexOutput {
 
 export const somaFragmentShader = `
 // [V2.3] Soma Fragment Shader
+struct Uniforms {
+    mvpMatrix: mat4x4<f32>,
+    modelMatrix: mat4x4<f32>,
+    time: f32,
+    style: f32,
+    flowSpeed: f32,
+    colorShift: f32, // [Phase 5]
+    slicePlane: vec4<f32>, // [Neuro-Weaver] V2.6: Renamed from clipPlane
+    sparkle: f32, // [Phase 5] Synaptic Sparkles
+    growth: f32, // [Phase 6]
+    aberration: f32, // [Phase 7]
+    grain: f32, // [Phase 7],
+    lightDir: vec3<f32>, // [Phase 2]
+    ambientLight: f32, // [Phase 2]
+    dirIntensity: f32, // [Phase 2]
+    stress: f32,
+    cortisol: f32,
+    // Altitude/Hypoxia Parameters
+    altitude: f32,
+    oxygenLevel: f32,
+    hypoxiaStress: f32,
+    metabolicRate: f32,
+    mitochondrialFunction: f32,
+    fogDensity: f32,
+    zoom: f32,
+    pad1: f32,
+    pad2: f32,
+}
+@group(0) @binding(0) var<uniform> uniforms: Uniforms;
+
 struct FragmentInput {
     @location(0) worldPos: vec3<f32>,
     @location(1) color: vec3<f32>,
@@ -549,7 +598,15 @@ struct FragmentInput {
 @fragment
 fn main(input: FragmentInput) -> @location(0) vec4<f32> {
     if (input.clipDist < 0.0) { discard; }
-    return vec4<f32>(input.color, 1.0);
+
+    // Apply volumetric fog based on fragment depth
+    let cameraPos = vec3<f32>(0.0, 0.0, uniforms.zoom);
+    let depth = length(input.worldPos - cameraPos);
+    let fogFactor = exp(-uniforms.fogDensity * depth * 0.5);
+    let fogColor = vec3<f32>(0.02, 0.02, 0.05); // Deep space background color
+    let col = mix(fogColor, input.color, clamp(fogFactor, 0.0, 1.0));
+
+    return vec4<f32>(col, 1.0);
 }
 `;
 
@@ -751,6 +808,16 @@ struct Uniforms {
     dirIntensity: f32,
     stress: f32,
     cortisol: f32,
+    // Altitude/Hypoxia Parameters
+    altitude: f32,
+    oxygenLevel: f32,
+    hypoxiaStress: f32,
+    metabolicRate: f32,
+    mitochondrialFunction: f32,
+    fogDensity: f32,
+    zoom: f32,
+    pad1: f32,
+    pad2: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var tDiffuse: texture_2d<f32>;
