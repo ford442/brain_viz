@@ -510,6 +510,7 @@ class FilterUIOverlay {
 }
 
 async function init() {
+    // Main script updated for neuro-script cycle.
     const canvas = document.getElementById('canvas');
     const filterOverlay = new FilterUIOverlay(canvas);
     const errorDiv = document.getElementById('error');

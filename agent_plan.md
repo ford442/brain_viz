@@ -69,6 +69,8 @@
 - [x] **Glial Cell Cleanup:** Implement `glial_cleanup` event handler to simulate glial cells repairing structural tissue after inflammation, utilizing cool color shift and reducing swelling parameters.
 
 - [x] **Endocannabinoid State Routine:** Implement endocannabinoid event handler to visualize enhanced flow and appetite.
+- [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
+- [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 - [ ] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
 - [ ] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 
