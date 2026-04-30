@@ -583,8 +583,9 @@ async function init() {
     };
     
     if (!navigator.gpu) {
-        errorDiv.textContent = 'WebGPU is not supported in this browser.';
-        errorDiv.style.display = 'block';
+        const msg = document.getElementById('error-message');
+        if (msg) msg.textContent = 'Your browser does not support WebGPU. Please use Chrome 113+ or Edge 113+ with WebGPU enabled.';
+        errorDiv.classList.add('visible');
         return;
     }
     
@@ -656,20 +657,131 @@ async function init() {
             }
         });
 
-        // Legend UI
-        const legend = document.createElement('div');
-        legend.id = 'keyboard-legend';
-        legend.style.position = 'absolute';
-        legend.style.bottom = '10px';
-        legend.style.right = '10px';
-        legend.style.background = 'rgba(0, 0, 0, 0.7)';
-        legend.style.color = '#fff';
-        legend.style.padding = '8px';
-        legend.style.fontFamily = 'monospace';
-        legend.style.fontSize = '12px';
-        legend.style.pointerEvents = 'none';
-        legend.innerHTML = 'Keys: 1=Surprise, 2=Calm, 3=Scan, 4=Serotonin, 5=Epiphany, 6=Panic, 7-9=Views, 0=Focus, -=Breathe, l=Lighting, g=Fog, d=Dopamine, e=Endorphin, E=Electrical, M=Mercury, j=Melatonin, a=Adrenaline, u=Noradrenaline, m=Memory, c=Custom Audio, t=Time Warp, x=Time Mod, p=Spline, v=Fly-Through, i=Interactive, b=Branch, w=Math/Vars, o=Orbit Avoid, q=Choice, f=Filters, k=Binaural, y=Oxytocin, r=Acetylcholine, h=GABA, n=Neuro-Cinema, z=Default Mode Network, I=Inflammation, C=Glial Cleanup, F=Fluid Dynamics, B=Endocannabinoid, G=Glitch, S=Signal';
-        document.body.appendChild(legend);
+        // Keyboard Legend FAB + Panel
+        const fabHelp = document.createElement('button');
+        fabHelp.className = 'fab-help';
+        fabHelp.innerHTML = '?';
+        fabHelp.title = 'Keyboard Shortcuts';
+        document.body.appendChild(fabHelp);
+
+        const legendPanel = document.createElement('div');
+        legendPanel.className = 'legend-panel';
+        legendPanel.innerHTML = `
+            <h3>Keyboard Shortcuts</h3>
+            <div class="legend-section">
+                <div class="legend-section-title">Views</div>
+                <div class="legend-row">
+                    <div class="legend-item"><span class="legend-key">7</span><span>Top View</span></div>
+                    <div class="legend-item"><span class="legend-key">8</span><span>Bottom View</span></div>
+                    <div class="legend-item"><span class="legend-key">9</span><span>Isometric</span></div>
+                </div>
+            </div>
+            <div class="legend-section">
+                <div class="legend-section-title">States</div>
+                <div class="legend-row">
+                    <div class="legend-item"><span class="legend-key">1</span><span>Surprise</span></div>
+                    <div class="legend-item"><span class="legend-key">2</span><span>Calm</span></div>
+                    <div class="legend-item"><span class="legend-key">3</span><span>Scan</span></div>
+                    <div class="legend-item"><span class="legend-key">4</span><span>Serotonin</span></div>
+                    <div class="legend-item"><span class="legend-key">5</span><span>Epiphany</span></div>
+                    <div class="legend-item"><span class="legend-key">6</span><span>Panic</span></div>
+                </div>
+            </div>
+            <div class="legend-section">
+                <div class="legend-section-title">Neurochemical</div>
+                <div class="legend-row">
+                    <div class="legend-item"><span class="legend-key">d</span><span>Dopamine</span></div>
+                    <div class="legend-item"><span class="legend-key">e</span><span>Endorphin</span></div>
+                    <div class="legend-item"><span class="legend-key">y</span><span>Oxytocin</span></div>
+                    <div class="legend-item"><span class="legend-key">r</span><span>Acetylcholine</span></div>
+                    <div class="legend-item"><span class="legend-key">h</span><span>GABA</span></div>
+                    <div class="legend-item"><span class="legend-key">j</span><span>Melatonin</span></div>
+                    <div class="legend-item"><span class="legend-key">a</span><span>Adrenaline</span></div>
+                    <div class="legend-item"><span class="legend-key">u</span><span>Noradrenaline</span></div>
+                    <div class="legend-item"><span class="legend-key">B</span><span>Endocannabinoid</span></div>
+                </div>
+            </div>
+            <div class="legend-section">
+                <div class="legend-section-title">Systems</div>
+                <div class="legend-row">
+                    <div class="legend-item"><span class="legend-key">E</span><span>Electrical</span></div>
+                    <div class="legend-item"><span class="legend-key">M</span><span>Mercury</span></div>
+                    <div class="legend-item"><span class="legend-key">I</span><span>Inflammation</span></div>
+                    <div class="legend-item"><span class="legend-key">C</span><span>Glial Cleanup</span></div>
+                    <div class="legend-item"><span class="legend-key">F</span><span>Fluid Dynamics</span></div>
+                </div>
+            </div>
+            <div class="legend-section">
+                <div class="legend-section-title">Cinematic</div>
+                <div class="legend-row">
+                    <div class="legend-item"><span class="legend-key">0</span><span>Focus</span></div>
+                    <div class="legend-item"><span class="legend-key">-</span><span>Breathe</span></div>
+                    <div class="legend-item"><span class="legend-key">l</span><span>Lighting</span></div>
+                    <div class="legend-item"><span class="legend-key">g</span><span>Fog</span></div>
+                    <div class="legend-item"><span class="legend-key">f</span><span>Filters</span></div>
+                    <div class="legend-item"><span class="legend-key">v</span><span>Fly-Through</span></div>
+                    <div class="legend-item"><span class="legend-key">V</span><span>Map Fly-Through</span></div>
+                    <div class="legend-item"><span class="legend-key">i</span><span>Interactive</span></div>
+                </div>
+            </div>
+            <div class="legend-section">
+                <div class="legend-section-title">Advanced</div>
+                <div class="legend-row">
+                    <div class="legend-item"><span class="legend-key">t</span><span>Time Warp</span></div>
+                    <div class="legend-item"><span class="legend-key">x</span><span>Time Modulation</span></div>
+                    <div class="legend-item"><span class="legend-key">p</span><span>Spline</span></div>
+                    <div class="legend-item"><span class="legend-key">w</span><span>Math / Variables</span></div>
+                    <div class="legend-item"><span class="legend-key">q</span><span>Choice</span></div>
+                    <div class="legend-item"><span class="legend-key">G</span><span>Glitch</span></div>
+                    <div class="legend-item"><span class="legend-key">S</span><span>Signal</span></div>
+                    <div class="legend-item"><span class="legend-key">m</span><span>Memory</span></div>
+                    <div class="legend-item"><span class="legend-key">b</span><span>Branch</span></div>
+                    <div class="legend-item"><span class="legend-key">o</span><span>Orbit Avoid</span></div>
+                    <div class="legend-item"><span class="legend-key">c</span><span>Custom Audio</span></div>
+                    <div class="legend-item"><span class="legend-key">k</span><span>Binaural</span></div>
+                    <div class="legend-item"><span class="legend-key">n</span><span>Neuro-Cinema</span></div>
+                    <div class="legend-item"><span class="legend-key">z</span><span>Default Mode</span></div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(legendPanel);
+
+        let legendOpen = false;
+        const legendStorageKey = 'neuro_weaver_legend_seen';
+
+        function toggleLegend(forceState) {
+            legendOpen = forceState !== undefined ? forceState : !legendOpen;
+            if (legendOpen) {
+                legendPanel.classList.add('open');
+            } else {
+                legendPanel.classList.remove('open');
+            }
+        }
+
+        fabHelp.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleLegend();
+        });
+
+        document.addEventListener('click', (e) => {
+            if (legendOpen && !legendPanel.contains(e.target) && e.target !== fabHelp) {
+                toggleLegend(false);
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Escape' && legendOpen) {
+                toggleLegend(false);
+            }
+        });
+
+        // Auto-open on first visit
+        try {
+            if (!localStorage.getItem(legendStorageKey)) {
+                localStorage.setItem(legendStorageKey, 'true');
+                toggleLegend(true);
+            }
+        } catch (e) {}
         // [Phase 4] Narrative Overlay
         const narrative = document.createElement('div');
         narrative.id = 'narrative-overlay';
@@ -678,15 +790,26 @@ async function init() {
             bottom: '15%',
             width: '100%',
             textAlign: 'center',
-            color: 'rgba(220, 240, 255, 0.9)',
-            fontFamily: '"Courier New", monospace',
-            fontSize: '24px',
-            textShadow: '0 0 10px rgba(0, 150, 255, 0.8)',
+            color: 'rgba(200, 240, 255, 0.95)',
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '22px',
+            letterSpacing: '1px',
+            textShadow: '0 0 10px rgba(0,150,255,0.6), 0 0 40px rgba(0,100,200,0.3)',
             pointerEvents: 'none',
             transition: 'opacity 1.0s ease-in-out',
             opacity: '0',
             zIndex: '100'
         });
+        const narrativeText = document.createElement('span');
+        narrativeText.id = 'narrative-text';
+        narrative.appendChild(narrativeText);
+        const narrativeCursor = document.createElement('span');
+        narrativeCursor.id = 'narrative-cursor';
+        narrativeCursor.textContent = '|';
+        narrativeCursor.style.color = '#00e5e5';
+        narrativeCursor.style.fontWeight = '100';
+        narrativeCursor.style.display = 'none';
+        narrative.appendChild(narrativeCursor);
         document.body.appendChild(narrative);
 
         // [Phase 2] Interactive Visual Overlay Container
@@ -712,6 +835,7 @@ async function init() {
 
         // Sync UI when routine executes events
         let narrativeTimeout = null;
+        let typeInterval = null;
 
         player.onEvent = (event) => {
              if (event.type === 'choice') {
@@ -797,10 +921,34 @@ async function init() {
                          .replace(/\*([^*]+)\*/g, '<em>$1</em>') // Italic
                          .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:#00aaff;">$1</a>'); // Links
 
-                     narrative.innerHTML = htmlMessage;
-                     narrative.style.opacity = '1';
+                     // Strip tags for typing
+                     const tmp = document.createElement('div');
+                     tmp.innerHTML = htmlMessage;
+                     const plainText = tmp.textContent || '';
 
                      if (narrativeTimeout) clearTimeout(narrativeTimeout);
+                     if (typeInterval) clearInterval(typeInterval);
+
+                     narrative.style.opacity = '1';
+                     narrativeText.textContent = '';
+                     narrativeCursor.style.display = 'inline';
+
+                     let i = 0;
+                     const maxTypingTime = event.duration ? (event.duration * 1000) / 2 : Infinity;
+                     const interval = plainText.length > 0 && maxTypingTime !== Infinity
+                         ? Math.min(30, Math.floor(maxTypingTime / plainText.length))
+                         : 30;
+
+                     typeInterval = setInterval(() => {
+                         i++;
+                         narrativeText.textContent = plainText.substring(0, i);
+                         if (i >= plainText.length) {
+                             clearInterval(typeInterval);
+                             typeInterval = null;
+                             narrativeText.innerHTML = htmlMessage;
+                             narrativeCursor.style.display = 'none';
+                         }
+                     }, interval);
 
                      // Optional: Auto-fade if duration is provided
                      if (event.duration) {
@@ -811,9 +959,15 @@ async function init() {
                      }
                  } else {
                      narrative.style.opacity = '0';
+                     narrativeText.textContent = '';
+                     narrativeCursor.style.display = 'none';
                      if (narrativeTimeout) {
                          clearTimeout(narrativeTimeout);
                          narrativeTimeout = null;
+                     }
+                     if (typeInterval) {
+                         clearInterval(typeInterval);
+                         typeInterval = null;
                      }
                  }
              }
@@ -852,65 +1006,112 @@ async function init() {
         routineContainer.style.paddingTop = "10px";
         routineContainer.style.borderTop = "1px solid #444";
 
-        // Transport Controls
-        const transportDiv = document.createElement('div');
-        transportDiv.style.display = 'flex';
-        transportDiv.style.gap = '5px';
-        transportDiv.style.marginBottom = '5px';
+        // Transport Bar
+        const transportBar = document.createElement('div');
+        transportBar.style.display = 'flex';
+        transportBar.style.alignItems = 'center';
+        transportBar.style.gap = '6px';
+        transportBar.style.marginBottom = '8px';
+
+        const btnSkip = document.createElement('button');
+        btnSkip.innerHTML = '⏮';
+        btnSkip.title = 'Skip Forward';
+        btnSkip.style.width = '32px';
+        btnSkip.style.height = '32px';
+        btnSkip.style.padding = '0';
+        btnSkip.style.fontSize = '14px';
+        btnSkip.style.display = 'flex';
+        btnSkip.style.alignItems = 'center';
+        btnSkip.style.justifyContent = 'center';
 
         const btnPlay = document.createElement('button');
-        btnPlay.textContent = '▶ Play';
-        btnPlay.style.flex = '2';
-        btnPlay.style.background = "#0055aa";
-        btnPlay.style.color = "white";
+        btnPlay.innerHTML = '▶';
+        btnPlay.title = 'Play / Pause';
+        btnPlay.style.width = '32px';
+        btnPlay.style.height = '32px';
+        btnPlay.style.padding = '0';
+        btnPlay.style.fontSize = '14px';
+        btnPlay.style.display = 'flex';
+        btnPlay.style.alignItems = 'center';
+        btnPlay.style.justifyContent = 'center';
 
         const btnStop = document.createElement('button');
-        btnStop.textContent = '⏹';
-        btnStop.style.flex = '1';
-        btnStop.style.background = "#aa2222";
+        btnStop.innerHTML = '⏹';
+        btnStop.title = 'Stop';
+        btnStop.style.width = '32px';
+        btnStop.style.height = '32px';
+        btnStop.style.padding = '0';
+        btnStop.style.fontSize = '14px';
+        btnStop.style.display = 'flex';
+        btnStop.style.alignItems = 'center';
+        btnStop.style.justifyContent = 'center';
 
-        // [Phase 3] Procedural Generation Button
-        const btnGen = document.createElement('button');
-        btnGen.textContent = '🎲';
-        btnGen.title = "Generate Random Routine";
-        btnGen.style.flex = '0.5';
-        btnGen.style.background = "#5522aa";
+        const btnLoop = document.createElement('button');
+        btnLoop.innerHTML = '🔁';
+        btnLoop.title = 'Toggle Loop';
+        btnLoop.style.width = '32px';
+        btnLoop.style.height = '32px';
+        btnLoop.style.padding = '0';
+        btnLoop.style.fontSize = '14px';
+        btnLoop.style.display = 'flex';
+        btnLoop.style.alignItems = 'center';
+        btnLoop.style.justifyContent = 'center';
+        btnLoop.style.opacity = '0.5';
 
-        transportDiv.appendChild(btnPlay);
-        transportDiv.appendChild(btnStop);
-        transportDiv.appendChild(btnGen);
-        routineContainer.appendChild(transportDiv);
-
-        // Transport Info (Time + Loop)
-        const infoDiv = document.createElement('div');
-        infoDiv.style.display = 'flex';
-        infoDiv.style.justifyContent = 'space-between';
-        infoDiv.style.alignItems = 'center';
-        infoDiv.style.marginBottom = '10px';
-        infoDiv.style.fontSize = '12px';
-        infoDiv.style.color = '#aaa';
+        const statusDot = document.createElement('span');
+        statusDot.style.width = '8px';
+        statusDot.style.height = '8px';
+        statusDot.style.borderRadius = '50%';
+        statusDot.style.background = '#445566';
+        statusDot.style.display = 'inline-block';
+        statusDot.style.flexShrink = '0';
 
         const timeDisplay = document.createElement('span');
         timeDisplay.textContent = "00:00 / 00:00";
+        timeDisplay.style.fontFamily = "'JetBrains Mono', monospace";
+        timeDisplay.style.fontSize = '12px';
+        timeDisplay.style.color = '#00e5e5';
+        timeDisplay.style.marginLeft = 'auto';
+        timeDisplay.style.marginRight = '4px';
 
-        const loopLabel = document.createElement('label');
-        loopLabel.style.display = 'flex';
-        loopLabel.style.alignItems = 'center';
-        loopLabel.style.gap = '5px';
-        loopLabel.style.margin = '0';
+        const btnGen = document.createElement('button');
+        btnGen.innerHTML = '🎲';
+        btnGen.title = 'Procedural Generation';
+        btnGen.style.width = '32px';
+        btnGen.style.height = '32px';
+        btnGen.style.padding = '0';
+        btnGen.style.fontSize = '14px';
+        btnGen.style.display = 'flex';
+        btnGen.style.alignItems = 'center';
+        btnGen.style.justifyContent = 'center';
 
-        const chkLoop = document.createElement('input');
-        chkLoop.type = 'checkbox';
-        chkLoop.style.width = 'auto'; // Reset width from CSS
+        transportBar.appendChild(btnSkip);
+        transportBar.appendChild(btnPlay);
+        transportBar.appendChild(btnStop);
+        transportBar.appendChild(btnLoop);
+        transportBar.appendChild(statusDot);
+        transportBar.appendChild(timeDisplay);
+        transportBar.appendChild(btnGen);
+        routineContainer.appendChild(transportBar);
 
-        loopLabel.appendChild(chkLoop);
-        loopLabel.appendChild(document.createTextNode('Loop'));
+        // Progress bar
+        const progressTrack = document.createElement('div');
+        progressTrack.style.width = '100%';
+        progressTrack.style.height = '3px';
+        progressTrack.style.background = 'rgba(100,150,200,0.2)';
+        progressTrack.style.borderRadius = '2px';
+        progressTrack.style.marginBottom = '10px';
+        progressTrack.style.overflow = 'hidden';
 
-        infoDiv.appendChild(timeDisplay);
-        infoDiv.appendChild(loopLabel);
-        routineContainer.appendChild(infoDiv);
+        const progressFill = document.createElement('div');
+        progressFill.style.height = '100%';
+        progressFill.style.width = '0%';
+        progressFill.style.background = 'linear-gradient(90deg, #00e5e5, #00ffaa)';
+        progressFill.style.transition = 'width 0.1s linear';
+        progressTrack.appendChild(progressFill);
+        routineContainer.appendChild(progressTrack);
 
-        // [Phase 2] Playback Speed Control
+        // Playback Speed Control
         const speedDiv = document.createElement('div');
         speedDiv.style.marginTop = "5px";
         speedDiv.style.marginBottom = "10px";
@@ -918,16 +1119,17 @@ async function init() {
         speedDiv.style.alignItems = "center";
         speedDiv.style.gap = "10px";
         speedDiv.style.fontSize = "12px";
-        speedDiv.style.color = "#aaa";
 
         const speedLabel = document.createElement('span');
         speedLabel.id = "routine-speed-label";
         speedLabel.textContent = "Speed: 1.0x";
         speedLabel.style.minWidth = "70px";
+        speedLabel.style.fontFamily = "'JetBrains Mono', monospace";
+        speedLabel.style.color = "#00e5e5";
 
         const speedSlider = document.createElement('input');
         speedSlider.type = "range";
-        speedSlider.id = "routine-speed"; // For verification
+        speedSlider.id = "routine-speed";
         speedSlider.min = "0.1";
         speedSlider.max = "5.0";
         speedSlider.step = "0.1";
@@ -944,54 +1146,43 @@ async function init() {
         speedDiv.appendChild(speedSlider);
         routineContainer.appendChild(speedDiv);
 
-        // Event Listeners
-        let isLoading = false;
-        btnPlay.onclick = async () => {
-            if (player.isPlaying) {
-                player.pause();
-            } else {
-                // If no routine loaded, load default
-                if (player.routine.length === 0) {
-                     isLoading = true;
-                     btnPlay.textContent = "⏳ Loading...";
-                     await player.loadRoutineFromFile('routines/deep_thought.json', chkLoop.checked);
-                     isLoading = false;
-                     player.play();
-                } else {
-                    // Resume if paused, otherwise Play
-                    if (player.lastPauseTime > 0) {
-                        player.resume();
-                    } else {
-                        player.play();
-                    }
-                }
-            }
-        };
+        // Load Custom Routine (styled label + hidden input)
+        const fileWrapper = document.createElement('div');
+        fileWrapper.style.marginTop = "8px";
 
-        btnStop.onclick = () => player.stop();
-
-        // [Phase 3] Procedural Generation Handler
-        btnGen.onclick = () => {
-             player.generateProceduralRoutine();
-             player.play();
-        };
-
-        chkLoop.onchange = () => {
-            player.loop = chkLoop.checked;
-        };
-
-        // [New] JSON Loader Input
         const fileLabel = document.createElement('label');
         fileLabel.textContent = "Load Custom Routine (.json / .csv)";
-        fileLabel.style.marginTop = "10px";
-        routineContainer.appendChild(fileLabel);
+        fileLabel.dataset.tooltip = "Load a custom routine script (.json or .csv)";
+        fileLabel.style.display = 'inline-block';
+        fileLabel.style.width = '100%';
+        fileLabel.style.padding = '6px 10px';
+        fileLabel.style.background = '#1a1a2e';
+        fileLabel.style.border = '1px solid #445566';
+        fileLabel.style.borderRadius = '6px';
+        fileLabel.style.color = '#aabbcc';
+        fileLabel.style.fontFamily = "'Inter', sans-serif";
+        fileLabel.style.fontWeight = '600';
+        fileLabel.style.fontSize = '11px';
+        fileLabel.style.cursor = 'pointer';
+        fileLabel.style.textAlign = 'center';
+        fileLabel.style.transition = 'all 0.2s ease';
+        fileLabel.style.marginBottom = '6px';
+
+        fileLabel.addEventListener('mouseenter', () => {
+            fileLabel.style.transform = 'translateY(-1px)';
+            fileLabel.style.filter = 'brightness(1.2)';
+        });
+        fileLabel.addEventListener('mouseleave', () => {
+            fileLabel.style.transform = 'translateY(0)';
+            fileLabel.style.filter = 'brightness(1)';
+        });
 
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
         fileInput.accept = '.json, .csv';
-        fileInput.style.color = "#aaa";
-        fileInput.style.marginTop = "5px";
-        fileInput.style.width = "100%";
+        fileInput.style.display = 'none';
+
+        fileLabel.addEventListener('click', () => fileInput.click());
 
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -1024,7 +1215,71 @@ async function init() {
             reader.readAsText(file);
         });
 
-        routineContainer.appendChild(fileInput);
+        fileWrapper.appendChild(fileLabel);
+        fileWrapper.appendChild(fileInput);
+        routineContainer.appendChild(fileWrapper);
+
+        // Event Listeners
+        let isLoading = false;
+        let loopActive = false;
+
+        btnPlay.onclick = async () => {
+            if (player.isPlaying) {
+                player.pause();
+            } else {
+                if (player.routine.length === 0) {
+                     isLoading = true;
+                     btnPlay.innerHTML = "⏳";
+                     await player.loadRoutineFromFile('routines/deep_thought.json', loopActive);
+                     isLoading = false;
+                     player.play();
+                } else {
+                    if (player.lastPauseTime > 0) {
+                        player.resume();
+                    } else {
+                        player.play();
+                    }
+                }
+            }
+        };
+
+        btnStop.onclick = () => player.stop();
+
+        btnSkip.onclick = () => {
+            if (player.routine.length === 0) return;
+            const skipAmount = 5.0;
+            const target = Math.min(player.elapsedTime + skipAmount, player.duration);
+            while (player.cursor < player.routine.length && player.routine[player.cursor].time <= target) {
+                player.cursor++;
+            }
+            player.elapsedTime = target;
+        };
+
+        btnGen.onclick = () => {
+             player.generateProceduralRoutine();
+             player.play();
+        };
+
+        btnLoop.onclick = () => {
+            loopActive = !loopActive;
+            player.loop = loopActive;
+            btnLoop.style.opacity = loopActive ? '1' : '0.5';
+        };
+
+        // Status dot pulse animation style injection
+        const pulseStyle = document.createElement('style');
+        pulseStyle.textContent = `
+            @keyframes pulse-cyan {
+                0% { box-shadow: 0 0 0 0 rgba(0, 229, 229, 0.7); }
+                70% { box-shadow: 0 0 0 6px rgba(0, 229, 229, 0); }
+                100% { box-shadow: 0 0 0 0 rgba(0, 229, 229, 0); }
+            }
+            .status-pulse {
+                animation: pulse-cyan 1.5s infinite;
+            }
+        `;
+        document.head.appendChild(pulseStyle);
+
         controls.appendChild(routineContainer);
 
         // -----------------------------
@@ -1039,6 +1294,7 @@ async function init() {
 
         const bciTitle = document.createElement('div');
         bciTitle.textContent = 'BCI Tensor Playback';
+        bciTitle.dataset.tooltip = "Stream pre-recorded 32×32×32 neural tensor frames";
         bciTitle.style.color = '#00ffaa';
         bciTitle.style.fontSize = '12px';
         bciTitle.style.fontWeight = 'bold';
@@ -1049,6 +1305,7 @@ async function init() {
         const bciPatternSelect = document.createElement('select');
         bciPatternSelect.style.width = '100%';
         bciPatternSelect.style.marginBottom = '5px';
+        bciPatternSelect.dataset.tooltip = "Select a built-in BCI pattern to simulate";
         bciPatternSelect.style.background = '#1a2a3a';
         bciPatternSelect.style.color = '#ddd';
         bciPatternSelect.style.border = '1px solid #444';
@@ -1268,6 +1525,7 @@ async function init() {
         let aiLoading = false;
         const aiToggle = document.createElement('button');
         aiToggle.textContent = 'Enable AI "Dreaming"';
+        aiToggle.dataset.tooltip = "Enable AI-driven SqueezeNet inference to auto-inject stimuli";
         aiToggle.style.background = '#424';
         aiToggle.style.borderColor = '#d0d';
         aiToggle.style.color = '#eaffea';
@@ -1307,6 +1565,7 @@ async function init() {
         // [Audio Reactivity Button]
         const audioBtn = document.createElement('button');
         audioBtn.textContent = 'Enable Audio Reactivity 🎤';
+        audioBtn.dataset.tooltip = "Use microphone input to modulate neural activity amplitude";
         audioBtn.style.background = '#442';
         audioBtn.style.borderColor = '#dd4';
         audioBtn.style.color = '#ff9';
@@ -1326,6 +1585,9 @@ async function init() {
 
         initUIControls(renderer, inputs, labels); // [Reuse existing function]
 
+        initRangeTooltips(controls); // [Custom range tooltip helper]
+        initTooltips(); // [Phase 9] Contextual tooltip system
+
         // [Director Mode]
         const directorLabels = initDirectorTools(renderer, player);
 
@@ -1344,15 +1606,25 @@ async function init() {
                 if(labels.flowSpeed) labels.flowSpeed.textContent = renderer.params.flowSpeed.toFixed(2);
             }
 
-            // 2. Transport UI Update
-            if (player.isPlaying) {
-                btnPlay.textContent = "⏸ Pause";
-                btnPlay.style.background = "#aa8800";
-            } else {
-                if (!isLoading) {
-                    btnPlay.textContent = (player.lastPauseTime > 0) ? "▶ Resume" : "▶ Play";
-                    btnPlay.style.background = (player.lastPauseTime > 0) ? "#00aa55" : "#0055aa";
+            // 2. Routine Status Dot
+            const routineDot = document.getElementById('routine-status-dot');
+            if (routineDot) {
+                if (player.isPlaying) {
+                    routineDot.classList.add('active');
+                } else {
+                    routineDot.classList.remove('active');
                 }
+            }
+
+            // 3. Transport UI Update
+            if (player.isPlaying) {
+                if (!isLoading) btnPlay.innerHTML = "⏸";
+                statusDot.style.background = '#00e5e5';
+                statusDot.classList.add('status-pulse');
+            } else {
+                if (!isLoading) btnPlay.innerHTML = "▶";
+                statusDot.classList.remove('status-pulse');
+                statusDot.style.background = (player.lastPauseTime > 0) ? '#ffaa00' : '#445566';
             }
 
             // Time Format
@@ -1362,6 +1634,10 @@ async function init() {
                 return `${m}:${s}`;
             };
             timeDisplay.textContent = `${fmt(player.currentTime)} / ${fmt(player.duration)}`;
+
+            // Progress bar
+            const progressPercent = player.duration > 0 ? (player.currentTime / player.duration) * 100 : 0;
+            progressFill.style.width = `${progressPercent}%`;
 
             // 3. Director Tools Update
             if (directorLabels) {
@@ -1398,8 +1674,9 @@ async function init() {
 
     } catch (error) {
         console.error('Failed to initialize:', error);
-        errorDiv.textContent = `Error: ${error.message}`;
-        errorDiv.style.display = 'block';
+        const msg = document.getElementById('error-message');
+        if (msg) msg.textContent = `Error: ${error.message}`;
+        errorDiv.classList.add('visible');
     }
 }
 
@@ -1439,6 +1716,21 @@ function initUIControls(renderer, uiInputs, uiLabels) {
                 if(uiInputs[pKey]) uiInputs[pKey].value = activePreset[pKey];
                 syncParam(pKey, activePreset[pKey]);
             });
+            // [Phase 10] Mode-change toast
+            const controls = document.getElementById('controls');
+            if (controls) {
+                let toast = controls.querySelector('.mode-toast');
+                if (!toast) {
+                    toast = document.createElement('div');
+                    toast.className = 'mode-toast';
+                    controls.appendChild(toast);
+                }
+                const modeName = styleDropdown.options[styleDropdown.selectedIndex].text.replace(/^\d+\.\s*/, '');
+                toast.textContent = `Mode: ${modeName}`;
+                toast.classList.add('show');
+                clearTimeout(toast._hideTimer);
+                toast._hideTimer = setTimeout(() => toast.classList.remove('show'), 1000);
+            }
         });
     }
 
@@ -1477,18 +1769,21 @@ function initUIControls(renderer, uiInputs, uiLabels) {
             btn.addEventListener('click', () => {
                 // Inject stimulus at region coordinates with intensity 1.0
                 renderer.injectStimulus(region.pos[0], region.pos[1], region.pos[2], 1.0);
+                flashButton(btn);
             });
         }
     });
 
     document.getElementById('stim-random')?.addEventListener('click', () => {
         renderer.injectStimulus((Math.random()-0.5)*2, (Math.random()-0.5)*2, (Math.random()-0.5)*2, 1.0);
+        flashButton(document.getElementById('stim-random'));
     });
 
     document.getElementById('stim-electrical')?.addEventListener('click', () => {
         const intensity = parseFloat(document.getElementById('hazard-intensity').value) / 100.0;
         const duration = parseFloat(document.getElementById('hazard-duration').value);
         renderer.injectElectrical(intensity, duration);
+        flashButton(document.getElementById('stim-electrical'));
         const styleMode = document.getElementById('style-mode');
         if (styleMode) {
             styleMode.value = '1'; // Cyber
@@ -1500,6 +1795,7 @@ function initUIControls(renderer, uiInputs, uiLabels) {
         const intensity = parseFloat(document.getElementById('hazard-intensity').value) / 100.0;
         const duration = parseFloat(document.getElementById('hazard-duration').value);
         renderer.injectMercury(intensity, duration);
+        flashButton(document.getElementById('stim-mercury'));
         const styleMode = document.getElementById('style-mode');
         if (styleMode) {
             styleMode.value = '3'; // Heatmap
@@ -1509,6 +1805,8 @@ function initUIControls(renderer, uiInputs, uiLabels) {
 
     document.getElementById('stim-calm')?.addEventListener('click', () => {
         renderer.calmState();
+        flashButton(document.getElementById('stim-calm'));
+        glowRegionButtons();
         ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'cortisol', 'fluidActive', 'fogDensity', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
             if(uiInputs[k]) uiInputs[k].value = renderer.params[k];
             syncParam(k, renderer.params[k]);
@@ -1585,6 +1883,147 @@ function initDirectorTools(renderer, player) {
 
     document.body.appendChild(container);
     return labels;
+}
+
+function initTooltips() {
+    let tooltip = document.getElementById('nw-tooltip');
+    if (!tooltip) {
+        tooltip = document.createElement('div');
+        tooltip.id = 'nw-tooltip';
+        document.body.appendChild(tooltip);
+    }
+
+    let showTimeout = null;
+    let currentTarget = null;
+
+    const hide = () => {
+        if (showTimeout) { clearTimeout(showTimeout); showTimeout = null; }
+        currentTarget = null;
+        tooltip.classList.remove('visible');
+    };
+
+    const position = (target) => {
+        const rect = target.getBoundingClientRect();
+        const ttRect = tooltip.getBoundingClientRect();
+        let top = rect.top + window.scrollY - ttRect.height - 8;
+        let left = rect.left + window.scrollX + (rect.width / 2) - (ttRect.width / 2);
+        // Flip to below if too close to top
+        if (top < window.scrollY + 10) {
+            top = rect.bottom + window.scrollY + 8;
+        }
+        // Clamp horizontal
+        left = Math.max(8, Math.min(left, window.innerWidth - ttRect.width - 8));
+        tooltip.style.top = `${top}px`;
+        tooltip.style.left = `${left}px`;
+    };
+
+    const show = (target) => {
+        const text = target.dataset.tooltip || target.title || '';
+        if (!text) return;
+        tooltip.textContent = text;
+        tooltip.style.display = 'block';
+        // Force layout so we can measure
+        void tooltip.offsetWidth;
+        position(target);
+        tooltip.classList.add('visible');
+    };
+
+    document.body.addEventListener('mouseover', (e) => {
+        const target = e.target.closest('[data-tooltip], [title]');
+        if (!target) { hide(); return; }
+        if (target === currentTarget) return;
+        hide();
+        currentTarget = target;
+        showTimeout = setTimeout(() => show(target), 400);
+    });
+
+    document.body.addEventListener('mouseout', (e) => {
+        const target = e.target.closest('[data-tooltip], [title]');
+        if (target && target === currentTarget) {
+            hide();
+        }
+    });
+
+    window.addEventListener('scroll', hide, true);
+    window.addEventListener('resize', hide);
+}
+
+function flashButton(btn) {
+    if (!btn) return;
+    btn.classList.remove('flashing');
+    void btn.offsetWidth;
+    btn.classList.add('flashing');
+    setTimeout(() => btn.classList.remove('flashing'), 600);
+}
+
+function glowRegionButtons() {
+    document.querySelectorAll('.btn-region').forEach(btn => {
+        btn.classList.remove('calm-glow');
+        void btn.offsetWidth;
+        btn.classList.add('calm-glow');
+        setTimeout(() => btn.classList.remove('calm-glow'), 800);
+    });
+}
+
+function initRangeTooltips(container) {
+    if (!container) return;
+    const tooltip = document.createElement('div');
+    tooltip.id = 'range-tooltip';
+    Object.assign(tooltip.style, {
+        position: 'absolute',
+        display: 'none',
+        pointerEvents: 'none',
+        zIndex: '1000',
+        background: 'rgba(0, 20, 40, 0.9)',
+        color: '#00ffaa',
+        fontFamily: "'JetBrains Mono', monospace",
+        fontSize: '11px',
+        padding: '2px 6px',
+        borderRadius: '4px',
+        border: '1px solid rgba(0, 229, 229, 0.3)',
+        whiteSpace: 'nowrap',
+        transition: 'opacity 0.15s ease'
+    });
+    document.body.appendChild(tooltip);
+
+    const ranges = container.querySelectorAll('input[type="range"]');
+    ranges.forEach(range => {
+        const show = () => {
+            tooltip.textContent = range.value;
+            tooltip.style.display = 'block';
+            tooltip.style.opacity = '1';
+            positionTooltip(range);
+        };
+        const hide = () => {
+            tooltip.style.opacity = '0';
+            setTimeout(() => {
+                if (tooltip.style.opacity === '0') tooltip.style.display = 'none';
+            }, 150);
+        };
+        const positionTooltip = (r) => {
+            const rect = r.getBoundingClientRect();
+            const min = parseFloat(r.min || 0);
+            const max = parseFloat(r.max || 100);
+            const val = parseFloat(r.value || 0);
+            const percent = max === min ? 0 : (val - min) / (max - min);
+            const thumbWidth = 14;
+            const thumbCenter = percent * (rect.width - thumbWidth) + thumbWidth / 2;
+            const tooltipRect = tooltip.getBoundingClientRect();
+            const top = rect.top + window.scrollY - tooltipRect.height - 6;
+            const left = rect.left + window.scrollX + thumbCenter - (tooltipRect.width / 2);
+            tooltip.style.top = `${top}px`;
+            tooltip.style.left = `${left}px`;
+        };
+
+        range.addEventListener('input', () => {
+            show();
+            positionTooltip(range);
+        });
+        range.addEventListener('mouseenter', show);
+        range.addEventListener('mouseleave', hide);
+        range.addEventListener('focus', show);
+        range.addEventListener('blur', hide);
+    });
 }
 
 init();

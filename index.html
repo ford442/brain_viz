@@ -4,224 +4,861 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neuro-Weaver Brain Viz V2.6</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
     <!-- Neuro-Weaver V2.6 - Volumetric Data Visualization & Compute Shaders -->
     <!-- [Neuro-Weaver V2.8] UI Layer for Parameter Control and Stimulus Injection -->
     <style>
-        body { margin: 0; overflow: hidden; background: #000; color: #fff; font-family: monospace; width: 100vw; height: 100vh; }
+        body { margin: 0; overflow: hidden; background: #000; color: #fff; font-family: 'Inter', sans-serif; width: 100vw; height: 100vh; }
         canvas { display: block; width: 100vw; height: 100vh; }
         #controls {
             position: absolute; top: 10px; left: 10px;
-            background: rgba(0, 0, 0, 0.8); padding: 20px;
-            border: 1px solid #444; border-radius: 8px;
+            background: rgba(10, 15, 25, 0.85);
+            padding: 20px;
+            border: 1px solid rgba(100, 150, 200, 0.15);
+            border-radius: 12px;
             pointer-events: auto;
             max-height: 90vh; overflow-y: auto;
             width: 280px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
         }
-        #controls h2 { margin: 0 0 15px 0; font-size: 1.2em; color: #0ff; }
+        #controls h2 {
+            margin: 0 0 15px 0;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 18px;
+            color: #00e5e5;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
         .control-group { margin-bottom: 12px; }
-        label { display: block; color: #aaa; margin-bottom: 4px; font-size: 0.9em; }
-        input[type="range"] { width: 100%; cursor: pointer; }
+        label {
+            display: block;
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+            font-size: 12px;
+            color: #99aabb;
+            margin-bottom: 4px;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: transparent;
+            border-radius: 2px;
+            outline: none;
+            margin: 10px 0;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #0a1a2a 0%, #1a3a5a 100%);
+            border-radius: 2px;
+        }
+        input[type="range"]::-moz-range-track {
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #0a1a2a 0%, #1a3a5a 100%);
+            border-radius: 2px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #00e5e5;
+            box-shadow: 0 0 8px rgba(0, 229, 229, 0.5);
+            margin-top: -5px;
+            transition: box-shadow 0.2s ease, transform 0.2s ease;
+            border: none;
+            cursor: pointer;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #00e5e5;
+            box-shadow: 0 0 8px rgba(0, 229, 229, 0.5);
+            transition: box-shadow 0.2s ease, transform 0.2s ease;
+            border: none;
+            cursor: pointer;
+        }
+        input[type="range"]:hover::-webkit-slider-thumb,
+        input[type="range"]:active::-webkit-slider-thumb {
+            box-shadow: 0 0 12px rgba(0, 229, 229, 0.8);
+            transform: scale(1.1);
+        }
+        input[type="range"]:hover::-moz-range-thumb,
+        input[type="range"]:active::-moz-range-thumb {
+            box-shadow: 0 0 12px rgba(0, 229, 229, 0.8);
+            transform: scale(1.1);
+        }
+        input[type="range"]:disabled::-webkit-slider-thumb {
+            background: #555;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+        input[type="range"]:disabled::-moz-range-thumb {
+            background: #555;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
         select { width: 100%; background: #222; color: #fff; border: 1px solid #444; padding: 4px; }
-        .value { float: right; color: #0f0; }
+
+        /* Cyber-styled style dropdown */
+        select#style-mode {
+            background: #1a2040;
+            border: 1px solid #445566;
+            color: #aaccff;
+            border-radius: 6px;
+            padding: 8px 30px 8px 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            cursor: pointer;
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2300e5e5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        select#style-mode:hover {
+            border-color: #00e5e5;
+            box-shadow: 0 0 8px rgba(0, 229, 229, 0.15);
+        }
+        select#style-mode:focus {
+            border-color: #00e5e5;
+            box-shadow: 0 0 10px rgba(0, 229, 229, 0.25);
+        }
+        select#style-mode option {
+            background: #0a1520;
+            color: #aaccff;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            padding: 6px;
+        }
+        select#style-mode option:hover,
+        select#style-mode option:checked {
+            background: #0a2a3a;
+            color: #00e5e5;
+        }
+
+        /* Mode-change toast */
+        .mode-toast {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0, 20, 40, 0.9);
+            border: 1px solid rgba(0, 229, 229, 0.3);
+            color: #00e5e5;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 4px;
+            opacity: 0;
+            transform: translateY(-4px);
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            z-index: 10;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+        .mode-toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .value, .val-display {
+            float: right;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 500;
+            font-size: 11px;
+            color: #00ffaa;
+        }
+        /* Tooltip System */
+        #nw-tooltip {
+            position: absolute;
+            display: none;
+            pointer-events: none;
+            z-index: 2000;
+            background: rgba(0, 20, 40, 0.95);
+            border: 1px solid rgba(0, 229, 229, 0.2);
+            color: #aaccff;
+            font-size: 11px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            max-width: 220px;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.4;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+            opacity: 0;
+            transform: translateY(4px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        #nw-tooltip.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Routine Status Dot */
+        .routine-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #445566;
+            margin-left: 8px;
+            vertical-align: middle;
+            transition: background 0.3s ease;
+        }
+        .routine-dot.active {
+            background: #00e5e5;
+            animation: pulse-cyan 1.5s infinite;
+        }
+
+        /* Button Flash Animations */
+        @keyframes flash-hazard {
+            0%, 100% { box-shadow: 0 0 6px rgba(204,102,34,0.3); border-color: #cc6622; }
+            50% { box-shadow: 0 0 20px rgba(204,102,34,0.8); border-color: #ffffff; }
+        }
+        @keyframes flash-region {
+            0%, 100% { box-shadow: 0 0 6px rgba(68,102,204,0.2); border-color: #4466cc; }
+            50% { box-shadow: 0 0 20px rgba(68,102,204,0.8); border-color: #ffffff; }
+        }
+        @keyframes flash-danger {
+            0%, 100% { box-shadow: 0 0 6px rgba(204,34,34,0.3); border-color: #cc2222; }
+            50% { box-shadow: 0 0 20px rgba(204,34,34,0.8); border-color: #ffffff; }
+        }
+        @keyframes flash-calm {
+            0%, 100% { box-shadow: 0 0 6px rgba(34,170,102,0.2); border-color: #22aa66; }
+            50% { box-shadow: 0 0 20px rgba(34,170,102,0.8); border-color: #ffffff; }
+        }
+        @keyframes calm-glow {
+            0%, 100% { box-shadow: 0 0 6px rgba(68,102,204,0.2); border-color: #4466cc; }
+            50% { box-shadow: 0 0 20px rgba(34,170,102,0.6); border-color: #66ffaa; }
+        }
+        .btn-hazard.flashing { animation: flash-hazard 0.6s ease; }
+        .btn-region.flashing { animation: flash-region 0.6s ease; }
+        .btn-danger.flashing { animation: flash-danger 0.6s ease; }
+        .btn-calm.flashing { animation: flash-calm 0.6s ease; }
+        .btn-region.calm-glow { animation: calm-glow 0.8s ease; }
+
+        /* WebGPU Error / Loading State */
         #error {
-            display: none; position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            color: #ff3333; background: rgba(0,0,0,0.9);
-            padding: 20px; border: 1px solid #ff3333;
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(5, 8, 15, 0.95);
+            z-index: 10000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            text-align: center;
+        }
+        #error.visible {
+            display: flex;
+        }
+        #error .error-brain {
+            font-size: 48px;
+            color: #00e5e5;
+            margin-bottom: 20px;
+            animation: pulse-brain 2s ease-in-out infinite;
+            line-height: 1;
+        }
+        #error .error-title {
+            font-size: 14px;
+            color: #ff6666;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        #error .error-sub {
+            font-size: 12px;
+            color: #6688aa;
+            max-width: 400px;
+            line-height: 1.5;
+        }
+        #error .error-scanline {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(transparent 50%, rgba(0,50,100,0.05) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 1;
+        }
+        #error .error-content {
+            position: relative;
+            z-index: 2;
+            padding: 40px;
+        }
+        @keyframes pulse-brain {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        @keyframes pulse-cyan {
+            0% { box-shadow: 0 0 0 0 rgba(0, 229, 229, 0.7); }
+            70% { box-shadow: 0 0 0 6px rgba(0, 229, 229, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 229, 229, 0); }
         }
         button {
-            background: #224; border: 1px solid #44f; color: #adf;
-            padding: 6px 10px; width: 100%; margin-bottom: 6px;
-            cursor: pointer; transition: 0.2s;
+            display: inline-block;
+            width: 100%;
+            margin-bottom: 6px;
+            padding: 8px 12px;
+            border: 1px solid #445566;
+            border-radius: 6px;
+            background: #1a1a2e;
+            color: #aabbcc;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 0 transparent;
         }
-        button:hover { background: #336; }
-        hr { border: 0; border-top: 1px solid #333; margin: 15px 0; }
+        button:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.2);
+            box-shadow: 0 0 8px rgba(170, 187, 204, 0.15);
+        }
+        button:active {
+            transform: translateY(0);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+        button:hover:active {
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            filter: none;
+            box-shadow: none;
+        }
+
+        /* Category overrides */
+        .btn-hazard {
+            background: #3a2010;
+            border-color: #cc6622;
+            color: #ffaa66;
+            box-shadow: 0 0 6px rgba(204, 102, 34, 0.3);
+        }
+        .btn-hazard:hover {
+            box-shadow: 0 0 10px rgba(204, 102, 34, 0.5);
+        }
+
+        .btn-region {
+            background: #1a2040;
+            border-color: #4466cc;
+            color: #88aaff;
+            box-shadow: 0 0 6px rgba(68, 102, 204, 0.2);
+        }
+        .btn-region:hover {
+            box-shadow: 0 0 10px rgba(68, 102, 204, 0.4);
+        }
+
+        .btn-danger {
+            background: #401010;
+            border-color: #cc2222;
+            color: #ff6666;
+            box-shadow: 0 0 6px rgba(204, 34, 34, 0.3);
+        }
+        .btn-danger:hover {
+            box-shadow: 0 0 10px rgba(204, 34, 34, 0.5);
+        }
+
+        .btn-calm {
+            background: #102a20;
+            border-color: #22aa66;
+            color: #66ffaa;
+            box-shadow: 0 0 6px rgba(34, 170, 102, 0.2);
+        }
+        .btn-calm:hover {
+            box-shadow: 0 0 10px rgba(34, 170, 102, 0.4);
+        }
+
+        /* 2-column grid for region + random buttons */
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+        .btn-grid button {
+            width: 100%;
+            margin-bottom: 0;
+        }
+        hr { border: 0; border-top: 1px solid rgba(100, 150, 200, 0.1); margin: 12px 0; }
+
+        /* Tab bar styling */
+        .tab-bar { display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 1px solid #444; padding-bottom: 4px; }
+        .tab-btn {
+            flex: 1;
+            background: #222;
+            border: 1px solid #444;
+            color: #8899aa;
+            padding: 6px 2px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            transition: 0.2s;
+            border-radius: 4px;
+        }
+        .tab-btn:hover { background: #333; }
+        .tab-btn.active { background: #224; border-color: #44f; color: #adf; }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+
+        /* Accordion sections */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: 6px 8px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 13px;
+            color: #aaccff;
+            margin-bottom: 4px;
+            user-select: none;
+        }
+        .section-header::after {
+            content: '▶';
+            font-size: 0.8em;
+            color: #888;
+            transition: transform 0.3s ease;
+            margin-left: 8px;
+        }
+        .section-header.expanded::after {
+            transform: rotate(90deg);
+        }
+        .section-content {
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.5s ease;
+        }
+        .section-header.expanded + .section-content {
+            max-height: 1200px;
+        }
+
+        /* Narrative overlay scan-line & cursor */
+        #narrative-overlay::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(transparent 50%, rgba(0,50,100,0.05) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 1;
+        }
+        #narrative-text, #narrative-cursor {
+            position: relative;
+            z-index: 2;
+        }
+        #narrative-cursor {
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* FAB & Keyboard Legend Panel */
+        .fab-help {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(10, 15, 25, 0.9);
+            border: 1px solid rgba(0, 229, 229, 0.3);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            color: #00e5e5;
+            font-family: 'Inter', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 500;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        .fab-help:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 12px rgba(0, 229, 229, 0.4);
+        }
+        .legend-panel {
+            position: fixed;
+            bottom: 66px;
+            right: 20px;
+            width: 320px;
+            max-height: 400px;
+            overflow-y: auto;
+            background: rgba(10, 15, 25, 0.85);
+            border: 1px solid rgba(100, 150, 200, 0.15);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 500;
+            opacity: 0;
+            transform: translateY(10px);
+            pointer-events: none;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+        .legend-panel.open {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        .legend-panel h3 {
+            margin: 0 0 10px 0;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            color: #00e5e5;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .legend-section {
+            margin-bottom: 12px;
+        }
+        .legend-section-title {
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 11px;
+            color: #aaccff;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 6px;
+            border-bottom: 1px solid rgba(100,150,200,0.1);
+            padding-bottom: 4px;
+        }
+        .legend-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            color: #99aabb;
+        }
+        .legend-key {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: #00e5e5;
+            background: rgba(0, 229, 229, 0.15);
+            padding: 2px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
     <div id="controls">
-        <h2>NEURO-WEAVER V2.6</h2>
+        <h2>NEURO-WEAVER V2.6 <span id="routine-status-dot" class="routine-dot"></span></h2>
 
-        <div class="control-group">
-            <label>Visualization Style</label>
-            <select id="style-mode">
-                <option value="0">0. Organic (Surface)</option>
-                <option value="1">1. Cyber (Wireframe)</option>
-                <option value="2">2. Connectome (Fibers)</option>
-                <option value="3">3. Heatmap (Volumetric) [V2.3]</option>
-            </select>
+        <div class="tab-bar">
+            <button class="tab-btn active" data-tab="tab-activity">Activity</button>
+            <button class="tab-btn" data-tab="tab-neurochemical">Neurochemical</button>
+            <button class="tab-btn" data-tab="tab-stimulus">Stimulus</button>
+            <button class="tab-btn" data-tab="tab-cinematic">Cinematic</button>
+            <button class="tab-btn" data-tab="tab-lighting">Lighting</button>
         </div>
 
-        <hr>
+        <div class="tab-content">
+            <div id="tab-activity" class="tab-pane active">
+                <div class="section-header expanded" data-section="activity-signal">Signal Dynamics</div>
+                <div class="section-content">
+                    <div class="control-group">
+                        <label data-tooltip="Base oscillation rate of neural firing patterns">Activity Frequency <span id="val-freq" class="value">2.0</span></label>
+                        <input type="range" id="freq" min="0.1" max="10.0" step="0.1" value="2.0">
+                    </div>
+                    <div class="control-group">
+                        <label data-tooltip="Intensity of signal peaks in the tensor field">Amplitude <span id="val-amp" class="value">0.5</span></label>
+                        <input type="range" id="amp" min="0.0" max="2.0" step="0.1" value="0.5">
+                    </div>
+                    <div class="control-group">
+                        <label data-tooltip="Minimum value to trigger a visual action potential">Spike Threshold <span id="val-thresh" class="value">0.8</span></label>
+                        <input type="range" id="thresh" min="0.0" max="1.0" step="0.05" value="0.8">
+                    </div>
+                    <div class="control-group">
+                        <label data-tooltip="Temporal interpolation between signal frames">Smoothing <span id="val-smooth" class="value">0.9</span></label>
+                        <input type="range" id="smooth" min="0.0" max="0.99" step="0.01" value="0.9">
+                    </div>
+                </div>
 
-        <div class="control-group">
-            <!-- V2.2 Control: Slice Plane -->
-            <label>Clip Plane Z (Slice) <span id="val-clip" class="value">2.0</span></label>
-            <input type="range" id="clip" min="-2.0" max="2.0" step="0.1" value="2.0">
-        </div>
+                <div class="section-header" data-section="activity-flow">Flow & Growth</div>
+                <div class="section-content">
+                    <div class="control-group">
+                        <label data-tooltip="Velocity of neurotransmitter signaling propagation">Signal Flow Speed <span id="val-speed" class="value">4.0</span></label>
+                        <input type="range" id="speed" min="0.0" max="10.0" step="0.5" value="4.0">
+                    </div>
+                    <div class="control-group">
+                        <label data-tooltip="Intensity of dendrite activation particle effects">Synaptic Sparkle <span id="val-sparkle" class="value">0.0</span></label>
+                        <input type="range" id="sparkle" min="0.0" max="1.0" step="0.01" value="0.0">
+                    </div>
+                    <div class="control-group">
+                        <label data-tooltip="Rate of structural arbor expansion">Dendritic Growth <span id="val-growth" class="value">1.0</span></label>
+                        <input type="range" id="growth" min="0.0" max="1.0" step="0.01" value="1.0">
+                    </div>
+                    <div class="control-group">
+                        <label data-tooltip="Volumetric cerebrospinal fluid simulation strength">Fluid Dynamics <span id="val-fluidActive" class="value">0.00</span></label>
+                        <input type="range" id="fluidActive" min="0" max="2" step="0.05" value="0">
+                    </div>
+                    <div class="control-group">
+                        <label data-tooltip="Atmospheric depth occlusion density">Volumetric Fog <span id="val-fogDensity" class="value">0.00</span></label>
+                        <input type="range" id="fogDensity" min="0.0" max="0.5" step="0.01" value="0.0">
+                    </div>
+                </div>
 
-        <div class="control-group">
-            <label>Cortisol (Decay) <span id="val-cortisol" class="value">0.00</span></label>
-            <input type="range" id="cortisol" min="0" max="1" step="0.01" value="0">
-        </div>
-        <div class="control-group">
-            <label>Fluid Dynamics <span id="val-fluidActive" class="value">0.00</span></label>
-            <input type="range" id="fluidActive" min="0" max="2" step="0.05" value="0">
-        </div>
-
-        <div class="control-group">
-            <label>Volumetric Fog <span id="val-fogDensity" class="value">0.00</span></label>
-            <input type="range" id="fogDensity" min="0.0" max="0.5" step="0.01" value="0.0">
-        </div>
-
-        <div class="control-group">
-            <!-- V2.3 Control: Signal Speed -->
-            <label>Signal Flow Speed <span id="val-speed" class="value">4.0</span></label>
-            <input type="range" id="speed" min="0.0" max="10.0" step="0.5" value="4.0">
-        </div>
-
-        <div class="control-group">
-            <label>Serotonin Shift <span id="val-shift" class="value">0.0</span></label>
-            <input type="range" id="shift" min="0.0" max="1.0" step="0.01" value="0.0">
-        </div>
-
-        <div class="control-group">
-            <label>Synaptic Sparkle <span id="val-sparkle" class="value">0.0</span></label>
-            <input type="range" id="sparkle" min="0.0" max="1.0" step="0.01" value="0.0">
-        </div>
-
-        <div class="control-group">
-            <label>Dendritic Growth <span id="val-growth" class="value">1.0</span></label>
-            <input type="range" id="growth" min="0.0" max="1.0" step="0.01" value="1.0">
-        </div>
-
-        <div class="control-group">
-            <label>Camera Shake <span id="val-shake" class="value">0.0</span></label>
-            <input type="range" id="shake" min="0.0" max="0.5" step="0.01" value="0.0">
-        </div>
-
-        <div class="control-group">
-            <label>Stress (Distortion) <span id="val-stress" class="value">0.0</span></label>
-            <input type="range" id="stress" min="0.0" max="2.0" step="0.05" value="0.0">
-        </div>
-
-        <hr>
-        <h3 style="margin-top: 15px; border-bottom: 1px solid #444; padding-bottom: 5px;">Altitude/Hypoxia Simulation</h3>
-
-        <div class="control-group">
-            <label>Altitude (meters) <span id="val-altitude" class="value">0</span></label>
-            <input type="range" id="altitude" min="0" max="8000" step="100" value="0">
-        </div>
-
-        <div class="control-group">
-            <label>Oxygen Level <span id="val-oxygen" class="value">1.00</span></label>
-            <input type="range" id="oxygen" min="0.3" max="1.0" step="0.01" value="1.0" disabled style="opacity: 0.5; cursor: not-allowed;">
-            <span style="font-size: 0.8em; color: #666;">(Read-only: derived from altitude)</span>
-        </div>
-
-        <div class="control-group">
-            <label>Metabolic Rate <span id="val-metabolic" class="value">1.0</span></label>
-            <input type="range" id="metabolic" min="0.5" max="2.0" step="0.05" value="1.0">
-        </div>
-
-        <hr>
-
-        <div class="control-group">
-            <label>Chromatic Aberration <span id="val-aberration" class="value">0.0</span></label>
-            <input type="range" id="aberration" min="0.0" max="2.0" step="0.01" value="0.0">
-        </div>
-
-        <div class="control-group">
-            <label>Film Grain <span id="val-grain" class="value">0.0</span></label>
-            <input type="range" id="grain" min="0.0" max="1.0" step="0.01" value="0.0">
-        </div>
-
-        <div class="control-group">
-            <label>Focus Distance <span id="val-focus" class="value">0.5</span></label>
-            <input type="range" id="focus" min="0.0" max="1.0" step="0.01" value="0.5">
-        </div>
-
-        <div class="control-group">
-            <label>Aperture (Blur) <span id="val-aperture" class="value">0.0</span></label>
-            <input type="range" id="aperture" min="0.0" max="1.0" step="0.01" value="0.0">
-        </div>
-            <h3 style="margin-top: 15px; border-bottom: 1px solid #444; padding-bottom: 5px;">Lighting Control</h3>
-            <div class="control-group">
-                <label>Ambient Light: <span id="val-ambientLight" class="val-display">0.2</span></label>
-                <input type="range" id="ambientLight" min="0.0" max="1.0" step="0.01" value="0.2">
-            </div>
-            <div class="control-group">
-                <label>Dir Intensity: <span id="val-dirIntensity" class="val-display">0.8</span></label>
-                <input type="range" id="dirIntensity" min="0.0" max="5.0" step="0.1" value="0.8">
-            </div>
-            <div class="control-group">
-                <label>Light Dir X: <span id="val-lightDirX" class="val-display">1.0</span></label>
-                <input type="range" id="lightDirX" min="-1.0" max="1.0" step="0.1" value="1.0">
-            </div>
-            <div class="control-group">
-                <label>Light Dir Y: <span id="val-lightDirY" class="val-display">1.0</span></label>
-                <input type="range" id="lightDirY" min="-1.0" max="1.0" step="0.1" value="1.0">
-            </div>
-            <div class="control-group">
-                <label>Light Dir Z: <span id="val-lightDirZ" class="val-display">1.0</span></label>
-                <input type="range" id="lightDirZ" min="-1.0" max="1.0" step="0.1" value="1.0">
+                <div class="section-header" data-section="activity-render">Visualization & Slice</div>
+                <div class="section-content">
+                    <div class="control-group">
+                        <label data-tooltip="Render mode: surface, wireframe, fibers, or thermal"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00e5e5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:6px;opacity:0.8;"><circle cx="12" cy="12" r="3"/><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/></svg>Visualization Style</label>
+                        <select id="style-mode">
+                            <option value="0">0. Organic (Surface)</option>
+                            <option value="1">1. Cyber (Wireframe)</option>
+                            <option value="2">2. Connectome (Fibers)</option>
+                            <option value="3">3. Heatmap (Volumetric) [V2.3]</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <!-- V2.2 Control: Slice Plane -->
+                        <label data-tooltip="Cross-sectional cutting plane depth">Clip Plane Z (Slice) <span id="val-clip" class="value">2.0</span></label>
+                        <input type="range" id="clip" min="-2.0" max="2.0" step="0.1" value="2.0">
+                    </div>
+                </div>
             </div>
 
-        <hr>
+            <div id="tab-neurochemical" class="tab-pane">
+                <div class="section-header expanded" data-section="neuro-stress">Stress Chemistry</div>
+                <div class="section-content">
+                    <div class="control-group">
+                        <label data-tooltip="Metaphorical hue rotation during mood elevation">Serotonin Shift <span id="val-shift" class="value">0.0</span></label>
+                        <input type="range" id="shift" min="0.0" max="1.0" step="0.01" value="0.0">
+                    </div>
+                    <div class="control-group">
+                        <label data-tooltip="Simulates stress-induced dendritic atrophy">Cortisol (Decay) <span id="val-cortisol" class="value">0.00</span></label>
+                        <input type="range" id="cortisol" min="0" max="1" step="0.01" value="0">
+                    </div>
+                    <div class="control-group">
+                        <label data-tooltip="Amplitude of geometric warping from tension">Stress (Distortion) <span id="val-stress" class="value">0.0</span></label>
+                        <input type="range" id="stress" min="0.0" max="2.0" step="0.05" value="0.0">
+                    </div>
+                </div>
 
-        <div class="control-group">
-            <label>Activity Frequency <span id="val-freq" class="value">2.0</span></label>
-            <input type="range" id="freq" min="0.1" max="10.0" step="0.1" value="2.0">
+                <div class="section-header" data-section="neuro-altitude">Altitude / Hypoxia</div>
+                <div class="section-content">
+                    <div class="control-group">
+                        <label data-tooltip="Simulated elevation for oxygen deprivation modeling">Altitude (meters) <span id="val-altitude" class="value">0</span></label>
+                        <input type="range" id="altitude" min="0" max="8000" step="100" value="0">
+                    </div>
+                    <div class="control-group">
+                        <label data-tooltip="Derived blood-oxygen saturation from altitude">Oxygen Level <span id="val-oxygen" class="value">1.00</span></label>
+                        <input type="range" id="oxygen" min="0.3" max="1.0" step="0.01" value="1.0" disabled style="opacity: 0.5; cursor: not-allowed;">
+                        <span style="font-size: 0.8em; color: #666;">(Read-only: derived from altitude)</span>
+                    </div>
+                    <div class="control-group">
+                        <label data-tooltip="Neural energy consumption multiplier">Metabolic Rate <span id="val-metabolic" class="value">1.0</span></label>
+                        <input type="range" id="metabolic" min="0.5" max="2.0" step="0.05" value="1.0">
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-stimulus" class="tab-pane">
+                <div class="section-header expanded" data-section="stim-hazard">Hazard Exposure</div>
+                <div class="section-content">
+                    <label style="margin-bottom:10px; color:#fff" data-tooltip="Trigger external environmental neurotoxins">Inject Stimulus</label>
+                    <!-- Environmental Exposure Buttons -->
+                    <button id="stim-electrical" class="btn-hazard" type="button" data-tooltip="Simulate ion-channel disruption from current">Electrical Exposure</button>
+                    <button id="stim-mercury" class="btn-hazard" type="button" data-tooltip="Model heavy-metal synaptic interference">Vapor/Mercury Exposure</button>
+                    <div class="control-group">
+                        <label data-tooltip="Strength of toxic exposure effect">Hazard Intensity <span id="val-hazard-intensity" class="value">50</span></label>
+                        <input type="range" id="hazard-intensity" min="0" max="100" step="1" value="50">
+                    </div>
+                    <div class="control-group">
+                        <label data-tooltip="Length of environmental hazard event">Hazard Duration (s) <span id="val-hazard-duration" class="value">5</span></label>
+                        <input type="range" id="hazard-duration" min="0" max="10" step="1" value="5">
+                    </div>
+                </div>
+
+                <div class="section-header" data-section="stim-region">Region Targets</div>
+                <div class="section-content">
+                    <div class="btn-grid">
+                        <button id="stim-frontal" class="btn-region" type="button" data-tooltip="Inject signal into executive function region">Frontal Lobe (Cognition)</button>
+                        <button id="stim-parietal" class="btn-region" type="button" data-tooltip="Inject signal into spatial processing region">Parietal Lobe (Sensory)</button>
+                        <button id="stim-temporal" class="btn-region" type="button" data-tooltip="Inject signal into auditory/memory region">Temporal Lobe (Memory)</button>
+                        <button id="stim-occipital" class="btn-region" type="button" data-tooltip="Inject signal into visual cortex">Occipital Lobe (Vision)</button>
+                        <button id="stim-deep" class="btn-region" type="button" data-tooltip="Inject signal into limbic/thalamic core">Deep Brain (Core)</button>
+                        <button id="stim-random" class="btn-danger" type="button" data-tooltip="Stochastic activation at random coordinates">Random Pulse</button>
+                    </div>
+                </div>
+
+                <div class="section-header" data-section="stim-state">State Control</div>
+                <div class="section-content">
+                    <button id="stim-calm" class="btn-calm" type="button" data-tooltip="Reset all parameters to baseline resting values">Calm State</button>
+                    <button id="stim-reset" class="btn-calm" type="button" data-tooltip="Clear accumulated tensor field energy">Reset Activity</button>
+                </div>
+            </div>
+
+            <div id="tab-cinematic" class="tab-pane">
+                <div class="section-header expanded" data-section="cinematic-lens">Lens Effects</div>
+                <div class="section-content">
+                    <div class="control-group">
+                        <label data-tooltip="Physical trauma or stress-induced viewpoint jitter">Camera Shake <span id="val-shake" class="value">0.0</span></label>
+                        <input type="range" id="shake" min="0.0" max="0.5" step="0.01" value="0.0">
+                    </div>
+                    <div class="control-group">
+                        <label data-tooltip="RGB channel separation lens effect">Chromatic Aberration <span id="val-aberration" class="value">0.0</span></label>
+                        <input type="range" id="aberration" min="0.0" max="2.0" step="0.01" value="0.0">
+                    </div>
+                    <div class="control-group">
+                        <label data-tooltip="Photochemical noise overlay intensity">Film Grain <span id="val-grain" class="value">0.0</span></label>
+                        <input type="range" id="grain" min="0.0" max="1.0" step="0.01" value="0.0">
+                    </div>
+                    <div class="control-group">
+                        <label data-tooltip="Depth-of-field focal plane position">Focus Distance <span id="val-focus" class="value">0.5</span></label>
+                        <input type="range" id="focus" min="0.0" max="1.0" step="0.01" value="0.5">
+                    </div>
+                    <div class="control-group">
+                        <label data-tooltip="Bokeh strength of out-of-focus regions">Aperture (Blur) <span id="val-aperture" class="value">0.0</span></label>
+                        <input type="range" id="aperture" min="0.0" max="1.0" step="0.01" value="0.0">
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-lighting" class="tab-pane">
+                <div class="section-header expanded" data-section="lighting-ambient">Ambient & Directional</div>
+                <div class="section-content">
+                    <div class="control-group">
+                        <label data-tooltip="Base fill illumination of the scene">Ambient Light: <span id="val-ambientLight" class="val-display">0.2</span></label>
+                        <input type="range" id="ambientLight" min="0.0" max="1.0" step="0.01" value="0.2">
+                    </div>
+                    <div class="control-group">
+                        <label data-tooltip="Strength of the primary directional light source">Dir Intensity: <span id="val-dirIntensity" class="val-display">0.8</span></label>
+                        <input type="range" id="dirIntensity" min="0.0" max="5.0" step="0.1" value="0.8">
+                    </div>
+                    <div class="control-group">
+                        <label data-tooltip="X vector component of primary light direction">Light Dir X: <span id="val-lightDirX" class="val-display">1.0</span></label>
+                        <input type="range" id="lightDirX" min="-1.0" max="1.0" step="0.1" value="1.0">
+                    </div>
+                    <div class="control-group">
+                        <label data-tooltip="Y vector component of primary light direction">Light Dir Y: <span id="val-lightDirY" class="val-display">1.0</span></label>
+                        <input type="range" id="lightDirY" min="-1.0" max="1.0" step="0.1" value="1.0">
+                    </div>
+                    <div class="control-group">
+                        <label data-tooltip="Z vector component of primary light direction">Light Dir Z: <span id="val-lightDirZ" class="val-display">1.0</span></label>
+                        <input type="range" id="lightDirZ" min="-1.0" max="1.0" step="0.1" value="1.0">
+                    </div>
+                </div>
+            </div>
         </div>
-        
-        <div class="control-group">
-            <label>Amplitude <span id="val-amp" class="value">0.5</span></label>
-            <input type="range" id="amp" min="0.0" max="2.0" step="0.1" value="0.5">
-        </div>
-
-        <div class="control-group">
-            <label>Spike Threshold <span id="val-thresh" class="value">0.8</span></label>
-            <input type="range" id="thresh" min="0.0" max="1.0" step="0.05" value="0.8">
-        </div>
-
-        <div class="control-group">
-            <label>Smoothing <span id="val-smooth" class="value">0.9</span></label>
-            <input type="range" id="smooth" min="0.0" max="0.99" step="0.01" value="0.9">
-        </div>
-
-        <hr>
-        <!-- [V2.5] Controls: Region Stimulation -->
-        <!-- [Neuro-Weaver] Region-Specific Stimulus Injection Buttons -->
-        <label style="margin-bottom:10px; color:#fff">Inject Stimulus</label>
-
-        <!-- Environmental Exposure Buttons -->
-        <button id="stim-electrical" class="stim-btn" style="background:#442; border-color:#ff4; color:#ffc">Electrical Exposure</button>
-        <button id="stim-mercury" class="stim-btn" style="background:#242; border-color:#4f4; color:#cfc">Vapor/Mercury Exposure</button>
-
-        <div class="control-group">
-            <label>Hazard Intensity <span id="val-hazard-intensity" class="value">50</span></label>
-            <input type="range" id="hazard-intensity" min="0" max="100" step="1" value="50">
-        </div>
-        <div class="control-group">
-            <label>Hazard Duration (s) <span id="val-hazard-duration" class="value">5</span></label>
-            <input type="range" id="hazard-duration" min="0" max="10" step="1" value="5">
-        </div>
-        <hr style="border-top: 1px dashed #444; margin: 8px 0;">
-        <button id="stim-frontal" class="stim-btn" type="button">Frontal Lobe (Cognition)</button>
-        <button id="stim-parietal" class="stim-btn" type="button">Parietal Lobe (Sensory)</button>
-        <button id="stim-temporal" class="stim-btn" type="button">Temporal Lobe (Memory)</button>
-        <button id="stim-occipital" class="stim-btn" type="button">Occipital Lobe (Vision)</button>
-        <button id="stim-deep" class="stim-btn" type="button">Deep Brain (Core)</button>
-        <button id="stim-random" class="stim-btn" style="background:#422; border-color:#f44; color:#fcc">Random Pulse</button>
-
-        <hr style="border-top: 1px dashed #444; margin: 8px 0;">
-
-        <button id="stim-calm" style="background:#244; border-color:#488; color:#aff">Calm State</button>
-        <button id="stim-reset" style="background:#444; border-color:#888; color:#eee">Reset Activity</button>
     </div>
 
-    <div id="error"></div>
+    <div id="error">
+        <div class="error-scanline"></div>
+        <div class="error-content">
+            <div class="error-brain">◉</div>
+            <div class="error-title">Neural Interface Offline — WebGPU Required</div>
+            <div class="error-sub" id="error-message">Your browser does not support WebGPU. Please use Chrome 113+ or Edge 113+ with WebGPU enabled.</div>
+        </div>
+    </div>
     <canvas id="canvas"></canvas>
+    <script>
+    (function() {
+        // --- Tab Switching ---
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+        const storageKey = 'neuro_weaver_active_tab';
+        function activateTab(tabId) {
+            tabBtns.forEach(btn => {
+                if (btn.dataset.tab === tabId) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+            tabPanes.forEach(pane => {
+                if (pane.id === tabId) pane.classList.add('active');
+                else pane.classList.remove('active');
+            });
+            try { localStorage.setItem(storageKey, tabId); } catch (e) {}
+        }
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+        });
+        const savedTab = localStorage.getItem(storageKey);
+        if (savedTab && document.getElementById(savedTab)) {
+            activateTab(savedTab);
+        }
+
+        // --- Accordion Sections ---
+        const sectionHeaders = document.querySelectorAll('.section-header');
+        const sectionPrefix = 'neuro_weaver_section_';
+
+        sectionHeaders.forEach(header => {
+            header.addEventListener('click', () => {
+                const isExpanded = header.classList.contains('expanded');
+                header.classList.toggle('expanded');
+                const sectionId = header.dataset.section;
+                if (sectionId) {
+                    try {
+                        sessionStorage.setItem(sectionPrefix + sectionId, String(!isExpanded));
+                    } catch (e) {}
+                }
+            });
+        });
+
+        // Restore section states
+        sectionHeaders.forEach(header => {
+            const sectionId = header.dataset.section;
+            if (!sectionId) return;
+            const saved = sessionStorage.getItem(sectionPrefix + sectionId);
+            if (saved !== null) {
+                if (saved === 'true') {
+                    header.classList.add('expanded');
+                } else {
+                    header.classList.remove('expanded');
+                }
+            } else {
+                // Default: only the first section-header inside each tab-pane is expanded.
+                const pane = header.closest('.tab-pane');
+                if (pane) {
+                    const first = pane.querySelector('.section-header');
+                    if (header === first) {
+                        header.classList.add('expanded');
+                    } else {
+                        header.classList.remove('expanded');
+                    }
+                }
+            }
+        });
+    })();
+    </script>
     <script type="module" src="main.js"></script>
 </body>
 </html>
