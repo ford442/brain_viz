@@ -274,6 +274,13 @@ const MINI_ROUTINES = {
         { time: 10.0, type: 'calm' },
         { time: 10.0, type: 'text', message: 'Fly-Through Complete', duration: 2.0 }
     ],
+    'V': [ // Spline Camera Map Fly-Through Demo
+        { time: 0.0, type: 'text', message: 'Spline Camera Map Fly-Through...', duration: 5.0 },
+        { time: 0.0, type: 'style', value: 2 },
+        { time: 0.0, type: 'camera', path: ['cortex-top', 'right-hemisphere', 'brainstem', 'left-hemisphere', 'overview'], duration: 10.0, ease: 'linear' },
+        { time: 10.0, type: 'calm' },
+        { time: 10.0, type: 'text', message: 'Map Fly-Through Complete', duration: 2.0 }
+    ],
     'i': [ // Interactive Visual Overlays Demo
         { time: 0.0, type: 'text', message: 'Interactive Overlay Initiated...', duration: 2.0 },
         { time: 0.0, type: 'style', value: 1 }, // Cyber
@@ -599,7 +606,11 @@ async function init() {
         const cameraCoordinatesMap = {
             'overview': { rotation: { x: 0.5, y: -0.5 }, zoom: 4.0 },
             'close-up': { rotation: { x: 0.1, y: 0.1 }, zoom: 1.5 },
-            'scan': { rotation: { x: 0.8, y: 0.2 }, zoom: 3.0 }
+            'scan': { rotation: { x: 0.8, y: 0.2 }, zoom: 3.0 },
+            'cortex-top': { rotation: { x: 1.5, y: 0 }, zoom: 3.0 },
+            'brainstem': { rotation: { x: -0.5, y: 3.14 }, zoom: 2.5 },
+            'left-hemisphere': { rotation: { x: 0, y: 1.57 }, zoom: 3.5 },
+            'right-hemisphere': { rotation: { x: 0, y: -1.57 }, zoom: 3.5 }
         };
 
         // Initialize RoutinePlayer, ensuring it expects the BrainRenderer instance

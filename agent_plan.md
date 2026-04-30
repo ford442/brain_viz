@@ -71,8 +71,9 @@
 - [x] **Endocannabinoid State Routine:** Implement endocannabinoid event handler to visualize enhanced flow and appetite.
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
-- [ ] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
-- [ ] **Camera Coordinates Map:** Define explicit regions for better camera angles.
+- [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
+- [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
+- [ ] **GUI Timeline Editor:** Create a visual timeline editor for creating custom routines interactively.
 
 ### Phase 3: "Brain DJ" Mode (Live Performance)
 - [x] **Keyboard Triggers:** Bind number keys (1-9) to specific mini-routines (e.g., Press '1' for "Sudden Surprise", '2' for "Calm Down").
@@ -108,6 +109,7 @@
 
 ## 🧪 "Dream" Log (Future Concepts)
 
+*Idea:* "Interactive Timeline Editor" - A GUI for users to visually sequence routine events rather than writing JSON/CSV.
 *Idea:* "What if we visualized neuroplasticity as real-time growth of new connections?"
 * *Idea:* "What if we visualized long-term heavy metal accumulation as permanent structural alterations?"
 * *Idea:* "What if we visualized myelin sheath degradation in neurodegenerative conditions?"
