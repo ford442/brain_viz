@@ -629,6 +629,10 @@ async function init() {
         }
         window.playerState = player.state; // Share state with global window for inline logic
 
+        // [Phase 10] Persistent Style Lock — routines cannot override the dropdown selection
+        player.registerHandler('style', () => {});
+        player.registerHandler('mode-transition', () => {});
+
         // [Phase 3] Extensible Event System Demo
         // Register a custom 'debug' handler to demonstrate the new V2.9 architecture
         player.registerHandler('debug', (evt) => {
@@ -971,9 +975,6 @@ async function init() {
                      }
                  }
              }
-             if (event.type === 'style') {
-                 if (inputs.style) inputs.style.value = event.value;
-             }
              if (event.type === 'param') {
                  if (inputs[event.key]) inputs[event.key].value = event.value;
                  if (labels[event.key]) labels[event.key].textContent = event.value.toFixed(2);
@@ -1230,7 +1231,7 @@ async function init() {
                 if (player.routine.length === 0) {
                      isLoading = true;
                      btnPlay.innerHTML = "⏳";
-                     await player.loadRoutineFromFile('routines/deep_thought.json', loopActive);
+                     await player.loadRoutineFromFile('/routines/deep_thought.json', loopActive);
                      isLoading = false;
                      player.play();
                 } else {
@@ -1454,9 +1455,6 @@ async function init() {
             bciPlay.textContent = '⏳';
             bciPlay.disabled = true;
             try {
-                // Switch renderer to the pattern's suggested mode
-                renderer.setParams({ style: pattern.suggestedMode });
-                if (inputs.style) inputs.style.value = pattern.suggestedMode;
                 const frames = await Promise.resolve(pattern.generate(tensorPlayer));
                 tensorPlayer.loadFrames(frames);
                 tensorPlayer.play();
@@ -1784,11 +1782,6 @@ function initUIControls(renderer, uiInputs, uiLabels) {
         const duration = parseFloat(document.getElementById('hazard-duration').value);
         renderer.injectElectrical(intensity, duration);
         flashButton(document.getElementById('stim-electrical'));
-        const styleMode = document.getElementById('style-mode');
-        if (styleMode) {
-            styleMode.value = '1'; // Cyber
-            styleMode.dispatchEvent(new Event('change'));
-        }
     });
 
     document.getElementById('stim-mercury')?.addEventListener('click', () => {
@@ -1796,11 +1789,6 @@ function initUIControls(renderer, uiInputs, uiLabels) {
         const duration = parseFloat(document.getElementById('hazard-duration').value);
         renderer.injectMercury(intensity, duration);
         flashButton(document.getElementById('stim-mercury'));
-        const styleMode = document.getElementById('style-mode');
-        if (styleMode) {
-            styleMode.value = '3'; // Heatmap
-            styleMode.dispatchEvent(new Event('change'));
-        }
     });
 
     document.getElementById('stim-calm')?.addEventListener('click', () => {
