@@ -1220,6 +1220,163 @@ async function init() {
         fileWrapper.appendChild(fileInput);
         routineContainer.appendChild(fileWrapper);
 
+        // --- GUI Timeline Editor ---
+        const btnEditor = document.createElement('button');
+        btnEditor.textContent = 'Open Timeline Editor';
+        btnEditor.dataset.tooltip = "Create and edit custom routines interactively";
+        btnEditor.style.width = '100%';
+        btnEditor.style.marginTop = '8px';
+        btnEditor.style.padding = '6px 10px';
+        btnEditor.style.background = '#2a1a3e';
+        btnEditor.style.border = '1px solid #554466';
+        btnEditor.style.borderRadius = '6px';
+        btnEditor.style.color = '#ccaabb';
+        btnEditor.style.cursor = 'pointer';
+
+        routineContainer.appendChild(btnEditor);
+
+        const editorModal = document.createElement('div');
+        editorModal.style.position = 'fixed';
+        editorModal.style.top = '10%';
+        editorModal.style.left = '10%';
+        editorModal.style.width = '80%';
+        editorModal.style.height = '80%';
+        editorModal.style.backgroundColor = 'rgba(10, 20, 30, 0.95)';
+        editorModal.style.border = '2px solid #00e5e5';
+        editorModal.style.zIndex = '1000';
+        editorModal.style.display = 'none';
+        editorModal.style.flexDirection = 'column';
+        editorModal.style.color = '#fff';
+        editorModal.style.fontFamily = 'monospace';
+        editorModal.style.padding = '20px';
+        editorModal.style.boxSizing = 'border-box';
+        document.body.appendChild(editorModal);
+
+        const editorHeader = document.createElement('h2');
+        editorHeader.textContent = 'GUI Timeline Editor';
+        editorHeader.style.marginTop = '0';
+        editorModal.appendChild(editorHeader);
+
+        const eventList = document.createElement('div');
+        eventList.style.flex = '1';
+        eventList.style.overflowY = 'auto';
+        eventList.style.marginBottom = '10px';
+        eventList.style.border = '1px solid #444';
+        eventList.style.padding = '10px';
+        editorModal.appendChild(eventList);
+
+        const editorControls = document.createElement('div');
+        editorControls.style.display = 'flex';
+        editorControls.style.gap = '10px';
+        editorModal.appendChild(editorControls);
+
+        const btnAddEvent = document.createElement('button');
+        btnAddEvent.textContent = '+ Add Event';
+        editorControls.appendChild(btnAddEvent);
+
+        const btnPlayEditor = document.createElement('button');
+        btnPlayEditor.textContent = '▶ Play Routine';
+        editorControls.appendChild(btnPlayEditor);
+
+        const btnExport = document.createElement('button');
+        btnExport.textContent = '💾 Export JSON';
+        editorControls.appendChild(btnExport);
+
+        const btnCloseEditor = document.createElement('button');
+        btnCloseEditor.textContent = 'Close';
+        btnCloseEditor.style.marginLeft = 'auto';
+        editorControls.appendChild(btnCloseEditor);
+
+        let editingRoutine = [];
+
+        function renderEventList() {
+            eventList.innerHTML = '';
+            editingRoutine.sort((a, b) => a.time - b.time);
+            editingRoutine.forEach((evt, idx) => {
+                const eventRow = document.createElement('div');
+                eventRow.style.display = 'flex';
+                eventRow.style.gap = '10px';
+                eventRow.style.marginBottom = '5px';
+                eventRow.style.alignItems = 'center';
+
+                const timeInput = document.createElement('input');
+                timeInput.type = 'number';
+                timeInput.step = '0.1';
+                timeInput.value = evt.time;
+                timeInput.style.width = '60px';
+                timeInput.onchange = (e) => { evt.time = parseFloat(e.target.value) || 0; };
+
+                const typeInput = document.createElement('input');
+                typeInput.type = 'text';
+                typeInput.value = evt.type;
+                typeInput.style.width = '100px';
+                typeInput.onchange = (e) => { evt.type = e.target.value; };
+
+                const paramsInput = document.createElement('input');
+                paramsInput.type = 'text';
+                const { time, type, ...params } = evt;
+                paramsInput.value = JSON.stringify(params);
+                paramsInput.style.flex = '1';
+                paramsInput.onchange = (e) => {
+                    try {
+                        const parsed = JSON.parse(e.target.value);
+                        // Update the original object reference rather than replacing it
+                        // so that `timeInput` and `typeInput` closures still point to the correct object.
+                        // Remove all old keys except time and type
+                        Object.keys(evt).forEach(k => {
+                            if (k !== 'time' && k !== 'type') delete evt[k];
+                        });
+                        Object.assign(evt, parsed);
+                    } catch (err) {
+                        alert('Invalid JSON params');
+                    }
+                };
+
+                const btnRemove = document.createElement('button');
+                btnRemove.textContent = 'X';
+                btnRemove.onclick = () => {
+                    editingRoutine.splice(idx, 1);
+                    renderEventList();
+                };
+
+                eventRow.appendChild(timeInput);
+                eventRow.appendChild(typeInput);
+                eventRow.appendChild(paramsInput);
+                eventRow.appendChild(btnRemove);
+                eventList.appendChild(eventRow);
+            });
+        }
+
+        btnEditor.onclick = () => {
+            editingRoutine = JSON.parse(JSON.stringify(player.routine.length > 0 ? player.routine : []));
+            renderEventList();
+            editorModal.style.display = 'flex';
+        };
+
+        btnCloseEditor.onclick = () => {
+            editorModal.style.display = 'none';
+        };
+
+        btnAddEvent.onclick = () => {
+            editingRoutine.push({ time: 0, type: 'text', message: 'New Event' });
+            renderEventList();
+        };
+
+        btnPlayEditor.onclick = () => {
+            player.playNow(JSON.parse(JSON.stringify(editingRoutine)));
+        };
+
+        btnExport.onclick = () => {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(editingRoutine, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "custom_routine.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        };
+        // --- End GUI Timeline Editor ---
+
         // Event Listeners
         let isLoading = false;
         let loopActive = false;
