@@ -19,6 +19,7 @@ const CAMERA_PRESETS = {
 export class RoutinePlayer {
     constructor(renderer, regionMap, cameraMap) {
         // Routine Engine logic verified in this cycle.
+        // Expects BrainRenderer instance.
         this.renderer = renderer;
         this.regions = regionMap || {}; // Maps names like 'frontal' to [x,y,z]
         this.cameraMap = cameraMap || {}; // Maps camera target names to {rotation, zoom}
