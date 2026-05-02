@@ -20,6 +20,10 @@ const MINI_ROUTINES = {
         { time: 0.0, type: 'mercury', intensity: 0.8, duration: 5.0 },
         { time: 5.0, type: 'calm' }
     ],
+    'K': [ // ATP Energy Depletion
+        { time: 0.0, type: 'text', message: 'ATP Energy Depletion', duration: 3.0 },
+        { time: 0.0, type: 'atp_depletion', intensity: 1.0, duration: 6.0 }
+    ],
     'z': [ // Default Mode Network
         { time: 0.0, type: 'style', value: 2 }, // Connectome
         { time: 0.0, type: 'camera', target: 'isometric', duration: 2.0 },
@@ -703,6 +707,7 @@ async function init() {
                     <div class="legend-item"><span class="legend-key">a</span><span>Adrenaline</span></div>
                     <div class="legend-item"><span class="legend-key">u</span><span>Noradrenaline</span></div>
                     <div class="legend-item"><span class="legend-key">B</span><span>Endocannabinoid</span></div>
+                    <div class="legend-item"><span class="legend-key">K</span><span>ATP Depletion</span></div>
                 </div>
             </div>
             <div class="legend-section">

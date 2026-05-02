@@ -92,6 +92,7 @@
 - [x] **Serotonin Color Shift:** Implement `colorShift` uniform to modulate palette (Blue -> Gold/Red) for visualizing chemical changes.
 - [x] **Synaptic Sparkles:** Implement `sparkle` uniform for visual bursts of insight (high-frequency flicker/glow).
 - [x] **Cortisol Decay:** Implement Cortisol levels as structural decay to simulate stress.
+- [x] **ATP Energy Depletion:** Implement `atp_depletion` event handler to simulate energy loss via slow playback and desaturation.
 
 ### Phase 6: Structural Dynamics
 - [x] **Dendritic Growth Animation:** Implement `growth` uniform to control the maximum render radius of the brain structure, simulating organic growth.
@@ -136,6 +137,7 @@
 * *Idea:* "What if we allowed scripts to trigger external events like Haptic Feedback API?"
 * *Idea:* "Multimodal Embeddings" - Connect an ML backend to translate input text (e.g., from an LLM) into corresponding brain state routines automatically.
 * *Idea:* "What if we visualized ATP energy depletion as slow frame rates and desaturation?"
+* *Idea:* "What if we visualize neuroplasticity decay in aging brains?"
 * *Idea:* "Endorphin Rush" - Visualizing temporary immunity to stress/shake events by suppressing distortion parameters.
 * *Idea:* "Hormonal Flow Physics" - What if we visualize hormonal flows like Oxytocin as a slow, warm wave using procedural volumetric fluid dynamics rather than just parameter shifts?
 * *Idea:* "Procedural Cellular Advection" - Expand fluid dynamics to push and advect individual soma particles or fibers based on the fluid velocity field.
