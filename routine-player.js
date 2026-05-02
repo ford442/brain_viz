@@ -315,6 +315,30 @@ export class RoutinePlayer {
             this.startLerp({ key: 'colorShift', value: -0.2 * intensity, duration: duration, ease: 'quadOut' });
         });
 
+        // [Phase 5] ATP Energy Depletion
+        this.registerHandler('atp_depletion', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 5.0;
+
+            // Slow down playback speed and desaturate
+            this.startLerp({ key: 'playbackSpeed', value: 0.2 * (2.0 - intensity), duration: duration * 0.5, ease: 'quadOut' });
+            this.startLerp({ key: 'colorShift', value: -0.8 * intensity, duration: duration * 0.5, ease: 'quadOut' });
+
+            // Fade back
+            if (duration > 0) {
+                 const revertTime = this.elapsedTime + duration;
+                 const revertEvents = [
+                    { time: revertTime, type: 'lerp', key: 'playbackSpeed', value: 1.0, duration: duration * 0.5, ease: 'quadIn' },
+                    { time: revertTime, type: 'lerp', key: 'colorShift', value: 0.0, duration: duration * 0.5, ease: 'quadIn' }
+                 ];
+                 let insertIdx = this.currentEventIndex || this.cursor;
+                 while (insertIdx < this.routine.length && this.routine[insertIdx].time < revertTime) {
+                     insertIdx++;
+                 }
+                 this.routine.splice(insertIdx, 0, ...revertEvents);
+            }
+        });
+
 
         // [Phase 5] Endocannabinoids
         this.registerHandler('endocannabinoid', (evt) => {
