@@ -8,18 +8,36 @@ import { TensorPlayer, BUILTIN_PATTERNS } from './tensor-player.js'; // [BCI]
 
 // [Phase 3] Keyboard Triggered Routines
 const MINI_ROUTINES = {
-    'E': [ // Electrical Exposure
-        { time: 0.0, type: 'text', message: 'Electrical Exposure Warning', duration: 2.0 },
-        { time: 0.0, type: 'style', value: 1 }, // Cyber
-        { time: 0.0, type: 'electrical', intensity: 0.8, duration: 5.0 },
-        { time: 5.0, type: 'calm' }
+    'E': [ // Electrical Exposure (High voltage, rapid chaotic firing, harsh audio)
+        { time: 0.0, type: 'text', message: 'HAZARD: ELECTRICAL EXPOSURE', duration: 2.5 },
+        { time: 0.0, type: 'style', value: 1 }, // Cyber/Wireframe style
+        { time: 0.0, type: 'shake', intensity: 0.3, duration: 2.0 }, // Intense shaking
+        { time: 0.0, type: 'lerp', key: 'sparkle', value: 1.0, duration: 0.1 }, // Flash on
+        { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 25.0, duration: 0.1 }, // Hyper-fast signals
+        { time: 0.0, type: 'sound', frequency: 60, oscType: 'sawtooth', duration: 2.0, volume: 0.8 }, // 60Hz Electrical Hum
+        { time: 0.2, type: 'stimulus', target: 'frontal', intensity: 10.0 },
+        { time: 0.5, type: 'stimulus', target: 'occipital', intensity: 10.0 },
+        { time: 0.8, type: 'stimulus', target: 'parietal', intensity: 10.0 },
+        { time: 1.1, type: 'glitch', intensity: 2.0, autoRestore: true }, // System glitching from voltage
+        { time: 2.5, type: 'calm' },
+        { time: 2.5, type: 'text', message: 'Voltage Stabilized', duration: 1.5 }
     ],
-    'M': [ // Mercury Exposure
-        { time: 0.0, type: 'text', message: 'Mercury Exposure Warning', duration: 2.0 },
-        { time: 0.0, type: 'style', value: 3 }, // Heatmap
-        { time: 0.0, type: 'mercury', intensity: 0.8, duration: 5.0 },
-        { time: 5.0, type: 'calm' }
+    'M': [ // Vapor/Mercury Exposure (Sluggish, toxic, disorienting)
+        { time: 0.0, type: 'text', message: 'HAZARD: NEUROTOXIC VAPOR DETECTED', duration: 4.0 },
+        { time: 0.0, type: 'style', value: 3 }, // Heatmap mode
+        { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 0.5, duration: 3.0, ease: 'quadOut' }, // Extremely sluggish signals
+        { time: 0.0, type: 'lerp', key: 'smoothing', value: 0.98, duration: 3.0 }, // Overly blurred/washed out
+        { time: 0.0, type: 'lerp', key: 'colorShift', value: 0.7, duration: 3.0 }, // Sickly color shift
+        { time: 0.0, type: 'sound', frequency: 90, oscType: 'sine', duration: 5.0, volume: 0.6 }, // Low, disorienting throb
+        { time: 0.0, type: 'cinematic', aberration: 1.5, grain: 0.8, duration: 3.0 }, // Dizzy/nauseous visual distortion
+        { time: 2.0, type: 'lerp', key: 'amplitude', value: 0.1, duration: 2.0 }, // Weakened signal strength
+        { time: 5.0, type: 'calm' },
+        { time: 5.0, type: 'cinematic', aberration: 0.0, grain: 0.0, duration: 2.0 },
+        { time: 5.0, type: 'text', message: 'Toxicity Clearing...', duration: 2.0 }
     ],
+
+
+
     'K': [ // ATP Energy Depletion
         { time: 0.0, type: 'text', message: 'ATP Energy Depletion', duration: 3.0 },
         { time: 0.0, type: 'atp_depletion', intensity: 1.0, duration: 6.0 }
@@ -714,7 +732,7 @@ async function init() {
                 <div class="legend-section-title">Systems</div>
                 <div class="legend-row">
                     <div class="legend-item"><span class="legend-key">E</span><span>Electrical</span></div>
-                    <div class="legend-item"><span class="legend-key">M</span><span>Mercury</span></div>
+                    <div class="legend-item"><span class="legend-key">M</span><span>Mercury Vapor</span></div>
                     <div class="legend-item"><span class="legend-key">I</span><span>Inflammation</span></div>
                     <div class="legend-item"><span class="legend-key">C</span><span>Glial Cleanup</span></div>
                     <div class="legend-item"><span class="legend-key">F</span><span>Fluid Dynamics</span></div>
