@@ -29,7 +29,7 @@ Key capabilities:
 | **Math** | Custom `Mat4` library (`math-utils.js`), column-major |
 | **Build Tool** | Vite (minimal config, dev server + bundling) |
 | **ML Runtime** | ONNX Runtime Web (`onnxruntime-web`) |
-| **Test/Verify** | Playwright (in deps), Python scripts for smoke tests |
+| **Test/Verify** | Playwright (in deps), Python scripts for smoke tests and visual verification |
 | **Deployment** | Manual SFTP via `deploy.py` |
 
 **Dependencies (`package.json`):**
@@ -50,7 +50,7 @@ Key capabilities:
 ```
 brain_viz/
 ├── index.html              # Main HTML with control panel UI
-├── main.js                 # Application bootstrap, UI wiring, keyboard shortcuts
+├── main.js                 # Application bootstrap, UI wiring, keyboard shortcuts, mini-routines
 ├── brain-renderer.js       # Core WebGPU engine: device, pipelines, render loop
 ├── brain-geometry.js       # Procedural brain mesh + circuit grid + soma positions
 ├── shaders.js              # WGSL shader strings (vertex, fragment, compute, post-process)
@@ -60,9 +60,15 @@ brain_viz/
 ├── tensor-utils.js         # Lightweight `Tensor` helper class (data + shape ops)
 ├── inference-engine.js     # ONNX SqueezeNet wrapper for AI mode
 ├── audio-reactor.js        # Web Audio microphone reactivity
+├── icosahedron.js          # Icosahedron vertex/index constants (used for instanced somas)
 ├── vite.config.js          # Vite config (COOP/COEP headers, ONNX exclude)
 ├── package.json            # npm manifest
 ├── deploy.py               # SFTP deployment script
+├── test_run.py             # Python smoke test (starts dev server, curls localhost)
+├── test_compile.py         # Stub for build verification
+├── test_shader.js          # Shader-related test stub
+├── patch_render_test.js    # Render pipeline patch/test stub
+├── fix_main.py             # Script for main.js fixes
 ├── routines/               # JSON/CSV routine data
 │   ├── deep_thought.json
 │   ├── altitude_simulation.json
@@ -71,7 +77,51 @@ brain_viz/
 ├── public/                 # Static assets (WASM, ONNX model)
 │   ├── squeezenet1.1.onnx
 │   └── ort-wasm-*.wasm
-└── verification/           # Screenshots/videos from manual testing
+├── verification/           # Screenshots/videos + Python verification scripts
+│   ├── brain_heatmap.png
+│   ├── branching_deep.png
+│   ├── connectome_spheres.png
+│   ├── error_state.png
+│   ├── math_feature.png
+│   ├── oxytocin_burst.png
+│   ├── serotonin_manual.png
+│   ├── test_flashback.py
+│   ├── test_glitch.py
+│   ├── verify_adrenaline.py
+│   ├── verify_ai.py
+│   ├── verify_brain.py
+│   ├── verify_brain_v2.py
+│   ├── verify_brain_viz.py
+│   ├── verify_branching.py
+│   ├── verify_camera_routine.py
+│   ├── verify_connectome.py
+│   ├── verify_custom_audio.py
+│   ├── verify_cyber.py
+│   ├── verify_director_tools.py
+│   ├── verify_fog.py
+│   ├── verify_glitch.py
+│   ├── verify_growth.py
+│   ├── verify_interactive_storytelling.py
+│   ├── verify_keyboard.py
+│   ├── verify_math_feature.py
+│   ├── verify_noradrenaline.py
+│   ├── verify_oxytocin.py
+│   ├── verify_routine.py
+│   ├── verify_shake.py
+│   ├── verify_signal.py
+│   ├── verify_signal_speed.py
+│   ├── verify_sparkle.py
+│   ├── verify_spline.py
+│   ├── verify_spline_flythrough.py
+│   ├── verify_stress.py
+│   ├── verify_suite.py
+│   ├── verify_suite_v2.py
+│   ├── verify_timeline_editor.py
+│   └── verify_ui.py
+├── .github/
+│   └── copilot-instructions.md  # GitHub Copilot context instructions
+└── .jules/
+    └── setup.sh               # Emscripten setup script
 ```
 
 ### Key Module Responsibilities
@@ -81,7 +131,9 @@ brain_viz/
 - **`shaders.js`** — Contains all WGSL code as exported JavaScript template strings. Includes vertex/fragment shaders for the brain surface, instanced soma shaders, compute shader for tensor physics, and post-processing shaders (chromatic aberration, grain, DoF).
 - **`routine-player.js`** — Orchestrates timed events (stimulus, camera, lerp, audio, text, choice/branching). Supports sub-routines, procedural generation, CSV parsing, and an extensible handler registry.
 - **`tensor-player.js`** — Generates synthetic BCI patterns (alpha waves, working memory, visual burst, seizure spread, meditation) and loads `.bin`, `.npy`, and `.csv` tensor series.
+- **`tensor-utils.js`** — Lightweight `Tensor` helper class providing data validation, `reshape()`, and `normalize()` operations for Float32Array-based tensors.
 - **`main.js`** — Wires the DOM UI to the renderer, sets up keyboard shortcuts, initializes `RoutinePlayer`, `AudioReactor`, `TensorPlayer`, and `InferenceEngine`, and runs the main update loop.
+- **`icosahedron.js`** — Static icosahedron vertex and index arrays exported as constants. Used by `brain-renderer.js` for instanced soma geometry.
 
 ---
 
@@ -143,8 +195,8 @@ When `tensorPlaybackMode` is `true` (driven by `TensorPlayer`), the compute pass
 
 WGSL structs require strict memory alignment. The `Uniforms` struct in `shaders.js` has explicit scalar/padding layout, and the JavaScript side writes a `Float32Array` with hardcoded offsets.
 
-- **Render uniform buffer**: 60 floats (240 bytes), padded up to 256 bytes to satisfy WebGPU uniform alignment.
-- **Compute uniform buffer**: 64 bytes fixed size.
+- **Render uniform buffer**: 64 floats (`RENDER_UNIFORM_FLOAT_COUNT = 64`), which is 256 bytes. This already satisfies WebGPU uniform alignment requirements, so the buffer is allocated at exactly 256 bytes.
+- **Compute uniform buffer**: 80 bytes fixed size (`COMPUTE_UNIFORM_BUFFER_SIZE = 80`). The active data spans offsets 0–71 (time, voxelDim, frequency, amplitude, spikeThreshold, smoothing, style, padding, stimulusPos, stimulusActive, hypoxiaStress, metabolicRate, mitochondrialFunction, fluidActive, electricalActive, mercuryActive), with trailing padding to reach 80 bytes.
 
 **When adding new uniforms, you MUST manually calculate and respect WGSL alignment rules in both the shader struct and the JavaScript `Float32Array`/`DataView` writing to it.** Failure results in silent data corruption or validation errors.
 
@@ -183,6 +235,40 @@ There is **no automated unit test suite** (no Jest/Vitest configuration). Testin
 ```bash
 python test_run.py
 ```
+
+**Python verification scripts** (run individually for targeted feature checks):
+- `verification/verify_brain.py` — Basic brain rendering verification
+- `verification/verify_brain_v2.py` — Extended rendering checks
+- `verification/verify_brain_viz.py` — Full visualization pipeline check
+- `verification/verify_routine.py` — Routine player event sequencing
+- `verification/verify_camera_routine.py` — Camera move verification
+- `verification/verify_connectome.py` — Connectome/fiber mode check
+- `verification/verify_cyber.py` — Cyber/wireframe mode check
+- `verification/verify_adrenaline.py` — Adrenaline stimulus routine
+- `verification/verify_noradrenaline.py` — Noradrenaline stimulus routine
+- `verification/verify_oxytocin.py` — Oxytocin stimulus routine
+- `verification/verify_stress.py` — Stress distortion effects
+- `verification/verify_shake.py` — Camera shake behavior
+- `verification/verify_glitch.py` — Glitch corruption simulation
+- `verification/verify_fog.py` — Volumetric fog rendering
+- `verification/verify_growth.py` — Dendritic growth parameters
+- `verification/verify_sparkle.py` — Synaptic sparkle effects
+- `verification/verify_spline.py` — Spline interpolation paths
+- `verification/verify_spline_flythrough.py` — Spline camera fly-through
+- `verification/verify_branching.py` — Branching routine logic
+- `verification/verify_signal.py` — Signal/wait event synchronization
+- `verification/verify_signal_speed.py` — Playback speed modulation
+- `verification/verify_math_feature.py` — Math/variable routine features
+- `verification/verify_interactive_storytelling.py` — Choice/overlay interactions
+- `verification/verify_custom_audio.py` — External audio loading
+- `verification/verify_keyboard.py` — Keyboard shortcut handling
+- `verification/verify_ui.py` — UI control synchronization
+- `verification/verify_timeline_editor.py` — Timeline editor checks
+- `verification/verify_director_tools.py` — Director tool verification
+- `verification/verify_ai.py` — ONNX inference engine verification
+- `verification/verify_suite.py` / `verify_suite_v2.py` — Aggregated verification suites
+- `verification/test_flashback.py` — Memory flashback routine test
+- `verification/test_glitch.py` — Glitch storm routine test
 
 ---
 
