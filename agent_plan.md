@@ -16,8 +16,8 @@
 - [x] **Playback UI:** Add a "Run Sequence" button and a transport clock (Play/Stop/Loop) to the DOM.
 
 ### Phase 2: Advanced Choreography
-- [ ] **Parameter Interpolation/Easing:** Enhance routines with advanced smooth interpolation logic.
-- [ ] **Camera Coordinates Map:** Define explicit spline regions for complex camera angles.
+- [x] **Parameter Interpolation/Easing:** Enhance routines with advanced smooth interpolation logic.
+- [x] **Camera Coordinates Map:** Define explicit spline regions for complex camera angles.
 - [x] **Environmental Hazards:** Implement electrical and mercury event handlers.
 - [x] **Serotonin Color Shift:** Implement `serotonin` event handler in `routine-player.js` to simulate serotonin flood via `colorShift` and `flowSpeed`.
 - [x] **Default Mode Network (DMN) Routine:** Visualize the Default Mode Network as a low-frequency hum during idle states.
@@ -234,3 +234,5 @@
 * [Date] - Plan initialized.
 * *Idea:* "What if we visualized Adrenaline surges as sudden global illumination flashes?"
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
+
+* *Idea:* "What if we mapped real-time weather data to global illumination and fog density?"
