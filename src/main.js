@@ -42,6 +42,15 @@ const MINI_ROUTINES = {
         { time: 0.0, type: 'text', message: 'ATP Energy Depletion', duration: 3.0 },
         { time: 0.0, type: 'atp_depletion', intensity: 1.0, duration: 6.0 }
     ],
+    'W': [ // Sensory Overload
+        { time: 0.0, type: 'text', message: 'Sensory Overload Detected...', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 1 }, // Cyber
+        { time: 0.0, type: 'sound', frequency: 1500, oscType: 'sawtooth', duration: 4.0, volume: 0.6 },
+        { time: 0.0, type: 'sensory_overload', intensity: 1.5, duration: 4.0 },
+        { time: 4.0, type: 'text', message: 'System Recovering...', duration: 2.0 },
+        { time: 6.0, type: 'calm' },
+        { time: 6.0, type: 'style', value: 0 }
+    ],
     'z': [ // Default Mode Network
         { time: 0.0, type: 'style', value: 2 }, // Connectome
         { time: 0.0, type: 'camera', target: 'isometric', duration: 2.0 },
@@ -736,6 +745,7 @@ async function init() {
                     <div class="legend-item"><span class="legend-key">I</span><span>Inflammation</span></div>
                     <div class="legend-item"><span class="legend-key">C</span><span>Glial Cleanup</span></div>
                     <div class="legend-item"><span class="legend-key">F</span><span>Fluid Dynamics</span></div>
+                    <div class="legend-item"><span class="legend-key">W</span><span>Sensory Overload</span></div>
                 </div>
             </div>
             <div class="legend-section">

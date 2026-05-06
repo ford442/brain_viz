@@ -179,7 +179,7 @@ export class RoutinePlayer {
                         { time: revertTime, type: 'lerp', key: 'flowSpeed', value: 4.0, duration: duration, ease: 'quadOut' }
                     ];
 
-                    let insertIdx = this.currentEventIndex || this.cursor;
+                    let insertIdx = this.currentEventIndex ?? this.cursor;
                     while (insertIdx < this.routine.length && this.routine[insertIdx].time < revertTime) {
                         insertIdx++;
                     }
@@ -331,7 +331,7 @@ export class RoutinePlayer {
                     { time: revertTime, type: 'lerp', key: 'playbackSpeed', value: 1.0, duration: duration * 0.5, ease: 'quadIn' },
                     { time: revertTime, type: 'lerp', key: 'colorShift', value: 0.0, duration: duration * 0.5, ease: 'quadIn' }
                  ];
-                 let insertIdx = this.currentEventIndex || this.cursor;
+                 let insertIdx = this.currentEventIndex ?? this.cursor;
                  while (insertIdx < this.routine.length && this.routine[insertIdx].time < revertTime) {
                      insertIdx++;
                  }
@@ -452,6 +452,66 @@ export class RoutinePlayer {
                 this.startLerp({ key: 'flowSpeed', value: 4.0, duration: duration, ease: ease });
                 this.startLerp({ key: 'amplitude', value: 0.5, duration: duration, ease: ease });
                 this.startLerp({ key: 'frequency', value: 2.0, duration: duration, ease: ease });
+            }
+        });
+
+        // [Phase 2] Sensory Overload Simulation
+        this.registerHandler('sensory_overload', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 5.0;
+
+            // Instantly spike stress, shake, aberration, and speed
+            this.renderer.setParams({
+                stress: 2.0 * intensity,
+                shake: 0.15 * intensity,
+                aberration: 2.0 * intensity,
+                flowSpeed: 20.0 * intensity,
+                colorShift: 0.8 * intensity // Shift to harsh colors
+            });
+
+            // Random rapid stimuli using timeline injection
+            const regions = Object.keys(this.regions);
+            const eventsToInsert = [];
+
+            if (regions.length > 0 && this.routine) {
+                // Pre-calculate stimuli events every 0.2s for the duration
+                const numStimuli = Math.floor(duration / 0.2);
+                for (let i = 1; i <= numStimuli; i++) {
+                    const target = regions[Math.floor(Math.random() * regions.length)];
+                    eventsToInsert.push({
+                        time: this.elapsedTime + (i * 0.2),
+                        type: 'stimulus',
+                        target: target,
+                        intensity: intensity * 3.0
+                    });
+                }
+            }
+
+            if (duration > 0 && this.routine) {
+                 const revertTime = this.elapsedTime + duration;
+                 const ease = evt.ease || 'quadOut';
+                 const revertEvents = [
+                    { time: revertTime, type: 'lerp', key: 'stress', value: 0.0, duration: 2.0, ease: ease },
+                    { time: revertTime, type: 'lerp', key: 'shake', value: 0.0, duration: 2.0, ease: ease },
+                    { time: revertTime, type: 'lerp', key: 'aberration', value: 0.0, duration: 2.0, ease: ease },
+                    { time: revertTime, type: 'lerp', key: 'flowSpeed', value: 4.0, duration: 2.0, ease: ease },
+                    { time: revertTime, type: 'lerp', key: 'colorShift', value: 0.0, duration: 2.0, ease: ease }
+                 ];
+                 eventsToInsert.push(...revertEvents);
+            }
+
+            if (eventsToInsert.length > 0 && this.routine) {
+                 // Sort the events to insert
+                 eventsToInsert.sort((a, b) => a.time - b.time);
+
+                 let insertIdx = this.currentEventIndex ?? this.cursor;
+                 for (const ev of eventsToInsert) {
+                     while (insertIdx < this.routine.length && this.routine[insertIdx].time < ev.time) {
+                         insertIdx++;
+                     }
+                     this.routine.splice(insertIdx, 0, ev);
+                     insertIdx++;
+                 }
             }
         });
 
@@ -727,7 +787,7 @@ export class RoutinePlayer {
                 ];
 
                 // Insert events keeping chronological order
-                let insertIdx = this.currentEventIndex;
+                let insertIdx = this.currentEventIndex ?? this.cursor;
                 while (insertIdx < this.routine.length && this.routine[insertIdx].time < revertTime) {
                     insertIdx++;
                 }

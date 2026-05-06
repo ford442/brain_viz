@@ -16,6 +16,7 @@
 - [x] **Playback UI:** Add a "Run Sequence" button and a transport clock (Play/Stop/Loop) to the DOM.
 
 ### Phase 2: Advanced Choreography
+- [x] **Sensory Overload Simulation:** Implement sensory overload event and routine.
 - [x] **Parameter Interpolation/Easing:** Enhance routines with advanced smooth interpolation logic.
 - [x] **Camera Coordinates Map:** Define explicit spline regions for complex camera angles.
 - [x] **Environmental Hazards:** Implement electrical and mercury event handlers.
@@ -115,6 +116,7 @@
 * *Idea:* "Cognitive Load Resolution: What if we visualized cognitive load as variable rendering resolution? (Dynamic LoD)"
 
 *Idea:* "Interactive Timeline Editor" - A GUI for users to visually sequence routine events rather than writing JSON/CSV.
+* *Idea:* "What if we visualized sleep deprivation as progressive desaturation and increased glitch frequency?"
 *Idea:* "What if we visualized neuroplasticity as real-time growth of new connections?"
 * *Idea:* "What if we visualized long-term heavy metal accumulation as permanent structural alterations?"
 * *Idea:* "What if we visualized myelin sheath degradation in neurodegenerative conditions?"
