@@ -236,6 +236,13 @@ const MINI_ROUTINES = {
         { time: 6.0, type: 'calm' },
         { time: 6.0, type: 'text', message: 'Deep Sleep', duration: 2.0 }
     ],
+    'U': [ // Sleep Deprivation
+        { time: 0.0, type: 'text', message: 'Sleep Deprivation Simulation Initiated...', duration: 3.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'sleep_deprivation', intensity: 1.0, duration: 10.0 },
+        { time: 10.0, type: 'text', message: 'Critical Fatigue Level Reached', duration: 2.0 },
+        { time: 13.0, type: 'calm' }
+    ],
     'e': [ // Endorphin Rush
         { time: 0.0, type: 'text', message: 'Endorphin Rush: Immunity to Stress', duration: 2.0 },
         { time: 0.0, type: 'style', value: 2 }, // Connectome
@@ -325,7 +332,7 @@ const MINI_ROUTINES = {
     ],
     'b': [ // Branching Demo
         { time: 0.0, type: 'text', message: 'Evaluating Brain State...', duration: 2.0 },
-        { time: 2.0, type: 'branch', condition: () => Math.random() > 0.5, trueBranch: 'branch_calm', falseBranch: 'branch_panic' }
+        { time: 2.0, type: 'branch', condition: 'Math.random() > 0.5', trueBranch: 'branch_calm', falseBranch: 'branch_panic' }
     ],
     'branch_calm': [
         { time: 0.0, type: 'text', message: 'State: CALM', duration: 2.0 },
@@ -735,6 +742,7 @@ async function init() {
                     <div class="legend-item"><span class="legend-key">u</span><span>Noradrenaline</span></div>
                     <div class="legend-item"><span class="legend-key">B</span><span>Endocannabinoid</span></div>
                     <div class="legend-item"><span class="legend-key">K</span><span>ATP Depletion</span></div>
+                    <div class="legend-item"><span class="legend-key">U</span><span>Sleep Deprivation</span></div>
                 </div>
             </div>
             <div class="legend-section">

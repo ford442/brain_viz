@@ -16,6 +16,7 @@
 - [x] **Playback UI:** Add a "Run Sequence" button and a transport clock (Play/Stop/Loop) to the DOM.
 
 ### Phase 2: Advanced Choreography
+- [x] **Sleep Deprivation Simulation:** Implement progressive desaturation, blurring, and increased glitch frequency to simulate sleep deprivation.
 - [x] **Sensory Overload Simulation:** Implement sensory overload event and routine.
 - [x] **Parameter Interpolation/Easing:** Enhance routines with advanced smooth interpolation logic.
 - [x] **Camera Coordinates Map:** Define explicit spline regions for complex camera angles.
@@ -114,6 +115,7 @@
 ## 🧪 "Dream" Log (Future Concepts)
 
 * *Idea:* "Cognitive Load Resolution: What if we visualized cognitive load as variable rendering resolution? (Dynamic LoD)"
+* *Idea:* "Visual Cortex Fatigue: What if we visualized visual cortex fatigue as decreasing render resolution?"
 
 *Idea:* "Interactive Timeline Editor" - A GUI for users to visually sequence routine events rather than writing JSON/CSV.
 * *Idea:* "What if we visualized sleep deprivation as progressive desaturation and increased glitch frequency?"

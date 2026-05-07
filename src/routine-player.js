@@ -375,6 +375,55 @@ export class RoutinePlayer {
             this.startLerp({ key: 'colorShift', value: -0.5 * intensity, duration: duration, ease: 'sineOut' });
         });
 
+        // [Phase 2] Sleep Deprivation Simulation
+        this.registerHandler('sleep_deprivation', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 10.0;
+
+            // Progressive desaturation and blurring
+            this.startLerp({ key: 'colorShift', value: -0.8 * intensity, duration: duration, ease: 'sineInOut' });
+            this.startLerp({ key: 'aperture', value: 0.5 * intensity, duration: duration, ease: 'sineInOut' });
+
+            // Sluggish flow speed
+            this.startLerp({ key: 'flowSpeed', value: 1.5, duration: duration, ease: 'sineInOut' });
+
+            // Periodic glitch injections
+            const numGlitches = Math.floor(duration / 2.0); // A glitch roughly every 2 seconds
+            if (numGlitches > 0 && this.routine) {
+                const eventsToInsert = [];
+                for (let i = 1; i <= numGlitches; i++) {
+                    eventsToInsert.push({
+                        time: this.elapsedTime + (i * 2.0) + (Math.random() - 0.5), // Jitter the timing slightly
+                        type: 'glitch',
+                        intensity: intensity * 1.5 * (i / numGlitches), // Glitches get more intense over time
+                        autoRestore: true,
+                        _isDynamic: true // Tag for cleanup
+                    });
+                }
+
+                // Add fade back to baseline
+                eventsToInsert.push(
+                    { time: this.elapsedTime + duration, type: 'lerp', key: 'colorShift', value: 0.0, duration: 3.0, _isDynamic: true },
+                    { time: this.elapsedTime + duration, type: 'lerp', key: 'aperture', value: 0.0, duration: 3.0, _isDynamic: true },
+                    { time: this.elapsedTime + duration, type: 'lerp', key: 'flowSpeed', value: 4.0, duration: 3.0, _isDynamic: true }
+                );
+
+                eventsToInsert.sort((a, b) => a.time - b.time);
+
+                // Create a temporary cloned routine if not already in dynamic mode
+                // Actually, a better approach is to not modify `this.routine` in place if it's referenced
+                // globally. We must use a copy. The routine-player architecture dynamically
+                // splices into `this.routine`. We just need to make sure `loadRoutine` creates a deep copy
+                // to avoid mutating the original `MINI_ROUTINES`!
+
+                let insertIdx = this.currentEventIndex ?? this.cursor;
+                while (insertIdx < this.routine.length && this.routine[insertIdx].time < eventsToInsert[0].time) {
+                    insertIdx++;
+                }
+                this.routine.splice(insertIdx, 0, ...eventsToInsert);
+            }
+        });
+
         // [Phase 2] Histamine Inflammatory Response
         this.registerHandler('histamine', (evt) => {
             const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
@@ -869,6 +918,9 @@ export class RoutinePlayer {
             let result = false;
             if (typeof evt.condition === 'function') {
                 result = evt.condition();
+            } else if (typeof evt.condition === 'string' && evt.condition === 'Math.random() > 0.5') {
+                // Hardcode logic for JSON safe functions if needed
+                result = Math.random() > 0.5;
             } else if (typeof evt.condition === 'string' && evt.condition.startsWith('state.')) {
                 const key = evt.condition.substring(6);
                 result = !!this.state[key];
@@ -1055,7 +1107,9 @@ export class RoutinePlayer {
     }
 
     loadRoutine(routineData, loop = false) {
-        const expanded = this.expandRoutine(routineData);
+        // Create a deep copy to prevent mutating the original templates (like MINI_ROUTINES)
+        const deepCopy = JSON.parse(JSON.stringify(routineData));
+        const expanded = this.expandRoutine(deepCopy);
         this.routine = expanded.sort((a, b) => a.time - b.time);
         this.loop = loop;
         this.stop();
