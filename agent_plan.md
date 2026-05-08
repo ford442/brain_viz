@@ -110,12 +110,15 @@
 ### Phase 8: Data Integration
 - [x] **CSV/fMRI Import:** Implement `RoutinePlayer` support for parsing CSV data (Time Series & Event Lists) to drive brain visualization from external datasets.
 
+### Phase 9: Engine Evolution & Polish
+- [x] **Cognitive Load Resolution (Dynamic LoD):** Implement variable rendering resolution scaled dynamically based on a `cognitiveLoad` or `fatigue` parameter to simulate visual cortex fatigue.
+
 ---
 
 ## 🧪 "Dream" Log (Future Concepts)
 
-* *Idea:* "Cognitive Load Resolution: What if we visualized cognitive load as variable rendering resolution? (Dynamic LoD)"
-* *Idea:* "Visual Cortex Fatigue: What if we visualized visual cortex fatigue as decreasing render resolution?"
+
+
 
 *Idea:* "Interactive Timeline Editor" - A GUI for users to visually sequence routine events rather than writing JSON/CSV.
 * *Idea:* "What if we visualized sleep deprivation as progressive desaturation and increased glitch frequency?"
@@ -123,7 +126,7 @@
 * *Idea:* "What if we visualized long-term heavy metal accumulation as permanent structural alterations?"
 * *Idea:* "What if we visualized myelin sheath degradation in neurodegenerative conditions?"
 * *Idea:* "Brain-Computer Interface (BCI) Training Mode" - A gamified mode where users try to maintain specific brain states (e.g., keeping the `stress` level below a threshold) to complete objectives.
-* *Idea:* "Cognitive Load Resolution: What if we visualized cognitive load as variable rendering resolution?"
+
 * *Idea:* "What if we visualized Endocannabinoids as an enhanced state of flow and appetite?"
 * *Idea:* "Dynamic Weather Systems" - Allow routines to control global environmental weather effects like rain/fog inside the brain.
 * *Idea:* "Narrative Mode" - Display text overlays synced with brain states (e.g., "Subject recognizes face" -> Temporal Lobe lights up).
