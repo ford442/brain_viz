@@ -462,6 +462,19 @@ export class RoutinePlayer {
             this.renderer.injectMercury(intensity, duration);
         });
 
+        // [Phase 9] Cognitive Load (Dynamic LoD Visual Cortex Fatigue)
+        this.registerHandler('cognitive_load', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 5.0;
+
+            if (duration > 0) {
+                const ease = evt.ease || 'sineInOut';
+                this.startLerp({ key: 'cognitiveLoad', value: intensity, duration: duration, ease: ease });
+            } else {
+                this.renderer.setParams({ cognitiveLoad: intensity });
+            }
+        });
+
         // [Phase 5] Acetylcholine Memory Consolidation
         this.registerHandler('acetylcholine', (evt) => {
             const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;

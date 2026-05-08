@@ -243,6 +243,14 @@ const MINI_ROUTINES = {
         { time: 10.0, type: 'text', message: 'Critical Fatigue Level Reached', duration: 2.0 },
         { time: 13.0, type: 'calm' }
     ],
+    'J': [ // Visual Cortex Fatigue (Dynamic LoD)
+        { time: 0.0, type: 'text', message: 'High Cognitive Load Detected', duration: 3.0 },
+        { time: 0.0, type: 'cognitive_load', intensity: 0.8, duration: 5.0 },
+        { time: 3.0, type: 'text', message: 'Visual Cortex Fatigue: Lowering Resolution', duration: 3.0 },
+        { time: 8.0, type: 'text', message: 'Recovering...', duration: 2.0 },
+        { time: 8.0, type: 'cognitive_load', intensity: 0.0, duration: 4.0 },
+        { time: 12.0, type: 'calm' }
+    ],
     'e': [ // Endorphin Rush
         { time: 0.0, type: 'text', message: 'Endorphin Rush: Immunity to Stress', duration: 2.0 },
         { time: 0.0, type: 'style', value: 2 }, // Connectome
@@ -1023,7 +1031,7 @@ async function init() {
              if (event.type === 'calm') {
                  // Calm state modifies amplitude, frequency, smoothing
                  // We should sync them if they are in the renderer params
-                 ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'cortisol', 'fluidActive', 'fogDensity', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
+                 ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'cortisol', 'cognitiveLoad', 'fluidActive', 'fogDensity', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
                     if (inputs[k]) inputs[k].value = renderer.params[k];
                     if (labels[k]) labels[k].textContent = renderer.params[k].toFixed(2);
                  });
@@ -1993,7 +2001,7 @@ function initUIControls(renderer, uiInputs, uiLabels) {
         renderer.calmState();
         flashButton(document.getElementById('stim-calm'));
         glowRegionButtons();
-        ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'cortisol', 'fluidActive', 'fogDensity', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
+        ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'cortisol', 'cognitiveLoad', 'fluidActive', 'fogDensity', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
             if(uiInputs[k]) uiInputs[k].value = renderer.params[k];
             syncParam(k, renderer.params[k]);
         });

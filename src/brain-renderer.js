@@ -32,6 +32,7 @@ export class BrainRenderer {
         this.tensorPlaybackMode = false; // [BCI] When true, compute shader skipped; TensorPlayer drives the voxel buffer
 
         this.params = {
+            cognitiveLoad: 0.0, // [Phase 9] Visual Cortex Fatigue (Dynamic LoD)
             frequency: 2.0,
             amplitude: 0.5,
             spikeThreshold: 0.8,
@@ -492,6 +493,7 @@ export class BrainRenderer {
         this.params.aperture = 0.0;
         this.params.stress = 0.0;
         this.params.cortisol = 0.0;
+        this.params.cognitiveLoad = 0.0;
     }
 
     resetActivity() {
@@ -656,21 +658,25 @@ export class BrainRenderer {
         }
     }
 
-    render() {
+            render() {
         // [V2.3] Main Render Loop
         if (!this.isRunning) return;
         
-        const width = this.canvas.clientWidth;
-        const height = this.canvas.clientHeight;
-        if (width === 0 || height === 0) return;
+        const load = Math.max(0, Math.min(1, this.params.cognitiveLoad));
+        const scale = Math.max(0.1, 1.0 - load); // Stronger load = more aggressive downscaling
 
-        if (this.canvas.width !== width || this.canvas.height !== height) {
-            this.canvas.width = width; this.canvas.height = height;
+        const targetWidth = Math.max(1, Math.floor(this.canvas.clientWidth * scale));
+        const targetHeight = Math.max(1, Math.floor(this.canvas.clientHeight * scale));
+
+        if (Math.abs(this.canvas.width - targetWidth) > 20 || Math.abs(this.canvas.height - targetHeight) > 20) {
+            this.canvas.width = targetWidth;
+            this.canvas.height = targetHeight;
             this.depthTexture.destroy();
-            this.depthTexture = this.device.createTexture({ size: [width, height], format: 'depth32float', usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING });
+            this.depthTexture = this.device.createTexture({ size: [targetWidth, targetHeight], format: 'depth32float', usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING });
 
             // Resize Render Target
-            this.createRenderTarget(width, height);
+            this.createRenderTarget(targetWidth, targetHeight);
+            console.log(`[BrainRenderer] LoD adjusted: ${targetWidth}x${targetHeight} (load=${load.toFixed(2)})`);
         }
 
         this.time += 0.016;
