@@ -16,7 +16,7 @@
 - [x] **Playback UI:** Add a "Run Sequence" button and a transport clock (Play/Stop/Loop) to the DOM.
 
 ### Phase 2: Advanced Choreography
-- [ ] **Parameter Interpolation/Easing:** Enhance routines with advanced smooth interpolation logic.
+- [x] **Parameter Interpolation/Easing:** Enhance routines with advanced smooth interpolation logic (Added `expoInOut` and multiple param interpolation).
 - [ ] **Camera Coordinates Map:** Define explicit spline regions for complex camera angles.
 - [x] **Environmental Hazards:** Implement electrical and mercury event handlers.
 - [x] **Serotonin Color Shift:** Implement `serotonin` event handler in `routine-player.js` to simulate serotonin flood via `colorShift` and `flowSpeed`.
@@ -113,6 +113,7 @@
 ## 🧪 "Dream" Log (Future Concepts)
 
 * *Idea:* "Cognitive Load Resolution: What if we visualized cognitive load as variable rendering resolution? (Dynamic LoD)"
+* *Idea:* "What if we visualized cellular aging as a slow increase in structural stiffness and reduced flow speed?"
 
 *Idea:* "Interactive Timeline Editor" - A GUI for users to visually sequence routine events rather than writing JSON/CSV.
 *Idea:* "What if we visualized neuroplasticity as real-time growth of new connections?"

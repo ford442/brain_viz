@@ -161,6 +161,14 @@ export const Easing = {
         const c1 = 1.70158;
         const c3 = c1 + 1;
         return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+    },
+
+    // Exponential
+    expoInOut: function(t) {
+        if (t === 0) return 0;
+        if (t === 1) return 1;
+        if (t < 0.5) return Math.pow(2, 20 * t - 10) / 2;
+        return (2 - Math.pow(2, -20 * t + 10)) / 2;
     }
 };
 
