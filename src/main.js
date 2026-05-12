@@ -472,6 +472,12 @@ const MINI_ROUTINES = {
         { time: 6.0, type: 'lerp', key: 'playbackSpeed', value: 1.0, duration: 2.0, ease: 'quadInOut' },
         { time: 6.0, type: 'calm' }
     ],
+    'N': [ // Myelin Sheath Degradation
+        { time: 0.0, type: 'text', message: 'Simulating Myelin Sheath Degradation...', duration: 4.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'myelin_degradation', intensity: 1.0, duration: 12.0 },
+        { time: 12.0, type: 'text', message: 'Severe Neurodegeneration Reached', duration: 4.0 }
+    ],
     'n': [ // Neuro-Cinema: Dramatic animated mode-shifting narrative
         { time: 0.0,  type: 'text',   message: 'Neural Deep Scan — Initializing', duration: 3.0 },
         { time: 0.0,  type: 'style',  value: 0 },
@@ -771,6 +777,7 @@ async function init() {
                     <div class="legend-item"><span class="legend-key">C</span><span>Glial Cleanup</span></div>
                     <div class="legend-item"><span class="legend-key">F</span><span>Fluid Dynamics</span></div>
                     <div class="legend-item"><span class="legend-key">W</span><span>Sensory Overload</span></div>
+                    <div class="legend-item"><span class="legend-key">N</span><span>Myelin Degradation</span></div>
                 </div>
             </div>
             <div class="legend-section">

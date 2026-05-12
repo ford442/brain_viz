@@ -475,6 +475,40 @@ export class RoutinePlayer {
             }
         });
 
+        // [Phase 2] Myelin Sheath Degradation (Neurodegenerative Simulation)
+        this.registerHandler('myelin_degradation', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 10.0;
+
+            // Permanently and progressively reduce flowSpeed and amplitude
+            this.startLerp({ key: 'flowSpeed', value: Math.max(0.5, 4.0 - (3.0 * intensity)), duration: duration, ease: 'sineOut' });
+            this.startLerp({ key: 'amplitude', value: Math.max(0.1, 0.5 - (0.4 * intensity)), duration: duration, ease: 'sineOut' });
+
+            // Induce structural breakdown and data loss via glitching/aberration
+            this.startLerp({ key: 'aberration', value: 1.5 * intensity, duration: duration, ease: 'sineIn' });
+            this.startLerp({ key: 'colorShift', value: -0.6 * intensity, duration: duration, ease: 'sineInOut' }); // desaturate/cool
+
+            // Occasional severe glitches
+            const numGlitches = Math.floor(duration / 2.5);
+            if (numGlitches > 0 && this.routine) {
+                const eventsToInsert = [];
+                for (let i = 1; i <= numGlitches; i++) {
+                    eventsToInsert.push({
+                        time: this.elapsedTime + (i * 2.5) + (Math.random() - 0.5),
+                        type: 'glitch',
+                        intensity: intensity * 1.5 * (i / numGlitches),
+                        autoRestore: true
+                    });
+                }
+                eventsToInsert.sort((a, b) => a.time - b.time);
+                let insertIdx = this.currentEventIndex ?? this.cursor;
+                while (insertIdx < this.routine.length && this.routine[insertIdx].time < eventsToInsert[0].time) {
+                    insertIdx++;
+                }
+                this.routine.splice(insertIdx, 0, ...eventsToInsert);
+            }
+        });
+
         // [Phase 5] Acetylcholine Memory Consolidation
         this.registerHandler('acetylcholine', (evt) => {
             const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
