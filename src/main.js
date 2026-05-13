@@ -457,6 +457,15 @@ const MINI_ROUTINES = {
         { time: 4.0, type: 'text', message: 'Connection established.', duration: 2.0 },
         { time: 5.0, type: 'calm' }
     ],
+    'Y': [ // Parameter Interpolation/Easing Feature Demo
+        { time: 0.0, type: 'text', message: 'Smooth Interpolation Demo...', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 2 },
+        { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 25.0, duration: 1.0, ease: 'expoInOut' },
+        { time: 0.0, type: 'lerp', key: 'colorShift', value: 0.8, duration: 1.0, ease: 'expoInOut' },
+        { time: 2.0, type: 'lerp', key: 'flowSpeed', value: 4.0, duration: 2.0, ease: 'expoInOut' },
+        { time: 2.0, type: 'lerp', key: 'colorShift', value: 0.0, duration: 2.0, ease: 'expoInOut' },
+        { time: 5.0, type: 'calm' }
+    ],
     'r': [ // Acetylcholine Memory Consolidation
         { time: 0.0, type: 'text', message: 'Acetylcholine Release: Memory Consolidation', duration: 3.0 },
         { time: 0.0, type: 'style', value: 2 }, // Connectome
@@ -823,6 +832,7 @@ async function init() {
                     <div class="legend-item"><span class="legend-key">k</span><span>Binaural</span></div>
                     <div class="legend-item"><span class="legend-key">n</span><span>Neuro-Cinema</span></div>
                     <div class="legend-item"><span class="legend-key">z</span><span>Default Mode</span></div>
+                    <div class="legend-item"><span class="legend-key">Y</span><span>Smooth Easing</span></div>
                 </div>
             </div>
         `;
