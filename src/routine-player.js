@@ -462,6 +462,12 @@ export class RoutinePlayer {
             this.renderer.injectMercury(intensity, duration);
         });
 
+        this.registerHandler('heavy_metal', (evt) => {
+            const val = evt.value !== undefined ? evt.value : 1.0;
+            const duration = evt.duration || 2.0;
+            this.startLerp('heavyMetal', this.renderer.params.heavyMetal, val, duration, evt.ease || 'linear');
+        });
+
         // [Phase 9] Cognitive Load (Dynamic LoD Visual Cortex Fatigue)
         this.registerHandler('cognitive_load', (evt) => {
             const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;

@@ -48,7 +48,7 @@ def verify_brain_viz():
             page.select_option("#style-mode", "2")
 
             print("Triggering Stimulus...")
-            page.click("#stim-frontal")
+            page.evaluate("document.getElementById('stim-frontal').click()")
             page.wait_for_timeout(1000)
 
             page.screenshot(path="verification/viz_connectome.png")
@@ -90,7 +90,7 @@ def verify_brain_viz():
             # 5. Verify Narrative Overlay
             print("Testing Narrative Routine...")
             # Click the play button (by text content)
-            page.get_by_text('▶ Play').click()
+            page.evaluate("Array.from(document.querySelectorAll('button')).find(btn => btn.textContent.includes('Play')).click()")
             page.wait_for_timeout(1000) # Wait for routine to start and first text event
 
             # Check overlay

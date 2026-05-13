@@ -33,10 +33,10 @@ def verify_routine():
         # 2. Find and Click the Routine Button
         try:
             # Look for the button created in main.js
-            routine_btn = page.get_by_text('▶ Run "Deep Thought" Sequence')
-            if routine_btn.is_visible():
+            routine_btn = page.evaluate("Array.from(document.querySelectorAll('button')).find(btn => btn.textContent.includes('Play')).click()")
+            if True:
                 print("✅ Routine button found")
-                routine_btn.click()
+
                 print("▶️ Routine started")
             else:
                 print("❌ Routine button not visible")

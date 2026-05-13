@@ -547,6 +547,15 @@ const MINI_ROUTINES = {
         { time: 7.0, type: 'fluid', intensity: 0.0, duration: 3.0, ease: 'quadOut' },
         { time: 7.0, type: 'lerp', key: 'colorShift', value: 0.0, duration: 3.0 },
         { time: 10.0, type: 'calm' }
+    ],
+    'P': [ // Heavy Metal Accumulation
+        { time: 0.0, type: 'text', message: 'Long-term Heavy Metal Exposure', duration: 3.0 },
+        { time: 0.0, type: 'style', value: 0 },
+        { time: 0.0, type: 'heavy_metal', value: 1.0, duration: 5.0 },
+        { time: 5.0, type: 'text', message: 'Permanent structural alterations observed.', duration: 3.0 },
+        { time: 8.0, type: 'calm' },
+        { time: 8.0, type: 'heavy_metal', value: 0.0, duration: 2.0 },
+        { time: 8.0, type: 'camera', target: 'global', duration: 2.0 }
     ]
 };
 
@@ -582,6 +591,7 @@ async function init() {
         shake: document.getElementById('shake'), // [Phase 2]
         stress: document.getElementById('stress'), // [Phase 2] Stress Distortion
         cortisol: document.getElementById('cortisol'), // [Phase 5] Cortisol Decay
+        heavyMetal: document.getElementById('heavyMetal'), // [Phase 6] Heavy Metal Accumulation
         fluidActive: document.getElementById('fluidActive'), // [Phase 6] Fluid Dynamics
         fogDensity: document.getElementById('fogDensity'),
         aberration: document.getElementById('aberration'), // [Phase 7]
@@ -612,6 +622,7 @@ async function init() {
         shake: document.getElementById('val-shake'), // [Phase 2]
         stress: document.getElementById('val-stress'), // [Phase 2] Stress Distortion
         cortisol: document.getElementById('val-cortisol'), // [Phase 5] Cortisol Decay
+        heavyMetal: document.getElementById('val-heavyMetal'), // [Phase 6] Heavy Metal Accumulation
         fluidActive: document.getElementById('val-fluidActive'), // [Phase 6] Fluid Dynamics
         fogDensity: document.getElementById('val-fogDensity'),
         aberration: document.getElementById('val-aberration'), // [Phase 7]
@@ -758,6 +769,7 @@ async function init() {
                 <div class="legend-row">
                     <div class="legend-item"><span class="legend-key">E</span><span>Electrical</span></div>
                     <div class="legend-item"><span class="legend-key">M</span><span>Mercury Vapor</span></div>
+                    <div class="legend-item"><span class="legend-key">P</span><span>Heavy Metal</span></div>
                     <div class="legend-item"><span class="legend-key">I</span><span>Inflammation</span></div>
                     <div class="legend-item"><span class="legend-key">C</span><span>Glial Cleanup</span></div>
                     <div class="legend-item"><span class="legend-key">F</span><span>Fluid Dynamics</span></div>
@@ -2001,7 +2013,7 @@ function initUIControls(renderer, uiInputs, uiLabels) {
         renderer.calmState();
         flashButton(document.getElementById('stim-calm'));
         glowRegionButtons();
-        ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'cortisol', 'cognitiveLoad', 'fluidActive', 'fogDensity', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
+        ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'cortisol', 'heavyMetal', 'cognitiveLoad', 'fluidActive', 'fogDensity', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
             if(uiInputs[k]) uiInputs[k].value = renderer.params[k];
             syncParam(k, renderer.params[k]);
         });

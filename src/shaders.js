@@ -151,8 +151,8 @@ struct Uniforms {
     mitochondrialFunction: f32, // ATP synthesis efficiency
     fogDensity: f32, // Volumetric Fog
     zoom: f32, // Camera zoom for distance math
+    heavyMetal: f32,
     pad1: f32, // Padding
-    pad2: f32, // Padding
 }
 
 struct VertexInput {
@@ -288,6 +288,13 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
             finalPos -= input.normal * decayErosion;
         }
 
+        // [Phase 6] Heavy Metal Structural Alteration
+        if (uniforms.heavyMetal > 0.0) {
+            let lesionNoise = fract(sin(dot(finalPos.xyz, vec3(12.9898, 78.233, 45.164))) * 43758.5453);
+            let erosion = uniforms.heavyMetal * 0.3 * lesionNoise;
+            finalPos -= input.normal * erosion;
+        }
+
         finalColor = vec3<f32>(0.2, 0.6, 1.0);
 
         // Style 1 (Cyber): Digital Grid
@@ -365,8 +372,8 @@ struct Uniforms {
     mitochondrialFunction: f32,
     fogDensity: f32,
     zoom: f32,
+    heavyMetal: f32,
     pad1: f32,
-    pad2: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
@@ -465,8 +472,8 @@ struct Uniforms {
     aperture: f32, // [Phase 7]
     fogDensity: f32,
     zoom: f32,
+    heavyMetal: f32,
     pad1: f32,
-    pad2: f32,
 }
 
 struct VertexInput {
@@ -584,8 +591,8 @@ struct Uniforms {
     mitochondrialFunction: f32,
     fogDensity: f32,
     zoom: f32,
+    heavyMetal: f32,
     pad1: f32,
-    pad2: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
@@ -635,7 +642,8 @@ struct TensorParams {
     fluidActive: f32,
     electricalActive: f32,
     mercuryActive: f32,
-    pad2: vec2<f32>,
+    heavyMetal: f32,
+    pad2: f32,
 }
 
 @group(0) @binding(0) var<storage, read_write> activityTensor: array<f32>;
@@ -770,6 +778,12 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
         decay = min(decay, 0.999);
     }
 
+    // [Phase 6] Heavy Metal Permanent Structural Accumulation
+    if (params.heavyMetal > 0.0) {
+        val = min(val, 1.0 - (params.heavyMetal * 0.8));
+        decay = min(decay, 0.999 - (params.heavyMetal * 0.05));
+    }
+
     val *= decay;
     activityTensor[index] = clamp(val, 0.0, 1.0);
 }
@@ -816,8 +830,8 @@ struct Uniforms {
     mitochondrialFunction: f32,
     fogDensity: f32,
     zoom: f32,
+    heavyMetal: f32,
     pad1: f32,
-    pad2: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var tDiffuse: texture_2d<f32>;
