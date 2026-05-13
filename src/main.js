@@ -180,6 +180,15 @@ const MINI_ROUTINES = {
         { time: 7.0, type: 'text', message: 'Centered', duration: 2.0 },
         { time: 7.0, type: 'calm' }
     ],
+    '=': [ // Exponential Easing Demo
+        { time: 0.0, type: 'text', message: 'Exponential Easing...', duration: 2.0 },
+        { time: 0.0, type: 'style', value: 2 },
+        { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 20.0, duration: 2.0, ease: 'expoInOut' },
+        { time: 0.0, type: 'lerp', key: 'amplitude', value: 1.5, duration: 2.0, ease: 'expoInOut' },
+        { time: 2.0, type: 'lerp', key: 'flowSpeed', value: 4.0, duration: 2.0, ease: 'expoInOut' },
+        { time: 2.0, type: 'lerp', key: 'amplitude', value: 0.5, duration: 2.0, ease: 'expoInOut' },
+        { time: 4.0, type: 'calm' }
+    ],
     'l': [ // Dynamic Lighting Demo
         { time: 0.0, type: 'text', message: 'Lights Out', duration: 2.0 },
         { time: 0.0, type: 'light', ambient: 0.0, dirIntensity: 0.0, duration: 2.0, ease: 'quadOut' },
@@ -462,6 +471,12 @@ const MINI_ROUTINES = {
         { time: 5.0, type: 'text', message: 'System Relaxed.', duration: 2.0 },
         { time: 6.0, type: 'lerp', key: 'playbackSpeed', value: 1.0, duration: 2.0, ease: 'quadInOut' },
         { time: 6.0, type: 'calm' }
+    ],
+    'N': [ // Myelin Sheath Degradation
+        { time: 0.0, type: 'text', message: 'Simulating Myelin Sheath Degradation...', duration: 4.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'myelin_degradation', intensity: 1.0, duration: 12.0 },
+        { time: 12.0, type: 'text', message: 'Severe Neurodegeneration Reached', duration: 4.0 }
     ],
     'n': [ // Neuro-Cinema: Dramatic animated mode-shifting narrative
         { time: 0.0,  type: 'text',   message: 'Neural Deep Scan — Initializing', duration: 3.0 },
@@ -774,6 +789,7 @@ async function init() {
                     <div class="legend-item"><span class="legend-key">C</span><span>Glial Cleanup</span></div>
                     <div class="legend-item"><span class="legend-key">F</span><span>Fluid Dynamics</span></div>
                     <div class="legend-item"><span class="legend-key">W</span><span>Sensory Overload</span></div>
+                    <div class="legend-item"><span class="legend-key">N</span><span>Myelin Degradation</span></div>
                 </div>
             </div>
             <div class="legend-section">
@@ -792,6 +808,7 @@ async function init() {
             <div class="legend-section">
                 <div class="legend-section-title">Advanced</div>
                 <div class="legend-row">
+                    <div class="legend-item"><span class="legend-key">=</span><span>Exponential Ease</span></div>
                     <div class="legend-item"><span class="legend-key">t</span><span>Time Warp</span></div>
                     <div class="legend-item"><span class="legend-key">x</span><span>Time Modulation</span></div>
                     <div class="legend-item"><span class="legend-key">p</span><span>Spline</span></div>
