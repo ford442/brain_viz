@@ -21,7 +21,7 @@ def verify_full_suite():
 
         # 2. Verify Clipping
         # Set clipZ to 0.0 (middle of brain)
-        page.fill("#clip", "0.0")
+        page.evaluate("document.getElementById('clip').value = '0.0'")
         # Trigger input event
         page.evaluate("document.getElementById('clip').dispatchEvent(new Event('input'))")
         time.sleep(1)

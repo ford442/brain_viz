@@ -41,7 +41,7 @@ def verify_brain_viz():
         print("Heatmap screenshot taken.")
 
         # Interact: Click 'Frontal' stimulus
-        page.click("#stim-frontal")
+        page.evaluate("document.getElementById('stim-frontal').click()")
         time.sleep(0.5) # Wait for pulse
         page.screenshot(path="verification/brain_stimulus.png")
         print("Stimulus screenshot taken.")

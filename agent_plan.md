@@ -100,6 +100,7 @@
 - [x] **Synaptic Sparkles:** Implement `sparkle` uniform for visual bursts of insight (high-frequency flicker/glow).
 - [x] **Cortisol Decay:** Implement Cortisol levels as structural decay to simulate stress.
 - [x] **ATP Energy Depletion:** Implement `atp_depletion` event handler to simulate energy loss via slow playback and desaturation.
+- [x] **Heavy Metal Accumulation:** Implement `heavyMetal` parameter to visualize permanent structural alterations from long-term heavy metal accumulation.
 
 ### Phase 6: Structural Dynamics
 - [x] **Dendritic Growth Animation:** Implement `growth` uniform to control the maximum render radius of the brain structure, simulating organic growth.
@@ -126,7 +127,7 @@
 *Idea:* "Interactive Timeline Editor" - A GUI for users to visually sequence routine events rather than writing JSON/CSV.
 * *Idea:* "What if we visualized sleep deprivation as progressive desaturation and increased glitch frequency?"
 *Idea:* "What if we visualized neuroplasticity as real-time growth of new connections?"
-* *Idea:* "What if we visualized long-term heavy metal accumulation as permanent structural alterations?"
+* *Idea:* "What if we visualized neural synchronization during flow states as glowing harmonic waves?"
 * *Idea:* "What if we visualized myelin sheath degradation in neurodegenerative conditions?"
 * *Idea:* "Brain-Computer Interface (BCI) Training Mode" - A gamified mode where users try to maintain specific brain states (e.g., keeping the `stress` level below a threshold) to complete objectives.
 * *Idea:* "What if we visualized localized brain damage (e.g., stroke) by selectively disabling connectome pulses in specific coordinates?"
@@ -222,6 +223,7 @@
 * *Idea:* "Neuromodulation Interface" - What if we allowed users to connect external API data to drive these neuromodulators directly?
 
 ## 📜 Changelog
+* [2026-05-07] - Completed Phase 5 (Heavy Metal Accumulation). Implemented `heavyMetal` parameter in `brain-renderer.js` and updated shaders to permanently alter mesh structure based on heavy metal accumulation. Bound to 'P' key in `main.js`. Added neural synchronization idea to Dream Log.
 * [2026-05-12] - Completed Phase 2 (Myelin Degradation). Implemented `myelin_degradation` event handler in `routine-player.js` to simulate neurodegenerative conditions. Bound to 'N' key in `main.js`. Added localized brain damage idea to Dream Log.
 * [2026-05-05] - Completed Phase 2 (Glial Cell Cleanup). Implemented `glial_cleanup` event handler in `routine-player.js` to simulate post-inflammatory structural repair. Bound to 'C' key in `main.js`. Added myelin degradation idea to Dream Log.
 * [2026-05-06] - Completed "Volumetric Fog" Dream Log idea. Added `fogDensity` uniform with correct alignment in shaders, bound it to UI and renderer, and added 'g' shortcut in `main.js`. Added "Neuron Pulse Trail Length" idea to Dream Log.
