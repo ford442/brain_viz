@@ -329,6 +329,21 @@ const MINI_ROUTINES = {
         { time: 10.0, type: 'calm' },
         { time: 10.0, type: 'text', message: 'Fly-Through Complete', duration: 2.0 }
     ],
+    'L': [ // Lobe Tour Demo
+        { time: 0.0, type: 'text', message: 'Lobe Tour: Frontal Lobe', duration: 3.0 },
+        { time: 0.0, type: 'camera', target: 'frontal-lobe', duration: 3.0, ease: 'quadInOut' },
+        { time: 4.0, type: 'text', message: 'Lobe Tour: Parietal Lobe', duration: 3.0 },
+        { time: 4.0, type: 'camera', target: 'parietal-lobe', duration: 3.0, ease: 'quadInOut' },
+        { time: 8.0, type: 'text', message: 'Lobe Tour: Occipital Lobe', duration: 3.0 },
+        { time: 8.0, type: 'camera', target: 'occipital-lobe', duration: 3.0, ease: 'quadInOut' },
+        { time: 12.0, type: 'text', message: 'Lobe Tour: Cerebellum', duration: 3.0 },
+        { time: 12.0, type: 'camera', target: 'cerebellum', duration: 3.0, ease: 'quadInOut' },
+        { time: 16.0, type: 'text', message: 'Lobe Tour: Left Temporal Lobe', duration: 3.0 },
+        { time: 16.0, type: 'camera', target: 'temporal-lobe-left', duration: 3.0, ease: 'quadInOut' },
+        { time: 20.0, type: 'text', message: 'Lobe Tour: Right Temporal Lobe', duration: 3.0 },
+        { time: 20.0, type: 'camera', target: 'temporal-lobe-right', duration: 3.0, ease: 'quadInOut' },
+        { time: 24.0, type: 'camera', target: 'global', duration: 3.0, ease: 'quadOut' }
+    ],
     'V': [ // Spline Camera Map Fly-Through Demo
         { time: 0.0, type: 'text', message: 'Spline Camera Map Fly-Through...', duration: 5.0 },
         { time: 0.0, type: 'style', value: 2 },
@@ -692,7 +707,13 @@ async function init() {
             'cortex-top': { rotation: { x: 1.5, y: 0 }, zoom: 3.0 },
             'brainstem': { rotation: { x: -0.5, y: 3.14 }, zoom: 2.5 },
             'left-hemisphere': { rotation: { x: 0, y: 1.57 }, zoom: 3.5 },
-            'right-hemisphere': { rotation: { x: 0, y: -1.57 }, zoom: 3.5 }
+            'right-hemisphere': { rotation: { x: 0, y: -1.57 }, zoom: 3.5 },
+            'frontal-lobe': { rotation: { x: 0.2, y: 0 }, zoom: 2.5 },
+            'occipital-lobe': { rotation: { x: 0.2, y: 3.14 }, zoom: 2.5 },
+            'parietal-lobe': { rotation: { x: 1.0, y: 0 }, zoom: 2.5 },
+            'temporal-lobe-left': { rotation: { x: 0.2, y: 1.57 }, zoom: 2.5 },
+            'temporal-lobe-right': { rotation: { x: 0.2, y: -1.57 }, zoom: 2.5 },
+            'cerebellum': { rotation: { x: -0.8, y: 3.14 }, zoom: 2.5 }
         };
 
         // Initialize RoutinePlayer, ensuring it expects the BrainRenderer instance
@@ -811,6 +832,7 @@ async function init() {
                     <div class="legend-item"><span class="legend-key">f</span><span>Filters</span></div>
                     <div class="legend-item"><span class="legend-key">v</span><span>Fly-Through</span></div>
                     <div class="legend-item"><span class="legend-key">V</span><span>Map Fly-Through</span></div>
+                    <div class="legend-item"><span class="legend-key">L</span><span>Lobe Tour</span></div>
                     <div class="legend-item"><span class="legend-key">i</span><span>Interactive</span></div>
                 </div>
             </div>

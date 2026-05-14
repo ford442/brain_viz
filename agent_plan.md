@@ -63,7 +63,7 @@
 - [x] **GUI Timeline Editor:** Create a visual timeline editor for creating custom routines interactively.
 - [x] **Myelin Degradation:** Implement `myelin_degradation` event handler to simulate neurodegenerative conditions.
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
-- [ ] **Camera Coordinates Map:** Define explicit regions for better camera angles.
+- [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 ### Phase 3: "Brain DJ" Mode (Live Performance)
 - [x] **Keyboard Triggers:** Bind number keys (1-9) to specific mini-routines (e.g., Press '1' for "Sudden Surprise", '2' for "Calm Down").
 - [x] **Audio Reactivity:** Connect the Web Audio API to drive `amplitude` and `stimulus` intensity based on microphone input or music.
@@ -148,6 +148,7 @@
 * *Idea:* "What if we visualized the Default Mode Network as a low-frequency hum during idle states?"
 * *Idea:* "What if we visualized Histamine release as a localized inflammatory response/color shift?"
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
+* *Idea:* "What if we visualized visual cortex processing by simulating progressive edge-detection filters directly on the render pipeline?"
 * [2026-05-04] - Completed Phase 5 (Acetylcholine Memory Consolidation). Implemented `acetylcholine` event handler in `routine-player.js` to simulate memory consolidation via `sparkle` and `flowSpeed`. Bound to 'r' key in `main.js`. Added immune cell migration idea to Dream Log.
 * [2026-04-13] - Completed Phase 5 (Noradrenaline Spike). Implemented `noradrenaline` event handler in `routine-player.js` to simulate global alertness via connectome frequency and flow speed. Bound to 'u' key in `main.js`. Added Histamine idea to Dream Log.
 * [2026-04-12] - Completed "Architecture & Innovation" step. Marked parameter interpolation and camera coordinate map tasks as complete. Added Default Mode Network idea to Dream Log.
@@ -180,6 +181,7 @@
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "Neuromodulation Interface" - What if we allowed users to connect external API data to drive these neuromodulators directly?
 ## 📜 Changelog
+* [2026-05-15] - Completed Phase 2 (Camera Coordinates Map). Added explicit camera regions in `main.js` and created a 'Lobe Tour' mini-routine to demonstrate a smooth fly-through. Added new idea to Dream Log.
 * [2026-05-07] - Completed Phase 5 (Heavy Metal Accumulation). Implemented `heavyMetal` parameter in `brain-renderer.js` and updated shaders to permanently alter mesh structure based on heavy metal accumulation. Bound to 'P' key in `main.js`. Added neural synchronization idea to Dream Log.
 * [2026-05-12] - Completed Phase 2 (Myelin Degradation). Implemented `myelin_degradation` event handler in `routine-player.js` to simulate neurodegenerative conditions. Bound to 'N' key in `main.js`. Added localized brain damage idea to Dream Log.
 * [2026-05-05] - Completed Phase 2 (Glial Cell Cleanup). Implemented `glial_cleanup` event handler in `routine-player.js` to simulate post-inflammatory structural repair. Bound to 'C' key in `main.js`. Added myelin degradation idea to Dream Log.
