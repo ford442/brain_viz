@@ -17,7 +17,7 @@
 
 ### Phase 2: Advanced Choreography
 - [x] **Parameter Interpolation/Easing:** Enhance routines with advanced smooth interpolation logic (Added `expoInOut` and multiple param interpolation).
-- [ ] **Camera Coordinates Map:** Define explicit spline regions for complex camera angles.
+- [x] **Camera Coordinates Map:** Define explicit spline regions for complex camera angles.
 - [x] **Environmental Hazards:** Implement electrical and mercury event handlers.
 - [x] **Serotonin Color Shift:** Implement `serotonin` event handler in `routine-player.js` to simulate serotonin flood via `colorShift` and `flowSpeed`.
 - [x] **Default Mode Network (DMN) Routine:** Visualize the Default Mode Network as a low-frequency hum during idle states.
@@ -76,6 +76,7 @@
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 - [x] **GUI Timeline Editor:** Create a visual timeline editor for creating custom routines interactively.
+- [ ] **Visualizer API:** Create a public API for external modules to interact with the routine player.
 
 ### Phase 3: "Brain DJ" Mode (Live Performance)
 - [x] **Keyboard Triggers:** Bind number keys (1-9) to specific mini-routines (e.g., Press '1' for "Sudden Surprise", '2' for "Calm Down").
@@ -235,3 +236,4 @@
 * [Date] - Plan initialized.
 * *Idea:* "What if we visualized Adrenaline surges as sudden global illumination flashes?"
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
+* *Idea:* "What if we visualized neurotransmitter depletion over time as a gradual decrease in connectome flow speed and intensity?"
