@@ -91,6 +91,9 @@
 ### Phase 8: Data Integration
 - [x] **CSV/fMRI Import:** Implement `RoutinePlayer` support for parsing CSV data (Time Series & Event Lists) to drive brain visualization from external datasets.
 ### Phase 9: Engine Evolution & Polish
+
+
+- [x] **Procedural Cellular Advection:** Expand fluid dynamics to push and advect individual soma particles or fibers based on the fluid velocity field.
 - [x] **Cognitive Load Resolution (Dynamic LoD):** Implement variable rendering resolution scaled dynamically based on a `cognitiveLoad` or `fatigue` parameter to simulate visual cortex fatigue.
 ---
 ## 🧪 "Dream" Log (Future Concepts)
