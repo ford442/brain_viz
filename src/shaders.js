@@ -152,7 +152,7 @@ struct Uniforms {
     fogDensity: f32, // Volumetric Fog
     zoom: f32, // Camera zoom for distance math
     heavyMetal: f32,
-    pad1: f32, // Padding
+    fluidActive: f32, // Procedural Volumetric Fluid Dynamics
 }
 
 struct VertexInput {
@@ -373,7 +373,7 @@ struct Uniforms {
     fogDensity: f32,
     zoom: f32,
     heavyMetal: f32,
-    pad1: f32,
+    fluidActive: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
@@ -473,7 +473,7 @@ struct Uniforms {
     fogDensity: f32,
     zoom: f32,
     heavyMetal: f32,
-    pad1: f32,
+    fluidActive: f32,
 }
 
 struct VertexInput {
@@ -507,7 +507,21 @@ fn getVoxelValue(worldPos: vec3<f32>) -> f32 {
 fn main_soma(input: VertexInput) -> VertexOutput {
     var output: VertexOutput;
 
-    let activity = getVoxelValue(input.instancePos);
+    // Procedural Cellular Advection (Phase 9)
+    // Evaluate fluid velocity field to push soma particles
+    var advectedInstancePos = input.instancePos;
+    if (uniforms.fluidActive > 0.0) {
+        let timeSpeed = uniforms.time * 2.0;
+        let flowVelocity = vec3<f32>(
+            sin(input.instancePos.y * 3.0 + timeSpeed) * cos(input.instancePos.z * 2.0 - timeSpeed),
+            cos(input.instancePos.x * 3.0 - timeSpeed) * sin(input.instancePos.z * 2.0 + timeSpeed),
+            sin(input.instancePos.x * 2.0 + timeSpeed) * cos(input.instancePos.y * 3.0 - timeSpeed)
+        ) * 0.5 * uniforms.fluidActive;
+
+        advectedInstancePos = input.instancePos + flowVelocity;
+    }
+
+    let activity = getVoxelValue(advectedInstancePos);
 
     // [Verified] Instanced Neurons: Somas scaled by local tensor activity
     // [Neuro-Weaver] Reactive scaling to visualize firing intensity (0.02 base + activity)
@@ -515,7 +529,7 @@ fn main_soma(input: VertexInput) -> VertexOutput {
 
     // [Phase 5] Sparkle Logic: Pop Scale
     if (uniforms.sparkle > 0.0) {
-        let noise = fract(sin(dot(input.instancePos.xy, vec2(12.9898, 78.233))) * 43758.5453);
+        let noise = fract(sin(dot(advectedInstancePos.xy, vec2(12.9898, 78.233))) * 43758.5453);
         let flicker = sin(uniforms.time * 30.0 + noise * 50.0);
         if (flicker > 0.5) {
              scale += uniforms.sparkle * 0.03 * flicker;
@@ -523,7 +537,7 @@ fn main_soma(input: VertexInput) -> VertexOutput {
     }
 
     // [Phase 6] Dendritic Growth: Hide instances outside radius
-    if (length(input.instancePos) > uniforms.growth * 1.8) {
+    if (length(advectedInstancePos) > uniforms.growth * 1.8) {
         scale = 0.0;
     }
     // [Phase 5] Cortisol Structural Decay: Scale inward and simulate breakdown
@@ -531,7 +545,7 @@ fn main_soma(input: VertexInput) -> VertexOutput {
         let decayFactor = 1.0 - (uniforms.cortisol * 0.8);
         scale *= max(0.0, decayFactor);
     }
-    let pos = (input.position * scale) + input.instancePos;
+    let pos = (input.position * scale) + advectedInstancePos;
 
     output.worldPos = (uniforms.modelMatrix * vec4<f32>(pos, 1.0)).xyz;
     output.position = uniforms.mvpMatrix * vec4<f32>(pos, 1.0);
@@ -592,7 +606,7 @@ struct Uniforms {
     fogDensity: f32,
     zoom: f32,
     heavyMetal: f32,
-    pad1: f32,
+    fluidActive: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
@@ -831,7 +845,7 @@ struct Uniforms {
     fogDensity: f32,
     zoom: f32,
     heavyMetal: f32,
-    pad1: f32,
+    fluidActive: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var tDiffuse: texture_2d<f32>;

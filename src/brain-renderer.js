@@ -569,6 +569,8 @@ export class BrainRenderer {
         const OFFSET_MITOCHONDRIAL = 59;
         const OFFSET_FOG_DENSITY = 60;
         const OFFSET_ZOOM = 61;
+        const OFFSET_HEAVY_METAL = 62;
+        const OFFSET_FLUID_ACTIVE = 63;
 
         const uData = new Float32Array(RENDER_UNIFORM_FLOAT_COUNT);
         uData.set(mvp, OFFSET_MVP);
@@ -604,6 +606,8 @@ export class BrainRenderer {
         uData[OFFSET_MITOCHONDRIAL] = this.params.mitochondrialFunction;
         uData[OFFSET_FOG_DENSITY] = this.params.fogDensity;
         uData[OFFSET_ZOOM] = this.zoom;
+        uData[OFFSET_HEAVY_METAL] = this.params.heavyMetal;
+        uData[OFFSET_FLUID_ACTIVE] = this.params.fluidActive;
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         
