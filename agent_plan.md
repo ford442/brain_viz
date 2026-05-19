@@ -64,6 +64,8 @@
 - [x] **Myelin Degradation:** Implement `myelin_degradation` event handler to simulate neurodegenerative conditions.
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
+- [x] **Heartbeat Simulation:** Implement a heartbeat event type that triggers rhythmic cardiovascular pulses.
+- [ ] **Respiration Simulation:** Implement a respiration event type that links to heartbeat and modulates flow speed and overall scene intensity.
 ### Phase 3: "Brain DJ" Mode (Live Performance)
 - [x] **Keyboard Triggers:** Bind number keys (1-9) to specific mini-routines (e.g., Press '1' for "Sudden Surprise", '2' for "Calm Down").
 - [x] **Audio Reactivity:** Connect the Web Audio API to drive `amplitude` and `stimulus` intensity based on microphone input or music.
@@ -97,6 +99,7 @@
 - [x] **Cognitive Load Resolution (Dynamic LoD):** Implement variable rendering resolution scaled dynamically based on a `cognitiveLoad` or `fatigue` parameter to simulate visual cortex fatigue.
 ---
 ## 🧪 "Dream" Log (Future Concepts)
+* *Idea:* "Visualizing breathing rate as a slow sine wave modulating the alpha channel of the background."
 *Idea:* "Interactive Timeline Editor" - A GUI for users to visually sequence routine events rather than writing JSON/CSV.
 * *Idea:* "What if we visualized localized brain damage (e.g., stroke) by selectively disabling connectome pulses in specific coordinates?"
 * *Idea:* "What if we visualized sleep deprivation as progressive desaturation and increased glitch frequency?"
