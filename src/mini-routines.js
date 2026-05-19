@@ -7,6 +7,13 @@ export const MINI_ROUTINES = {
         { time: 3.0, type: 'heartbeat', intensity: 1.0, duration: 1.0 },
         { time: 4.5, type: 'calm' }
     ],
+    'R': [ // Respiration Cycle
+        { time: 0.0, type: 'text', message: 'Respiration Cycle: Inhale', duration: 1.6 },
+        { time: 0.0, type: 'respiration', intensity: 1.0, duration: 4.0 },
+        { time: 1.6, type: 'text', message: 'Exhale...', duration: 2.4 },
+        { time: 4.5, type: 'calm' }
+    ],
+
     'E': [ // Electrical Exposure (High voltage, rapid chaotic firing, harsh audio)
         { time: 0.0, type: 'text', message: 'HAZARD: ELECTRICAL EXPOSURE', duration: 2.5 },
         { time: 0.0, type: 'style', value: 1 }, // Cyber/Wireframe style
