@@ -53,6 +53,7 @@ export function setupLegendPanel() {
         <div class="legend-section">
             <div class="legend-section-title">Systems</div>
             <div class="legend-row">
+                <div class="legend-item"><span class="legend-key">H</span><span>Heartbeat</span></div>
                 <div class="legend-item"><span class="legend-key">E</span><span>Electrical</span></div>
                 <div class="legend-item"><span class="legend-key">M</span><span>Mercury Vapor</span></div>
                 <div class="legend-item"><span class="legend-key">T</span><span>Heavy Metal</span></div>

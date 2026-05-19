@@ -429,6 +429,42 @@ export function createDefaultHandlers(player) {
         }
     });
 
+    // [Phase 2] Heartbeat Simulation
+    handlers.set('heartbeat', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const duration = evt.duration || 1.0; // Total duration of the double-pulse
+
+        // Lub (First pulse)
+        player.renderer.setParams({
+            amplitude: 1.5 * intensity,
+            flowSpeed: 8.0 * intensity
+        });
+
+        // Dub (Second pulse) - slightly delayed
+        setTimeout(() => {
+            if (!player.isPlaying) return;
+            player.renderer.setParams({
+                amplitude: 1.8 * intensity,
+                flowSpeed: 10.0 * intensity
+            });
+
+            // Fade back after dub
+            if (duration > 0) {
+                const fadeDuration = duration * 0.7; // use remaining time for fade
+                const ease = evt.ease || 'quadOut';
+                player.startLerp({ key: 'amplitude', value: 0.5, duration: fadeDuration, ease: ease });
+                player.startLerp({ key: 'flowSpeed', value: 4.0, duration: fadeDuration, ease: ease });
+            }
+        }, (duration * 1000) * 0.25); // dub starts at 25% of the total duration
+
+        // Fade back for lub (before dub hits)
+        if (duration > 0) {
+            const ease = evt.ease || 'quadOut';
+            player.startLerp({ key: 'amplitude', value: 0.8, duration: duration * 0.25, ease: ease });
+            player.startLerp({ key: 'flowSpeed', value: 5.0, duration: duration * 0.25, ease: ease });
+        }
+    });
+
     // [Phase 5] Acetylcholine Memory Consolidation
     handlers.set('acetylcholine', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;

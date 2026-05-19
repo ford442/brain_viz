@@ -1,4 +1,12 @@
 export const MINI_ROUTINES = {
+    'H': [ // Heartbeat Pulse
+        { time: 0.0, type: 'text', message: 'Heartbeat Simulation', duration: 3.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome style for visible pulses
+        { time: 0.0, type: 'heartbeat', intensity: 1.0, duration: 1.0 },
+        { time: 1.5, type: 'heartbeat', intensity: 1.0, duration: 1.0 },
+        { time: 3.0, type: 'heartbeat', intensity: 1.0, duration: 1.0 },
+        { time: 4.5, type: 'calm' }
+    ],
     'E': [ // Electrical Exposure (High voltage, rapid chaotic firing, harsh audio)
         { time: 0.0, type: 'text', message: 'HAZARD: ELECTRICAL EXPOSURE', duration: 2.5 },
         { time: 0.0, type: 'style', value: 1 }, // Cyber/Wireframe style
