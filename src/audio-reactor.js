@@ -81,7 +81,7 @@ export class AudioReactor {
         console.log("[AudioReactor] Stopped.");
     }
 
-    update(renderer) {
+    update(renderer, player) {
         if (!this.isActive || !this.analyser) return;
 
         // Get Frequency Data
@@ -140,6 +140,23 @@ export class AudioReactor {
              // Intensity based on treble peak
              renderer.injectStimulus(x, y, z, this.treble * 2.0);
              this.lastBeatTime = now;
+        }
+
+        // 4. Volume drives Respiration Rate (Brain DJ Mode)
+        if (player && player.state && player.state.respirationRate !== undefined) {
+             // Modulate player's respiration rate based on volume
+             // Scale: 1.0 (base) + volume * 2.0 (dynamic)
+             const targetRespirationRate = 1.0 + (this.volume * 2.0);
+
+             // Higher energy should feel immediate, decaying slightly slower
+             if (targetRespirationRate > player.state.respirationRate) {
+                 player.state.respirationRate += (targetRespirationRate - player.state.respirationRate) * 0.2;
+             } else {
+                 player.state.respirationRate += (targetRespirationRate - player.state.respirationRate) * 0.05;
+             }
+
+             // Cap max respiration rate
+             player.state.respirationRate = Math.min(3.0, Math.max(1.0, player.state.respirationRate));
         }
 
         // --- ALTITUDE/HYPOXIA AUDIO REACTIVITY ---

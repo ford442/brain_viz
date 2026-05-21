@@ -11,7 +11,15 @@ export function createDefaultHandlers(player) {
         } else if (Array.isArray(evt.target)) {
             coords = evt.target;
         }
-        player.renderer.injectStimulus(coords[0], coords[1], coords[2], evt.intensity || 1.0);
+
+        const intensity = evt.intensity || 1.0;
+        player.renderer.injectStimulus(coords[0], coords[1], coords[2], intensity);
+
+        // [Phase 3] Temporary boost to respiration rate on strong stimuli
+        if (intensity > 0.5 && player.state.respirationRate !== undefined) {
+            // Cap the max respiration rate boost from visual stimuli to 2.5
+            player.state.respirationRate = Math.min(2.5, player.state.respirationRate + (intensity * 0.2));
+        }
     });
 
     // Style Change (instant snap)
@@ -331,10 +339,13 @@ export function createDefaultHandlers(player) {
             eventsToInsert.sort((a, b) => a.time - b.time);
 
             let insertIdx = player.currentEventIndex ?? player.cursor;
-            while (insertIdx < player.routine.length && player.routine[insertIdx].time < eventsToInsert[0].time) {
-                insertIdx++;
+            for (const ev of eventsToInsert) {
+                while (insertIdx < player.routine.length && player.routine[insertIdx].time < ev.time) {
+                    insertIdx++;
+                }
+                player.routine.splice(insertIdx, 0, ev);
+                insertIdx++; // Move past the newly inserted event
             }
-            player.routine.splice(insertIdx, 0, ...eventsToInsert);
         }
     });
 
@@ -422,19 +433,26 @@ export function createDefaultHandlers(player) {
             }
             eventsToInsert.sort((a, b) => a.time - b.time);
             let insertIdx = player.currentEventIndex ?? player.cursor;
-            while (insertIdx < player.routine.length && player.routine[insertIdx].time < eventsToInsert[0].time) {
+            for (const ev of eventsToInsert) {
+                while (insertIdx < player.routine.length && player.routine[insertIdx].time < ev.time) {
+                    insertIdx++;
+                }
+                player.routine.splice(insertIdx, 0, ev);
                 insertIdx++;
             }
-            player.routine.splice(insertIdx, 0, ...eventsToInsert);
         }
     });
-    // [Phase 2] Respiration Simulation
+    // [Phase 2, 3] Respiration Simulation (Dynamic)
     handlers.set('respiration', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
-        const duration = evt.duration || 4.0; // Total duration of respiration cycle
+        const baseDuration = evt.duration || 4.0; // Total duration of respiration cycle
 
-        const inhaleDuration = duration * 0.4;
-        const exhaleDuration = duration * 0.6;
+        // Dynamically scale duration based on respiration rate state
+        const currentRate = player.state.respirationRate || 1.0;
+        const activeDuration = baseDuration / currentRate;
+
+        const inhaleDuration = activeDuration * 0.4;
+        const exhaleDuration = activeDuration * 0.6;
 
         // Inhale phase
         player.startLerp({ key: 'flowSpeed', value: 6.0 * intensity, duration: inhaleDuration, ease: 'sineOut' });
@@ -443,29 +461,65 @@ export function createDefaultHandlers(player) {
         const currentAmbient = player.renderer.params.ambientLight || 0.2;
         player.startLerp({ key: 'ambientLight', value: currentAmbient + (0.3 * intensity), duration: inhaleDuration, ease: 'sineOut' });
 
-        // Exhale phase
-        setTimeout(() => {
-            if (!player.isPlaying) return;
-            player.startLerp({ key: 'flowSpeed', value: 2.0, duration: exhaleDuration, ease: 'sineInOut' });
-            player.startLerp({ key: 'amplitude', value: 0.5, duration: exhaleDuration, ease: 'sineInOut' });
-            player.startLerp({ key: 'ambientLight', value: currentAmbient, duration: exhaleDuration, ease: 'sineInOut' });
-        }, inhaleDuration * 1000);
-
-        // Schedule a heartbeat event at the peak of the inhale
         if (player.routine) {
+            const eventsToInsert = [];
             const peakTime = player.elapsedTime + inhaleDuration;
-            const heartbeatEvent = {
+
+            // Schedule Exhale phase perfectly in sync with timeline
+            eventsToInsert.push({
+                time: peakTime,
+                type: 'lerp',
+                key: 'flowSpeed',
+                value: 2.0,
+                duration: exhaleDuration,
+                ease: 'sineInOut'
+            });
+            eventsToInsert.push({
+                time: peakTime,
+                type: 'lerp',
+                key: 'amplitude',
+                value: 0.5,
+                duration: exhaleDuration,
+                ease: 'sineInOut'
+            });
+            eventsToInsert.push({
+                time: peakTime,
+                type: 'lerp',
+                key: 'ambientLight',
+                value: currentAmbient,
+                duration: exhaleDuration,
+                ease: 'sineInOut'
+            });
+
+            // Schedule a heartbeat event at the peak of the inhale
+            eventsToInsert.push({
                 time: peakTime,
                 type: 'heartbeat',
                 intensity: intensity * 1.2,
                 duration: 1.0
-            };
+            });
+
+            // Handle continuous looping mode
+            if (evt.continuous) {
+                eventsToInsert.push({
+                    time: player.elapsedTime + activeDuration,
+                    type: 'respiration',
+                    intensity: intensity,
+                    duration: baseDuration, // Pass along original base duration
+                    continuous: true
+                });
+            }
+
+            eventsToInsert.sort((a, b) => a.time - b.time);
 
             let insertIdx = player.currentEventIndex ?? player.cursor;
-            while (insertIdx < player.routine.length && player.routine[insertIdx].time < peakTime) {
+            for (const ev of eventsToInsert) {
+                while (insertIdx < player.routine.length && player.routine[insertIdx].time < ev.time) {
+                    insertIdx++;
+                }
+                player.routine.splice(insertIdx, 0, ev);
                 insertIdx++;
             }
-            player.routine.splice(insertIdx, 0, heartbeatEvent);
         }
     });
 

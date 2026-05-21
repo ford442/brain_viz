@@ -27,7 +27,9 @@ export class RoutinePlayer {
         this.lastPauseTime = 0;
         this.subRoutines = {}; // [Phase 2] Sub-Routine System
         this.customPresets = {}; // [Phase 2] Custom Camera Presets
-        this.state = {}; // [Phase 2] Internal State for Branching
+        this.state = {
+            respirationRate: 1.0 // [Phase 3] Dynamic Environment Reactions
+        }; // [Phase 2] Internal State for Branching
 
         // [Phase 2] Event Synchronization
         this.waitingForSignal = null; // String name of the signal we are waiting for
@@ -466,6 +468,14 @@ export class RoutinePlayer {
         const now = performance.now();
         const deltaTime = (now - this.lastFrameTime) / 1000.0;
         this.lastFrameTime = now;
+
+        // [Phase 3] Gentle decay for respirationRate back to baseline
+        if (this.state.respirationRate > 1.0) {
+            this.state.respirationRate -= deltaTime * 0.5; // Slowly returns to 1.0
+            if (this.state.respirationRate < 1.0) {
+                this.state.respirationRate = 1.0;
+            }
+        }
 
         // Advance timeline if not paused waiting for a signal
         if (!this.waitingForSignal) {

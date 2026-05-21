@@ -230,10 +230,18 @@ async function init() {
                 await audioReactor.start();
                 audioBtn.textContent = 'Disable Audio Reactivity 🔇';
                 audioBtn.style.background = '#662';
+
+                // [Phase 3] Automatically start a continuous respiration loop when audio reactivity is enabled
+                player.executeEvent({ type: 'respiration', duration: 4.0, continuous: true });
             } else {
                 audioReactor.stop();
                 audioBtn.textContent = 'Enable Audio Reactivity 🎤';
                 audioBtn.style.background = '#442';
+
+                // Stop the respiration loop by clearing the timeline of future respiration events
+                if (player.routine) {
+                    player.routine = player.routine.filter(evt => evt.type !== 'respiration');
+                }
             }
         };
         controls.appendChild(audioBtn);
@@ -253,7 +261,7 @@ async function init() {
 
             // 1. Audio Reactivity
             if (audioReactor.isActive) {
-                audioReactor.update(renderer);
+                audioReactor.update(renderer, player); // Pass player for Phase 3 Audio Reactivity
                 // Sync UI sliders
                 if(inputs.amplitude) inputs.amplitude.value = renderer.params.amplitude;
                 if(labels.amplitude) labels.amplitude.textContent = renderer.params.amplitude.toFixed(2);
