@@ -67,7 +67,7 @@
 - [x] **Heartbeat Simulation:** Implement a heartbeat event type that triggers rhythmic cardiovascular pulses.
 - [x] **Respiration Simulation:** Implement a respiration event type that links to heartbeat and modulates flow speed and overall scene intensity.
 ### Phase 3: "Brain DJ" Mode (Live Performance)
-- [ ] **Dynamic Environment Reactions:** Allow respiration rate to dynamically react to visual stimuli or events.
+- [x] **Dynamic Environment Reactions:** Allow respiration rate to dynamically react to visual stimuli or events.
 - [x] **Keyboard Triggers:** Bind number keys (1-9) to specific mini-routines (e.g., Press '1' for "Sudden Surprise", '2' for "Calm Down").
 - [x] **Audio Reactivity:** Connect the Web Audio API to drive `amplitude` and `stimulus` intensity based on microphone input or music.
 - [x] **Procedural Routine Generation:** Add a button to generate infinite random routines on the fly for continuous playback.
@@ -216,3 +216,5 @@
 * *Idea:* "What if we visualized Adrenaline surges as sudden global illumination flashes?"
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "What if we mapped real-time weather data to global illumination and fog density?"
+* [2026-05-20] - Completed Phase 3 (Dynamic Environment Reactions). Integrated stateful respiration rate driven by visual stimuli and AudioReactor to simulate excitement.
+* *Idea:* "What if we visualized breathing rate visually using volumetric particle condensation near the olfactory bulb?"
