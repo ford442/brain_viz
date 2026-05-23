@@ -1,6 +1,5 @@
 // audio-reactor.js
 // Handles Web Audio API integration for reactive brain visualization
-
 export class AudioReactor {
     constructor() {
         this.audioContext = null;
@@ -14,47 +13,40 @@ export class AudioReactor {
         this.fftSize = 512;
         this.smoothingTimeConstant = 0.8;
 
-        // Analysis State
-        this.bass = 0;
-        this.mid = 0;
-        this.treble = 0;
-        this.volume = 0;
+        // Raw Analysis State
+        this.rawBass = 0;
+        this.rawMid = 0;
+        this.rawTreble = 0;
+        this.rawVolume = 0;
 
-        // Beat Detection
-        this.beatThreshold = 1.1; // Multiplier for average energy
-        this.beatDecay = 0.05;
-        this.lastBeatTime = 0;
-
-        // Central Reactivity Bus Features
+        // Central Reactivity Bus (Normalized + Smoothed Features)
         this.features = {
             bass: 0,
             energy: 0,
             brightness: 0,
             onset: 0
         };
+
+        // Onset / Beat Detection
+        this.previousEnergy = 0;
+        this.lastBeatTime = 0;
     }
 
     async start() {
         if (this.isActive) return;
-
         try {
-            // Initialize Audio Context
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             this.audioContext = new AudioContext();
 
-            // Request Microphone Access
             this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-            // Create Analyzer
             this.analyser = this.audioContext.createAnalyser();
             this.analyser.fftSize = this.fftSize;
             this.analyser.smoothingTimeConstant = this.smoothingTimeConstant;
 
-            // Connect Source
             this.source = this.audioContext.createMediaStreamSource(this.stream);
             this.source.connect(this.analyser);
 
-            // Buffer for frequency data
             const bufferLength = this.analyser.frequencyBinCount;
             this.dataArray = new Uint8Array(bufferLength);
 
@@ -74,12 +66,10 @@ export class AudioReactor {
             this.source.disconnect();
             this.source = null;
         }
-
         if (this.stream) {
             this.stream.getTracks().forEach(track => track.stop());
             this.stream = null;
         }
-
         if (this.audioContext) {
             this.audioContext.close();
             this.audioContext = null;
@@ -89,22 +79,24 @@ export class AudioReactor {
         console.log("[AudioReactor] Stopped.");
     }
 
+    getFeatures() {
+        return this.features;
+    }
+
     update(renderer, player) {
         if (!this.isActive || !this.analyser) return;
 
         // Get Frequency Data
         this.analyser.getByteFrequencyData(this.dataArray);
 
-        // Analyze Bands (Simple Average)
         const bufferLength = this.analyser.frequencyBinCount;
         let bassSum = 0, midSum = 0, trebleSum = 0;
 
-        // Ranges (Approximate for 512 FFT)
-        const bassRange = Math.floor(bufferLength * 0.1); // Low frequencies
-        const midRange = Math.floor(bufferLength * 0.5);  // Mid frequencies
+        const bassRange = Math.floor(bufferLength * 0.1);
+        const midRange = Math.floor(bufferLength * 0.5);
 
         for (let i = 0; i < bufferLength; i++) {
-            const val = this.dataArray[i] / 255.0; // Normalize 0-1
+            const val = this.dataArray[i] / 255.0;
             if (i < bassRange) {
                 bassSum += val;
             } else if (i < midRange) {
@@ -114,68 +106,30 @@ export class AudioReactor {
             }
         }
 
-        this.bass = bassSum / bassRange;
-        this.mid = midSum / (midRange - bassRange);
-        this.treble = trebleSum / (bufferLength - midRange);
-        this.volume = (this.bass + this.mid + this.treble) / 3;
+        this.rawBass = bassSum / bassRange;
+        this.rawMid = midSum / (midRange - bassRange);
+        this.rawTreble = trebleSum / (bufferLength - midRange);
+        this.rawVolume = (this.rawBass + this.rawMid + this.rawTreble) / 3;
 
-        // Update Central Reactivity Bus features
-        this.features.bass = this.bass;
-        this.features.energy = this.volume;
-        this.features.brightness = this.treble;
-        this.features.onset = (this.treble > 0.4 && (performance.now() - this.lastBeatTime > 100)) ? 1.0 : 0.0;
+        // --- CENTRAL REACTIVITY BUS (Smoothed) ---
+        const SMOOTHING = 0.2;
 
-        // --- MAP TO RENDERER ---
+        this.features.bass = this.features.bass + (this.rawBass - this.features.bass) * SMOOTHING;
+        this.features.energy = this.features.energy + (this.rawVolume - this.features.energy) * SMOOTHING;
 
-        // 1. Bass drives Amplitude (Overall pulse strength)
-        // Scale: 0.2 (base) + bass * 1.5 (dynamic)
-        const targetAmp = 0.2 + (this.bass * 2.0);
-        // Smooth transition
-        renderer.params.amplitude += (targetAmp - renderer.params.amplitude) * 0.1;
+        const rawBrightness = this.rawVolume > 0 ? (this.rawTreble / this.rawVolume) * 0.5 : 0;
+        this.features.brightness = this.features.brightness + (Math.min(1.0, rawBrightness) - this.features.brightness) * SMOOTHING;
 
-        // 2. Mid drives Flow Speed (Signal velocity)
-        // Scale: 2.0 (base) + mid * 8.0 (dynamic)
-        const targetSpeed = 2.0 + (this.mid * 8.0);
-        renderer.params.flowSpeed += (targetSpeed - renderer.params.flowSpeed) * 0.1;
+        // Onset Detection
+        const energyDelta = this.rawVolume - this.previousEnergy;
+        const rawOnset = energyDelta > 0.05 ? energyDelta * 5.0 : 0;
 
-        // 3. Treble drives Stimulus Injection (Sparks)
-        const now = performance.now();
-        if (this.treble > 0.4 && (now - this.lastBeatTime > 100)) { // Threshold & Debounce
-             // Inject at random cortex location
-             // Cortex is roughly surface of brain
-             const r = 1.0 + Math.random() * 0.2;
-             const theta = Math.random() * Math.PI * 2;
-             const phi = Math.random() * Math.PI;
-
-             const x = r * Math.sin(phi) * Math.cos(theta);
-             const y = r * Math.sin(phi) * Math.sin(theta);
-             const z = r * Math.cos(phi);
-
-             // Intensity based on treble peak
-             renderer.injectStimulus(x, y, z, this.treble * 2.0);
-             this.lastBeatTime = now;
+        if (rawOnset > this.features.onset) {
+            this.features.onset = Math.min(1.0, rawOnset);
+        } else {
+            this.features.onset += (0 - this.features.onset) * 0.15; // Fast decay
         }
 
-        // --- ALTITUDE/HYPOXIA AUDIO REACTIVITY ---
-        // Only activate altitude reactivity when altitude is already elevated
-        if (renderer.params.altitude > 2000) {
-            // Bass: indicates pressure/breathing difficulty
-            // Maps to altitude: 0-4000m range from audio bass
-            const altitudeFromBass = this.bass * 4000;
-            const targetAlt = Math.min(8000, 2000 + altitudeFromBass);
-            renderer.params.altitude += (targetAlt - renderer.params.altitude) * 0.05;
-            renderer.updateAltitudeState();
-
-            // Treble: metabolism intensity under hypoxia
-            // Maps to metabolic rate: 1.0-1.8 multiplier
-            const metabolicFromTreble = 1.0 + (this.treble * 0.8);
-            renderer.params.metabolicRate += (metabolicFromTreble - renderer.params.metabolicRate) * 0.1;
-
-            // Mid-range: oxygen recovery (inverse relationship)
-            // Affects mitochondrial function
-            const oxygenRecovery = 1.0 - (this.mid * 0.3);
-            const newMitochondrial = Math.max(0.3, oxygenRecovery * renderer.params.mitochondrialFunction);
-            renderer.params.mitochondrialFunction += (newMitochondrial - renderer.params.mitochondrialFunction) * 0.1;
-        }
+        this.previousEnergy = this.rawVolume;
     }
 }

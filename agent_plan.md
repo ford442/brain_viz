@@ -70,6 +70,9 @@
 - [x] **Dynamic Environment Reactions:** Allow respiration rate to dynamically react to visual stimuli or events.
 - [x] **Keyboard Triggers:** Bind number keys (1-9) to specific mini-routines (e.g., Press '1' for "Sudden Surprise", '2' for "Calm Down").
 - [x] **Audio Reactivity:** Connect the Web Audio API to drive `amplitude` and `stimulus` intensity based on microphone input or music.
+- [x] **Central Reactivity Bus:** Implement normalized and smoothed properties for `bass`, `energy`, `brightness`, and `onset`.
+- [x] **Dynamic Continuous Respiration:** Make respiration a continuous loop driven by audio energy instead of a one-shot event.
+- [x] **Music-Reactive Visual Parameters:** Map audio features to visual elements (e.g., energy -> zoom, bass -> colorShift, onset -> sparkle).
 - [x] **Procedural Routine Generation:** Add a button to generate infinite random routines on the fly for continuous playback.
 ### Phase 3 Extension: Brain DJ Mode (New)
 - [x] **Central Reactivity Bus:** Create a single ReactivityEngine (or expand AudioReactor) that computes normalized audio features (bass, energy, brightness, onset) and broadcasts them to all visual systems.
@@ -223,3 +226,4 @@
 * *Idea:* "What if we mapped real-time weather data to global illumination and fog density?"
 * [2026-05-20] - Completed Phase 3 (Dynamic Environment Reactions). Integrated stateful respiration rate driven by visual stimuli and AudioReactor to simulate excitement.
 * *Idea:* "What if we visualized breathing rate visually using volumetric particle condensation near the olfactory bulb?"
+* *Idea:* "What if we allowed users to map their own custom audio features to arbitrary parameters via a GUI matrix?
