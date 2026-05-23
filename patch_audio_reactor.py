@@ -1,8 +1,10 @@
-// audio-reactor.js
-// Handles Web Audio API integration for reactive brain visualization
+import re
 
-export class AudioReactor {
-    constructor() {
+with open('src/audio-reactor.js', 'r') as f:
+    content = f.read()
+
+# Replace the constructor to add new features
+new_constructor = """    constructor() {
         this.audioContext = null;
         this.analyser = null;
         this.dataArray = null;
@@ -35,69 +37,22 @@ export class AudioReactor {
 
         // Onset Detection
         this.previousEnergy = 0;
-    }
+    }"""
 
-    async start() {
-        if (this.isActive) return;
+content = re.sub(r'    constructor\(\) \{.*?\n    }', new_constructor, content, flags=re.DOTALL)
 
-        try {
-            // Initialize Audio Context
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            this.audioContext = new AudioContext();
-
-            // Request Microphone Access
-            this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-            // Create Analyzer
-            this.analyser = this.audioContext.createAnalyser();
-            this.analyser.fftSize = this.fftSize;
-            this.analyser.smoothingTimeConstant = this.smoothingTimeConstant;
-
-            // Connect Source
-            this.source = this.audioContext.createMediaStreamSource(this.stream);
-            this.source.connect(this.analyser);
-
-            // Buffer for frequency data
-            const bufferLength = this.analyser.frequencyBinCount;
-            this.dataArray = new Uint8Array(bufferLength);
-
-            this.isActive = true;
-            console.log("[AudioReactor] Started listening to microphone.");
-        } catch (error) {
-            console.error("[AudioReactor] Failed to start audio:", error);
-            alert("Microphone access denied or not supported.");
-            this.isActive = false;
-        }
-    }
-
-    stop() {
-        if (!this.isActive) return;
-
-        if (this.source) {
-            this.source.disconnect();
-            this.source = null;
-        }
-
-        if (this.stream) {
-            this.stream.getTracks().forEach(track => track.stop());
-            this.stream = null;
-        }
-
-        if (this.audioContext) {
-            this.audioContext.close();
-            this.audioContext = null;
-        }
-
-        this.isActive = false;
-        console.log("[AudioReactor] Stopped.");
-    }
-
-
+# Add getFeatures method
+get_features_method = """
     getFeatures() {
         return this.features;
     }
 
-    update(renderer, player) {
+    update(renderer, player) {"""
+
+content = content.replace("    update(renderer, player) {", get_features_method)
+
+# Update the analysis loop
+analysis_logic = """    update(renderer, player) {
         if (!this.isActive || !this.analyser) return;
 
         // Get Frequency Data
@@ -173,4 +128,9 @@ export class AudioReactor {
         }
         */
     }
-}
+}"""
+
+content = re.sub(r'    update\(renderer, player\).*?^}', analysis_logic, content, flags=re.DOTALL|re.MULTILINE)
+
+with open('src/audio-reactor.js', 'w') as f:
+    f.write(content)
