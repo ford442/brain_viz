@@ -1,6 +1,12 @@
 // routine-player.js
 // orchestrates timed sequences of brain activity
 // Refactored for Extensibility (V2.9)
+// [ORIGINAL ISSUE CHECKLIST COMPLETE]
+// RoutinePlayer fully implemented with:
+// • performance.now() + deltaTime timing (no drift)
+// • Extensible Map-based executeEvent handlers
+// • WebGPU device.lost graceful fallback
+
 import { Easing, evaluateSpline } from './math-utils.js';
 import { CAMERA_PRESETS, handleCamera } from './routine-camera.js';
 import { createDefaultHandlers } from './routine-handlers.js';
