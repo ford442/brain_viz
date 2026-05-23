@@ -469,11 +469,27 @@ export class RoutinePlayer {
         const deltaTime = (now - this.lastFrameTime) / 1000.0;
         this.lastFrameTime = now;
 
-        // [Phase 3] Gentle decay for respirationRate back to baseline
-        if (this.state.respirationRate > 1.0) {
-            this.state.respirationRate -= deltaTime * 0.5; // Slowly returns to 1.0
-            if (this.state.respirationRate < 1.0) {
-                this.state.respirationRate = 1.0;
+        // [Phase 3 Extension] Dynamic Respiration based on Central Reactivity Bus
+        if (this.audioReactor && this.audioReactor.isActive && this.audioReactor.features) {
+            // Scale: 1.0 (base) + energy * 2.0 (dynamic)
+            const targetRespirationRate = 1.0 + (this.audioReactor.features.energy * 2.0);
+
+            // Higher energy should feel immediate, decaying slightly slower
+            if (targetRespirationRate > this.state.respirationRate) {
+                this.state.respirationRate += (targetRespirationRate - this.state.respirationRate) * 0.2;
+            } else {
+                this.state.respirationRate += (targetRespirationRate - this.state.respirationRate) * 0.05;
+            }
+
+            // Cap max respiration rate
+            this.state.respirationRate = Math.min(3.0, Math.max(1.0, this.state.respirationRate));
+        } else {
+            // Gentle decay for respirationRate back to baseline if audio reactor is not active
+            if (this.state.respirationRate > 1.0) {
+                this.state.respirationRate -= deltaTime * 0.5; // Slowly returns to 1.0
+                if (this.state.respirationRate < 1.0) {
+                    this.state.respirationRate = 1.0;
+                }
             }
         }
 

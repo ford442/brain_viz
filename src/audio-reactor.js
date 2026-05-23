@@ -24,6 +24,14 @@ export class AudioReactor {
         this.beatThreshold = 1.1; // Multiplier for average energy
         this.beatDecay = 0.05;
         this.lastBeatTime = 0;
+
+        // Central Reactivity Bus Features
+        this.features = {
+            bass: 0,
+            energy: 0,
+            brightness: 0,
+            onset: 0
+        };
     }
 
     async start() {
@@ -111,6 +119,12 @@ export class AudioReactor {
         this.treble = trebleSum / (bufferLength - midRange);
         this.volume = (this.bass + this.mid + this.treble) / 3;
 
+        // Update Central Reactivity Bus features
+        this.features.bass = this.bass;
+        this.features.energy = this.volume;
+        this.features.brightness = this.treble;
+        this.features.onset = (this.treble > 0.4 && (performance.now() - this.lastBeatTime > 100)) ? 1.0 : 0.0;
+
         // --- MAP TO RENDERER ---
 
         // 1. Bass drives Amplitude (Overall pulse strength)
@@ -140,23 +154,6 @@ export class AudioReactor {
              // Intensity based on treble peak
              renderer.injectStimulus(x, y, z, this.treble * 2.0);
              this.lastBeatTime = now;
-        }
-
-        // 4. Volume drives Respiration Rate (Brain DJ Mode)
-        if (player && player.state && player.state.respirationRate !== undefined) {
-             // Modulate player's respiration rate based on volume
-             // Scale: 1.0 (base) + volume * 2.0 (dynamic)
-             const targetRespirationRate = 1.0 + (this.volume * 2.0);
-
-             // Higher energy should feel immediate, decaying slightly slower
-             if (targetRespirationRate > player.state.respirationRate) {
-                 player.state.respirationRate += (targetRespirationRate - player.state.respirationRate) * 0.2;
-             } else {
-                 player.state.respirationRate += (targetRespirationRate - player.state.respirationRate) * 0.05;
-             }
-
-             // Cap max respiration rate
-             player.state.respirationRate = Math.min(3.0, Math.max(1.0, player.state.respirationRate));
         }
 
         // --- ALTITUDE/HYPOXIA AUDIO REACTIVITY ---

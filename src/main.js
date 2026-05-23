@@ -144,6 +144,7 @@ async function init() {
         player.registerSubRoutines(MINI_ROUTINES);
 
         const audioReactor = new AudioReactor();
+        player.audioReactor = audioReactor; // Link audio reactor for Phase 3 Extension
 
         // --- KEYBOARD TRIGGERS ---
         document.addEventListener('keydown', (e) => {
@@ -262,6 +263,16 @@ async function init() {
             // 1. Audio Reactivity
             if (audioReactor.isActive) {
                 audioReactor.update(renderer, player); // Pass player for Phase 3 Audio Reactivity
+
+                // --- Phase 3 Extension: Music-Reactive Visual Parameters ---
+                // Map bass to camera zoom
+                renderer.targetZoom = 3.5 - (audioReactor.features.bass * 1.5);
+
+                // Map energy to global hue/color shift
+                renderer.params.colorShift = audioReactor.features.energy * 0.5;
+                if(inputs.colorShift) inputs.colorShift.value = renderer.params.colorShift;
+                if(labels.colorShift) labels.colorShift.textContent = renderer.params.colorShift.toFixed(2);
+
                 // Sync UI sliders
                 if(inputs.amplitude) inputs.amplitude.value = renderer.params.amplitude;
                 if(labels.amplitude) labels.amplitude.textContent = renderer.params.amplitude.toFixed(2);
