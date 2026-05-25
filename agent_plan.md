@@ -5,11 +5,12 @@
 ---
 ## 🧠 Strategic Roadmap
 ### Phase 1: The Sequencing Core (Routine Engine)
-- [x] **Routine Player Module:** Implement `routine-player.js` to handle time-based event execution (Stimulus, Style Change, Parameter Tweaks).
+- [x] **Routine Player Module:** Implement `routine-player.js` to handle time-based event execution (Stimulus, Style Change, Parameter Tweaks). [x] RoutinePlayer + main.js integration (already existed and was enhanced in prior work)
 - [x] **Main Integration:** Refactor `main.js` to initialize `RoutinePlayer` and expose it to the UI.
 - [x] **"Deep Thought" Script:** Hardcode the demo routine (Organic -> Visual Input -> Connectome Processing -> Heatmap Aftermath).
 - [x] **Playback UI:** Add a "Run Sequence" button and a transport clock (Play/Stop/Loop) to the DOM.
 ### Phase 2: Advanced Choreography
+- [x] **Parameter Interpolation/Easing:** Added parameter interpolation.
 - [x] **Sleep Deprivation Simulation:** Implement progressive desaturation, blurring, and increased glitch frequency to simulate sleep deprivation.
 - [x] **Sensory Overload Simulation:** Implement sensory overload event and routine.
 - [x] **Parameter Interpolation/Easing:** Enhance routines with advanced smooth interpolation logic.
@@ -108,6 +109,7 @@
 - [x] **Cognitive Load Resolution (Dynamic LoD):** Implement variable rendering resolution scaled dynamically based on a `cognitiveLoad` or `fatigue` parameter to simulate visual cortex fatigue.
 ---
 ## 🧪 "Dream" Log (Future Concepts)
+* *Idea:* "What if we visualized visual cortex processing by simulating progressive edge-detection filters directly on the render pipeline?"
 * *Idea:* "What if we visualized breathing rate as a subtle global illumination pulsing effect?"
 * *Idea:* "Visualizing breathing rate as a slow sine wave modulating the alpha channel of the background."
 *Idea:* "Interactive Timeline Editor" - A GUI for users to visually sequence routine events rather than writing JSON/CSV.

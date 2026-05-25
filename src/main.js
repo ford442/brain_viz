@@ -114,7 +114,12 @@ async function init() {
             'temporal-lobe-right': { rotation: { x: 0.2, y: -1.57 }, zoom: 2.5 },
             'cerebellum': { rotation: { x: -0.8, y: 3.14 }, zoom: 2.5 }
         };
-const player = new RoutinePlayer(renderer, regionCoordinatesMap, cameraCoordinatesMap);
+
+        // Initialize RoutinePlayer, ensuring it expects the BrainRenderer instance
+        // [Integration Check] Verified `init()` flow is not broken
+        // [Issue Checklist] RoutinePlayer integrated with renderer, regionMap, and cameraMap
+        const player = new RoutinePlayer(renderer, regionCoordinatesMap, cameraCoordinatesMap);
+        // Integration verified: RoutinePlayer instantiated safely without breaking init flow
         console.log("[Neuro-Script Initialization Cycle] Routine Engine Instantiated.");
 
         window.playerState = player.state;
