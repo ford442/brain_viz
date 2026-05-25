@@ -1,6 +1,5 @@
 // audio-reactor.js
 // Handles Web Audio API integration for reactive brain visualization
-
 export class AudioReactor {
     constructor() {
         this.audioContext = null;
@@ -20,7 +19,7 @@ export class AudioReactor {
         this.rawTreble = 0;
         this.rawVolume = 0;
 
-        // Normalized and Smoothed Features (Central Reactivity Bus)
+        // Central Reactivity Bus (Normalized + Smoothed Features)
         this.features = {
             bass: 0,
             energy: 0,
@@ -28,36 +27,26 @@ export class AudioReactor {
             onset: 0
         };
 
-        // Beat Detection
-        this.beatThreshold = 1.1; // Multiplier for average energy
-        this.beatDecay = 0.05;
-        this.lastBeatTime = 0;
-
-        // Onset Detection
+        // Onset / Beat Detection
         this.previousEnergy = 0;
+        this.lastBeatTime = 0;
     }
 
     async start() {
         if (this.isActive) return;
-
         try {
-            // Initialize Audio Context
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             this.audioContext = new AudioContext();
 
-            // Request Microphone Access
             this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-            // Create Analyzer
             this.analyser = this.audioContext.createAnalyser();
             this.analyser.fftSize = this.fftSize;
             this.analyser.smoothingTimeConstant = this.smoothingTimeConstant;
 
-            // Connect Source
             this.source = this.audioContext.createMediaStreamSource(this.stream);
             this.source.connect(this.analyser);
 
-            // Buffer for frequency data
             const bufferLength = this.analyser.frequencyBinCount;
             this.dataArray = new Uint8Array(bufferLength);
 
@@ -77,12 +66,10 @@ export class AudioReactor {
             this.source.disconnect();
             this.source = null;
         }
-
         if (this.stream) {
             this.stream.getTracks().forEach(track => track.stop());
             this.stream = null;
         }
-
         if (this.audioContext) {
             this.audioContext.close();
             this.audioContext = null;
@@ -91,7 +78,6 @@ export class AudioReactor {
         this.isActive = false;
         console.log("[AudioReactor] Stopped.");
     }
-
 
     getFeatures() {
         return this.features;
@@ -103,16 +89,14 @@ export class AudioReactor {
         // Get Frequency Data
         this.analyser.getByteFrequencyData(this.dataArray);
 
-        // Analyze Bands (Simple Average)
         const bufferLength = this.analyser.frequencyBinCount;
         let bassSum = 0, midSum = 0, trebleSum = 0;
 
-        // Ranges (Approximate for 512 FFT)
-        const bassRange = Math.floor(bufferLength * 0.1); // Low frequencies
-        const midRange = Math.floor(bufferLength * 0.5);  // Mid frequencies
+        const bassRange = Math.floor(bufferLength * 0.1);
+        const midRange = Math.floor(bufferLength * 0.5);
 
         for (let i = 0; i < bufferLength; i++) {
-            const val = this.dataArray[i] / 255.0; // Normalize 0-1
+            const val = this.dataArray[i] / 255.0;
             if (i < bassRange) {
                 bassSum += val;
             } else if (i < midRange) {
@@ -127,50 +111,25 @@ export class AudioReactor {
         this.rawTreble = trebleSum / (bufferLength - midRange);
         this.rawVolume = (this.rawBass + this.rawMid + this.rawTreble) / 3;
 
-        // --- CENTRAL REACTIVITY BUS FEATURE EXTRACTION ---
-        const SMOOTHING = 0.2; // Exponential moving average factor
+        // --- CENTRAL REACTIVITY BUS (Smoothed) ---
+        const SMOOTHING = 0.2;
 
-        // 1. Bass (low frequency energy)
-        this.features.bass += (this.rawBass - this.features.bass) * SMOOTHING;
+        this.features.bass = this.features.bass + (this.rawBass - this.features.bass) * SMOOTHING;
+        this.features.energy = this.features.energy + (this.rawVolume - this.features.energy) * SMOOTHING;
 
-        // 2. Energy (overall volume/intensity)
-        this.features.energy += (this.rawVolume - this.features.energy) * SMOOTHING;
-
-        // 3. Brightness (high frequency content relative to energy)
         const rawBrightness = this.rawVolume > 0 ? (this.rawTreble / this.rawVolume) * 0.5 : 0;
-        this.features.brightness += (Math.min(1.0, rawBrightness) - this.features.brightness) * SMOOTHING;
+        this.features.brightness = this.features.brightness + (Math.min(1.0, rawBrightness) - this.features.brightness) * SMOOTHING;
 
-        // 4. Onset (sudden changes/beats)
+        // Onset Detection
         const energyDelta = this.rawVolume - this.previousEnergy;
-        const rawOnset = energyDelta > 0.05 ? energyDelta * 5.0 : 0; // Spike on sudden increase
+        const rawOnset = energyDelta > 0.05 ? energyDelta * 5.0 : 0;
 
-        // Onset decays quickly, spikes instantly
         if (rawOnset > this.features.onset) {
             this.features.onset = Math.min(1.0, rawOnset);
         } else {
-            this.features.onset += (0 - this.features.onset) * 0.1; // Fast decay
+            this.features.onset += (0 - this.features.onset) * 0.15; // Fast decay
         }
 
         this.previousEnergy = this.rawVolume;
-
-        // We comment out the direct mapping here because Phase 3 Step 3 handles it in main.js
-        // But we leave altitude/hypoxia intact as requested, but modified to use features
-        /*
-        // --- ALTITUDE/HYPOXIA AUDIO REACTIVITY ---
-        // Only activate altitude reactivity when altitude is already elevated
-        if (renderer.params.altitude > 2000) {
-            const altitudeFromBass = this.features.bass * 4000;
-            const targetAlt = Math.min(8000, 2000 + altitudeFromBass);
-            renderer.params.altitude += (targetAlt - renderer.params.altitude) * 0.05;
-            renderer.updateAltitudeState();
-
-            const metabolicFromTreble = 1.0 + (this.features.brightness * 0.8);
-            renderer.params.metabolicRate += (metabolicFromTreble - renderer.params.metabolicRate) * 0.1;
-
-            const oxygenRecovery = 1.0 - (this.features.energy * 0.3);
-            const newMitochondrial = Math.max(0.3, oxygenRecovery * renderer.params.mitochondrialFunction);
-            renderer.params.mitochondrialFunction += (newMitochondrial - renderer.params.mitochondrialFunction) * 0.1;
-        }
-        */
     }
 }
