@@ -3,6 +3,7 @@
 import { BrainGeometry } from './brain-geometry.js';
 import { vertexShader, fragmentShader, computeShader, somaVertexShader, somaFragmentShader, postVertexShader, postFragmentShader } from './shaders.js';
 import { Mat4 } from './math-utils.js';
+import { WasmTensorEngine } from './wasm-engine.js'; // [Phase 1 WASM]
 
 const RENDER_UNIFORM_FLOAT_COUNT = 64;
 const UNIFORM_BUFFER_ALIGNMENT = 256;
@@ -30,6 +31,13 @@ export class BrainRenderer {
         this.time = 0;
         this.isRunning = false;
         this.tensorPlaybackMode = false; // [BCI] When true, compute shader skipped; TensorPlayer drives the voxel buffer
+
+        // [Phase 1 WASM] Hybrid simulation mode.
+        // When wasmMode is true the C++ BrainTensorEngine drives the tensor physics
+        // instead of the WebGPU compute shader.  Falls back to WebGPU automatically
+        // if the WASM build has not been run or the browser does not support it.
+        this.wasmMode   = false;
+        this.wasmEngine = new WasmTensorEngine(32); // lazy-initialised on first enable
 
         this.params = {
             cognitiveLoad: 0.0, // [Phase 9] Visual Cortex Fatigue (Dynamic LoD)
@@ -463,6 +471,17 @@ export class BrainRenderer {
         // Ensure intensity is non-negative
         this.stimulus.active = Math.max(0.0, intensity);
 
+        // [Phase 1 WASM] Forward stimulus to the C++ engine when in WASM mode
+        if (this.wasmMode && this.wasmEngine.available) {
+            this.wasmEngine.injectStimulus(
+                this.stimulus.pos[0],
+                this.stimulus.pos[1],
+                this.stimulus.pos[2],
+                this.stimulus.active,
+                this.params.mitochondrialFunction ?? 1.0
+            );
+        }
+
         console.log(`[Neuro-Weaver] Stimulus Injected: Pos(${targetX.toFixed(2)}, ${targetY.toFixed(2)}, ${targetZ.toFixed(2)}) Intensity(${intensity.toFixed(2)})`);
     }
 
@@ -500,6 +519,37 @@ export class BrainRenderer {
         // Instantly clear the volumetric tensor data
         const emptyData = new Float32Array(this.voxelCount);
         this.device.queue.writeBuffer(this.tensorBuffer, 0, emptyData);
+        // Also reset WASM engine buffer so both paths stay in sync
+        if (this.wasmEngine.available) this.wasmEngine.reset();
+    }
+
+    // [Phase 1 WASM] Enable the hybrid WASM simulation mode.
+    // Loads and initialises the C++ engine on first call.
+    // @returns {Promise<boolean>}  true if WASM is now active.
+    async enableWasmMode() {
+        const ok = await this.wasmEngine.init();
+        if (ok) {
+            this.wasmMode = true;
+            console.log('[BrainRenderer] WASM simulation mode ENABLED');
+        } else {
+            console.warn('[BrainRenderer] WASM unavailable — staying on WebGPU compute');
+        }
+        return ok;
+    }
+
+    // [Phase 1 WASM] Disable the hybrid WASM mode and return to WebGPU compute shaders.
+    disableWasmMode() {
+        this.wasmMode = false;
+        console.log('[BrainRenderer] WASM simulation mode DISABLED — using WebGPU compute');
+    }
+
+    // [Phase 1 WASM] Run and log a WASM benchmark (steps simulation steps).
+    runWasmBenchmark(steps = 100) {
+        if (!this.wasmEngine.available) {
+            console.warn('[BrainRenderer] WASM not initialised — call enableWasmMode() first');
+            return null;
+        }
+        return this.wasmEngine.benchmark(steps);
     }
 
     updateUniforms() {
@@ -691,11 +741,26 @@ export class BrainRenderer {
 
         // Skip physics simulation when tensor playback is driving the voxel buffer directly
         if (!this.tensorPlaybackMode) {
-            const computePass = commandEncoder.beginComputePass();
-            computePass.setPipeline(this.computePipeline);
-            computePass.setBindGroup(0, this.computeBindGroup);
-            computePass.dispatchWorkgroups(Math.ceil(this.voxelBufferSize / 64));
-            computePass.end();
+            if (this.wasmMode && this.wasmEngine.available) {
+                // [Phase 1 WASM] Hybrid path: C++ engine runs simulation on CPU,
+                // result is uploaded to the WebGPU storage buffer each frame.
+                this.wasmEngine.update(this.time, {
+                    ...this.params,
+                    _electricalActive: this.stimulus.electricalActive,
+                    _mercuryActive:    this.stimulus.mercuryActive
+                });
+                const tensorData = this.wasmEngine.getTensorData();
+                if (tensorData) {
+                    this.device.queue.writeBuffer(this.tensorBuffer, 0, tensorData);
+                }
+            } else {
+                // Default path: WebGPU compute shader handles tensor physics on GPU.
+                const computePass = commandEncoder.beginComputePass();
+                computePass.setPipeline(this.computePipeline);
+                computePass.setBindGroup(0, this.computeBindGroup);
+                computePass.dispatchWorkgroups(Math.ceil(this.voxelBufferSize / 64));
+                computePass.end();
+            }
         }
         
         // --- PASS 1: RENDER SCENE TO TEXTURE ---
