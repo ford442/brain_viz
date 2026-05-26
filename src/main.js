@@ -164,6 +164,50 @@ async function init() {
         let aiEnabled = false;
         // ... (your existing aiToggle code) ...
 
+        // [Phase 1 WASM] Wire WASM simulation engine toggle
+        const wasmToggleBtn    = document.getElementById('btn-wasm-toggle');
+        const wasmBenchmarkBtn = document.getElementById('btn-wasm-benchmark');
+        const wasmStatusDiv    = document.getElementById('wasm-status');
+
+        if (wasmToggleBtn) {
+            wasmToggleBtn.addEventListener('click', async () => {
+                if (!renderer.wasmMode) {
+                    wasmToggleBtn.textContent = '⏳ Loading WASM…';
+                    wasmToggleBtn.disabled = true;
+                    const ok = await renderer.enableWasmMode();
+                    wasmToggleBtn.disabled = false;
+                    if (ok) {
+                        wasmToggleBtn.textContent = '🧠 C++ WASM Engine (active)';
+                        wasmToggleBtn.style.borderColor = 'rgba(0,229,100,0.5)';
+                        wasmToggleBtn.style.color = '#00e564';
+                        if (wasmBenchmarkBtn) wasmBenchmarkBtn.style.display = '';
+                        if (wasmStatusDiv)    wasmStatusDiv.textContent = 'WASM engine active — tensor physics running on CPU (C++).';
+                    } else {
+                        wasmToggleBtn.textContent = '⚙️ WebGPU Compute (active) — WASM unavailable';
+                        if (wasmStatusDiv)    wasmStatusDiv.textContent = 'WASM build not found. Run: npm run build:wasm';
+                    }
+                } else {
+                    renderer.disableWasmMode();
+                    wasmToggleBtn.textContent = '⚙️ WebGPU Compute (active)';
+                    wasmToggleBtn.style.borderColor = 'rgba(0,200,180,0.3)';
+                    wasmToggleBtn.style.color = '#99aabb';
+                    if (wasmBenchmarkBtn) wasmBenchmarkBtn.style.display = 'none';
+                    if (wasmStatusDiv)    wasmStatusDiv.textContent = 'WebGPU compute shader active.';
+                }
+            });
+        }
+
+        if (wasmBenchmarkBtn) {
+            wasmBenchmarkBtn.addEventListener('click', () => {
+                const result = renderer.runWasmBenchmark(100);
+                if (result && wasmStatusDiv) {
+                    wasmStatusDiv.textContent =
+                        `Benchmark: 100 steps in ${result.elapsedMs.toFixed(1)} ms` +
+                        ` (${result.stepsPerSec.toFixed(0)} steps/sec)`;
+                }
+            });
+        }
+
         // Audio Reactivity Button
         const audioBtn = document.createElement('button');
         audioBtn.textContent = 'Enable Audio Reactivity 🎤';

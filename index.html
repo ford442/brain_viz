@@ -655,6 +655,28 @@
                         <input type="range" id="clip" min="-2.0" max="2.0" step="0.1" value="2.0">
                     </div>
                 </div>
+
+                <!-- [Phase 1 WASM] C++ Engine Toggle -->
+                <div class="section-header" data-section="activity-wasm">Simulation Engine</div>
+                <div class="section-content">
+                    <div class="control-group">
+                        <label data-tooltip="Switch tensor physics between WebGPU compute shader (GPU) and native C++ WASM engine (CPU). Requires npm run build:wasm.">
+                            Simulation Backend
+                        </label>
+                        <button id="btn-wasm-toggle" type="button"
+                            style="width:100%;padding:8px;background:#0a1a2a;border:1px solid rgba(0,200,180,0.3);
+                                   border-radius:6px;color:#99aabb;font-size:12px;cursor:pointer;text-align:left;">
+                            ⚙️ WebGPU Compute (active)
+                        </button>
+                        <button id="btn-wasm-benchmark" type="button"
+                            style="width:100%;margin-top:4px;padding:6px;background:#0a1a2a;
+                                   border:1px solid rgba(0,200,100,0.3);border-radius:6px;
+                                   color:#99aabb;font-size:11px;cursor:pointer;text-align:left;display:none;">
+                            📊 Run WASM Benchmark (100 steps)
+                        </button>
+                        <div id="wasm-status" style="font-size:10px;color:#556677;margin-top:4px;"></div>
+                    </div>
+                </div>
             </div>
 
             <div id="tab-neurochemical" class="tab-pane">

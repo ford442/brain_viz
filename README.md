@@ -40,6 +40,20 @@ Unlike surface-only visualizations, this engine maintains a **32x32x32 3D Storag
     *   `BrainRenderer`: Manages GPU device, pipelines, and render loop.
     *   `BrainGeometry`: Generates procedural brain mesh and fiber grids.
     *   `Compute Shader`: Handles physics/signal logic (Diffusion, Decay).
+    *   `BrainTensorEngine` (C++ WASM): Optional hybrid simulation path — see below.
+
+## 🧪 C++ WASM Simulation Engine (Phase 1)
+
+A native C++ simulation backend can optionally replace the WebGPU compute shader for tensor physics.  The render pipeline is identical in both modes.
+
+**Build the WASM module** (requires [Emscripten](https://emscripten.org/)):
+```bash
+npm run build:wasm
+```
+
+**Enable at runtime:** click the **"Simulation Engine"** toggle in the Activity tab of the control panel, or call `renderer.enableWasmMode()` from the browser console.
+
+See [`docs/wasm-engine.md`](docs/wasm-engine.md) for full technical details.
 
 ## 🚀 Running Locally
 1.  **Clone (shallow recommended):**
