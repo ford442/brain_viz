@@ -994,5 +994,16 @@ export function createDefaultHandlers(player) {
         }
     });
 
+
+    // [Phase 10] Neuroplasticity Sprouting
+    handlers.set('neuroplasticity', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.5;
+        const duration = evt.duration || 5.0;
+        const ease = evt.ease || 'sineInOut';
+
+        player.startLerp({ key: 'growth', value: intensity, duration: duration, ease: ease });
+        player.startLerp({ key: 'flowSpeed', value: 8.0, duration: duration, ease: ease });
+    });
+
     return handlers;
 }

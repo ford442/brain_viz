@@ -108,6 +108,8 @@
 
 - [x] **Procedural Cellular Advection:** Expand fluid dynamics to push and advect individual soma particles or fibers based on the fluid velocity field.
 - [x] **Cognitive Load Resolution (Dynamic LoD):** Implement variable rendering resolution scaled dynamically based on a `cognitiveLoad` or `fatigue` parameter to simulate visual cortex fatigue.
+### Phase 10: Neuroplasticity & Future Concepts
+- [x] **Dendritic Growth / Neuroplasticity:** Implement `neuroplasticity` event handler to simulate real-time growth of new connections by modulating the `growth` uniform over time. Bound to a routine.
 ---
 ## 🧪 "Dream" Log (Future Concepts)
 * *Idea:* "What if we visualized visual cortex processing by simulating progressive edge-detection filters directly on the render pipeline?"
@@ -199,6 +201,7 @@
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "Neuromodulation Interface" - What if we allowed users to connect external API data to drive these neuromodulators directly?
 ## 📜 Changelog
+* [2026-05-21] - Created Phase 10 (Neuroplasticity & Future Concepts) and added Dendritic Growth task based on Dream Log.
 * [2026-05-15] - Completed Phase 2 (Camera Coordinates Map). Added explicit camera regions in `main.js` and created a 'Lobe Tour' mini-routine to demonstrate a smooth fly-through. Added new idea to Dream Log.
 * [2026-05-07] - Completed Phase 5 (Heavy Metal Accumulation). Implemented `heavyMetal` parameter in `brain-renderer.js` and updated shaders to permanently alter mesh structure based on heavy metal accumulation. Bound to 'P' key in `main.js`. Added neural synchronization idea to Dream Log.
 * [2026-05-12] - Completed Phase 2 (Myelin Degradation). Implemented `myelin_degradation` event handler in `routine-player.js` to simulate neurodegenerative conditions. Bound to 'N' key in `main.js`. Added localized brain damage idea to Dream Log.
