@@ -3,6 +3,7 @@ import { TimelineEditor } from './timeline-editor.js';
 // Neuro-Weaver V2.8
 
 import { BUILTIN_PATTERNS } from './tensor-player.js';
+import { setupTimelineEditor } from './ui-timeline-editor.js';
 
 export function setupLegendPanel() {
     const fabHelp = document.createElement('button');
@@ -581,6 +582,7 @@ export function setupRoutineTransport(player, controls) {
     routineContainer.appendChild(fileWrapper);
 
     // --- GUI Timeline Editor ---
+    setupTimelineEditor(player, routineContainer);
     const timelineEditor = new TimelineEditor(player);
 
     const btnEditor = document.createElement('button');

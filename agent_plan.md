@@ -67,6 +67,7 @@
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 - [x] **Heartbeat Simulation:** Implement a heartbeat event type that triggers rhythmic cardiovascular pulses.
 - [x] **Respiration Simulation:** Implement a respiration event type that links to heartbeat and modulates flow speed and overall scene intensity.
+- [x] **Interactive Timeline Editor:** Created a visual, drag-and-drop timeline editor for sequence building instead of writing JSON directly.
 ### Phase 3: "Brain DJ" Mode (Live Performance)
 - [x] **Dynamic Environment Reactions:** Allow respiration rate to dynamically react to visual stimuli or events.
 - [x] **Keyboard Triggers:** Bind number keys (1-9) to specific mini-routines (e.g., Press '1' for "Sudden Surprise", '2' for "Calm Down").
@@ -112,7 +113,6 @@
 * *Idea:* "What if we visualized visual cortex processing by simulating progressive edge-detection filters directly on the render pipeline?"
 * *Idea:* "What if we visualized breathing rate as a subtle global illumination pulsing effect?"
 * *Idea:* "Visualizing breathing rate as a slow sine wave modulating the alpha channel of the background."
-*Idea:* "Interactive Timeline Editor" - A GUI for users to visually sequence routine events rather than writing JSON/CSV.
 * *Idea:* "What if we visualized localized brain damage (e.g., stroke) by selectively disabling connectome pulses in specific coordinates?"
 * *Idea:* "What if we visualized sleep deprivation as progressive desaturation and increased glitch frequency?"
 *Idea:* "What if we visualized neuroplasticity as real-time growth of new connections?"
