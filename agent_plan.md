@@ -63,6 +63,7 @@
 - [x] **Endocannabinoid State Routine:** Implement endocannabinoid event handler to visualize enhanced flow and appetite.
 - [x] **GUI Timeline Editor:** Create a visual timeline editor for creating custom routines interactively.
 - [x] **Myelin Degradation:** Implement `myelin_degradation` event handler to simulate neurodegenerative conditions.
+- [x] **Neuroplasticity Sprouting:** Implement an event type that dynamically increases connection density over time.
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 - [x] **Heartbeat Simulation:** Implement a heartbeat event type that triggers rhythmic cardiovascular pulses.
@@ -229,3 +230,4 @@
 * [2026-05-20] - Completed Phase 3 (Dynamic Environment Reactions). Integrated stateful respiration rate driven by visual stimuli and AudioReactor to simulate excitement.
 * *Idea:* "What if we visualized breathing rate visually using volumetric particle condensation near the olfactory bulb?"
 * *Idea:* "What if we allowed users to map their own custom audio features to arbitrary parameters via a GUI matrix?
+* *Idea:* "What if we visualized neurotransmitter depletion as gradual mesh decimation?"
