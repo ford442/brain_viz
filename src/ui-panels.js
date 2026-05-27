@@ -1,3 +1,4 @@
+import { TimelineEditor } from './timeline-editor.js';
 // src/ui-panels.js — Extracted UI panel builders from main.js
 // Neuro-Weaver V2.8
 
@@ -582,6 +583,22 @@ export function setupRoutineTransport(player, controls) {
 
     // --- GUI Timeline Editor ---
     setupTimelineEditor(player, routineContainer);
+    const timelineEditor = new TimelineEditor(player);
+
+    const btnEditor = document.createElement('button');
+    btnEditor.textContent = 'Open Timeline Editor';
+    btnEditor.dataset.tooltip = "Create and edit custom routines interactively";
+    btnEditor.style.width = '100%';
+    btnEditor.style.marginTop = '8px';
+    btnEditor.style.padding = '6px 10px';
+    btnEditor.style.background = '#2a1a3e';
+    btnEditor.style.border = '1px solid #554466';
+    btnEditor.style.borderRadius = '6px';
+    btnEditor.style.color = '#ccaabb';
+    btnEditor.style.cursor = 'pointer';
+    btnEditor.onclick = () => timelineEditor.open();
+
+    routineContainer.appendChild(btnEditor);
     // --- End GUI Timeline Editor ---
 
     // Event Listeners
