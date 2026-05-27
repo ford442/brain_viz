@@ -603,8 +603,10 @@ export const MINI_ROUTINES = {
         { time: 8.0, type: 'camera', target: 'global', duration: 2.0 }
     ],
     'Q': [ // Neuroplasticity Sprouting
-        { time: 0.0, type: 'text', message: 'Neuroplasticity Sprouting...', duration: 2.0 },
-        { time: 0.0, type: 'neuroplasticity', value: 0.5 },
-        { time: 2.0, type: 'calm' }
-    ]
+        { time: 0.0, type: 'text', message: 'Neuroplasticity: Forming New Connections', duration: 3.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'neuroplasticity', intensity: 2.0, duration: 5.0 },
+        { time: 5.0, type: 'text', message: 'Connections established.', duration: 2.0 },
+        { time: 6.0, type: 'calm' }
+    ],
 };
