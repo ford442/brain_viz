@@ -129,6 +129,11 @@ async function init() {
         player.registerHandler('debug', (evt) => {
             console.log(`%c[Routine Debug] ${evt.message}`, 'color: #ff00ff; font-weight: bold;');
         });
+        player.registerHandler('neuroplasticity', (evt) => {
+            if (player.renderer && player.renderer.params) {
+                player.renderer.params.growth = (player.renderer.params.growth || 0) + (evt.value || 0.1);
+            }
+        });
         player.registerSubRoutines(MINI_ROUTINES);
 
         // === Audio Reactor (Brain DJ Mode) ===

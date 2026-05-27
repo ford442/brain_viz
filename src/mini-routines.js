@@ -601,5 +601,10 @@ export const MINI_ROUTINES = {
         { time: 8.0, type: 'calm' },
         { time: 8.0, type: 'heavy_metal', value: 0.0, duration: 2.0 },
         { time: 8.0, type: 'camera', target: 'global', duration: 2.0 }
+    ],
+    'Q': [ // Neuroplasticity Sprouting
+        { time: 0.0, type: 'text', message: 'Neuroplasticity Sprouting...', duration: 2.0 },
+        { time: 0.0, type: 'neuroplasticity', value: 0.5 },
+        { time: 2.0, type: 'calm' }
     ]
 };

@@ -63,10 +63,12 @@
 - [x] **Endocannabinoid State Routine:** Implement endocannabinoid event handler to visualize enhanced flow and appetite.
 - [x] **GUI Timeline Editor:** Create a visual timeline editor for creating custom routines interactively.
 - [x] **Myelin Degradation:** Implement `myelin_degradation` event handler to simulate neurodegenerative conditions.
+- [x] **Neuroplasticity Sprouting:** Implement an event type that dynamically increases connection density over time.
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 - [x] **Heartbeat Simulation:** Implement a heartbeat event type that triggers rhythmic cardiovascular pulses.
 - [x] **Respiration Simulation:** Implement a respiration event type that links to heartbeat and modulates flow speed and overall scene intensity.
+- [x] **Interactive Timeline Editor:** Created a visual, drag-and-drop timeline editor for sequence building instead of writing JSON directly.
 ### Phase 3: "Brain DJ" Mode (Live Performance)
 - [x] **Dynamic Environment Reactions:** Allow respiration rate to dynamically react to visual stimuli or events.
 - [x] **Keyboard Triggers:** Bind number keys (1-9) to specific mini-routines (e.g., Press '1' for "Sudden Surprise", '2' for "Calm Down").
@@ -112,7 +114,6 @@
 * *Idea:* "What if we visualized visual cortex processing by simulating progressive edge-detection filters directly on the render pipeline?"
 * *Idea:* "What if we visualized breathing rate as a subtle global illumination pulsing effect?"
 * *Idea:* "Visualizing breathing rate as a slow sine wave modulating the alpha channel of the background."
-*Idea:* "Interactive Timeline Editor" - A GUI for users to visually sequence routine events rather than writing JSON/CSV.
 * *Idea:* "What if we visualized localized brain damage (e.g., stroke) by selectively disabling connectome pulses in specific coordinates?"
 * *Idea:* "What if we visualized sleep deprivation as progressive desaturation and increased glitch frequency?"
 *Idea:* "What if we visualized neuroplasticity as real-time growth of new connections?"
@@ -229,3 +230,4 @@
 * [2026-05-20] - Completed Phase 3 (Dynamic Environment Reactions). Integrated stateful respiration rate driven by visual stimuli and AudioReactor to simulate excitement.
 * *Idea:* "What if we visualized breathing rate visually using volumetric particle condensation near the olfactory bulb?"
 * *Idea:* "What if we allowed users to map their own custom audio features to arbitrary parameters via a GUI matrix?
+* *Idea:* "What if we visualized neurotransmitter depletion as gradual mesh decimation?"
