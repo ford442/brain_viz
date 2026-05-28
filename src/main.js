@@ -129,12 +129,41 @@ async function init() {
         player.registerHandler('debug', (evt) => {
             console.log(`%c[Routine Debug] ${evt.message}`, 'color: #ff00ff; font-weight: bold;');
         });
+        player.registerHandler('memory_fragmentation', (evt) => {
+            if (player.renderer && player.renderer.params) {
+                player.renderer.params.aberration = (player.renderer.params.aberration || 0) + (evt.value || 0.5);
+                player.renderer.params.grain = (player.renderer.params.grain || 0) + (evt.value || 0.5);
+                player.renderer.params.shake = (player.renderer.params.shake || 0) + (evt.value || 0.2);
+                player.renderer.params.flowSpeed = Math.max(0.1, (player.renderer.params.flowSpeed || 4.0) - (evt.value || 2.0));
+
+                // Trigger a glitch effect
+                player.executeEvent({ type: 'glitch', duration: evt.duration || 1.0, intensity: evt.value || 0.8 });
+
+                if (evt.message) {
+                    player.executeEvent({ type: 'text', message: evt.message, duration: evt.duration || 2.0 });
+                }
+            }
+        });
         player.registerHandler('neuroplasticity', (evt) => {
             if (player.renderer && player.renderer.params) {
                 player.renderer.params.growth = (player.renderer.params.growth || 0) + (evt.value || 0.1);
             }
         });
         player.registerSubRoutines(MINI_ROUTINES);
+
+        MINI_ROUTINES['M'] = [
+            { time: 0.0, type: 'text', message: 'Memory Fragmentation Sequence', duration: 2.0 },
+            { time: 0.0, type: 'style', value: 1 },
+            { time: 0.0, type: 'camera', target: 'close-up', duration: 1.0 },
+            { time: 1.0, type: 'memory_fragmentation', value: 0.8, duration: 2.5, message: 'Synaptic uncoupling detected...' },
+            { time: 3.5, type: 'flashback', duration: 1.5, intensity: 1.2 },
+            { time: 5.0, type: 'memory_fragmentation', value: 1.5, duration: 3.0, message: 'Data loss imminent.' },
+            { time: 8.0, type: 'calm' },
+            { time: 8.0, type: 'camera', target: 'overview', duration: 2.0 },
+            { time: 8.0, type: 'text', message: 'Fragmentation Subsided.', duration: 2.0 }
+        ];
+
+
 
         // === Audio Reactor (Brain DJ Mode) ===
         const audioReactor = new AudioReactor();
@@ -156,6 +185,14 @@ async function init() {
         });
 
         setupLegendPanel();
+    // Add memory fragmentation to legend
+    const legendPanel = document.getElementById('legend-panel');
+    if (legendPanel) {
+        const newEntry = document.createElement('div');
+        newEntry.innerHTML = '<b>M</b> : Memory Fragmentation';
+        legendPanel.appendChild(newEntry);
+    }
+
         setupOverlays(player, filterOverlay, inputs, labels);
         const controls = document.getElementById('controls');
         const transport = setupRoutineTransport(player, controls);

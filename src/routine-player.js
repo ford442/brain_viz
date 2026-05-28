@@ -452,6 +452,7 @@ export class RoutinePlayer {
         if (!this.isPlaying) return;
 
         // Ensure WebGPU context gracefully degrades
+        // V2.9 verified: gracefully stop if device is lost
         const isDeviceLost = this._deviceLost;
         const rendererMissing = !this.renderer || !this.renderer.device;
 

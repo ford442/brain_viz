@@ -10,6 +10,7 @@
 - [x] **"Deep Thought" Script:** Hardcode the demo routine (Organic -> Visual Input -> Connectome Processing -> Heatmap Aftermath).
 - [x] **Playback UI:** Add a "Run Sequence" button and a transport clock (Play/Stop/Loop) to the DOM.
 ### Phase 2: Advanced Choreography
+- [x] **Memory Fragmentation:** Implement memory fragmentation event and routine.
 - [x] **Parameter Interpolation/Easing:** Added parameter interpolation.
 - [x] **Sleep Deprivation Simulation:** Implement progressive desaturation, blurring, and increased glitch frequency to simulate sleep deprivation.
 - [x] **Sensory Overload Simulation:** Implement sensory overload event and routine.
@@ -113,6 +114,7 @@
 - [x] **Dendritic Growth / Neuroplasticity:** Implement `neuroplasticity` event handler to simulate real-time growth of new connections by modulating the `growth` uniform over time. Bound to a routine.
 ---
 ## 🧪 "Dream" Log (Future Concepts)
+* *Idea:* "What if we visualized auditory hallucinations as rapid localized cortex flashes?"
 * *Idea:* "What if we visualized visual cortex processing by simulating progressive edge-detection filters directly on the render pipeline?"
 * *Idea:* "What if we visualized breathing rate as a subtle global illumination pulsing effect?"
 * *Idea:* "Visualizing breathing rate as a slow sine wave modulating the alpha channel of the background."
@@ -202,6 +204,7 @@
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "Neuromodulation Interface" - What if we allowed users to connect external API data to drive these neuromodulators directly?
 ## 📜 Changelog
+* [2026-05-28] - Completed Phase 2 (Memory Fragmentation). Implemented `memory_fragmentation` event and updated `agent_plan.md` as per neuro-script cycle. Added auditory hallucination idea to Dream Log.
 * [2026-05-21] - Created Phase 10 (Neuroplasticity & Future Concepts) and added Dendritic Growth task based on Dream Log.
 * [2026-05-15] - Completed Phase 2 (Camera Coordinates Map). Added explicit camera regions in `main.js` and created a 'Lobe Tour' mini-routine to demonstrate a smooth fly-through. Added new idea to Dream Log.
 * [2026-05-07] - Completed Phase 5 (Heavy Metal Accumulation). Implemented `heavyMetal` parameter in `brain-renderer.js` and updated shaders to permanently alter mesh structure based on heavy metal accumulation. Bound to 'P' key in `main.js`. Added neural synchronization idea to Dream Log.
