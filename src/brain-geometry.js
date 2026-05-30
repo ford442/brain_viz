@@ -1,6 +1,6 @@
 // brain-geometry.js
-// Procedural Brain Generation with Circuit Grid - V2.5 Verified
-// [Neuro-Weaver] Generates deformed sphere mesh and internal fiber grid.
+// Procedural Brain Generation with Organic Connectome Fibers - V3.0
+// [Neuro-Weaver] Generates deformed sphere mesh and anatomically-guided fiber pathways.
 
 export class BrainGeometry {
     constructor() {
@@ -9,6 +9,8 @@ export class BrainGeometry {
         this.indices = [];
         this.fibers = [];
         this.somaPositions = [];
+        // Per-segment metadata: [radius, bundleId, myelin] — companion buffer for Phase 2
+        this.fiberMetadata = [];
     }
 
     generate(rows, cols) {
@@ -18,6 +20,7 @@ export class BrainGeometry {
         this.indices = [];
         this.fibers = [];
         this.somaPositions = [];
+        this.fiberMetadata = [];
 
         // 1. Generate deformed sphere (Brain Mesh)
         for (let r = 0; r <= rows; r++) {
@@ -54,8 +57,8 @@ export class BrainGeometry {
             }
         }
 
-        // 2. Generate Structured Circuit Grid
-        this.generateCircuitGrid();
+        // 2. Generate Organic Connectome Fibers (replaces Manhattan grid for style=2)
+        this.generateOrganicConnectomeFibers();
     }
 
     applyBrainDeformation(x, y, z) {
@@ -97,7 +100,7 @@ export class BrainGeometry {
         return len < maxRadius;
     }
 
-    // [V2.3] Circuit Grid Generation
+    // [V2.3] Circuit Grid Generation — kept as named fallback
     generateCircuitGrid() {
         const step = 0.15; // Grid spacing
         const range = 1.5; // Bounding box half-size
@@ -147,6 +150,151 @@ export class BrainGeometry {
         }
     }
 
+    // [V3.0] Organic Connectome Fiber Generation
+    // Generates curved, branching, anatomically-guided white-matter tracts using
+    // quadratic Bézier splines seeded from 16 major bilateral bundles.
+    // Replaces the Manhattan circuit grid for style=2 Connectome mode.
+    generateOrganicConnectomeFibers() {
+        // Bundle descriptor fields:
+        //   s  — spline start  [x,y,z]
+        //   c  — Bézier control point  [x,y,z]
+        //   e  — spline end  [x,y,z]
+        //   r  — nominal radius (for metadata / future thick-line rendering)
+        //   m  — myelin fraction 0-1 (metadata, Phase 2)
+        //   id — bundle ID 0-7 (metadata, Phase 2)
+        //   n  — number of parallel sub-fibers per bundle
+        //   b  — terminal branch count per sub-fiber endpoint
+        const BUNDLES = [
+            // Corpus Callosum — genu (frontal inter-hemispheric commissure)
+            { s:[-0.9,  0.2,  0.55], c:[ 0.0,  0.85,  0.4], e:[ 0.9,  0.2,  0.55],
+              r:0.07, m:0.9, id:0, n:28, b:6 },
+            // Corpus Callosum — splenium (posterior inter-hemispheric commissure)
+            { s:[-0.85, 0.2, -0.45], c:[ 0.0,  0.65, -0.6], e:[ 0.85, 0.2, -0.45],
+              r:0.065, m:0.9, id:0, n:24, b:5 },
+            // Left Corticospinal tract — descending motor projection
+            { s:[-0.35, 0.85,  0.3], c:[-0.4,  0.05,  0.45], e:[-0.1, -0.85,  0.1],
+              r:0.06, m:0.88, id:1, n:22, b:4 },
+            // Right Corticospinal tract
+            { s:[ 0.35, 0.85,  0.3], c:[ 0.4,  0.05,  0.45], e:[ 0.1, -0.85,  0.1],
+              r:0.06, m:0.88, id:1, n:22, b:4 },
+            // Left Optic radiation — visual projection to occipital cortex
+            { s:[-0.2,  0.05, -0.85], c:[-0.65, -0.3, -0.45], e:[-0.8, -0.05,  0.15],
+              r:0.05, m:0.82, id:2, n:20, b:5 },
+            // Right Optic radiation
+            { s:[ 0.2,  0.05, -0.85], c:[ 0.65, -0.3, -0.45], e:[ 0.8, -0.05,  0.15],
+              r:0.05, m:0.82, id:2, n:20, b:5 },
+            // Left Superior Longitudinal Fasciculus — fronto-parietal association
+            { s:[-0.8,  0.45,  0.5], c:[-1.0,  0.3, -0.05], e:[-0.8,  0.1, -0.65],
+              r:0.055, m:0.78, id:3, n:20, b:3 },
+            // Right Superior Longitudinal Fasciculus
+            { s:[ 0.8,  0.45,  0.5], c:[ 1.0,  0.3, -0.05], e:[ 0.8,  0.1, -0.65],
+              r:0.055, m:0.78, id:3, n:20, b:3 },
+            // Left Arcuate Fasciculus — language fronto-temporal arc
+            { s:[-0.6,  0.35,  0.5], c:[-0.3,  0.7,  0.2], e:[-0.85, -0.2,  0.05],
+              r:0.05, m:0.76, id:4, n:18, b:3 },
+            // Right Arcuate Fasciculus
+            { s:[ 0.6,  0.35,  0.5], c:[ 0.3,  0.7,  0.2], e:[ 0.85, -0.2,  0.05],
+              r:0.05, m:0.76, id:4, n:18, b:3 },
+            // Left Cingulum — medial limbic association arc
+            { s:[-0.1,  0.6,  0.5], c:[-0.15, 0.6,  0.0], e:[-0.1,  0.3, -0.6],
+              r:0.045, m:0.74, id:5, n:16, b:2 },
+            // Right Cingulum
+            { s:[ 0.1,  0.6,  0.5], c:[ 0.15, 0.6,  0.0], e:[ 0.1,  0.3, -0.6],
+              r:0.045, m:0.74, id:5, n:16, b:2 },
+            // Left Inferior Fronto-Occipital Fasciculus — long-range temporal bypass
+            { s:[-0.75, 0.2,  0.6], c:[-0.8, -0.1,  0.0], e:[-0.65, -0.1, -0.75],
+              r:0.05, m:0.75, id:6, n:18, b:3 },
+            // Right Inferior Fronto-Occipital Fasciculus
+            { s:[ 0.75, 0.2,  0.6], c:[ 0.8, -0.1,  0.0], e:[ 0.65, -0.1, -0.75],
+              r:0.05, m:0.75, id:6, n:18, b:3 },
+            // Left Uncinate Fasciculus — hooked temporal-frontal tract
+            { s:[-0.65, -0.3,  0.35], c:[-0.5,  0.1,  0.65], e:[-0.55, 0.4,  0.65],
+              r:0.045, m:0.72, id:7, n:16, b:3 },
+            // Right Uncinate Fasciculus
+            { s:[ 0.65, -0.3,  0.35], c:[ 0.5,  0.1,  0.65], e:[ 0.55, 0.4,  0.65],
+              r:0.045, m:0.72, id:7, n:16, b:3 },
+        ];
+
+        for (const bun of BUNDLES) {
+            for (let s = 0; s < bun.n; s++) {
+                // Perturb each sub-fiber within the bundle radius for natural spread
+                const jit = bun.r * 0.7;
+                const rnd = () => (Math.random() - 0.5) * 2;
+                const pS = [bun.s[0]+rnd()*jit, bun.s[1]+rnd()*jit, bun.s[2]+rnd()*jit];
+                const pC = [bun.c[0]+rnd()*jit*0.4, bun.c[1]+rnd()*jit*0.4, bun.c[2]+rnd()*jit*0.4];
+                const pE = [bun.e[0]+rnd()*jit, bun.e[1]+rnd()*jit, bun.e[2]+rnd()*jit];
+
+                const pts = this.generateSplinePath(pS, pC, pE, 12);
+
+                for (let i = 0; i < pts.length - 1; i++) {
+                    const [x1, y1, z1] = pts[i];
+                    const [x2, y2, z2] = pts[i + 1];
+                    if (!this.isInsideBrain(x1, y1, z1) && !this.isInsideBrain(x2, y2, z2)) continue;
+                    this.fibers.push(x1, y1, z1, x2, y2, z2);
+                    const t = i / (pts.length - 1);
+                    // Metadata: radius tapers toward terminal end; bundleId and myelin for Phase 2
+                    this.fiberMetadata.push(bun.r * (1.0 - t * 0.3), bun.id, bun.m);
+                }
+
+                // Soma nodes: start, midpoint, and end of each sub-fiber
+                const mid = pts[Math.floor(pts.length / 2)];
+                [pts[0], mid, pts[pts.length - 1]].forEach(pt => {
+                    if (this.isInsideBrain(pt[0], pt[1], pt[2])) {
+                        this.somaPositions.push(pt[0], pt[1], pt[2]);
+                    }
+                });
+
+                // Fan-out terminal branches at the axon-terminal endpoint
+                this.addTerminalBranches(pts[pts.length - 1], bun.b, bun.r * 0.5, bun.id);
+            }
+        }
+    }
+
+    // [V3.0] Quadratic Bézier spline: smooth curve through a single control point.
+    // Returns (segments+1) [x,y,z] waypoints from start to end.
+    generateSplinePath(start, control, end, segments) {
+        const pts = [];
+        for (let i = 0; i <= segments; i++) {
+            const t  = i / segments;
+            const mt = 1.0 - t;
+            // B(t) = (1-t)²·P0 + 2(1-t)t·P1 + t²·P2
+            pts.push([
+                mt * mt * start[0] + 2 * mt * t * control[0] + t * t * end[0],
+                mt * mt * start[1] + 2 * mt * t * control[1] + t * t * end[1],
+                mt * mt * start[2] + 2 * mt * t * control[2] + t * t * end[2],
+            ]);
+        }
+        return pts;
+    }
+
+    // [V3.0] Cortical terminal arborisation: fans out short, tapering branch segments
+    // from a fiber endpoint to mimic axon terminals / dendritic arbors.
+    addTerminalBranches(origin, count, segRadius, bundleId) {
+        const DEPTH = 4; // branch segments per terminal fiber
+        for (let i = 0; i < count; i++) {
+            const theta = Math.random() * Math.PI * 2;
+            const phi   = Math.random() * Math.PI * 0.6;
+            const dx = Math.sin(phi) * Math.cos(theta);
+            const dy = Math.cos(phi) * 0.6 + (Math.random() - 0.5) * 0.4;
+            const dz = Math.sin(phi) * Math.sin(theta);
+
+            let [px, py, pz] = origin;
+            let len = segRadius;
+            for (let d = 0; d < DEPTH; d++) {
+                const jit = len * 0.4;
+                const nx = px + dx * len + (Math.random() - 0.5) * jit;
+                const ny = py + dy * len + (Math.random() - 0.5) * jit;
+                const nz = pz + dz * len + (Math.random() - 0.5) * jit;
+                if (this.isInsideBrain(px, py, pz) || this.isInsideBrain(nx, ny, nz)) {
+                    this.fibers.push(px, py, pz, nx, ny, nz);
+                    this.fiberMetadata.push(segRadius * (1.0 - d / DEPTH), bundleId, 0.3);
+                }
+                px = nx; py = ny; pz = nz;
+                len *= 0.65; // taper: shorter segments toward terminals
+            }
+        }
+    }
+
     getVertexData() { return new Float32Array(this.vertices); }
     getNormalData() { return new Float32Array(this.normals); }
     getIndexData() { return new Uint32Array(this.indices); }
@@ -156,4 +304,6 @@ export class BrainGeometry {
     getVertexCount() { return this.vertices.length / 3; }
     // V2.2 Getter: Soma Positions for Instancing
     getSomaPositions() { return new Float32Array(this.somaPositions); }
+    // [V3.0] Per-segment metadata [radius, bundleId, myelin] — consumed by Phase 2 pipeline
+    getFiberMetadata() { return new Float32Array(this.fiberMetadata); }
 }
