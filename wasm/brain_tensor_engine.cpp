@@ -173,26 +173,95 @@ void bte_update(
         decay     *= globalDecayMod;
         diffusion *= globalDiffMod;
 
-        // 3. Laplacian diffusion (6-neighbour, mirrors WGSL)
+        // 3. Anisotropic diffusion (Phase 3/8 — mirrors WGSL fiberDirections)
+        // Procedural fiber direction (same algorithm as brain-renderer.js uploadFiberDirections)
+        float dx_dir = 0.0f, dy_dir = 0.0f, dz_dir = 0.0f;
+        const float nwx = wx / BRAIN_RANGE; // normalized to [-1,1]
+        const float nwy = wy / BRAIN_RANGE;
+        const float nwz = wz / BRAIN_RANGE;
+
+        if (std::abs(nwz) > 0.6f) {
+            dz_dir = nwz > 0 ? 1.0f : -1.0f;
+            dx_dir = nwx * 0.2f;
+            dy_dir = nwy * 0.2f;
+        } else if (std::abs(nwx) > 0.7f) {
+            dx_dir = nwx > 0 ? 1.0f : -1.0f;
+            dy_dir = nwy * 0.1f;
+            dz_dir = nwz * 0.1f;
+        } else if (std::abs(nwy) > 0.6f) {
+            dy_dir = nwy > 0 ? 1.0f : -1.0f;
+            dx_dir = nwx * 0.15f;
+            dz_dir = nwz * 0.15f;
+        } else {
+            dx_dir = nwx;
+            dy_dir = nwy;
+            dz_dir = nwz * 0.3f;
+        }
+
+        // Add deterministic noise
+        const float noiseScale = 0.3f;
+        float h1 = std::sin(static_cast<float>(x) * 12.9898f + static_cast<float>(y) * 78.233f + static_cast<float>(z) * 45.164f) * 43758.5453f;
+        float h2 = std::sin(static_cast<float>(x) * 93.9898f + static_cast<float>(y) * 67.345f + static_cast<float>(z) * 28.921f) * 23421.631f;
+        float h3 = std::sin(static_cast<float>(x) * 45.164f + static_cast<float>(y) * 12.9898f + static_cast<float>(z) * 78.233f) * 63281.417f;
+        dx_dir += (h1 - std::floor(h1) - 0.5f) * noiseScale;
+        dy_dir += (h2 - std::floor(h2) - 0.5f) * noiseScale;
+        dz_dir += (h3 - std::floor(h3) - 0.5f) * noiseScale;
+
+        // Normalize direction
+        const float dirLen = std::sqrt(dx_dir*dx_dir + dy_dir*dy_dir + dz_dir*dz_dir);
+        if (dirLen > 0.001f) { dx_dir /= dirLen; dy_dir /= dirLen; dz_dir /= dirLen; }
+
+        // Neighbor values
+        const float valXm = (x > 0u)     ? data[eng->idx(x-1,y,z)] : val;
+        const float valXp = (x < dim-1u) ? data[eng->idx(x+1,y,z)] : val;
+        const float valYm = (y > 0u)     ? data[eng->idx(x,y-1,z)] : val;
+        const float valYp = (y < dim-1u) ? data[eng->idx(x,y+1,z)] : val;
+        const float valZm = (z > 0u)     ? data[eng->idx(x,y,z-1)] : val;
+        const float valZp = (z < dim-1u) ? data[eng->idx(x,y,z+1)] : val;
+
+        // Discrete gradient
+        const float gradX = (valXp - valXm) * 0.5f;
+        const float gradY = (valYp - valYm) * 0.5f;
+        const float gradZ = (valZp - valZm) * 0.5f;
+
+        // Neighbor average
         float neighborSum   = 0.0f;
         float neighborCount = 0.0f;
+        if (x > 0u)       { neighborSum += valXm; neighborCount += 1.0f; }
+        if (x < dim-1u)   { neighborSum += valXp; neighborCount += 1.0f; }
+        if (y > 0u)       { neighborSum += valYm; neighborCount += 1.0f; }
+        if (y < dim-1u)   { neighborSum += valYp; neighborCount += 1.0f; }
+        if (z > 0u)       { neighborSum += valZm; neighborCount += 1.0f; }
+        if (z < dim-1u)   { neighborSum += valZp; neighborCount += 1.0f; }
 
-        if (x > 0u)       { neighborSum += data[eng->idx(x-1,y,z)]; neighborCount += 1.0f; }
-        if (x < dim-1u)   { neighborSum += data[eng->idx(x+1,y,z)]; neighborCount += 1.0f; }
-        if (y > 0u)       { neighborSum += data[eng->idx(x,y-1,z)]; neighborCount += 1.0f; }
-        if (y < dim-1u)   { neighborSum += data[eng->idx(x,y+1,z)]; neighborCount += 1.0f; }
-        if (z > 0u)       { neighborSum += data[eng->idx(x,y,z-1)]; neighborCount += 1.0f; }
-        if (z < dim-1u)   { neighborSum += data[eng->idx(x,y,z+1)]; neighborCount += 1.0f; }
+        const float avg = neighborSum / std::max(1.0f, neighborCount);
+
+        // Anisotropic: project gradient onto fiber direction
+        const float along = gradX * dx_dir + gradY * dy_dir + gradZ * dz_dir;
+        const float perpX = gradX - along * dx_dir;
+        const float perpY = gradY - along * dy_dir;
+        const float perpZ = gradZ - along * dz_dir;
+        const float perpMag2 = perpX*perpX + perpY*perpY + perpZ*perpZ;
+
+        const float diffusionAlong = diffusion * 1.6f;
+        const float diffusionPerp  = diffusion * 0.35f;
+        const float sign_along = along > 0.0f ? 1.0f : (along < 0.0f ? -1.0f : 0.0f);
+
+        const float diffused = avg + along * diffusionAlong + perpMag2 * diffusionPerp * sign_along;
+        val = val + 0.7f * (diffused - val);
+
+        // Traveling phase wave (oscillatory propagation along fibers)
+        const float phaseSpeed = 4.0f;
+        const float waveFreq = 6.2832f;
+        const float spatialPhase = (nx * dx_dir + ny * dy_dir + nz * dz_dir) * waveFreq;
+        const float travelingWave = std::sin(spatialPhase - time * phaseSpeed) * 0.5f + 0.5f;
+        val += val * (travelingWave - 0.5f) * 0.08f;
 
         // 4. Directional flow bias (Frontal lobe pulls from upstream Z+)
         if (flowBias < -0.1f && z < dim-1u) {
             const float upstream = data[eng->idx(x, y, z+1)];
-            neighborSum   += upstream * 2.5f;
-            neighborCount += 2.5f;
+            val = val + diffusion * 0.4f * (upstream - val);
         }
-
-        const float avg = neighborSum / std::max(1.0f, neighborCount);
-        val = val + diffusion * (avg - val);   // equivalent to mix(val, avg, diffusion)
 
         // 5. Procedural fluid advection
         if (fluidActive > 0.0f) {
