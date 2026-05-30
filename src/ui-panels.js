@@ -64,6 +64,7 @@ export function setupLegendPanel() {
                 <div class="legend-item"><span class="legend-key">C</span><span>Glial Cleanup</span></div>
                 <div class="legend-item"><span class="legend-key">F</span><span>Fluid Dynamics</span></div>
                 <div class="legend-item"><span class="legend-key">W</span><span>Sensory Overload</span></div>
+                <div class="legend-item"><span class="legend-key">A</span><span>Auditory Hallucination</span></div>
                 <div class="legend-item"><span class="legend-key">Q</span><span>Neuroplasticity</span></div>
                 <div class="legend-item"><span class="legend-key">N</span><span>Myelin Degradation</span></div>
             </div>
