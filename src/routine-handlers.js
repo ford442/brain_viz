@@ -995,6 +995,41 @@ export function createDefaultHandlers(player) {
     });
 
 
+
+    // [Phase 10] Auditory Hallucinations
+    handlers.set('auditory_hallucination', (evt) => {
+        const flashes = evt.flashes || 10;
+        const duration = evt.duration || 2.0;
+        const intensity = evt.intensity || 2.0;
+
+        for (let i = 0; i < flashes; i++) {
+            const timeOffset = (Math.random() * duration);
+
+            // Generate random coordinate roughly around temporal lobe
+            const x = (Math.random() > 0.5 ? 1 : -1) * (0.5 + Math.random() * 0.3);
+            const y = -0.2 + Math.random() * 0.4;
+            const z = -0.3 + Math.random() * 0.6;
+
+            // We use setTimeout because this is an instant handler, but we want the flashes distributed over time.
+            // Alternatively, we could inject these into the timeline, but since we are inside a handler, setTimeout is acceptable for transient visual effects.
+            // But since RoutinePlayer relies on a declarative timeline, modifying the timeline is better.
+
+            const dynamicEvent = {
+                time: player.elapsedTime + timeOffset,
+                type: 'stimulus',
+                target: [x, y, z],
+                intensity: intensity * (0.5 + Math.random() * 0.5)
+            };
+
+            // Find insertion point to keep routine sorted
+            let insertIdx = player.cursor;
+            while (insertIdx < player.routine.length && player.routine[insertIdx].time <= dynamicEvent.time) {
+                insertIdx++;
+            }
+            player.routine.splice(insertIdx, 0, dynamicEvent);
+        }
+    });
+
     // [Phase 10] Neuroplasticity Sprouting
     handlers.set('neuroplasticity', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.5;

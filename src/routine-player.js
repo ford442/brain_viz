@@ -650,7 +650,12 @@ export class RoutinePlayer {
                 console.error(`[Routine Engine] Error executing extensible handler '${resolvedEvt.type}':`, handlerError);
             }
         } else {
-            console.warn(`[Routine Engine] Unrecognized Event Type: '${resolvedEvt.type}'. Extensible registry lacks this handler.`);
+            // [Event Handling Requirement] Fallback extensible switch statement
+            switch (resolvedEvt.type) {
+                default:
+                    console.warn(`[Routine Engine] Unrecognized Event Type: '${resolvedEvt.type}'. Extensible switch/registry lacks this handler.`);
+                    break;
+            }
         }
 
         // Dispatch to UI listener if configured

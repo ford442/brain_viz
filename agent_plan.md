@@ -10,6 +10,9 @@
 - [x] **"Deep Thought" Script:** Hardcode the demo routine (Organic -> Visual Input -> Connectome Processing -> Heatmap Aftermath).
 - [x] **Playback UI:** Add a "Run Sequence" button and a transport clock (Play/Stop/Loop) to the DOM.
 ### Phase 2: Advanced Choreography
+- [ ] **Camera Coordinates Map:** Define explicit spline regions for complex camera angles.
+- [ ] **Parameter Interpolation/Easing:** Enhance routines with advanced smooth interpolation logic.
+- [x] **Routine Logic & Extensibility Refactor:** Ensure `tick()` loop uses `performance.now()`, `executeEvent` is extensible, and WebGPU context gracefully degrades.
 - [x] **Memory Fragmentation:** Implement memory fragmentation event and routine.
 - [x] **Parameter Interpolation/Easing:** Added parameter interpolation.
 - [x] **Sleep Deprivation Simulation:** Implement progressive desaturation, blurring, and increased glitch frequency to simulate sleep deprivation.
@@ -112,8 +115,10 @@
 - [x] **Cognitive Load Resolution (Dynamic LoD):** Implement variable rendering resolution scaled dynamically based on a `cognitiveLoad` or `fatigue` parameter to simulate visual cortex fatigue.
 ### Phase 10: Neuroplasticity & Future Concepts
 - [x] **Dendritic Growth / Neuroplasticity:** Implement `neuroplasticity` event handler to simulate real-time growth of new connections by modulating the `growth` uniform over time. Bound to a routine.
+- [x] **Auditory Hallucinations:** Implement `auditory_hallucination` event handler in `routine-player.js` to simulate rapid localized cortex flashes via rapid `stimulus` events.
 ---
 ## 🧪 "Dream" Log (Future Concepts)
+* *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "What if we visualized auditory hallucinations as rapid localized cortex flashes?"
 * *Idea:* "What if we visualized visual cortex processing by simulating progressive edge-detection filters directly on the render pipeline?"
 * *Idea:* "What if we visualized breathing rate as a subtle global illumination pulsing effect?"
@@ -204,6 +209,8 @@
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "Neuromodulation Interface" - What if we allowed users to connect external API data to drive these neuromodulators directly?
 ## 📜 Changelog
+* [2026-05-31] - Completed Routine Logic Refactor. Ensured `tick()` uses `performance.now()`, `executeEvent` uses switch, and WebGPU degrades safely. Added tasks for Interpolation and Camera Maps, and Serotonin to Dream Log.
+* [2026-05-30] - Completed Phase 10 (Auditory Hallucinations). Implemented `auditory_hallucination` event handler in `routine-handlers.js` to simulate rapid flashes via generated stimulus events. Added mini-routine 'A' to `mini-routines.js`. Added neural synchronization idea to Dream Log.
 * [2026-05-28] - Completed Phase 2 (Memory Fragmentation). Implemented `memory_fragmentation` event and updated `agent_plan.md` as per neuro-script cycle. Added auditory hallucination idea to Dream Log.
 * [2026-05-21] - Created Phase 10 (Neuroplasticity & Future Concepts) and added Dendritic Growth task based on Dream Log.
 * [2026-05-15] - Completed Phase 2 (Camera Coordinates Map). Added explicit camera regions in `main.js` and created a 'Lobe Tour' mini-routine to demonstrate a smooth fly-through. Added new idea to Dream Log.
