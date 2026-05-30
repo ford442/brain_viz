@@ -9,7 +9,7 @@ export class BrainGeometry {
         this.indices = [];
         this.fibers = [];
         this.somaPositions = [];
-        // Per-segment metadata: [radius, bundleId, myelin] — companion buffer for Phase 2
+        // Per-vertex metadata: [radius, bundleId, myelin] — companion buffer for Phase 2
         this.fiberMetadata = [];
     }
 
@@ -230,10 +230,9 @@ export class BrainGeometry {
                     const [x1, y1, z1] = pts[i];
                     const [x2, y2, z2] = pts[i + 1];
                     if (!this.isInsideBrain(x1, y1, z1) && !this.isInsideBrain(x2, y2, z2)) continue;
-                    this.fibers.push(x1, y1, z1, x2, y2, z2);
                     const t = i / (pts.length - 1);
-                    // Metadata: radius tapers toward terminal end; bundleId and myelin for Phase 2
-                    this.fiberMetadata.push(bun.r * (1.0 - t * 0.3), bun.id, bun.m);
+                    const radius = bun.r * (1.0 - t * 0.3);
+                    this.addFiberRibbonSegment([x1, y1, z1], [x2, y2, z2], radius, bun.id, bun.m);
                 }
 
                 // Soma nodes: start, midpoint, and end of each sub-fiber
@@ -286,12 +285,60 @@ export class BrainGeometry {
                 const ny = py + dy * len + (Math.random() - 0.5) * jit;
                 const nz = pz + dz * len + (Math.random() - 0.5) * jit;
                 if (this.isInsideBrain(px, py, pz) || this.isInsideBrain(nx, ny, nz)) {
-                    this.fibers.push(px, py, pz, nx, ny, nz);
-                    this.fiberMetadata.push(segRadius * (1.0 - d / DEPTH), bundleId, 0.3);
+                    this.addFiberRibbonSegment(
+                        [px, py, pz],
+                        [nx, ny, nz],
+                        segRadius * (1.0 - d / DEPTH),
+                        bundleId,
+                        0.3
+                    );
                 }
                 px = nx; py = ny; pz = nz;
                 len *= 0.65; // taper: shorter segments toward terminals
             }
+        }
+    }
+
+    addFiberRibbonSegment(start, end, radius, bundleId, myelin) {
+        const dx = end[0] - start[0];
+        const dy = end[1] - start[1];
+        const dz = end[2] - start[2];
+        const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (length < 1e-6) return;
+
+        const tx = dx / length;
+        const ty = dy / length;
+        const tz = dz / length;
+
+        const upX = Math.abs(ty) > 0.92 ? 1 : 0;
+        const upY = Math.abs(ty) > 0.92 ? 0 : 1;
+        const upZ = 0;
+
+        let sx = ty * upZ - tz * upY;
+        let sy = tz * upX - tx * upZ;
+        let sz = tx * upY - ty * upX;
+        const sLen = Math.sqrt(sx * sx + sy * sy + sz * sz) || 1.0;
+        sx = (sx / sLen) * radius;
+        sy = (sy / sLen) * radius;
+        sz = (sz / sLen) * radius;
+
+        const v0 = [start[0] + sx, start[1] + sy, start[2] + sz];
+        const v1 = [start[0] - sx, start[1] - sy, start[2] - sz];
+        const v2 = [end[0] + sx, end[1] + sy, end[2] + sz];
+        const v3 = [end[0] - sx, end[1] - sy, end[2] - sz];
+
+        // Two triangles per segment
+        this.fibers.push(
+            v0[0], v0[1], v0[2],
+            v2[0], v2[1], v2[2],
+            v1[0], v1[1], v1[2],
+            v1[0], v1[1], v1[2],
+            v2[0], v2[1], v2[2],
+            v3[0], v3[1], v3[2]
+        );
+
+        for (let i = 0; i < 6; i++) {
+            this.fiberMetadata.push(radius, bundleId, Math.max(0.0, Math.min(1.0, myelin)));
         }
     }
 
@@ -300,6 +347,7 @@ export class BrainGeometry {
     getIndexData() { return new Uint32Array(this.indices); }
     getIndexCount() { return this.indices.length; }
     getFiberData() { return new Float32Array(this.fibers); }
+    getFiberDataWithMetadata() { return new Float32Array(this.fiberMetadata); }
     getFiberVertexCount() { return this.fibers.length / 3; }
     getVertexCount() { return this.vertices.length / 3; }
     // V2.2 Getter: Soma Positions for Instancing

@@ -205,48 +205,42 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     // Signals travel along the fibers based on vertex index and flow speed
     if (uniforms.style >= 2.0 && uniforms.style < 3.0) {
         finalPos = input.position;
+        let radius = max(0.002, input.normal.x);
+        let bundleId = input.normal.y;
+        let myelin = clamp(input.normal.z, 0.0, 1.0);
+        let degradation = clamp(uniforms.cortisol, 0.0, 1.0);
+        let effectiveMyelin = myelin * (1.0 - degradation * (1.0 - myelin));
+        let effectiveRadius = radius * mix(0.45, 1.0, effectiveMyelin);
 
-        // [Phase 5] Cortisol Structural Decay
-        if (uniforms.cortisol > 0.0) {
-            let decayFactor = 1.0 - (uniforms.cortisol * 0.3);
-            finalPos *= max(0.0, decayFactor);
-        }
+        let conductionSpeed = uniforms.flowSpeed * (0.45 + effectiveMyelin * 1.65 + effectiveRadius * 18.0);
+        signalStrength = calculateSignalFlow(vertexIndex, worldPos, uniforms.time, conductionSpeed, FLOW_SCALE);
 
-        var baseColor = vec3<f32>(0.05, 0.1, 0.15); // Dark Blue Base
-        var pulseColor = vec3<f32>(0.0, 0.8, 1.0); // Cyan Pulse
+        let hue = bundleId * 0.83 + uniforms.colorShift * 2.3;
+        let bundleColor = vec3<f32>(
+            0.35 + 0.65 * (0.5 + 0.5 * sin(hue)),
+            0.35 + 0.65 * (0.5 + 0.5 * sin(hue + 2.094)),
+            0.35 + 0.65 * (0.5 + 0.5 * sin(hue + 4.188))
+        );
 
-        // [Phase 5] Serotonin Color Shift (Blue -> Gold/Red)
-        // [Scientific Note] This is a METAPHORICAL visualization - serotonin affects
-        // neuromodulation and gain control, not actual color perception. The warm
-        // shift represents mood/altered state, not literal visual processing.
-        if (uniforms.colorShift > 0.0) {
-             let warmBase = vec3<f32>(0.2, 0.05, 0.05); // Deep Red
-             let warmPulse = vec3<f32>(1.0, 0.8, 0.2); // Gold
-             baseColor = mix(baseColor, warmBase, uniforms.colorShift);
-             pulseColor = mix(pulseColor, warmPulse, uniforms.colorShift);
-        }
+        let hierarchy = clamp(effectiveRadius * 16.0, 0.0, 1.0);
+        let brightness = mix(0.35, 1.55, effectiveMyelin) * mix(0.65, 1.45, hierarchy);
+        let pulseColor = mix(vec3<f32>(0.1, 0.8, 1.0), vec3<f32>(1.0, 0.9, 0.35), uniforms.colorShift);
+        let pulseBoost = signalStrength * (0.5 + effectiveMyelin * 0.9 + hierarchy * 0.6);
 
-        // [Neuro-Weaver] Refactored: Use helper function calculateSignalFlow
-        signalStrength = calculateSignalFlow(vertexIndex, worldPos, uniforms.time, uniforms.flowSpeed, FLOW_SCALE);
+        finalColor = bundleColor * brightness + pulseColor * pulseBoost;
 
-        // Blend based on activity
-        // Glow is the resting state activity
-        let glow = mix(baseColor, pulseColor * 0.5, activity);
-        // Flash is the moving signal pulse
-        let flash = pulseColor * signalStrength * activity;
-
-        finalColor = glow + flash;
-
-        // [Phase 5] Synaptic Sparkles: Add high-frequency digital strobe
         if (uniforms.sparkle > 0.0) {
-             // Pseudo-random flicker based on vertex index
-             let flicker = sin(uniforms.time * 40.0 + f32(vertexIndex) * 0.1);
-             if (flicker > 0.8) {
-                 finalColor += vec3<f32>(1.0, 1.0, 1.0) * uniforms.sparkle;
-             }
+            let flicker = sin(uniforms.time * 40.0 + f32(vertexIndex) * 0.1 + bundleId);
+            if (flicker > 0.8) {
+                finalColor += vec3<f32>(1.0) * uniforms.sparkle * (0.4 + effectiveMyelin * 0.6);
+            }
         }
 
-        finalNormal = vec3<f32>(0.0, 1.0, 0.0);
+        finalNormal = normalize(vec3<f32>(
+            sin(bundleId * 1.7 + finalPos.x * 2.3),
+            cos(bundleId * 1.3 + finalPos.y * 2.1),
+            sin(bundleId * 1.1 + finalPos.z * 2.5)
+        ));
     }
     // --- HEATMAP MODE ---
     // [V2.3] Volumetric Heatmap Style
@@ -412,7 +406,7 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
     if (uniforms.style >= 2.0) {
         // [Neuro-Weaver] Style 2.0: Translucent Fibers with activity glow
         // Opacity Modulation: Pulse ripples through transparency
-        let alpha = 0.3 + (input.activity * 0.2) + (input.signal * 0.8);
+        let alpha = 0.32 + (input.signal * 0.55) + clamp(length(input.color) * 0.09, 0.0, 0.35);
         return vec4<f32>(input.color, alpha);
     }
 
