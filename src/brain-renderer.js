@@ -259,6 +259,14 @@ export class BrainRenderer {
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
         });
 
+        // [Phase 3/8] Fiber Direction Buffer: vec4 per voxel (xyz = direction, w = padding)
+        // Procedurally generated anatomical prior for anisotropic diffusion
+        this.fiberDirectionBuffer = this.device.createBuffer({
+            size: this.voxelCount * 4 * 4, // vec4<f32> per voxel
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+        });
+        this.uploadFiberDirections();
+
         // Render uniforms: 2 mat4s (32 floats) + scalar block (28 floats including padding) = 60 floats / 240 bytes.
         // The buffer is padded to 256 bytes to satisfy WebGPU uniform buffer alignment requirements.
         this.uniformBuffer = this.device.createBuffer({
@@ -271,6 +279,71 @@ export class BrainRenderer {
             size: COMPUTE_UNIFORM_BUFFER_SIZE,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         });
+    }
+
+    // [Phase 3/8] Generate and upload procedural fiber direction field
+    uploadFiberDirections() {
+        const dim = this.voxelDim;
+        const brainRange = 1.6;
+        // vec4 per voxel: xyz = normalized direction, w = 0
+        const data = new Float32Array(this.voxelCount * 4);
+
+        for (let z = 0; z < dim; z++) {
+            for (let y = 0; y < dim; y++) {
+                for (let x = 0; x < dim; x++) {
+                    // World position normalized to [-1, 1]
+                    const wx = (x / dim) * 2.0 - 1.0;
+                    const wy = (y / dim) * 2.0 - 1.0;
+                    const wz = (z / dim) * 2.0 - 1.0;
+
+                    let dx = 0, dy = 0, dz = 0;
+
+                    // Anatomical prior: mimic major white-matter tract orientations
+                    if (Math.abs(wz) > 0.6) {
+                        // Superior/Inferior: vertical fibers (corticospinal tract)
+                        dz = Math.sign(wz);
+                        dx = wx * 0.2;
+                        dy = wy * 0.2;
+                    } else if (Math.abs(wx) > 0.7) {
+                        // Lateral: commissural fibers (corpus callosum direction)
+                        dx = Math.sign(wx);
+                        dy = wy * 0.1;
+                        dz = wz * 0.1;
+                    } else if (Math.abs(wy) > 0.6) {
+                        // Dorsal/Ventral: association fibers
+                        dy = Math.sign(wy);
+                        dx = wx * 0.15;
+                        dz = wz * 0.15;
+                    } else {
+                        // Central: radiating fibers (corona radiata)
+                        dx = wx;
+                        dy = wy;
+                        dz = wz * 0.3;
+                    }
+
+                    // Add subtle noise for organic variation
+                    const noiseScale = 0.3;
+                    const hash1 = Math.sin(x * 12.9898 + y * 78.233 + z * 45.164) * 43758.5453;
+                    const hash2 = Math.sin(x * 93.9898 + y * 67.345 + z * 28.921) * 23421.631;
+                    const hash3 = Math.sin(x * 45.164 + y * 12.9898 + z * 78.233) * 63281.417;
+                    dx += (hash1 - Math.floor(hash1) - 0.5) * noiseScale;
+                    dy += (hash2 - Math.floor(hash2) - 0.5) * noiseScale;
+                    dz += (hash3 - Math.floor(hash3) - 0.5) * noiseScale;
+
+                    // Normalize
+                    const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                    const invLen = len > 0.001 ? 1.0 / len : 0.0;
+
+                    const idx = (z * dim * dim + y * dim + x) * 4;
+                    data[idx + 0] = dx * invLen;
+                    data[idx + 1] = dy * invLen;
+                    data[idx + 2] = dz * invLen;
+                    data[idx + 3] = 0.0; // padding
+                }
+            }
+        }
+
+        this.device.queue.writeBuffer(this.fiberDirectionBuffer, 0, data);
     }
 
     // [Neuro-Weaver] Refactored: Initialize Soma Geometry
@@ -340,14 +413,17 @@ export class BrainRenderer {
     }
 
     initComputePipeline() {
-        // Compute Pipeline
+        // Compute Pipeline with Fiber Direction Buffer for Anisotropic Diffusion
         const computeLayout = this.device.createBindGroupLayout({
              entries: [{ binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
-                       { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } }]
+                       { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
+                       { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } }]
         });
         this.computeBindGroup = this.device.createBindGroup({
             layout: computeLayout,
-            entries: [{ binding: 0, resource: { buffer: this.tensorBuffer } }, { binding: 1, resource: { buffer: this.computeUniformBuffer } }]
+            entries: [{ binding: 0, resource: { buffer: this.tensorBuffer } },
+                      { binding: 1, resource: { buffer: this.computeUniformBuffer } },
+                      { binding: 2, resource: { buffer: this.fiberDirectionBuffer } }]
         });
         this.computePipeline = this.device.createComputePipeline({
             layout: this.device.createPipelineLayout({ bindGroupLayouts: [computeLayout] }),

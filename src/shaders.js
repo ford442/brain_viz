@@ -656,6 +656,7 @@ struct TensorParams {
 
 @group(0) @binding(0) var<storage, read_write> activityTensor: array<f32>;
 @group(0) @binding(1) var<uniform> params: TensorParams;
+@group(0) @binding(2) var<storage, read> fiberDirections: array<vec4<f32>>;
 
 fn getIndex(x: u32, y: u32, z: u32) -> u32 {
     return z * params.voxelDim * params.voxelDim + y * params.voxelDim + x;
@@ -693,35 +694,70 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     decay *= hypoxiaPhysics.x;      // Accelerated decay under hypoxia
     diffusion *= hypoxiaPhysics.y;  // Reduced signal propagation
 
-    // [Neuro-Weaver V2.8] Diffusion Step (6-Neighbor Laplacian)
+    // [Phase 3/8] Anisotropic Diffusion with Fiber Direction Field
+    // Read precomputed fiber direction for this voxel (xyz = direction, w unused)
+    let fiberDir = fiberDirections[index].xyz;
+
+    // Compute discrete gradient from 6-neighbor differences
+    var gradX = 0.0;
+    var gradY = 0.0;
+    var gradZ = 0.0;
     var neighborSum = 0.0;
     var neighborCount = 0.0;
 
-    // X-Axis Neighbors
-    if (x > 0u) { neighborSum += activityTensor[getIndex(x - 1u, y, z)]; neighborCount += 1.0; }
-    if (x < dim - 1u) { neighborSum += activityTensor[getIndex(x + 1u, y, z)]; neighborCount += 1.0; }
+    // Safe neighbor reads (clamp indices to avoid out-of-bounds)
+    let xm = select(0u, x - 1u, x > 0u);
+    let xp = select(dim - 1u, x + 1u, x < dim - 1u);
+    let ym = select(0u, y - 1u, y > 0u);
+    let yp = select(dim - 1u, y + 1u, y < dim - 1u);
+    let zm = select(0u, z - 1u, z > 0u);
+    let zp = select(dim - 1u, z + 1u, z < dim - 1u);
 
-    // Y-Axis Neighbors
-    if (y > 0u) { neighborSum += activityTensor[getIndex(x, y - 1u, z)]; neighborCount += 1.0; }
-    if (y < dim - 1u) { neighborSum += activityTensor[getIndex(x, y + 1u, z)]; neighborCount += 1.0; }
+    let valXm = activityTensor[getIndex(xm, y, z)];
+    let valXp = activityTensor[getIndex(xp, y, z)];
+    let valYm = activityTensor[getIndex(x, ym, z)];
+    let valYp = activityTensor[getIndex(x, yp, z)];
+    let valZm = activityTensor[getIndex(x, y, zm)];
+    let valZp = activityTensor[getIndex(x, y, zp)];
 
-    // Z-Axis Neighbors
-    if (z > 0u) { neighborSum += activityTensor[getIndex(x, y, z - 1u)]; neighborCount += 1.0; }
-    if (z < dim - 1u) { neighborSum += activityTensor[getIndex(x, y, z + 1u)]; neighborCount += 1.0; }
+    // Discrete gradient (central differences)
+    gradX = (valXp - valXm) * 0.5;
+    gradY = (valYp - valYm) * 0.5;
+    gradZ = (valZp - valZm) * 0.5;
+    let gradient = vec3<f32>(gradX, gradY, gradZ);
+
+    // Neighbor average (6-neighbor with clamped boundary conditions)
+    neighborSum = valXm + valXp + valYm + valYp + valZm + valZp;
+    neighborCount = 6.0;
+
+    let avg = neighborSum / max(1.0, neighborCount);
+
+    // Anisotropic diffusion: stronger along fiber direction, weaker perpendicular
+    let along = dot(gradient, fiberDir);
+    let perpVec = gradient - along * fiberDir;
+
+    let diffusionAlong = diffusion * 1.6;
+    let diffusionPerp  = diffusion * 0.35;
+
+    let diffused = avg + along * diffusionAlong + dot(perpVec, perpVec) * diffusionPerp * sign(along);
+    val = mix(val, diffused, 0.7);
+
+    // [Phase 3/8] Traveling Phase Wave (oscillatory propagation along fibers)
+    let phaseSpeed = 4.0;
+    let waveFreq = 6.2832; // 2*PI
+    let spatialPhase = dot(normalizedPosition, fiberDir) * waveFreq;
+    let travelingWave = sin(spatialPhase - params.time * phaseSpeed) * 0.5 + 0.5;
+    // Modulate existing signal with traveling wave (subtle structured pattern)
+    val += val * (travelingWave - 0.5) * 0.08;
 
     // [Neuro-Weaver] Directional Flow Logic
     // If flowBias is negative, pull signal from 'upstream' (Frontal/Z+)
     if (flowBias < -0.1) {
         if (z < dim - 1u) {
             let upstream = activityTensor[getIndex(x, y, z + 1u)];
-            // Add weighted upstream influence to the average
-            neighborSum += upstream * 2.5;
-            neighborCount += 2.5;
+            val = mix(val, upstream, diffusion * 0.4);
         }
     }
-
-    let avg = neighborSum / max(1.0, neighborCount);
-    val = mix(val, avg, diffusion);
 
     // Procedural Volumetric Fluid Dynamics (Advection)
     // Simulates neurotransmitter diffusion using volumetric rendering
