@@ -23,8 +23,11 @@
         1.  **Solid/Mesh:** For the brain surface (Organic/Cyber styles).
         2.  **Fiber/Line:** For the internal circuit grid (Connectome style).
 *   **Brain Generation:** `brain-geometry.js`
-    *   `generate(rows, cols)`: Creates a deformed UV sphere to mimic gyri/sulci.
-    *   `generateCircuitGrid()`: Creates a "Manhattan-style" 3D grid of line segments inside the brain volume.
+    *   `generate(rows, cols)`: Creates a deformed UV sphere to mimic gyri/sulci, then calls `generateOrganicConnectomeFibers()`.
+    *   `generateOrganicConnectomeFibers()`: [V3.0] Creates curved, branching white-matter tracts using quadratic Bézier splines seeded from 16 anatomically-inspired bilateral bundles (corpus callosum, corticospinal tracts, optic radiations, SLF, arcuate fasciculus, cingulum, IFOF, uncinate fasciculus). Terminal arborisations fan out at endpoints. Stores per-segment metadata (`fiberMetadata`) for Phase 2 pipeline.
+    *   `generateCircuitGrid()`: Legacy "Manhattan-style" 3D grid, kept as a named fallback.
+    *   `generateSplinePath(start, control, end, segments)`: Quadratic Bézier interpolation between two endpoints through a control point.
+    *   `addTerminalBranches(origin, count, segRadius, bundleId)`: Tapering terminal branch segments that fan out from axon-terminal endpoints.
 *   **Shaders:** `shaders.js`
     *   Contains WGSL strings for Vertex, Fragment, and Compute shaders.
     *   Implements the visual styles (Ghost, Fresnel, Digital Pulse).
