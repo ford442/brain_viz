@@ -63,6 +63,7 @@ export class BrainRenderer {
             dirIntensity: 0.8, // [Phase 2] Directional Light Intensity
             stress: 0.0, // [Phase 2] Cognitive Stress Distortion
             cortisol: 0.0, // [Phase 5] Cortisol Structural Decay
+            myelin_degradation: 0.0, // [V3.1] Connectome myelin loss visualization
             fluidActive: 0.0, // [Phase 6] Procedural Volumetric Fluid Dynamics
             // Altitude/Hypoxia Simulation Parameters
             altitude: 0.0, // Altitude in meters (0-8000)
@@ -165,6 +166,7 @@ export class BrainRenderer {
         
         // 2. Fiber Line Buffers
         this.fiberBuffer = this.createBuffer(geometry.getFiberData(), GPUBufferUsage.VERTEX);
+        this.fiberMetaBuffer = this.createBuffer(geometry.getFiberDataWithMetadata(), GPUBufferUsage.VERTEX);
         this.fiberVertexCount = geometry.getFiberVertexCount();
         
         // 3. Setup Resource Groups
@@ -226,7 +228,7 @@ export class BrainRenderer {
                 entryPoint: 'main',
                 targets: [{ format: format, blend: { color: { srcFactor: 'src-alpha', dstFactor: 'one', operation: 'add' }, alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' } } }] 
             },
-            primitive: { topology: 'line-list' }, 
+            primitive: { topology: 'triangle-list' }, 
             depthStencil: { depthWriteEnabled: false, depthCompare: 'less', format: 'depth32float' }
         });
 
@@ -648,7 +650,7 @@ export class BrainRenderer {
         uData[OFFSET_AMBIENT] = this.params.ambientLight;
         uData[OFFSET_DIR_INTENSITY] = this.params.dirIntensity;
         uData[OFFSET_STRESS] = this.params.stress;
-        uData[OFFSET_CORTISOL] = this.params.cortisol;
+        uData[OFFSET_CORTISOL] = Math.max(this.params.cortisol, this.params.myelin_degradation || 0.0);
         uData[OFFSET_ALTITUDE] = this.params.altitude;
         uData[OFFSET_OXYGEN] = this.params.oxygenLevel;
         uData[OFFSET_HYPOXIA_STRESS] = this.params.hypoxiaStress;
@@ -781,7 +783,7 @@ export class BrainRenderer {
             // 1. Draw Fibers
             renderPass.setPipeline(this.fiberPipeline);
             renderPass.setVertexBuffer(0, this.fiberBuffer);
-            renderPass.setVertexBuffer(1, this.fiberBuffer); 
+            renderPass.setVertexBuffer(1, this.fiberMetaBuffer); 
             renderPass.draw(this.fiberVertexCount); 
 
             // 2. Draw Instanced Neurons (Somas) [V2.6 Pipeline]
