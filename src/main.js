@@ -115,10 +115,16 @@ async function init() {
             'cerebellum': { rotation: { x: -0.8, y: 3.14 }, zoom: 2.5 }
         };
 
+        const explicitSplineMap = {
+            'frontal-tour': ['overview', 'cortex-top', 'frontal-lobe', 'close-up'],
+            'full-rotation': ['overview', 'left-hemisphere', 'brainstem', 'right-hemisphere', 'overview']
+        };
+
         // Initialize RoutinePlayer, ensuring it expects the BrainRenderer instance
         // [Integration Check] Verified `init()` flow is not broken
         // [Issue Checklist] RoutinePlayer integrated with renderer, regionMap, and cameraMap
         const player = new RoutinePlayer(renderer, regionCoordinatesMap, cameraCoordinatesMap);
+        player.splineMap = explicitSplineMap;
 
         // Ensure graceful WebGPU degradation handler is wired
         if (renderer.device && renderer.device.lost) {
@@ -172,6 +178,11 @@ async function init() {
             { time: 8.0, type: 'text', message: 'Fragmentation Subsided.', duration: 2.0 }
         ];
 
+        MINI_ROUTINES['S'] = [
+            { time: 0.0, type: 'text', message: 'Frontal Tour Sequence', duration: 2.0 },
+            { time: 0.0, type: 'camera', target: 'frontal-tour', duration: 5.0, ease: 'sineInOut' }
+        ];
+
 
 
         // === Audio Reactor (Brain DJ Mode) ===
@@ -194,11 +205,11 @@ async function init() {
         });
 
         setupLegendPanel();
-    // Add memory fragmentation to legend
+    // Add memory fragmentation and spline tour to legend
     const legendPanel = document.getElementById('legend-panel');
     if (legendPanel) {
         const newEntry = document.createElement('div');
-        newEntry.innerHTML = '<b>M</b> : Memory Fragmentation';
+        newEntry.innerHTML = '<b>M</b> : Memory Fragmentation<br><b>S</b> : Frontal Tour (Spline)';
         legendPanel.appendChild(newEntry);
     }
 

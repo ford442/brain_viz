@@ -10,8 +10,9 @@
 - [x] **"Deep Thought" Script:** Hardcode the demo routine (Organic -> Visual Input -> Connectome Processing -> Heatmap Aftermath).
 - [x] **Playback UI:** Add a "Run Sequence" button and a transport clock (Play/Stop/Loop) to the DOM.
 ### Phase 2: Advanced Choreography
-- [ ] **Camera Coordinates Map:** Define explicit spline regions for complex camera angles.
-- [ ] **Parameter Interpolation/Easing:** Enhance routines with advanced smooth interpolation logic.
+- [x] **Camera Coordinates Map:** Define explicit spline regions for complex camera angles.
+- [x] **Parameter Interpolation/Easing:** Enhance routines with advanced smooth interpolation logic.
+- [ ] **Camera Collision Detection Improvements:** Enhance pathfinding camera transitions to avoid mesh intersections during large field of view shifts.
 - [x] **Routine Logic & Extensibility Refactor:** Ensure `tick()` loop uses `performance.now()`, `executeEvent` is extensible, and WebGPU context gracefully degrades.
 - [x] **Memory Fragmentation:** Implement memory fragmentation event and routine.
 - [x] **Parameter Interpolation/Easing:** Added parameter interpolation.
@@ -118,6 +119,7 @@
 - [x] **Auditory Hallucinations:** Implement `auditory_hallucination` event handler in `routine-player.js` to simulate rapid localized cortex flashes via rapid `stimulus` events.
 ---
 ## 🧪 "Dream" Log (Future Concepts)
+* *Idea:* "What if we visualized visual cortex processing by simulating progressive edge-detection filters directly on the render pipeline?"
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "What if we visualized auditory hallucinations as rapid localized cortex flashes?"
 * *Idea:* "What if we visualized visual cortex processing by simulating progressive edge-detection filters directly on the render pipeline?"
