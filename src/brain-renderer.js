@@ -1,7 +1,7 @@
 // brain-renderer.js
 // Verified Neuro-Weaver V2.6 Implementation
 import { BrainGeometry } from './brain-geometry.js';
-import { vertexShader, fragmentShader, computeShader, somaVertexShader, somaFragmentShader, postVertexShader, postFragmentShader } from './shaders.js';
+import { vertexShader, fragmentShader, computeShader, somaVertexShader, somaFragmentShader, sparkVertexShader, sparkFragmentShader, postVertexShader, postFragmentShader } from './shaders.js';
 import { Mat4 } from './math-utils.js';
 import { WasmTensorEngine } from './wasm-engine.js'; // [Phase 1 WASM]
 
@@ -10,7 +10,7 @@ const UNIFORM_BUFFER_ALIGNMENT = 256;
 const RENDER_UNIFORM_BUFFER_SIZE = Math.ceil(
     (RENDER_UNIFORM_FLOAT_COUNT * Float32Array.BYTES_PER_ELEMENT) / UNIFORM_BUFFER_ALIGNMENT
 ) * UNIFORM_BUFFER_ALIGNMENT;
-const COMPUTE_UNIFORM_BUFFER_SIZE = 80;
+const COMPUTE_UNIFORM_BUFFER_SIZE = 96;
 
 export class BrainRenderer {
     constructor(canvas) {
@@ -22,6 +22,7 @@ export class BrainRenderer {
         this.pipeline = null;      // Solid Mesh
         this.fiberPipeline = null; // Lines
         this.somaPipeline = null;  // Instanced Spheres (Somas)
+        this.sparkPipeline = null; // Emissive Sparks
         this.postPipeline = null;  // [Phase 7] Cinematic Post-Process
         
         this.rotation = { x: 0, y: 0 };
@@ -167,17 +168,19 @@ export class BrainRenderer {
         // 2. Fiber Line Buffers
         this.fiberBuffer = this.createBuffer(geometry.getFiberData(), GPUBufferUsage.VERTEX);
         this.fiberMetaBuffer = this.createBuffer(geometry.getFiberDataWithMetadata(), GPUBufferUsage.VERTEX);
+        this.fiberPathBuffer = this.createBuffer(geometry.getFiberPathData(), GPUBufferUsage.VERTEX);
         this.fiberVertexCount = geometry.getFiberVertexCount();
         
         // 3. Setup Resource Groups
         this.initSomaResources(geometry);
+        this.initSparkResources(geometry);
         this.initVolumetricResources();
         
         // Bind Groups Layouts
         const renderBindGroupLayout = this.device.createBindGroupLayout({
             entries: [
                 { binding: 0, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
-                { binding: 1, visibility: GPUShaderStage.VERTEX, buffer: { type: 'read-only-storage' } }
+                { binding: 1, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } }
             ]
         });
         
@@ -206,7 +209,7 @@ export class BrainRenderer {
             fragment: {
                 module: this.device.createShaderModule({ code: fragmentShader }),
                 entryPoint: 'main',
-                targets: [{ format: format, blend: { color: { srcFactor: 'src-alpha', dstFactor: 'one', operation: 'add' }, alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' } } }]
+                targets: [{ format: format, blend: { color: { srcFactor: 'src-alpha', dstFactor: 'one-minus-src-alpha', operation: 'add' }, alpha: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha', operation: 'add' } } }] 
             },
             primitive: { topology: 'triangle-list', cullMode: 'none' },
             depthStencil: { depthWriteEnabled: false, depthCompare: 'less', format: 'depth32float' }
@@ -220,7 +223,14 @@ export class BrainRenderer {
                 entryPoint: 'main', 
                 buffers: [
                     { arrayStride: 12, attributes: [{ shaderLocation: 0, offset: 0, format: 'float32x3' }] },
-                    { arrayStride: 12, attributes: [{ shaderLocation: 1, offset: 0, format: 'float32x3' }] }
+                    { arrayStride: 16, attributes: [{ shaderLocation: 1, offset: 0, format: 'float32x4' }] },
+                    {
+                        arrayStride: 24,
+                        attributes: [
+                            { shaderLocation: 2, offset: 0, format: 'float32x3' },
+                            { shaderLocation: 3, offset: 12, format: 'float32x3' }
+                        ]
+                    }
                 ]
             },
             fragment: {
@@ -233,6 +243,7 @@ export class BrainRenderer {
         });
 
         this.initSomaPipeline(renderBindGroupLayout, format);
+        this.initSparkPipeline(renderBindGroupLayout, format);
         this.initComputePipeline();
 
         // [Phase 7] Post-Processing Init
@@ -379,6 +390,21 @@ export class BrainRenderer {
         this.somaIndexCount = icoIndices.length;
     }
 
+    initSparkResources(geometry) {
+        const sparkSources = geometry.getSparkSourceData();
+        this.sparkInstanceBuffer = this.createBuffer(sparkSources, GPUBufferUsage.VERTEX);
+        this.sparkInstanceCount = sparkSources.length / 12;
+
+        this.sparkQuadBuffer = this.createBuffer(new Float32Array([
+            -1.0, -1.0,
+             1.0, -1.0,
+            -1.0,  1.0,
+            -1.0,  1.0,
+             1.0, -1.0,
+             1.0,  1.0
+        ]), GPUBufferUsage.VERTEX);
+    }
+
     initSomaPipeline(renderBindGroupLayout, format) {
         // --- PIPELINE 3: INSTANCED SPHERES (V2.6) ---
         // [Neuro-Weaver] Setup Instanced Soma Pipeline
@@ -409,6 +435,44 @@ export class BrainRenderer {
             },
             primitive: { topology: 'triangle-list', cullMode: 'back' },
             depthStencil: { depthWriteEnabled: true, depthCompare: 'less', format: 'depth32float' }
+        });
+    }
+
+    initSparkPipeline(renderBindGroupLayout, format) {
+        const sparkModule = this.device.createShaderModule({ code: sparkVertexShader });
+        const sparkFragModule = this.device.createShaderModule({ code: sparkFragmentShader });
+
+        this.sparkPipeline = this.device.createRenderPipeline({
+            layout: this.device.createPipelineLayout({ bindGroupLayouts: [renderBindGroupLayout] }),
+            vertex: {
+                module: sparkModule,
+                entryPoint: 'main',
+                buffers: [
+                    { arrayStride: 8, attributes: [{ shaderLocation: 0, offset: 0, format: 'float32x2' }] },
+                    {
+                        arrayStride: 48,
+                        stepMode: 'instance',
+                        attributes: [
+                            { shaderLocation: 1, offset: 0, format: 'float32x4' },
+                            { shaderLocation: 2, offset: 16, format: 'float32x4' },
+                            { shaderLocation: 3, offset: 32, format: 'float32x4' }
+                        ]
+                    }
+                ]
+            },
+            fragment: {
+                module: sparkFragModule,
+                entryPoint: 'main',
+                targets: [{
+                    format: format,
+                    blend: {
+                        color: { srcFactor: 'src-alpha', dstFactor: 'one', operation: 'add' },
+                        alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' }
+                    }
+                }]
+            },
+            primitive: { topology: 'triangle-list', cullMode: 'none' },
+            depthStencil: { depthWriteEnabled: false, depthCompare: 'less', format: 'depth32float' }
         });
     }
 
@@ -740,7 +804,7 @@ export class BrainRenderer {
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         
         // Compute Uniforms layout (64 bytes total):
-        // 32 bytes scalar block + 16 bytes stimulus block + 12 bytes hypoxia block + 4 bytes trailing padding.
+        // 32 bytes scalar block + 16 bytes stimulus block + 12 bytes hypoxia block + 8 bytes avalanche controls + 16 bytes trailing padding.
         const cBuf = new ArrayBuffer(COMPUTE_UNIFORM_BUFFER_SIZE);
         const dv = new DataView(cBuf);
         dv.setFloat32(0, this.time, true);
@@ -774,6 +838,8 @@ export class BrainRenderer {
         dv.setFloat32(60, this.params.fluidActive, true);
         dv.setFloat32(64, this.stimulus.electricalActive, true);
         dv.setFloat32(68, this.stimulus.mercuryActive, true);
+        dv.setFloat32(72, this.params.cognitiveLoad, true);
+        dv.setFloat32(76, this.params.stress, true);
 
         // Upload to GPU
         this.device.queue.writeBuffer(this.computeUniformBuffer, 0, cBuf);
@@ -860,6 +926,7 @@ export class BrainRenderer {
             renderPass.setPipeline(this.fiberPipeline);
             renderPass.setVertexBuffer(0, this.fiberBuffer);
             renderPass.setVertexBuffer(1, this.fiberMetaBuffer); 
+            renderPass.setVertexBuffer(2, this.fiberPathBuffer);
             renderPass.draw(this.fiberVertexCount); 
 
             // 2. Draw Instanced Neurons (Somas) [V2.6 Pipeline]
@@ -869,6 +936,14 @@ export class BrainRenderer {
             renderPass.setIndexBuffer(this.somaIndexBuffer, 'uint16');
             // Draw call uses instance count
             renderPass.drawIndexed(this.somaIndexCount, this.somaInstanceCount);
+
+            // 3. Draw Emissive Sparks / Vesicles
+            if (this.sparkInstanceCount > 0) {
+                renderPass.setPipeline(this.sparkPipeline);
+                renderPass.setVertexBuffer(0, this.sparkQuadBuffer);
+                renderPass.setVertexBuffer(1, this.sparkInstanceBuffer);
+                renderPass.draw(6, this.sparkInstanceCount);
+            }
 
         } else {
             renderPass.setPipeline(this.pipeline);

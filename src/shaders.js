@@ -71,19 +71,6 @@ const HELPERS = `
         return vec3<f32>(decay, diffusion, flowBias);
     }
 
-    // [Neuro-Weaver] Refactored: Signal Flow Logic (Renamed for V2.7)
-    fn calculateSignalFlow(vertexIndex: u32, worldPos: vec3<f32>, time: f32, speed: f32, flowScale: f32) -> f32 {
-        // [Neuro-Weaver] Refactored: Calculate flow along the fiber
-        let fiberOffset = f32(vertexIndex) * flowScale;
-        let spatialPhase = length(worldPos) * 2.0;
-
-        // Dynamic Wave: sin(Distance - Time * Speed)
-        let wave = sin(fiberOffset * 8.0 + spatialPhase - (time * speed));
-
-        // Sharpen the wave into a pulse for better visibility
-        return smoothstep(0.85, 1.0, wave);
-    }
-
     // [Neuro-Weaver] V2.6 Helper: Heatmap Color Ramp
     fn getHeatmapColor(activity: f32) -> vec3<f32> {
         // Thermal Gradient: Blue -> Green/Cyan -> Neon Orange
@@ -117,6 +104,108 @@ const HELPERS = `
         let freqBoost = hypoxiaStress * 2.0 * (1.0 - hypoxiaStress * 0.5);
 
         return vec3<f32>(decayMod, diffusionMod, freqBoost);
+    }
+
+    fn getVoxelValue(worldPos: vec3<f32>) -> f32 {
+        let normPos = (worldPos / BRAIN_RANGE) * 0.5 + 0.5;
+        if (any(normPos < vec3<f32>(0.0)) || any(normPos > vec3<f32>(1.0))) { return 0.0; }
+
+        let x = u32(normPos.x * f32(VOXEL_DIM));
+        let y = u32(normPos.y * f32(VOXEL_DIM));
+        let z = u32(normPos.z * f32(VOXEL_DIM));
+
+        let index = min(z, VOXEL_DIM-1u) * VOXEL_DIM * VOXEL_DIM + min(y, VOXEL_DIM-1u) * VOXEL_DIM + min(x, VOXEL_DIM-1u);
+        return activityTensor[index];
+    }
+
+    fn sampleSmoothedVoxelValue(worldPos: vec3<f32>) -> f32 {
+        let step = (BRAIN_RANGE / f32(VOXEL_DIM)) * 0.45;
+        let center = getVoxelValue(worldPos);
+        let neighbors =
+            getVoxelValue(worldPos + vec3<f32>( step, 0.0, 0.0)) +
+            getVoxelValue(worldPos + vec3<f32>(-step, 0.0, 0.0)) +
+            getVoxelValue(worldPos + vec3<f32>(0.0,  step, 0.0)) +
+            getVoxelValue(worldPos + vec3<f32>(0.0, -step, 0.0)) +
+            getVoxelValue(worldPos + vec3<f32>(0.0, 0.0,  step)) +
+            getVoxelValue(worldPos + vec3<f32>(0.0, 0.0, -step));
+        return (center * 0.5) + (neighbors * (0.5 / 6.0));
+    }
+
+    fn hashNoise3(p: vec3<f32>) -> f32 {
+        return fract(sin(dot(p, vec3<f32>(12.9898, 78.233, 45.164))) * 43758.5453);
+    }
+
+    fn avalancheCriticality(cognitiveLoad: f32, stress: f32, fluidActive: f32) -> f32 {
+        let drive = cognitiveLoad * 0.75 + stress * 0.9 + fluidActive * 0.35;
+        return clamp(drive, 0.0, 1.0);
+    }
+
+    fn raySphereBounds(rayOrigin: vec3<f32>, rayDir: vec3<f32>, radius: f32) -> vec2<f32> {
+        let b = dot(rayOrigin, rayDir);
+        let c = dot(rayOrigin, rayOrigin) - radius * radius;
+        let h = b * b - c;
+        if (h < 0.0) {
+            return vec2<f32>(1.0, -1.0);
+        }
+        let s = sqrt(h);
+        return vec2<f32>(-b - s, -b + s);
+    }
+
+    fn raymarchHeatmapVolume(rayOrigin: vec3<f32>, rayDir: vec3<f32>, tMin: f32, tMax: f32, planeNormal: vec3<f32>, planeOffset: f32) -> vec4<f32> {
+        var startT = max(tMin, 0.0);
+        var endT = tMax;
+
+        let originPlane = dot(rayOrigin, planeNormal) + planeOffset;
+        let dirPlane = dot(rayDir, planeNormal);
+        if (originPlane < 0.0 && originPlane + dirPlane * endT < 0.0) {
+            return vec4<f32>(0.0);
+        }
+        if (abs(dirPlane) > 1e-4) {
+            let planeT = -originPlane / dirPlane;
+            if (originPlane < 0.0) {
+                startT = max(startT, planeT);
+            } else if (originPlane + dirPlane * endT < 0.0) {
+                endT = min(endT, planeT);
+            }
+        }
+
+        if (endT <= startT) {
+            return vec4<f32>(0.0);
+        }
+
+        let span = endT - startT;
+        let stepCount: u32 = 28u;
+        let stepSize = span / f32(stepCount);
+        var t = startT;
+        var transmittance = 1.0;
+        var color = vec3<f32>(0.0);
+
+        for (var i = 0u; i < 32u; i = i + 1u) {
+            if (i >= stepCount || transmittance < 0.03) {
+                break;
+            }
+
+            let samplePos = rayOrigin + rayDir * (t + stepSize * 0.5);
+            let depthT = clamp((t + stepSize * 0.5 - startT) / span, 0.0, 1.0);
+            let jitter = 0.86 + 0.14 * hashNoise3(samplePos * 2.75 + vec3<f32>(uniforms.time * 0.08));
+            let density = clamp(getVoxelValue(samplePos) * jitter, 0.0, 1.0);
+
+            if (density > 0.0005) {
+                let thermal = getHeatmapColor(pow(density, 0.85));
+                let depthTint = mix(vec3<f32>(0.55, 0.75, 1.0), vec3<f32>(1.0, 0.58, 0.12), depthT);
+                let burst = smoothstep(0.64, 0.95, density);
+                let emission = thermal * depthTint + vec3<f32>(1.0, 0.9, 0.55) * burst * 0.55;
+                let alpha = 1.0 - exp(-density * stepSize * 8.5);
+                color += transmittance * emission * alpha;
+                transmittance *= (1.0 - alpha * 0.9);
+            } else {
+                transmittance *= 0.995;
+            }
+
+            t += stepSize;
+        }
+
+        return vec4<f32>(color, clamp(1.0 - transmittance, 0.0, 1.0));
     }
 `;
 
@@ -157,7 +246,9 @@ struct Uniforms {
 
 struct VertexInput {
     @location(0) position: vec3<f32>,
-    @location(1) normal: vec3<f32>,
+    @location(1) fiberMeta: vec4<f32>,
+    @location(2) fiberStart: vec3<f32>,
+    @location(3) fiberEnd: vec3<f32>,
 }
 
 struct VertexOutput {
@@ -169,22 +260,42 @@ struct VertexOutput {
     @location(4) clipDist: f32,
     @location(5) signal: f32,
     @location(6) distToCenter: f32, // [Phase 6]
+    @location(7) fiberMaterial: vec3<f32>,
+    @location(8) fiberTangent: vec3<f32>,
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 // [Verified] Volumetric Data: Flattened 3D buffer representing brain activity
 @group(0) @binding(1) var<storage, read> activityTensor: array<f32>;
 
-fn getVoxelValue(worldPos: vec3<f32>) -> f32 {
-    let normPos = (worldPos / BRAIN_RANGE) * 0.5 + 0.5;
-    if (any(normPos < vec3<f32>(0.0)) || any(normPos > vec3<f32>(1.0))) { return 0.0; }
+fn calculateSignalFlow(startPos: vec3<f32>, endPos: vec3<f32>, time: f32, speed: f32, segmentPhase: f32, flowBias: f32, myelin: f32, radius: f32, bundleId: f32) -> f32 {
+    let midpoint = mix(startPos, endPos, 0.5);
+    let region = getRegionPhysics(midpoint, uniforms.style);
+    let diffusionNorm = clamp(region.y / 0.15, 0.0, 1.0);
+    var travel = fract(time * speed + segmentPhase + bundleId * 0.031);
 
-    let x = u32(normPos.x * f32(VOXEL_DIM));
-    let y = u32(normPos.y * f32(VOXEL_DIM));
-    let z = u32(normPos.z * f32(VOXEL_DIM));
+    if (flowBias < -0.1) {
+        travel = 1.0 - travel;
+    }
 
-    let index = min(z, VOXEL_DIM-1u) * VOXEL_DIM * VOXEL_DIM + min(y, VOXEL_DIM-1u) * VOXEL_DIM + min(x, VOXEL_DIM-1u);
-    return activityTensor[index];
+    let regionSpeed = mix(0.78, 1.2, region.x);
+    let segmentSpan = mix(0.10, 0.22, 1.0 - myelin) * mix(1.2, 0.75, diffusionNorm) + radius * 0.12;
+    let centerT = fract(travel * regionSpeed);
+    let t0 = clamp(centerT - segmentSpan * 1.8, 0.0, 1.0);
+    let t1 = clamp(centerT - segmentSpan * 0.9, 0.0, 1.0);
+    let t2 = centerT;
+    let t3 = clamp(centerT + segmentSpan * 0.9, 0.0, 1.0);
+    let t4 = clamp(centerT + segmentSpan * 1.8, 0.0, 1.0);
+
+    let s0 = sampleSmoothedVoxelValue(mix(startPos, endPos, t0));
+    let s1 = sampleSmoothedVoxelValue(mix(startPos, endPos, t1));
+    let s2 = sampleSmoothedVoxelValue(mix(startPos, endPos, t2));
+    let s3 = sampleSmoothedVoxelValue(mix(startPos, endPos, t3));
+    let s4 = sampleSmoothedVoxelValue(mix(startPos, endPos, t4));
+
+    let weighted = (s0 * 0.12) + (s1 * 0.20) + (s2 * 0.36) + (s3 * 0.20) + (s4 * 0.12);
+    let regionalBoost = mix(0.72, 1.28, region.x) * mix(0.88, 1.12, myelin) * mix(1.08, 0.88, diffusionNorm);
+    return clamp(weighted * regionalBoost, 0.0, 1.5);
 }
 
 @vertex
@@ -194,8 +305,10 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     var finalNormal = input.normal;
     var finalColor = vec3<f32>(0.0);
     var signalStrength = 0.0;
+    output.fiberMaterial = vec3<f32>(0.0);
+    output.fiberTangent = vec3<f32>(0.0, 0.0, 1.0);
     
-    let activity = getVoxelValue(input.position);
+    let activity = sampleSmoothedVoxelValue(input.position);
 
     let worldPos = (uniforms.modelMatrix * vec4<f32>(finalPos, 1.0)).xyz;
 
@@ -205,15 +318,20 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     // Signals travel along the fibers based on vertex index and flow speed
     if (uniforms.style >= 2.0 && uniforms.style < 3.0) {
         finalPos = input.position;
-        let radius = max(0.002, input.normal.x);
-        let bundleId = input.normal.y;
-        let myelin = clamp(input.normal.z, 0.0, 1.0);
+        let radius = max(0.002, input.fiberMeta.x);
+        let bundleId = input.fiberMeta.y;
+        let myelin = clamp(input.fiberMeta.z, 0.0, 1.0);
+        let segmentPhase = input.fiberMeta.w;
         let degradation = clamp(uniforms.cortisol, 0.0, 1.0);
         let effectiveMyelin = myelin * (1.0 - degradation * (1.0 - myelin));
         let effectiveRadius = radius * mix(0.45, 1.0, effectiveMyelin);
 
         let conductionSpeed = uniforms.flowSpeed * (0.45 + effectiveMyelin * 1.65 + effectiveRadius * 18.0);
-        signalStrength = calculateSignalFlow(vertexIndex, worldPos, uniforms.time, conductionSpeed, FLOW_SCALE);
+        signalStrength = calculateSignalFlow(input.fiberStart, input.fiberEnd, uniforms.time, conductionSpeed, segmentPhase, getRegionPhysics(mix(input.fiberStart, input.fiberEnd, 0.5), uniforms.style).z, effectiveMyelin, effectiveRadius, bundleId);
+        let tangent = normalize(input.fiberEnd - input.fiberStart);
+        let refAxis = select(vec3<f32>(0.0, 1.0, 0.0), vec3<f32>(1.0, 0.0, 0.0), abs(tangent.y) > 0.82);
+        let sideAxis = normalize(cross(tangent, refAxis));
+        finalNormal = normalize(cross(sideAxis, tangent));
 
         let hue = bundleId * 0.83 + uniforms.colorShift * 2.3;
         let bundleColor = vec3<f32>(
@@ -236,11 +354,8 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
             }
         }
 
-        finalNormal = normalize(vec3<f32>(
-            sin(bundleId * 1.7 + finalPos.x * 2.3),
-            cos(bundleId * 1.3 + finalPos.y * 2.1),
-            sin(bundleId * 1.1 + finalPos.z * 2.5)
-        ));
+        output.fiberMaterial = vec3<f32>(effectiveMyelin, effectiveRadius, hierarchy);
+        output.fiberTangent = tangent;
     }
     // --- HEATMAP MODE ---
     // [V2.3] Volumetric Heatmap Style
@@ -341,6 +456,9 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
 `;
 
 export const fragmentShader = `
+${CONSTANTS}
+${HELPERS}
+
 struct Uniforms {
     mvpMatrix: mat4x4<f32>,
     modelMatrix: mat4x4<f32>,
@@ -370,6 +488,7 @@ struct Uniforms {
     fluidActive: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
+@group(0) @binding(1) var<storage, read> activityTensor: array<f32>;
 
 struct FragmentInput {
     @location(0) worldPos: vec3<f32>,
@@ -379,6 +498,10 @@ struct FragmentInput {
     @location(4) clipDist: f32,
     @location(5) signal: f32,
     @location(6) distToCenter: f32, // [Phase 6]
+    @location(7) fiberMaterial: vec3<f32>,
+    @location(8) fiberTangent: vec3<f32>,
+    @location(7) fiberMaterial: vec3<f32>,
+    @location(8) fiberTangent: vec3<f32>,
 }
 
 @fragment
@@ -396,18 +519,59 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
     let rim = pow(1.0 - NdotV, 3.0);
 
     // [Neuro-Weaver] Style 3.0: Translucent Heatmap Shell
-    // Activity-weighted alpha so hot regions glow through the skin; quiet zones nearly invisible
+    // Volume raymarch through the tensor so the interior reads as a true thermal body
     if (uniforms.style >= 3.0) {
-        let heatAlpha = 0.06 + (input.activity * 0.45);
-        let rimBoost = smoothstep(0.4, 1.0, rim) * 0.18;
-        return vec4<f32>(input.color, clamp(heatAlpha + rimBoost, 0.0, 0.72));
+        let rayOrigin = vec3<f32>(0.0, 0.0, uniforms.zoom);
+        let rayDir = normalize(input.worldPos - rayOrigin);
+        let bounds = raySphereBounds(rayOrigin, rayDir, BRAIN_RANGE);
+
+        if (bounds.y <= bounds.x) {
+            discard;
+        }
+
+        let volume = raymarchHeatmapVolume(rayOrigin, rayDir, bounds.x, bounds.y, uniforms.slicePlane.xyz, uniforms.slicePlane.w);
+        let shellTint = getHeatmapColor(pow(input.activity, 0.9));
+        let rimBoost = smoothstep(0.4, 1.0, rim) * 0.22;
+        let shellBurst = smoothstep(0.68, 0.98, input.activity) * 0.18;
+        let mixedColor = mix(volume.rgb, shellTint + vec3<f32>(1.0, 0.88, 0.5) * shellBurst, 0.12 + rimBoost);
+        let alpha = clamp(volume.a + 0.08 + rimBoost + shellBurst * 0.15, 0.0, 0.94);
+        return vec4<f32>(mixedColor, alpha);
     }
 
     if (uniforms.style >= 2.0) {
         // [Neuro-Weaver] Style 2.0: Translucent Fibers with activity glow
-        // Opacity Modulation: Pulse ripples through transparency
-        let alpha = 0.32 + (input.signal * 0.55) + clamp(length(input.color) * 0.09, 0.0, 0.35);
-        return vec4<f32>(input.color, alpha);
+        // Lighting: anisotropic highlight along the tract with a soft rim
+        let tangent = normalize(input.fiberTangent);
+        let normal = normalize(input.normal);
+        let lightDir = normalize(uniforms.lightDir);
+        let viewDir = normalize(vec3<f32>(0.0, 0.0, uniforms.zoom) - input.worldPos);
+        let halfDir = normalize(lightDir + viewDir);
+
+        let myelin = clamp(input.fiberMaterial.x, 0.0, 1.0);
+        let radius = clamp(input.fiberMaterial.y * 8.0, 0.0, 1.0);
+        let hierarchy = clamp(input.fiberMaterial.z, 0.0, 1.0);
+
+        let ndotl = max(0.0, dot(normal, lightDir));
+        let ndotv = max(0.0, dot(normal, viewDir));
+        let tangentFacing = abs(dot(tangent, viewDir));
+        let specPower = mix(10.0, 52.0, myelin);
+        let specular = pow(max(0.0, dot(normal, halfDir)), specPower) * mix(0.2, 1.0, myelin);
+        let rim = pow(1.0 - ndotv, 2.4) * mix(0.15, 0.45, hierarchy);
+
+        // Voxel-aware occlusion: darker in dense/high-activity regions to reduce uniform glow
+        let localDensity = sampleSmoothedVoxelValue(input.worldPos);
+        let ambientOcclusion = clamp(1.0 - localDensity * 0.38 - input.signal * 0.12, 0.42, 1.0);
+        let avalanche = smoothstep(0.56, 0.92, input.signal + localDensity * 0.55);
+
+        let fiberBase = input.color * (0.24 + ndotl * 0.72) * ambientOcclusion;
+        let metallic = mix(vec3<f32>(0.4, 0.5, 0.62), vec3<f32>(1.0, 0.95, 0.8), myelin);
+        let highlight = metallic * (specular * (0.6 + radius * 0.4) + rim * 0.32 + tangentFacing * 0.08);
+        let activityGlow = vec3<f32>(0.12, 0.45, 0.9) * input.signal * mix(0.55, 1.0, myelin);
+        let avalancheColor = vec3<f32>(1.0, 0.92, 0.58) * avalanche * (0.45 + localDensity * 0.8);
+        let finalRgb = fiberBase + highlight + activityGlow + avalancheColor;
+
+        let alpha = clamp(0.22 + (input.signal * 0.36) + (ndotl * 0.18) + (rim * 0.14) + avalanche * 0.1, 0.12, 0.82) * ambientOcclusion;
+        return vec4<f32>(finalRgb, alpha);
     }
 
     // [Neuro-Weaver] Frosted-glass skin for modes 0 (Organic) and 1 (Cyber)
@@ -497,6 +661,19 @@ fn getVoxelValue(worldPos: vec3<f32>) -> f32 {
     return activityTensor[index];
 }
 
+fn sampleSmoothedVoxelValue(worldPos: vec3<f32>) -> f32 {
+    let step = (BRAIN_RANGE / f32(VOXEL_DIM)) * 0.45;
+    let center = getVoxelValue(worldPos);
+    let neighbors =
+        getVoxelValue(worldPos + vec3<f32>( step, 0.0, 0.0)) +
+        getVoxelValue(worldPos + vec3<f32>(-step, 0.0, 0.0)) +
+        getVoxelValue(worldPos + vec3<f32>(0.0,  step, 0.0)) +
+        getVoxelValue(worldPos + vec3<f32>(0.0, -step, 0.0)) +
+        getVoxelValue(worldPos + vec3<f32>(0.0, 0.0,  step)) +
+        getVoxelValue(worldPos + vec3<f32>(0.0, 0.0, -step));
+    return (center * 0.5) + (neighbors * (0.5 / 6.0));
+}
+
 @vertex
 fn main_soma(input: VertexInput) -> VertexOutput {
     var output: VertexOutput;
@@ -515,7 +692,7 @@ fn main_soma(input: VertexInput) -> VertexOutput {
         advectedInstancePos = input.instancePos + flowVelocity;
     }
 
-    let activity = getVoxelValue(advectedInstancePos);
+    let activity = sampleSmoothedVoxelValue(advectedInstancePos);
 
     // [Verified] Instanced Neurons: Somas scaled by local tensor activity
     // [Neuro-Weaver] Reactive scaling to visualize firing intensity (0.02 base + activity)
@@ -625,6 +802,153 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
 }
 `;
 
+export const sparkVertexShader = `
+${CONSTANTS}
+${HELPERS}
+
+struct Uniforms {
+    mvpMatrix: mat4x4<f32>,
+    modelMatrix: mat4x4<f32>,
+    time: f32,
+    style: f32,
+    flowSpeed: f32,
+    colorShift: f32,
+    slicePlane: vec4<f32>,
+    sparkle: f32,
+    growth: f32,
+    aberration: f32,
+    grain: f32,
+    focus: f32,
+    aperture: f32,
+    lightDir: vec3<f32>,
+    ambientLight: f32,
+    dirIntensity: f32,
+    stress: f32,
+    cortisol: f32,
+    altitude: f32,
+    oxygenLevel: f32,
+    hypoxiaStress: f32,
+    metabolicRate: f32,
+    mitochondrialFunction: f32,
+    fogDensity: f32,
+    zoom: f32,
+    heavyMetal: f32,
+    fluidActive: f32,
+}
+
+struct SparkInput {
+    @location(0) corner: vec2<f32>,
+    @location(1) anchorPhase: vec4<f32>,
+    @location(2) tangentStrength: vec4<f32>,
+    @location(3) material: vec4<f32>,
+}
+
+struct SparkOutput {
+    @builtin(position) position: vec4<f32>,
+    @location(0) color: vec3<f32>,
+    @location(1) uv: vec2<f32>,
+    @location(2) alpha: f32,
+    @location(3) clipDist: f32,
+}
+
+@group(0) @binding(0) var<uniform> uniforms: Uniforms;
+@group(0) @binding(1) var<storage, read> activityTensor: array<f32>;
+
+@vertex
+fn main(input: SparkInput) -> SparkOutput {
+    var output: SparkOutput;
+
+    let anchor = input.anchorPhase.xyz;
+    let tangent = normalize(input.tangentStrength.xyz);
+    let strength = input.tangentStrength.w;
+    let bundleId = input.material.x;
+    let myelin = clamp(input.material.y, 0.0, 1.0);
+    let kind = input.material.z;
+
+    let localActivity = sampleSmoothedVoxelValue(anchor);
+    let pulseSpeed = uniforms.flowSpeed * mix(0.55, 1.25, localActivity + uniforms.fluidActive * 0.2);
+    let travel = (fract(uniforms.time * pulseSpeed + input.anchorPhase.w + bundleId * 0.071) - 0.5);
+    let trailScale = mix(0.10, 0.34, localActivity) * mix(0.8, 1.25, strength);
+    var center = anchor + tangent * (travel * trailScale);
+
+    let cameraPos = vec3<f32>(0.0, 0.0, uniforms.zoom);
+    let viewDir = normalize(cameraPos - center);
+    var side = cross(viewDir, tangent);
+    if (length(side) < 0.001) {
+        side = cross(vec3<f32>(0.0, 1.0, 0.0), tangent);
+    }
+    side = normalize(side);
+    let up = normalize(cross(tangent, side));
+
+    let size = mix(0.014, 0.052, strength) * mix(0.75, 1.35, myelin);
+    let offset = side * input.corner.x * size + up * input.corner.y * size;
+    let worldPos = center + offset;
+
+    let thermal = getHeatmapColor(clamp(localActivity * 1.1 + strength * 0.35, 0.0, 1.0));
+    let sparkTint = mix(vec3<f32>(0.2, 0.9, 1.0), vec3<f32>(1.0, 0.75, 0.25), clamp(kind * 0.5 + bundleId * 0.05, 0.0, 1.0));
+    output.color = thermal * sparkTint;
+    output.uv = input.corner;
+    output.alpha = clamp((0.14 + localActivity * 0.55 + strength * 0.3) * mix(0.7, 1.2, myelin), 0.08, 1.0);
+    output.position = uniforms.mvpMatrix * vec4<f32>(worldPos, 1.0);
+    output.clipDist = dot(worldPos, uniforms.slicePlane.xyz) + uniforms.slicePlane.w;
+    return output;
+}
+`;
+
+export const sparkFragmentShader = `
+${HELPERS}
+
+struct Uniforms {
+    mvpMatrix: mat4x4<f32>,
+    modelMatrix: mat4x4<f32>,
+    time: f32,
+    style: f32,
+    flowSpeed: f32,
+    colorShift: f32,
+    slicePlane: vec4<f32>,
+    sparkle: f32,
+    growth: f32,
+    aberration: f32,
+    grain: f32,
+    focus: f32,
+    aperture: f32,
+    lightDir: vec3<f32>,
+    ambientLight: f32,
+    dirIntensity: f32,
+    stress: f32,
+    cortisol: f32,
+    altitude: f32,
+    oxygenLevel: f32,
+    hypoxiaStress: f32,
+    metabolicRate: f32,
+    mitochondrialFunction: f32,
+    fogDensity: f32,
+    zoom: f32,
+    heavyMetal: f32,
+    fluidActive: f32,
+}
+
+struct SparkInput {
+    @location(0) color: vec3<f32>,
+    @location(1) uv: vec2<f32>,
+    @location(2) alpha: f32,
+    @location(3) clipDist: f32,
+}
+
+@group(0) @binding(0) var<uniform> uniforms: Uniforms;
+
+@fragment
+fn main(input: SparkInput) -> @location(0) vec4<f32> {
+    if (input.clipDist < 0.0) { discard; }
+
+    let falloff = exp(-dot(input.uv, input.uv) * 3.8);
+    let core = pow(max(0.0, 1.0 - length(input.uv)), 2.2);
+    let glow = mix(falloff, core, 0.45);
+    let color = input.color * (0.35 + glow * 1.25);
+    return vec4<f32>(color, clamp(input.alpha * glow, 0.0, 1.0));
+}
+`;
+
 export const computeShader = `
 // V2.2 Compute Logic: Region-based diffusion and stimulus
 ${CONSTANTS}
@@ -646,7 +970,9 @@ struct TensorParams {
     hypoxiaStress: f32,
     metabolicRate: f32,
     mitochondrialFunction: f32,
-    // Padding to 64 bytes is handled, now adding environmental hazards
+    cognitiveLoad: f32,
+    stress: f32,
+    // Padding to 96 bytes is handled, now adding environmental hazards
     fluidActive: f32,
     electricalActive: f32,
     mercuryActive: f32,
@@ -741,6 +1067,21 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
 
     let diffused = avg + along * diffusionAlong + dot(perpVec, perpVec) * diffusionPerp * sign(along);
     val = mix(val, diffused, 0.7);
+
+    // [Phase 10] Criticality Cascades: thresholded local ignition biased by fiber direction
+    let criticality = avalancheCriticality(params.cognitiveLoad, params.stress, params.fluidActive);
+    let localPeak = max(max(max(val, valXm), valXp), max(max(valYm, valYp), max(valZm, valZp)));
+    let avalancheThreshold = params.spikeThreshold * mix(1.08, 0.72, criticality);
+    let seeded = step(avalancheThreshold, localPeak);
+    let branchBias = clamp(0.5 + 0.5 * dot(normalize(gradient + vec3<f32>(0.001, 0.001, 0.001)), fiberDir), 0.0, 1.0);
+    let cascadeNoise = 0.72 + 0.28 * hashNoise3(worldPosition * 1.7 + vec3<f32>(params.time * 0.31));
+    let cascade = seeded * cascadeNoise * mix(0.18, 1.0, branchBias) * (0.35 + criticality * 0.85);
+    if (cascade > 0.0) {
+        val = max(val, localPeak * 0.84 + cascade * (0.42 + localPeak * 0.5));
+        val += cascade * branchBias * 0.48;
+        diffusion *= mix(1.0, 1.32, cascade);
+        decay *= mix(1.0, mix(0.94, 0.82, criticality), cascade);
+    }
 
     // [Phase 3/8] Traveling Phase Wave (oscillatory propagation along fibers)
     let phaseSpeed = 4.0;
@@ -933,6 +1274,26 @@ fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
         color = blurredColor;
     } else {
         color = sharpColor;
+    }
+
+    // Cheap bright-pass bloom for connectome sparks and hot fibre bundles
+    if (uniforms.style >= 2.0) {
+        let texel = 1.0 / vec2<f32>(textureDimensions(tDiffuse));
+        var bloom = vec3<f32>(0.0);
+        var bloomWeight = 0.0;
+        for (var i = -1; i <= 1; i++) {
+            for (var j = -1; j <= 1; j++) {
+                let w = select(0.16, 0.28, i == 0 && j == 0);
+                let sampleCol = textureSample(tDiffuse, sDiffuse, uv + vec2<f32>(f32(i), f32(j)) * texel);
+                let lum = max(0.0, dot(sampleCol.rgb, vec3<f32>(0.299, 0.587, 0.114)) - 0.65);
+                bloom += sampleCol.rgb * lum * w;
+                bloomWeight += lum * w;
+            }
+        }
+        if (bloomWeight > 0.0) {
+            let depthFade = clamp(1.0 - coc * 0.4, 0.45, 1.0);
+            color += (bloom / max(0.0001, bloomWeight)) * 0.42 * depthFade;
+        }
     }
 
     // Film Grain

@@ -9,8 +9,11 @@ export class BrainGeometry {
         this.indices = [];
         this.fibers = [];
         this.somaPositions = [];
-        // Per-vertex metadata: [radius, bundleId, myelin] — companion buffer for Phase 2
+        this.sparkSources = [];
+        // Per-vertex metadata: [radius, bundleId, myelin, segmentPhase] — companion buffer for Connectome shading
         this.fiberMetadata = [];
+        // Per-vertex path endpoints: [start.xyz, end.xyz] for tensor-aware fiber sampling
+        this.fiberPaths = [];
     }
 
     generate(rows, cols) {
@@ -20,7 +23,9 @@ export class BrainGeometry {
         this.indices = [];
         this.fibers = [];
         this.somaPositions = [];
+        this.sparkSources = [];
         this.fiberMetadata = [];
+        this.fiberPaths = [];
 
         // 1. Generate deformed sphere (Brain Mesh)
         for (let r = 0; r <= rows; r++) {
@@ -117,6 +122,7 @@ export class BrainGeometry {
                     // Store Soma Position (Grid Node)
                     // Add some jitter for organic feel? No, grid structure is the aesthetic.
                     this.somaPositions.push(x, y, z);
+                    this.addSparkSource([x, y, z], [x, y, z], 0.2, 0.0, 0.0, 0.0, 0.0);
 
                     // Try to connect to neighbors (+X, +Y, +Z)
                     // We only connect 'forward' to avoid duplicates
@@ -127,6 +133,10 @@ export class BrainGeometry {
                         if (Math.random() > 0.3) {
                             this.fibers.push(x, y, z);
                             this.fibers.push(x + step, y, z);
+                            this.fiberMetadata.push(0.05, 0.0, 0.5, 0.0, 0.05, 0.0, 0.5, 0.0);
+                            this.fiberPaths.push(x, y, z, x + step, y, z);
+                            this.fiberPaths.push(x, y, z, x + step, y, z);
+                            this.addSparkSource([x + step * 0.5, y, z], [1.0, 0.0, 0.0], 0.28, 0.0, 0.0, 0.0, 1.0);
                         }
                     }
 
@@ -135,6 +145,10 @@ export class BrainGeometry {
                         if (Math.random() > 0.3) {
                             this.fibers.push(x, y, z);
                             this.fibers.push(x, y + step, z);
+                            this.fiberMetadata.push(0.05, 1.0, 0.5, 0.0, 0.05, 1.0, 0.5, 0.0);
+                            this.fiberPaths.push(x, y, z, x, y + step, z);
+                            this.fiberPaths.push(x, y, z, x, y + step, z);
+                            this.addSparkSource([x, y + step * 0.5, z], [0.0, 1.0, 0.0], 0.28, 0.0, 1.0, 0.0, 1.0);
                         }
                     }
 
@@ -143,6 +157,10 @@ export class BrainGeometry {
                         if (Math.random() > 0.3) {
                             this.fibers.push(x, y, z);
                             this.fibers.push(x, y, z + step);
+                            this.fiberMetadata.push(0.05, 2.0, 0.5, 0.0, 0.05, 2.0, 0.5, 0.0);
+                            this.fiberPaths.push(x, y, z, x, y, z + step);
+                            this.fiberPaths.push(x, y, z, x, y, z + step);
+                            this.addSparkSource([x, y, z + step * 0.5], [0.0, 0.0, 1.0], 0.28, 0.0, 2.0, 0.0, 1.0);
                         }
                     }
                 }
@@ -232,7 +250,16 @@ export class BrainGeometry {
                     if (!this.isInsideBrain(x1, y1, z1) && !this.isInsideBrain(x2, y2, z2)) continue;
                     const t = i / (pts.length - 1);
                     const radius = bun.r * (1.0 - t * 0.3);
-                    this.addFiberRibbonSegment([x1, y1, z1], [x2, y2, z2], radius, bun.id, bun.m);
+                    this.addFiberRibbonSegment([x1, y1, z1], [x2, y2, z2], radius, bun.id, bun.m, t);
+                    if (i % 2 === 0) {
+                        const midPoint = [
+                            (x1 + x2) * 0.5,
+                            (y1 + y2) * 0.5,
+                            (z1 + z2) * 0.5
+                        ];
+                        const tangent = [x2 - x1, y2 - y1, z2 - z1];
+                        this.addSparkSource(midPoint, tangent, 0.38 + bun.m * 0.3, t, bun.id, bun.m, 1.0);
+                    }
                 }
 
                 // Soma nodes: start, midpoint, and end of each sub-fiber
@@ -240,11 +267,12 @@ export class BrainGeometry {
                 [pts[0], mid, pts[pts.length - 1]].forEach(pt => {
                     if (this.isInsideBrain(pt[0], pt[1], pt[2])) {
                         this.somaPositions.push(pt[0], pt[1], pt[2]);
+                        this.addSparkSource(pt, [pt[0], pt[1], pt[2]], 0.45 + bun.m * 0.35, 0.15, bun.id, bun.m, 0.0);
                     }
                 });
 
                 // Fan-out terminal branches at the axon-terminal endpoint
-                this.addTerminalBranches(pts[pts.length - 1], bun.b, bun.r * 0.5, bun.id);
+                this.addTerminalBranches(pts[pts.length - 1], bun.b, bun.r * 0.5, bun.id, 1.0);
             }
         }
     }
@@ -268,7 +296,7 @@ export class BrainGeometry {
 
     // [V3.0] Cortical terminal arborisation: fans out short, tapering branch segments
     // from a fiber endpoint to mimic axon terminals / dendritic arbors.
-    addTerminalBranches(origin, count, segRadius, bundleId) {
+    addTerminalBranches(origin, count, segRadius, bundleId, branchPhase = 0.0) {
         const DEPTH = 4; // branch segments per terminal fiber
         for (let i = 0; i < count; i++) {
             const theta = Math.random() * Math.PI * 2;
@@ -290,7 +318,8 @@ export class BrainGeometry {
                         [nx, ny, nz],
                         segRadius * (1.0 - d / DEPTH),
                         bundleId,
-                        0.3
+                        0.3,
+                        branchPhase + (d / DEPTH) * 0.15
                     );
                 }
                 px = nx; py = ny; pz = nz;
@@ -299,7 +328,7 @@ export class BrainGeometry {
         }
     }
 
-    addFiberRibbonSegment(start, end, radius, bundleId, myelin) {
+    addFiberRibbonSegment(start, end, radius, bundleId, myelin, segmentPhase = 0.0) {
         const dx = end[0] - start[0];
         const dy = end[1] - start[1];
         const dz = end[2] - start[2];
@@ -338,8 +367,29 @@ export class BrainGeometry {
         );
 
         for (let i = 0; i < 6; i++) {
-            this.fiberMetadata.push(radius, bundleId, Math.max(0.0, Math.min(1.0, myelin)));
+            this.fiberMetadata.push(radius, bundleId, Math.max(0.0, Math.min(1.0, myelin)), segmentPhase);
+            this.fiberPaths.push(
+                start[0], start[1], start[2],
+                end[0], end[1], end[2]
+            );
         }
+    }
+
+    addSparkSource(anchor, tangent, intensity, phase, bundleId, myelin, kind) {
+        const tx = tangent[0];
+        const ty = tangent[1];
+        const tz = tangent[2];
+        const len = Math.sqrt(tx * tx + ty * ty + tz * tz);
+        const invLen = len > 1e-6 ? 1.0 / len : 1.0;
+        const nx = len > 1e-6 ? tx * invLen : 0.0;
+        const ny = len > 1e-6 ? ty * invLen : 0.0;
+        const nz = len > 1e-6 ? tz * invLen : 1.0;
+
+        this.sparkSources.push(
+            anchor[0], anchor[1], anchor[2], phase,
+            nx, ny, nz, intensity,
+            bundleId, myelin, kind, 0.0
+        );
     }
 
     getVertexData() { return new Float32Array(this.vertices); }
@@ -348,6 +398,8 @@ export class BrainGeometry {
     getIndexCount() { return this.indices.length; }
     getFiberData() { return new Float32Array(this.fibers); }
     getFiberDataWithMetadata() { return new Float32Array(this.fiberMetadata); }
+    getFiberPathData() { return new Float32Array(this.fiberPaths); }
+    getSparkSourceData() { return new Float32Array(this.sparkSources); }
     getFiberVertexCount() { return this.fibers.length / 3; }
     getVertexCount() { return this.vertices.length / 3; }
     // V2.2 Getter: Soma Positions for Instancing
