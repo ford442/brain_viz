@@ -35,6 +35,10 @@ export function handleCamera(player, evt) {
         return null;
     };
 
+    if (evt.target && player.splineMap && player.splineMap[evt.target]) {
+        evt.path = player.splineMap[evt.target];
+    }
+
     if (evt.path && Array.isArray(evt.path) && evt.duration && evt.duration > 0 && player.renderer.targetRotation) {
         console.log(`[Routine] Spline Camera Transition started (${evt.duration}s)`);
         const duration = evt.duration;
