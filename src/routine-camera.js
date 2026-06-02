@@ -202,23 +202,32 @@ export function handleCamera(player, evt) {
             const deltaX = Math.abs(targetRotX - currentRotX);
 
             if (evt.avoidCollision && (deltaY > 2.0 || deltaX > 2.0)) {
-                // Pathfinding: Create a spline path that arcs outward to avoid clipping through the center
+                // Pathfinding: Create a 4-point spline path that arcs outward to avoid clipping through the center
                 console.log(`[Routine] Pathfinding Camera Transition started (${duration}s) to avoid collision.`);
-                const midRotX = (currentRotX + targetRotX) / 2.0;
-                // Slightly offset the midpoint Y rotation to create a nice curve
-                let midRotY = (currentRotY + targetRotY) / 2.0;
+
+                let targetRotYAdj = targetRotY;
                 if (Math.abs(currentRotY - targetRotY) > Math.PI) {
-                    midRotY += Math.PI; // Go the other way around if it's shorter
+                    targetRotYAdj += (currentRotY < targetRotY) ? -2 * Math.PI : 2 * Math.PI;
                 }
 
-                // Push the zoom out at the midpoint
+                const q1RotX = currentRotX + (targetRotX - currentRotX) * 0.33;
+                const q2RotX = currentRotX + (targetRotX - currentRotX) * 0.67;
+
+                const q1RotY = currentRotY + (targetRotYAdj - currentRotY) * 0.33;
+                const q2RotY = currentRotY + (targetRotYAdj - currentRotY) * 0.67;
+
+                // Dynamically calculate bump based on rotation magnitude
+                const rotMag = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                const bump = Math.min(rotMag * 1.5, 8.0); // Cap the bump distance
+
+                // Push the zoom out at the midpoints
                 const maxZoom = Math.max(currentZoom, targetZoom);
-                const midZoom = maxZoom + 3.0; // Bump out by 3.0 units
+                const midZoom = maxZoom + bump;
 
                 player.activeLerps.push({
                     key: 'cameraRotX',
                     startVal: currentRotX,
-                    path: [currentRotX, midRotX, targetRotX],
+                    path: [currentRotX, q1RotX, q2RotX, targetRotX],
                     elapsed: 0,
                     duration: duration,
                     isCamera: true,
@@ -228,7 +237,7 @@ export function handleCamera(player, evt) {
                 player.activeLerps.push({
                     key: 'cameraRotY',
                     startVal: currentRotY,
-                    path: [currentRotY, midRotY, targetRotY],
+                    path: [currentRotY, q1RotY, q2RotY, targetRotYAdj],
                     elapsed: 0,
                     duration: duration,
                     isCamera: true,
@@ -238,7 +247,7 @@ export function handleCamera(player, evt) {
                 player.activeLerps.push({
                     key: 'cameraZoom',
                     startVal: currentZoom,
-                    path: [currentZoom, midZoom, targetZoom],
+                    path: [currentZoom, midZoom, midZoom, targetZoom],
                     elapsed: 0,
                     duration: duration,
                     isCamera: true,
