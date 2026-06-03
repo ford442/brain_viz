@@ -27,6 +27,8 @@ async function init() {
         colorShift: document.getElementById('shift'), // [Phase 5]
         sparkle: document.getElementById('sparkle'), // [Phase 5]
         growth: document.getElementById('growth'), // [Phase 6]
+        pointCloudDensity: document.getElementById('pointCloudDensity'), // [V3.1]
+        fiberCoupling: document.getElementById('fiberCoupling'), // [V3.2]
         shake: document.getElementById('shake'), // [Phase 2]
         stress: document.getElementById('stress'), // [Phase 2] Stress Distortion
         cortisol: document.getElementById('cortisol'), // [Phase 5] Cortisol Decay
@@ -65,6 +67,8 @@ async function init() {
         colorShift: document.getElementById('val-shift'), // [Phase 5]
         sparkle: document.getElementById('val-sparkle'), // [Phase 5]
         growth: document.getElementById('val-growth'), // [Phase 6]
+        pointCloudDensity: document.getElementById('val-pointCloudDensity'), // [V3.1]
+        fiberCoupling: document.getElementById('val-fiberCoupling'), // [V3.2]
         shake: document.getElementById('val-shake'), // [Phase 2]
         stress: document.getElementById('val-stress'), // [Phase 2] Stress Distortion
         cortisol: document.getElementById('val-cortisol'), // [Phase 5] Cortisol Decay
@@ -197,14 +201,6 @@ async function init() {
             { time: 0.0, type: 'camera', target: 'frontal-tour', duration: 5.0, ease: 'sineInOut' }
         ];
 
-        MINI_ROUTINES['x'] = [
-            { type: 'style', value: 4.0 },
-            { type: 'lerp', key: 'aiInfluence', value: 0.7, duration: 2.0 },
-            { type: 'lerp', key: 'resonanceThreshold', value: 0.15, duration: 2.0 }
-        ];
-
-
-
         // === Audio Reactor (Brain DJ Mode) ===
         const audioReactor = new AudioReactor();
         player.audioReactor = audioReactor;
@@ -217,7 +213,7 @@ async function init() {
                     player.triggerSignal('continue_scan');
                 }
             }
-            const routine = MINI_ROUTINES[e.key];
+            const routine = MINI_ROUTINES[e.key] || MINI_ROUTINES[e.key.toLowerCase()] || MINI_ROUTINES[e.key.toUpperCase()];
             if (routine) {
                 console.log(`[Main] Triggering Mini-Routine: ${e.key}`);
                 player.playNow(routine);
@@ -238,9 +234,105 @@ async function init() {
         const transport = setupRoutineTransport(player, controls);
         const tensorPlayer = new TensorPlayer(renderer);
         const synaptixEngine = new SynaptiXEngine(renderer);
+        renderer.synaptixEngine = synaptixEngine;
         setupBciPanel(renderer, controls, tensorPlayer);
+        const styleSynaptix = document.getElementById('style-mode-synaptix');
+        const synaptixSourceStatus = document.getElementById('synaptix-source-status');
+        const synaptixShowcaseButton = document.getElementById('btn-synaptix-showcase');
 
         const inferenceEngine = new InferenceEngine();
+        let aiPrompt = 'visual cortex resonance prompt';
+        let lastAIStep = 0;
+
+        const syncStyleDropdowns = (styleValue) => {
+            const styleString = String(styleValue);
+            const mainStyle = document.getElementById('style-mode');
+            if (mainStyle) mainStyle.value = styleString;
+            if (styleSynaptix) styleSynaptix.value = styleString;
+        };
+
+        const syncSynaptiXUiFromRenderer = () => {
+            if (inputs.aiInfluence) inputs.aiInfluence.value = renderer.params.aiInfluence;
+            if (labels.aiInfluence) labels.aiInfluence.textContent = renderer.params.aiInfluence.toFixed(2);
+            if (inputs.resonanceThreshold) inputs.resonanceThreshold.value = renderer.params.resonanceThreshold;
+            if (labels.resonanceThreshold) labels.resonanceThreshold.textContent = renderer.params.resonanceThreshold.toFixed(2);
+            if (inputs.fusionParticles) inputs.fusionParticles.checked = synaptixEngine.fusionParticlesEnabled;
+            syncStyleDropdowns(renderer.params.style);
+        };
+
+        const applySynaptiXScene = ({
+            pattern,
+            phantomSequence,
+            aiInfluence,
+            resonanceThreshold,
+            style = 4.0,
+            sourceInfo
+        }) => {
+            if (phantomSequence) {
+                synaptixEngine.generatePhantomFrames(phantomSequence);
+            }
+            if (pattern) {
+                synaptixEngine.generatePattern(pattern);
+            }
+            synaptixEngine.pauseFrames();
+            renderer.setSynaptiXParams({
+                style,
+                aiInfluence: aiInfluence ?? renderer.params.aiInfluence,
+                resonanceThreshold: resonanceThreshold ?? renderer.params.resonanceThreshold
+            });
+            if (sourceInfo) {
+                synaptixEngine.lastSourceInfo = sourceInfo;
+            }
+            syncSynaptiXUiFromRenderer();
+        };
+
+        const runSynaptiXShowcase = async (routinePath = '/routines/synaptix_resonance.json') => {
+            applySynaptiXScene({
+                phantomSequence: 'resonance',
+                aiInfluence: 0.68,
+                resonanceThreshold: 0.16,
+                sourceInfo: 'Built-in SynaptiX showcase phantoms'
+            });
+            await player.loadRoutineFromFile(routinePath, false);
+            player.play();
+            return true;
+        };
+
+        player.registerHandler('synaptix', (evt) => {
+            const action = evt.action || 'pattern';
+            if (action === 'pattern' && evt.pattern) {
+                applySynaptiXScene({
+                    pattern: evt.pattern,
+                    aiInfluence: evt.aiInfluence,
+                    resonanceThreshold: evt.resonanceThreshold,
+                    style: evt.style ?? 4.0,
+                    sourceInfo: evt.sourceInfo
+                });
+                return;
+            }
+            if (action === 'phantom-sequence') {
+                applySynaptiXScene({
+                    phantomSequence: evt.sequence || 'resonance',
+                    aiInfluence: evt.aiInfluence,
+                    resonanceThreshold: evt.resonanceThreshold,
+                    style: evt.style ?? 4.0,
+                    sourceInfo: evt.sourceInfo
+                });
+                return;
+            }
+            if (action === 'play-frames') {
+                synaptixEngine.playFrames(evt.rate || 4);
+                return;
+            }
+            if (action === 'pause-frames') {
+                synaptixEngine.pauseFrames();
+                return;
+            }
+            if (action === 'params') {
+                renderer.setSynaptiXParams(evt.params || {});
+                syncSynaptiXUiFromRenderer();
+            }
+        });
 
         // AI Toggle (preserved)
         let aiMode = false;
@@ -322,6 +414,12 @@ async function init() {
                 const file = e.target.files[0];
                 if (!file) return;
                 await synaptixEngine.loadTensorFile(file);
+                if (renderer.params.style < 4.0) {
+                    renderer.setSynaptiXParams({ style: 4.0 });
+                    const mainStyle = document.getElementById('style-mode');
+                    if (mainStyle) mainStyle.value = '4';
+                    if (styleSynaptix) styleSynaptix.value = '4';
+                }
             });
         }
 
@@ -333,16 +431,25 @@ async function init() {
                 const pattern = aiPatternSelect.value;
                 if (pattern && pattern !== 'none') {
                     synaptixEngine.generatePattern(pattern);
+                    if (renderer.params.style < 4.0) {
+                        renderer.setSynaptiXParams({ style: 4.0 });
+                        syncStyleDropdowns(4);
+                    }
                 }
             });
         }
 
+        if (synaptixShowcaseButton) {
+            synaptixShowcaseButton.addEventListener('click', () => {
+                runSynaptiXShowcase();
+            });
+        }
+
         // [SynaptiX] Wire SynaptiX tab style dropdown
-        const styleSynaptix = document.getElementById('style-mode-synaptix');
         if (styleSynaptix) {
             styleSynaptix.addEventListener('change', (evt) => {
                 const selectedStyle = parseFloat(evt.target.value);
-                renderer.setParams({ style: selectedStyle });
+                renderer.setSynaptiXParams({ style: selectedStyle });
                 const mainStyle = document.getElementById('style-mode');
                 if (mainStyle) mainStyle.value = selectedStyle;
             });
@@ -352,8 +459,13 @@ async function init() {
         if (inputs.aiLayer) {
             inputs.aiLayer.addEventListener('input', (evt) => {
                 const layer = parseInt(evt.target.value, 10);
-                renderer.setParams({ aiLayer: layer / 63.0 });
+                const layerMax = Math.max(1, synaptixEngine.layerCount - 1);
+                renderer.setSynaptiXParams({ aiLayer: layer / layerMax });
                 if (labels.aiLayer) labels.aiLayer.textContent = layer;
+                if (synaptixEngine.frameSequence.length > 0) {
+                    const frameIndex = Math.round((layer / layerMax) * (synaptixEngine.frameSequence.length - 1));
+                    synaptixEngine.scrubToFrame(frameIndex);
+                }
             });
         }
 
@@ -362,7 +474,7 @@ async function init() {
             inputs.fusionParticles.addEventListener('change', (evt) => {
                 synaptixEngine.fusionParticlesEnabled = evt.target.checked;
                 // Mirror to renderer params for shader visibility if needed
-                renderer.setParams({ fusionParticles: evt.target.checked ? 1.0 : 0.0 });
+                renderer.setSynaptiXParams({ fusionParticles: evt.target.checked ? 1.0 : 0.0 });
             });
         }
 
@@ -374,10 +486,8 @@ async function init() {
                     synaptixEngine.generatePattern(pattern);
                     // Auto-switch to SynaptiX style if not already
                     if (renderer.params.style < 4.0) {
-                        renderer.setParams({ style: 4.0 });
-                        const mainStyle = document.getElementById('style-mode');
-                        if (mainStyle) mainStyle.value = '4';
-                        if (styleSynaptix) styleSynaptix.value = '4';
+                        renderer.setSynaptiXParams({ style: 4.0 });
+                        syncStyleDropdowns(4);
                     }
                 }
             });
@@ -433,6 +543,57 @@ async function init() {
             });
         }
 
+        window.setLiveAIFrame = (data) => {
+            if (!data) return false;
+            if (data instanceof Float32Array) {
+                synaptixEngine.setTensorData(data);
+                synaptixEngine.lastSourceInfo = 'Live AI frame pushed';
+                return true;
+            }
+            if (Array.isArray(data) || typeof data.length === 'number') {
+                const activeLayer = Math.round((renderer.params.aiLayer || 0) * Math.max(0, synaptixEngine.layerCount - 1));
+                synaptixEngine.projectActivation(data, activeLayer, Math.max(1, synaptixEngine.layerCount));
+                synaptixEngine.lastSourceInfo = `Live AI activation projected (${data.length} values)`;
+                return true;
+            }
+            return false;
+        };
+
+        window.setSynaptiXPrompt = (prompt) => {
+            aiPrompt = String(prompt || 'visual cortex resonance prompt');
+        };
+
+        window.runSynaptiXHallucinationDemo = async () => {
+            aiPrompt = 'hallucination uncanny conflict prompt';
+            const result = await inferenceEngine.stepSynaptiX(synaptixEngine, renderer, {
+                prompt: aiPrompt,
+                tokenIndex: inferenceEngine.tokenCounter
+            });
+            if (result) {
+                renderer.setSynaptiXParams({
+                    style: 4.0,
+                    aiInfluence: 0.82,
+                    resonanceThreshold: 0.12
+                });
+            }
+            return result;
+        };
+
+        window.runSynaptiXShowcase = runSynaptiXShowcase;
+        window.__synaptixDebug = {
+            runShowcase: runSynaptiXShowcase,
+            getState: () => ({
+                style: renderer.params.style,
+                aiInfluence: renderer.params.aiInfluence,
+                resonanceThreshold: renderer.params.resonanceThreshold,
+                currentPattern: synaptixEngine.currentPattern,
+                frameCount: synaptixEngine.frameSequence.length,
+                frameIndex: synaptixEngine.frameIndex,
+                sourceInfo: synaptixEngine.lastSourceInfo,
+                isRoutinePlaying: player.isPlaying
+            })
+        };
+
         initUIControls(renderer, inputs, labels);
 
         // [SynaptiX] Patch main style dropdown for preset 4 and SynaptiX tab sync
@@ -460,6 +621,23 @@ async function init() {
 
             // [SynaptiX] Update frame playback and live source polling
             if (synaptixEngine) synaptixEngine.update(timestamp);
+
+            if (timestamp - lastAIStep >= (1000 / Math.max(1, inferenceEngine.liveFrameRate))) {
+                lastAIStep = timestamp;
+                if (renderer.params.style >= 4.0 || inputs.liveSourceEnable?.checked) {
+                    inferenceEngine.stepSynaptiX(synaptixEngine, renderer, {
+                        prompt: aiPrompt,
+                        tokenIndex: inferenceEngine.tokenCounter
+                    }).then((result) => {
+                        if (!result) return;
+                        if (inputs.liveSourceEnable?.checked && liveSourceStatus) {
+                            liveSourceStatus.textContent = `status: ${inferenceEngine.status} token=${result.token}`;
+                        }
+                    }).catch((err) => {
+                        console.warn('[SynaptiX] Live inference step failed:', err);
+                    });
+                }
+            }
 
             // Audio Reactivity (Brain DJ Mode)
             if (audioReactor.isActive) {
@@ -506,18 +684,25 @@ async function init() {
             if (labels.amplitude) labels.amplitude.textContent = renderer.params.amplitude.toFixed(2);
             if (inputs.flowSpeed) inputs.flowSpeed.value = renderer.params.flowSpeed;
             if (labels.flowSpeed) labels.flowSpeed.textContent = renderer.params.flowSpeed.toFixed(2);
+            if (inputs.pointCloudDensity) inputs.pointCloudDensity.value = renderer.params.pointCloudDensity;
+            if (labels.pointCloudDensity) labels.pointCloudDensity.textContent = renderer.params.pointCloudDensity.toFixed(2);
+            if (inputs.fiberCoupling) inputs.fiberCoupling.value = renderer.params.fiberCoupling;
+            if (labels.fiberCoupling) labels.fiberCoupling.textContent = renderer.params.fiberCoupling.toFixed(2);
             if (inputs.aiInfluence) inputs.aiInfluence.value = renderer.params.aiInfluence;
             if (labels.aiInfluence) labels.aiInfluence.textContent = renderer.params.aiInfluence.toFixed(2);
             if (inputs.resonanceThreshold) inputs.resonanceThreshold.value = renderer.params.resonanceThreshold;
             if (labels.resonanceThreshold) labels.resonanceThreshold.textContent = renderer.params.resonanceThreshold.toFixed(2);
             if (inputs.aiLayer) {
-                const layerVal = Math.round((renderer.params.aiLayer || 0) * 63);
+                const layerMax = Math.max(1, synaptixEngine.layerCount - 1);
+                inputs.aiLayer.max = String(layerMax);
+                const layerVal = Math.round((renderer.params.aiLayer || 0) * layerMax);
                 inputs.aiLayer.value = layerVal;
                 if (labels.aiLayer) labels.aiLayer.textContent = layerVal;
             }
+            if (synaptixSourceStatus) synaptixSourceStatus.textContent = synaptixEngine.lastSourceInfo;
 
             // [SynaptiX] Update resonance stats display
-            const stats = synaptixEngine.computeResonanceStats();
+            const stats = synaptixEngine.computeResonanceStats(renderer._lastHumanTensor);
             const barHuman = document.getElementById('bar-human-energy');
             const barAI = document.getElementById('bar-ai-energy');
             const barResonance = document.getElementById('bar-resonance');
@@ -540,6 +725,10 @@ async function init() {
                 if (parseInt(inputs.frameScrubber.value, 10) !== synaptixEngine.frameIndex) {
                     inputs.frameScrubber.value = synaptixEngine.frameIndex;
                 }
+            } else if (inputs.frameScrubber) {
+                inputs.frameScrubber.disabled = true;
+                inputs.frameScrubber.max = '0';
+                if (labels.frameTotal) labels.frameTotal.textContent = '0';
             }
 
             // Sync style dropdowns
@@ -585,7 +774,12 @@ async function init() {
         requestAnimationFrame(updateLoop);
 
         // AI Loop
-        const runAI = async () => { /* ... your existing AI loop ... */ };
+        const runAI = async () => {
+            await inferenceEngine.initialize();
+            if (liveSourceStatus) {
+                liveSourceStatus.textContent = `status: ${inferenceEngine.status}`;
+            }
+        };
         runAI();
 
         renderer.start();

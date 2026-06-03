@@ -10,6 +10,7 @@
 
 Key capabilities:
 - **Four visualization styles**: Organic (surface), Cyber (wireframe), Connectome (fibers + instanced somas), and Heatmap (volumetric thermal gradient).
+- **SynaptiX comparative mode**: Dual-buffer human vs AI visualization with built-in phantom activations, resonance highlighting, and anatomical projection of non-32³ activations.
 - **Interactive stimuli**: Click to inject signals into specific lobes (frontal, occipital, parietal, temporal, deep).
 - **Routine engine**: Scripted, timed sequences of parameters, camera moves, audio, and stimuli (`RoutinePlayer`).
 - **BCI tensor playback**: Stream pre-recorded or synthetic 32×32×32 neural activity frames (`TensorPlayer`).
@@ -138,6 +139,7 @@ brain_viz/
 ### Key Module Responsibilities
 
 - **`brain-renderer.js`** — Encapsulates the entire WebGPU state machine. Creates the device, configures the canvas, builds render/compute pipelines, manages uniform buffers, and runs `requestAnimationFrame`. Exposes `setParams()`, `injectStimulus()`, `calmState()`, `resetActivity()`, and `setVoxelData()`.
+- **`synaptix-engine.js`** — Owns AI tensor ingestion/projecting, phantom presets, frame-sequence playback, and resonance stats for SynaptiX mode.
 - **`brain-geometry.js`** — Generates a deformed UV sphere (gyri/sulci approximation) and an internal Manhattan-style circuit grid. Provides vertex buffers, index buffers, fiber line buffers, and instanced soma positions.
 - **`shaders.js`** — Contains all WGSL code as exported JavaScript template strings. Includes vertex/fragment shaders for the brain surface, instanced soma shaders, compute shader for tensor physics, and post-processing shaders (chromatic aberration, grain, DoF).
 - **`routine-player.js`** — Orchestrates timed events (stimulus, camera, lerp, audio, text, choice/branching). Supports sub-routines, procedural generation, CSV parsing, and an extensible handler registry.
@@ -219,6 +221,18 @@ WGSL structs require strict memory alignment. The `Uniforms` struct in `shaders.
 - **Compute uniform buffer**: 80 bytes fixed size (`COMPUTE_UNIFORM_BUFFER_SIZE = 80`). The active data spans offsets 0–71 (time, voxelDim, frequency, amplitude, spikeThreshold, smoothing, style, padding, stimulusPos, stimulusActive, hypoxiaStress, metabolicRate, mitochondrialFunction, fluidActive, electricalActive, mercuryActive), with trailing padding to reach 80 bytes.
 
 **When adding new uniforms, you MUST manually calculate and respect WGSL alignment rules in both the shader struct and the JavaScript `Float32Array`/`DataView` writing to it.** Failure results in silent data corruption or validation errors.
+
+### 5.3a SynaptiX Uniform / Buffer Notes
+
+- SynaptiX uses a second 32×32×32 storage buffer, `aiTensorBuffer`, alongside the human `tensorBuffer`.
+- The render uniform path includes `aiInfluence`, `resonanceThreshold`, and `aiLayer`; these are mirrored from `brain-renderer.js` into the WGSL structs in `shaders.js`.
+- SynaptiX rendering is enabled when `style >= 4.0`.
+- Non-32³ tensors are projected in `synaptix-engine.js` using the default mapping:
+  - early activations → occipital
+  - lower-mid → temporal
+  - upper-mid → parietal
+  - deep → frontal
+- Built-in "phantom" presets are code-native and do not require external assets; story routines rely on them for first-run demos.
 
 ### 5.4 Stimulus Injection Lifecycle
 

@@ -130,7 +130,7 @@ export function initUIControls(renderer, uiInputs, uiLabels) {
         renderer.calmState();
         flashButton(document.getElementById('stim-calm'));
         glowRegionButtons();
-        ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'shake', 'stress', 'cortisol', 'heavyMetal', 'cognitiveLoad', 'fluidActive', 'fogDensity', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
+        ['amplitude', 'frequency', 'smoothing', 'colorShift', 'sparkle', 'pointCloudDensity', 'fiberCoupling', 'shake', 'stress', 'cortisol', 'heavyMetal', 'cognitiveLoad', 'fluidActive', 'fogDensity', 'aberration', 'grain', 'focus', 'aperture', 'ambientLight', 'dirIntensity', 'lightDirX', 'lightDirY', 'lightDirZ'].forEach(k => {
             if(uiInputs[k]) uiInputs[k].value = renderer.params[k];
             syncParam(k, renderer.params[k]);
         });

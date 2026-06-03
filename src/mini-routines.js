@@ -1,4 +1,23 @@
 export const MINI_ROUTINES = {
+    'x': [
+        { time: 0.0, type: 'text', message: 'SynaptiX Showcase', duration: 2.0 },
+        { time: 0.0, type: 'synaptix', action: 'phantom-sequence', sequence: 'resonance', aiInfluence: 0.68, resonanceThreshold: 0.16, sourceInfo: 'Built-in SynaptiX resonance phantoms' },
+        { time: 0.1, type: 'camera', target: 'overview', duration: 1.2 },
+        { time: 0.2, type: 'stimulus', target: 'occipital', intensity: 0.9 },
+        { time: 0.7, type: 'stimulus', target: 'frontal', intensity: 0.9 },
+        { time: 1.2, type: 'camera', target: 'frontal-lobe', duration: 1.8 },
+        { time: 1.2, type: 'lerp', key: 'aiInfluence', value: 0.82, duration: 2.5 },
+        { time: 1.2, type: 'lerp', key: 'resonanceThreshold', value: 0.12, duration: 2.5 },
+        { time: 2.6, type: 'synaptix', action: 'play-frames', rate: 3 },
+        { time: 3.4, type: 'camera', target: 'occipital-lobe', duration: 1.6 },
+        { time: 4.8, type: 'synaptix', action: 'pause-frames' },
+        { time: 4.8, type: 'synaptix', action: 'pattern', pattern: 'full-resonance', aiInfluence: 0.9, resonanceThreshold: 0.08, sourceInfo: 'Built-in SynaptiX full resonance phantom' },
+        { time: 4.9, type: 'camera', target: 'close-up', duration: 1.8 },
+        { time: 5.4, type: 'text', message: 'Human and synthetic activations converge.', duration: 2.2 }
+    ],
+    'X': [
+        { time: 0.0, type: 'call', routine: 'x' }
+    ],
     'H': [ // Heartbeat Pulse
         { time: 0.0, type: 'text', message: 'Heartbeat Simulation', duration: 3.0 },
         { time: 0.0, type: 'style', value: 2 }, // Connectome style for visible pulses

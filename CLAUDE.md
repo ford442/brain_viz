@@ -29,6 +29,7 @@ python test_run.py      # Smoke test (checks if server responds)
 - **`tensor-player.js`** — Synthesizes BCI patterns and loads pre-recorded tensor series (.bin, .npy, .csv).
 - **`inference-engine.js`** — ONNX Runtime integration for SqueezeNet inference (AI dreaming mode).
 - **`audio-reactor.js`** — Web Audio API microphone input for real-time audio reactivity.
+- **`synaptix-engine.js`** — AI tensor projection, phantom generation, frame playback, and resonance metrics for comparative mode.
 
 ### Data Flow
 ```
@@ -84,6 +85,20 @@ Testing is **manual and visual only**. Verify:
 - Shader changes produce expected visuals in real-time
 
 Run `npm run dev` and test in Chrome 113+/Edge 113+ (requires WebGPU support).
+
+### 5. SynaptiX Comparative Path
+SynaptiX is enabled by `style >= 4.0` and adds:
+
+- `aiTensorBuffer` as a second 32x32x32 storage buffer
+- render uniforms `aiInfluence`, `resonanceThreshold`, and `aiLayer`
+- built-in phantom activations from `src/synaptix-engine.js`
+- default projector mapping:
+  - early activations -> occipital
+  - lower-mid -> temporal
+  - upper-mid -> parietal
+  - deep -> frontal
+
+Routine files can drive SynaptiX through the custom `synaptix` event type. First-run demos should prefer code-native phantoms instead of external tensor assets.
 
 ## Code Style & Conventions
 

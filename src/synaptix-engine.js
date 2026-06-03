@@ -114,6 +114,8 @@ export class SynaptiXEngine {
         this.framePlaybackRate = 4;    // frames per second
         this.lastFrameTime = 0;
         this.liveCallback = null;      // External live source callback
+        this.layerCount = 1;
+        this.lastSourceInfo = 'No AI tensor loaded';
         this.resonanceStats = {        // Computed each update
             resonance: 0.0,
             humanEnergy: 0.0,
@@ -131,24 +133,37 @@ export class SynaptiXEngine {
 
     async loadTensorFile(file) {
         const ext = file.name.split('.').pop().toLowerCase();
-        let data;
+        let payload;
         if (ext === 'npy') {
-            data = await this.loadNPY(file);
+            payload = await this.loadNPY(file);
         } else if (ext === 'bin') {
-            data = await this.loadBinary(file);
+            payload = await this.loadBinary(file);
         } else if (ext === 'csv') {
-            data = await this.loadCSV(file);
+            payload = await this.loadCSV(file);
         } else {
             console.warn('[SynaptiX] Unsupported file format');
             return;
         }
-        this.setTensorData(data);
+        if (payload.frames) {
+            this.loadFrameSequence(payload.frames);
+            if (this.frameSequence.length > 0) {
+                this.scrubToFrame(0);
+            }
+            this.lastSourceInfo = `Sequence loaded: ${file.name} (${this.frameSequence.length} frames)`;
+            console.log(`[SynaptiX] Loaded frame sequence from file (${this.frameSequence.length} frames)`);
+            return;
+        }
+        this.setTensorData(payload.tensor);
+        this.layerCount = payload.layerCount || 1;
+        this.lastSourceInfo = payload.projected
+            ? `Projected activations: ${file.name} (${payload.sourceLength} values → 32^3)`
+            : `Tensor loaded: ${file.name}`;
         console.log('[SynaptiX] AI tensor loaded from file');
     }
 
     async loadBinary(file) {
         const buffer = await file.arrayBuffer();
-        return new Float32Array(buffer);
+        return this._parseTensorPayload(new Float32Array(buffer));
     }
 
     async loadNPY(file) {
@@ -158,7 +173,7 @@ export class SynaptiXEngine {
         const majorVersion = view.getUint8(6);
         const headerLen = majorVersion >= 2 ? view.getUint32(8, true) : view.getUint16(8, true);
         const dataOffset = 10 + headerLen;
-        return new Float32Array(buffer.slice(dataOffset));
+        return this._parseTensorPayload(new Float32Array(buffer.slice(dataOffset)));
     }
 
     async loadCSV(file) {
@@ -169,12 +184,14 @@ export class SynaptiXEngine {
             const parts = line.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
             values.push(...parts);
         }
-        return new Float32Array(values);
+        return this._parseTensorPayload(new Float32Array(values));
     }
 
     // [SynaptiX] Project an external activation tensor into the 32³ volume
     projectActivation(activation, layerIndex = 0, totalLayers = 1) {
         const projected = this.projector.project(activation, layerIndex, totalLayers);
+        this.layerCount = Math.max(1, totalLayers);
+        this.lastSourceInfo = `Projected external activation (${layerIndex + 1}/${this.layerCount})`;
         this.setTensorData(projected);
     }
 
@@ -191,6 +208,8 @@ export class SynaptiXEngine {
             return new Float32Array(f);
         }).filter(f => f.length === VOXEL_COUNT);
         this.frameIndex = 0;
+        this.isPlayingFrames = false;
+        this.layerCount = this.frameSequence.length > 0 ? this.frameSequence.length : 1;
         console.log(`[SynaptiX] Loaded ${this.frameSequence.length} frames`);
     }
 
@@ -233,19 +252,24 @@ export class SynaptiXEngine {
 
     setLiveCallback(callback) {
         this.liveCallback = callback;
+        this.lastSourceInfo = callback ? 'Live callback source connected' : 'Live callback source disconnected';
     }
 
     // ── Resonance Stats ──
 
     computeResonanceStats(humanTensor) {
         // humanTensor: Float32Array of VOXEL_COUNT (optional, samples from renderer if omitted)
+        if (!humanTensor && this.renderer?._lastHumanTensor?.length === VOXEL_COUNT) {
+            humanTensor = this.renderer._lastHumanTensor;
+        }
+
         if (!humanTensor && this.renderer && this.renderer.tensorBuffer) {
             // Can't read GPU buffer synchronously; use proxy values from params
             const blended = this.renderer.params.aiInfluence || 0;
             this.resonanceStats = {
-                resonance: blended * (1.0 - (this.renderer.params.resonanceThreshold || 0.2)),
-                humanEnergy: 1.0 - blended,
-                aiEnergy: blended
+                resonance: blended * (1.0 - (this.renderer.params.resonanceThreshold || 0.2)) * 100,
+                humanEnergy: (1.0 - blended) * 100,
+                aiEnergy: blended * 100
             };
             return this.resonanceStats;
         }
@@ -292,6 +316,14 @@ export class SynaptiXEngine {
     // ── Preset Patterns ──
 
     generatePattern(patternId) {
+        const data = this.createPatternData(patternId);
+        if (!data) return;
+        this.setTensorData(data);
+        this.currentPattern = patternId;
+        console.log(`[SynaptiX] Generated pattern: ${patternId}`);
+    }
+
+    createPatternData(patternId) {
         const data = new Float32Array(VOXEL_COUNT);
         switch (patternId) {
             case 'attention-frontal':
@@ -309,7 +341,6 @@ export class SynaptiXEngine {
             case 'embedding-space':
                 this._fillEmbeddingSpace(data);
                 break;
-            // [NEW] Narrative presets for comparative storytelling
             case 'aligned-prefrontal':
                 this._fillAlignedPrefrontal(data);
                 break;
@@ -323,11 +354,61 @@ export class SynaptiXEngine {
                 this._fillFullResonance(data);
                 break;
             default:
-                return;
+                return null;
         }
-        this.setTensorData(data);
-        this.currentPattern = patternId;
-        console.log(`[SynaptiX] Generated pattern: ${patternId}`);
+        return data;
+    }
+
+    generatePhantomFrames(sequenceId = 'resonance') {
+        const sequences = {
+            resonance: [
+                'attention-occipital',
+                'visual-mismatch',
+                'aligned-prefrontal',
+                'full-resonance'
+            ],
+            hallucination: [
+                'attention-occipital',
+                'hallucination-spike',
+                'visual-mismatch',
+                'hallucination-spike'
+            ]
+        };
+        const patternIds = sequences[sequenceId] || sequences.resonance;
+        const frames = patternIds
+            .map((patternId) => this.createPatternData(patternId))
+            .filter(Boolean);
+        this.loadFrameSequence(frames);
+        if (frames.length > 0) {
+            this.scrubToFrame(0);
+        }
+        this.lastSourceInfo = `Built-in phantom sequence: ${sequenceId} (${frames.length} frames)`;
+        return frames.length;
+    }
+
+    _parseTensorPayload(floatArray) {
+        if (floatArray.length === VOXEL_COUNT) {
+            return { tensor: floatArray, layerCount: 1, projected: false, sourceLength: floatArray.length };
+        }
+
+        if (floatArray.length > VOXEL_COUNT && floatArray.length % VOXEL_COUNT === 0) {
+            const frameCount = floatArray.length / VOXEL_COUNT;
+            const frames = new Array(frameCount);
+            for (let i = 0; i < frameCount; i++) {
+                const start = i * VOXEL_COUNT;
+                frames[i] = floatArray.slice(start, start + VOXEL_COUNT);
+            }
+            return { frames };
+        }
+
+        const projected = this.projector.project(floatArray, 0, 1);
+        console.warn(`[SynaptiX] Projected non-32^3 tensor payload of size ${floatArray.length} into 32^3 brain volume`);
+        return {
+            tensor: projected,
+            layerCount: 1,
+            projected: true,
+            sourceLength: floatArray.length
+        };
     }
 
     // ── Original Patterns ──

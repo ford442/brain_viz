@@ -630,6 +630,14 @@
                         <input type="range" id="growth" min="0.0" max="1.0" step="0.01" value="1.0">
                     </div>
                     <div class="control-group">
+                        <label data-tooltip="Density of fibre point cloud (boutons / varicosities)">Point Density <span id="val-pointCloudDensity" class="value">1.0</span></label>
+                        <input type="range" id="pointCloudDensity" min="0.0" max="2.0" step="0.01" value="1.0">
+                    </div>
+                    <div class="control-group">
+                        <label data-tooltip="Bidirectional tensor↔fiber coupling strength (0 = off)">Fiber Coupling <span id="val-fiberCoupling" class="value">0.50</span></label>
+                        <input type="range" id="fiberCoupling" min="0.0" max="1.0" step="0.01" value="0.5">
+                    </div>
+                    <div class="control-group">
                         <label data-tooltip="Volumetric cerebrospinal fluid simulation strength">Fluid Dynamics <span id="val-fluidActive" class="value">0.00</span></label>
                         <input type="range" id="fluidActive" min="0" max="2" step="0.05" value="0">
                     </div>
@@ -891,6 +899,10 @@
                     <div class="control-group">
                         <label>Load AI Tensor (.npy / .bin / .csv)</label>
                         <input type="file" id="ai-tensor-file" accept=".npy,.bin,.csv">
+                        <div id="synaptix-source-status" style="margin-top:4px;font-size:10px;color:#667788;font-family:'JetBrains Mono',monospace;">No AI tensor loaded</div>
+                        <div style="margin-top:4px;font-size:10px;color:#8899aa;line-height:1.35;">
+                            Default projector: early layers map to occipital, mid layers to temporal/parietal, deep layers to frontal volume.
+                        </div>
                     </div>
                     <div class="control-group">
                         <label>AI Pattern</label>
@@ -912,6 +924,13 @@
                             style="width:100%;padding:8px;background:#0a1a2a;border:1px solid rgba(200,0,180,0.3);
                                    border-radius:6px;color:#ddaaff;font-size:12px;cursor:pointer;">
                             ✨ Generate AI Pattern
+                        </button>
+                    </div>
+                    <div class="control-group">
+                        <button id="btn-synaptix-showcase" type="button"
+                            style="width:100%;padding:8px;background:#101d33;border:1px solid rgba(255,221,85,0.35);
+                                   border-radius:6px;color:#ffeeaa;font-size:12px;cursor:pointer;">
+                            ▶ Run SynaptiX Showcase (X)
                         </button>
                     </div>
                 </div>

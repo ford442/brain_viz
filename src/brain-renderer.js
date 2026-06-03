@@ -1,7 +1,7 @@
 // brain-renderer.js
 // Verified Neuro-Weaver V2.6 Implementation
 import { BrainGeometry } from './brain-geometry.js';
-import { vertexShader, fragmentShader, computeShader, somaVertexShader, somaFragmentShader, sparkVertexShader, sparkFragmentShader, postVertexShader, postFragmentShader } from './shaders.js';
+import { vertexShader, fragmentShader, fiberVertexShader, fiberFragmentShader, computeShader, somaVertexShader, somaFragmentShader, sparkVertexShader, sparkFragmentShader, postVertexShader, postFragmentShader, pointCloudVertexShader, pointCloudFragmentShader } from './shaders.js';
 import { Mat4 } from './math-utils.js';
 import { WasmTensorEngine } from './wasm-engine.js'; // [Phase 1 WASM]
 
@@ -32,6 +32,12 @@ export class BrainRenderer {
         this.time = 0;
         this.isRunning = false;
         this.tensorPlaybackMode = false; // [BCI] When true, compute shader skipped; TensorPlayer drives the voxel buffer
+        this.geometryRows = 80;
+        this.geometryCols = 50;
+        this.geometryDirty = false;
+        this.geometryRebuildIntervalMs = 80;
+        this.lastGeometryRebuildTime = 0;
+        this.lastGeometryGenerationMs = 0;
 
         // [Phase 1 WASM] Hybrid simulation mode.
         // When wasmMode is true the C++ BrainTensorEngine drives the tensor physics
@@ -76,12 +82,21 @@ export class BrainRenderer {
             aiInfluence: 0.5,
             resonanceThreshold: 0.2,
             aiLayer: 0.0,
+            pointCloudDensity: 1.0,
+            fiberCoupling: 0.5,
+            foldScale: 1.0,
+            foldStrength: 0.16,
+            fissureDepth: 0.52,
+            lobeFoldBias: 1.0,
+            corticalThickness: 0.11,
         };
 
         // Voxel Grid Settings
         // 32x32x32 flattened buffer
         this.voxelDim = 32;
         this.voxelCount = this.voxelDim * this.voxelDim * this.voxelDim;
+        this._lastHumanTensor = new Float32Array(this.voxelCount);
+        this._lastAITensor = new Float32Array(this.voxelCount);
 
         // Stimulus State (V2.2 Initialized)
         // Stores position and intensity for compute shader injection
@@ -159,8 +174,7 @@ export class BrainRenderer {
         this.context.configure({ device: this.device, format: format, alphaMode: 'opaque' });
         
         // Geometry
-        const geometry = new BrainGeometry();
-        geometry.generate(80, 50); 
+        const geometry = this.buildGeometry();
         
         // 1. Solid Mesh Buffers
         this.vertexBuffer = this.createBuffer(geometry.getVertexData(), GPUBufferUsage.VERTEX);
@@ -170,6 +184,7 @@ export class BrainRenderer {
         
         // 2. Fiber Line Buffers
         this.fiberBuffer = this.createBuffer(geometry.getFiberData(), GPUBufferUsage.VERTEX);
+        this.fiberNormalBuffer = this.createBuffer(geometry.getFiberNormalData(), GPUBufferUsage.VERTEX);
         this.fiberMetaBuffer = this.createBuffer(geometry.getFiberDataWithMetadata(), GPUBufferUsage.VERTEX);
         this.fiberPathBuffer = this.createBuffer(geometry.getFiberPathData(), GPUBufferUsage.VERTEX);
         this.fiberVertexCount = geometry.getFiberVertexCount();
@@ -178,6 +193,7 @@ export class BrainRenderer {
         this.initSomaResources(geometry);
         this.initSparkResources(geometry);
         this.initVolumetricResources();
+        this.uploadFiberDirections(geometry);
         
         // Bind Groups Layouts
         const renderBindGroupLayout = this.device.createBindGroupLayout({
@@ -224,31 +240,33 @@ export class BrainRenderer {
         this.fiberPipeline = this.device.createRenderPipeline({
             layout: this.device.createPipelineLayout({ bindGroupLayouts: [renderBindGroupLayout] }),
             vertex: {
-                module: this.device.createShaderModule({ code: vertexShader }),
+                module: this.device.createShaderModule({ code: fiberVertexShader }),
                 entryPoint: 'main', 
                 buffers: [
                     { arrayStride: 12, attributes: [{ shaderLocation: 0, offset: 0, format: 'float32x3' }] },
                     { arrayStride: 16, attributes: [{ shaderLocation: 1, offset: 0, format: 'float32x4' }] },
+                    { arrayStride: 16, attributes: [{ shaderLocation: 2, offset: 0, format: 'float32x4' }] },
                     {
                         arrayStride: 24,
                         attributes: [
-                            { shaderLocation: 2, offset: 0, format: 'float32x3' },
-                            { shaderLocation: 3, offset: 12, format: 'float32x3' }
+                            { shaderLocation: 3, offset: 0, format: 'float32x3' },
+                            { shaderLocation: 4, offset: 12, format: 'float32x3' }
                         ]
                     }
                 ]
             },
             fragment: {
-                module: this.device.createShaderModule({ code: fragmentShader }),
+                module: this.device.createShaderModule({ code: fiberFragmentShader }),
                 entryPoint: 'main',
                 targets: [{ format: format, blend: { color: { srcFactor: 'src-alpha', dstFactor: 'one', operation: 'add' }, alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' } } }] 
             },
             primitive: { topology: 'triangle-list' }, 
-            depthStencil: { depthWriteEnabled: false, depthCompare: 'less', format: 'depth32float' }
+            depthStencil: { depthWriteEnabled: true, depthCompare: 'less', format: 'depth32float' }
         });
 
         this.initSomaPipeline(renderBindGroupLayout, format);
         this.initSparkPipeline(renderBindGroupLayout, format);
+        this.initPointCloudPipeline(renderBindGroupLayout, format);
         this.initComputePipeline();
 
         // [Phase 7] Post-Processing Init
@@ -282,13 +300,11 @@ export class BrainRenderer {
         // Initialize with zeros
         this.device.queue.writeBuffer(this.aiTensorBuffer, 0, new Float32Array(this.voxelCount));
 
-        // [Phase 3/8] Fiber Direction Buffer: vec4 per voxel (xyz = direction, w = padding)
-        // Procedurally generated anatomical prior for anisotropic diffusion
+        // [V3.2] Fiber Affinity Buffer: 3 vec4s per voxel (xyz=dir, w=weight) from actual bundles
         this.fiberDirectionBuffer = this.device.createBuffer({
-            size: this.voxelCount * 4 * 4, // vec4<f32> per voxel
+            size: this.voxelCount * 12 * 4, // 3 vec4<f32> per voxel
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
         });
-        this.uploadFiberDirections();
 
         // Render uniforms: 2 mat4s (32 floats) + scalar block (28 floats including padding) = 60 floats / 240 bytes.
         // The buffer is padded to 256 bytes to satisfy WebGPU uniform buffer alignment requirements.
@@ -304,85 +320,25 @@ export class BrainRenderer {
         });
     }
 
-    // [Phase 3/8] Generate and upload procedural fiber direction field
-    uploadFiberDirections() {
-        const dim = this.voxelDim;
-        const brainRange = 1.6;
-        // vec4 per voxel: xyz = normalized direction, w = 0
-        const data = new Float32Array(this.voxelCount * 4);
-
-        for (let z = 0; z < dim; z++) {
-            for (let y = 0; y < dim; y++) {
-                for (let x = 0; x < dim; x++) {
-                    // World position normalized to [-1, 1]
-                    const wx = (x / dim) * 2.0 - 1.0;
-                    const wy = (y / dim) * 2.0 - 1.0;
-                    const wz = (z / dim) * 2.0 - 1.0;
-
-                    let dx = 0, dy = 0, dz = 0;
-
-                    // Anatomical prior: mimic major white-matter tract orientations
-                    if (Math.abs(wz) > 0.6) {
-                        // Superior/Inferior: vertical fibers (corticospinal tract)
-                        dz = Math.sign(wz);
-                        dx = wx * 0.2;
-                        dy = wy * 0.2;
-                    } else if (Math.abs(wx) > 0.7) {
-                        // Lateral: commissural fibers (corpus callosum direction)
-                        dx = Math.sign(wx);
-                        dy = wy * 0.1;
-                        dz = wz * 0.1;
-                    } else if (Math.abs(wy) > 0.6) {
-                        // Dorsal/Ventral: association fibers
-                        dy = Math.sign(wy);
-                        dx = wx * 0.15;
-                        dz = wz * 0.15;
-                    } else {
-                        // Central: radiating fibers (corona radiata)
-                        dx = wx;
-                        dy = wy;
-                        dz = wz * 0.3;
-                    }
-
-                    // Add subtle noise for organic variation
-                    const noiseScale = 0.3;
-                    const hash1 = Math.sin(x * 12.9898 + y * 78.233 + z * 45.164) * 43758.5453;
-                    const hash2 = Math.sin(x * 93.9898 + y * 67.345 + z * 28.921) * 23421.631;
-                    const hash3 = Math.sin(x * 45.164 + y * 12.9898 + z * 78.233) * 63281.417;
-                    dx += (hash1 - Math.floor(hash1) - 0.5) * noiseScale;
-                    dy += (hash2 - Math.floor(hash2) - 0.5) * noiseScale;
-                    dz += (hash3 - Math.floor(hash3) - 0.5) * noiseScale;
-
-                    // Normalize
-                    const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
-                    const invLen = len > 0.001 ? 1.0 / len : 0.0;
-
-                    const idx = (z * dim * dim + y * dim + x) * 4;
-                    data[idx + 0] = dx * invLen;
-                    data[idx + 1] = dy * invLen;
-                    data[idx + 2] = dz * invLen;
-                    data[idx + 3] = 0.0; // padding
-                }
-            }
+    // [V3.2] Upload actual bundle-derived fiber affinity map
+    uploadFiberDirections(geometry) {
+        const data = geometry.getFiberAffinityData();
+        if (data && data.byteLength === this.voxelCount * 12 * 4) {
+            this.device.queue.writeBuffer(this.fiberDirectionBuffer, 0, data);
         }
-
-        this.device.queue.writeBuffer(this.fiberDirectionBuffer, 0, data);
     }
 
-    // [Neuro-Weaver] Refactored: Initialize Soma Geometry
+    // [Neuro-Weaver] Refactored: Initialize Soma Geometry (V3.1)
     initSomaResources(geometry) {
-        // 3. Soma (Sphere) Instancing (V2.2)
-        // [Neuro-Weaver] Use explicit grid intersections from geometry for instance positions
-        const somaPositions = geometry.getSomaPositions();
-        this.somaInstanceBuffer = this.createBuffer(somaPositions, GPUBufferUsage.VERTEX);
-        this.somaInstanceCount = somaPositions.length / 3;
+        const somaInstances = geometry.getSomaInstanceData();
+        this.somaInstanceBuffer = this.createBuffer(somaInstances, GPUBufferUsage.VERTEX);
+        this.somaInstanceCount = somaInstances.length / 9;
 
         // Create a simple low-poly sphere (Icosahedron) for the instance geometry
         const X = 0.525731112119133606;
         const Z = 0.850650808352039932;
         const N = 0.0;
 
-        // V2.2 Icosahedron vertices
         const icoVerts = new Float32Array([
             -X,N,Z, X,N,Z, -X,N,-Z, X,N,-Z,
             N,Z,X, N,Z,-X, N,-Z,X, N,-Z,-X,
@@ -396,10 +352,23 @@ export class BrainRenderer {
             6,1,10, 9,0,11, 9,11,2, 9,2,5, 7,2,11
         ]);
 
-        // V2.2 Geometry Buffers: Icosahedron mesh for somas
         this.somaVertexBuffer = this.createBuffer(icoVerts, GPUBufferUsage.VERTEX);
         this.somaIndexBuffer = this.createBuffer(icoIndices, GPUBufferUsage.INDEX);
         this.somaIndexCount = icoIndices.length;
+
+        // [V3.1] Dense point-cloud instances
+        const pointCloudData = geometry.getPointCloudData();
+        this.pointCloudInstanceBuffer = this.createBuffer(pointCloudData, GPUBufferUsage.VERTEX);
+        this.pointCloudInstanceCount = pointCloudData.length / 8;
+
+        this.pointCloudQuadBuffer = this.createBuffer(new Float32Array([
+            -1.0, -1.0,
+             1.0, -1.0,
+            -1.0,  1.0,
+            -1.0,  1.0,
+             1.0, -1.0,
+             1.0,  1.0
+        ]), GPUBufferUsage.VERTEX);
     }
 
     initSparkResources(geometry) {
@@ -418,12 +387,7 @@ export class BrainRenderer {
     }
 
     initSomaPipeline(renderBindGroupLayout, format) {
-        // --- PIPELINE 3: INSTANCED SPHERES (V2.6) ---
-        // [Neuro-Weaver] Setup Instanced Soma Pipeline
-        // Renders soma spheres at circuit intersections using instancing.
-        // Verified: Uses explicit soma positions from BrainGeometry.
-        // This pipeline enables the "Structured Data" visualization by showing discrete nodes.
-
+        // --- PIPELINE 3: INSTANCED SPHERES (V3.1) ---
         const somaModule = this.device.createShaderModule({ code: somaVertexShader });
         const somaFragModule = this.device.createShaderModule({ code: somaFragmentShader });
 
@@ -435,9 +399,12 @@ export class BrainRenderer {
                 buffers: [
                     // 1. Mesh Geometry (Icosahedron)
                     { arrayStride: 12, attributes: [{ shaderLocation: 0, offset: 0, format: 'float32x3' }] },
-                    // 2. Instance Data (Positions)
-                    // Uses 'instance' step mode to position each soma based on circuit nodes
-                    { arrayStride: 12, stepMode: 'instance', attributes: [{ shaderLocation: 1, offset: 0, format: 'float32x3' }] }
+                    // 2. Instance Data: [pos(3), meta(4), shape(2)] padded to 32 bytes
+                    { arrayStride: 36, stepMode: 'instance', attributes: [
+                        { shaderLocation: 1, offset: 0, format: 'float32x3' },
+                        { shaderLocation: 2, offset: 12, format: 'float32x4' },
+                        { shaderLocation: 3, offset: 28, format: 'float32x2' }
+                    ]}
                 ]
             },
             fragment: {
@@ -474,6 +441,43 @@ export class BrainRenderer {
             },
             fragment: {
                 module: sparkFragModule,
+                entryPoint: 'main',
+                targets: [{
+                    format: format,
+                    blend: {
+                        color: { srcFactor: 'src-alpha', dstFactor: 'one', operation: 'add' },
+                        alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' }
+                    }
+                }]
+            },
+            primitive: { topology: 'triangle-list', cullMode: 'none' },
+            depthStencil: { depthWriteEnabled: false, depthCompare: 'less', format: 'depth32float' }
+        });
+    }
+
+    initPointCloudPipeline(renderBindGroupLayout, format) {
+        const pcModule = this.device.createShaderModule({ code: pointCloudVertexShader });
+        const pcFragModule = this.device.createShaderModule({ code: pointCloudFragmentShader });
+
+        this.pointCloudPipeline = this.device.createRenderPipeline({
+            layout: this.device.createPipelineLayout({ bindGroupLayouts: [renderBindGroupLayout] }),
+            vertex: {
+                module: pcModule,
+                entryPoint: 'main',
+                buffers: [
+                    { arrayStride: 8, attributes: [{ shaderLocation: 0, offset: 0, format: 'float32x2' }] },
+                    {
+                        arrayStride: 32,
+                        stepMode: 'instance',
+                        attributes: [
+                            { shaderLocation: 1, offset: 0, format: 'float32x3' },
+                            { shaderLocation: 2, offset: 12, format: 'float32x4' }
+                        ]
+                    }
+                ]
+            },
+            fragment: {
+                module: pcFragModule,
                 entryPoint: 'main',
                 targets: [{
                     format: format,
@@ -565,7 +569,74 @@ export class BrainRenderer {
         return buffer;
     }
 
-    setParams(newParams) { this.params = { ...this.params, ...newParams }; }
+    buildGeometry() {
+        const geometry = new BrainGeometry({
+            foldScale: this.params.foldScale,
+            foldStrength: this.params.foldStrength,
+            fissureDepth: this.params.fissureDepth,
+            lobeFoldBias: this.params.lobeFoldBias,
+            corticalThickness: this.params.corticalThickness,
+            growth: this.params.growth
+        });
+        geometry.generate(this.geometryRows, this.geometryCols);
+        return geometry;
+    }
+
+    destroyGeometryBuffers() {
+        [
+            this.vertexBuffer,
+            this.normalBuffer,
+            this.indexBuffer,
+            this.fiberBuffer,
+            this.fiberNormalBuffer,
+            this.fiberMetaBuffer,
+            this.fiberPathBuffer,
+            this.somaInstanceBuffer,
+            this.somaVertexBuffer,
+            this.somaIndexBuffer,
+            this.sparkInstanceBuffer,
+            this.sparkQuadBuffer,
+            this.pointCloudInstanceBuffer,
+            this.pointCloudQuadBuffer
+        ].forEach((buffer) => buffer?.destroy?.());
+    }
+
+    rebuildGeometry() {
+        if (!this.device) return;
+        const startedAt = typeof performance !== 'undefined' ? performance.now() : 0;
+        const geometry = this.buildGeometry();
+        this.destroyGeometryBuffers();
+
+        this.vertexBuffer = this.createBuffer(geometry.getVertexData(), GPUBufferUsage.VERTEX);
+        this.normalBuffer = this.createBuffer(geometry.getNormalData(), GPUBufferUsage.VERTEX);
+        this.indexBuffer = this.createBuffer(geometry.getIndexData(), GPUBufferUsage.INDEX);
+        this.indexCount = geometry.getIndexCount();
+        this.fiberBuffer = this.createBuffer(geometry.getFiberData(), GPUBufferUsage.VERTEX);
+        this.fiberNormalBuffer = this.createBuffer(geometry.getFiberNormalData(), GPUBufferUsage.VERTEX);
+        this.fiberMetaBuffer = this.createBuffer(geometry.getFiberDataWithMetadata(), GPUBufferUsage.VERTEX);
+        this.fiberPathBuffer = this.createBuffer(geometry.getFiberPathData(), GPUBufferUsage.VERTEX);
+        this.fiberVertexCount = geometry.getFiberVertexCount();
+        this.initSomaResources(geometry);
+        this.initSparkResources(geometry);
+        this.uploadFiberDirections(geometry);
+
+        this.geometryDirty = false;
+        this.lastGeometryRebuildTime = typeof performance !== 'undefined' ? performance.now() : 0;
+        this.lastGeometryGenerationMs = startedAt ? this.lastGeometryRebuildTime - startedAt : 0;
+    }
+
+    setParams(newParams) {
+        const geometryKeys = ['foldScale', 'foldStrength', 'fissureDepth', 'lobeFoldBias', 'corticalThickness', 'growth'];
+        const geometryChanged = geometryKeys.some((key) => newParams[key] !== undefined && newParams[key] !== this.params[key]);
+        this.params = { ...this.params, ...newParams };
+        if (geometryChanged) {
+            this.geometryDirty = true;
+        }
+    }
+
+    setSynaptiXParams(newParams) {
+        this.setParams(newParams);
+    }
 
     // Altitude/Hypoxia Physiological State Update
     // Derives hypoxia parameters from altitude input using barometric formulas
@@ -674,6 +745,7 @@ export class BrainRenderer {
     resetActivity() {
         // Instantly clear the volumetric tensor data
         const emptyData = new Float32Array(this.voxelCount);
+        this._lastHumanTensor.fill(0);
         this.device.queue.writeBuffer(this.tensorBuffer, 0, emptyData);
         // Also reset WASM engine buffer so both paths stay in sync
         if (this.wasmEngine.available) this.wasmEngine.reset();
@@ -781,6 +853,8 @@ export class BrainRenderer {
         const OFFSET_RESONANCE_THRESHOLD = 65;
         const OFFSET_SYNAPTIX_ACTIVE = 66;
         const OFFSET_AI_LAYER = 67;
+        const OFFSET_POINT_CLOUD_DENSITY = 68;
+        const OFFSET_FIBER_COUPLING = 69;
 
         const uData = new Float32Array(RENDER_UNIFORM_FLOAT_COUNT);
         uData.set(mvp, OFFSET_MVP);
@@ -822,6 +896,8 @@ export class BrainRenderer {
         uData[OFFSET_RESONANCE_THRESHOLD] = this.params.resonanceThreshold;
         uData[OFFSET_SYNAPTIX_ACTIVE] = this.params.style >= 4.0 ? 1.0 : 0.0;
         uData[OFFSET_AI_LAYER] = this.params.aiLayer;
+        uData[OFFSET_POINT_CLOUD_DENSITY] = this.params.pointCloudDensity ?? 1.0;
+        uData[OFFSET_FIBER_COUPLING] = this.params.fiberCoupling ?? 0.5;
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         
@@ -869,6 +945,9 @@ export class BrainRenderer {
         dv.setFloat32(92, this.params.resonanceThreshold, true);
         dv.setFloat32(96, this.params.style >= 4.0 ? 1.0 : 0.0, true);
 
+        // [V3.2] Fiber-volume coupling strength (offset 100)
+        dv.setFloat32(100, this.params.fiberCoupling ?? 0.5, true);
+
         // Upload to GPU
         this.device.queue.writeBuffer(this.computeUniformBuffer, 0, cBuf);
 
@@ -887,6 +966,9 @@ export class BrainRenderer {
             render() {
         // [V2.3] Main Render Loop
         if (!this.isRunning) return;
+        if (this.geometryDirty && (!this.lastGeometryRebuildTime || performance.now() - this.lastGeometryRebuildTime >= this.geometryRebuildIntervalMs)) {
+            this.rebuildGeometry();
+        }
         
         const load = Math.max(0, Math.min(1, this.params.cognitiveLoad));
         const scale = Math.max(0.1, 1.0 - load); // Stronger load = more aggressive downscaling
@@ -923,6 +1005,7 @@ export class BrainRenderer {
                 });
                 const tensorData = this.wasmEngine.getTensorData();
                 if (tensorData) {
+                    this._lastHumanTensor.set(tensorData);
                     this.device.queue.writeBuffer(this.tensorBuffer, 0, tensorData);
                 }
             } else {
@@ -956,19 +1039,27 @@ export class BrainRenderer {
             // 1. Draw Fibers
             renderPass.setPipeline(this.fiberPipeline);
             renderPass.setVertexBuffer(0, this.fiberBuffer);
-            renderPass.setVertexBuffer(1, this.fiberMetaBuffer);
-            renderPass.setVertexBuffer(2, this.fiberPathBuffer);
+            renderPass.setVertexBuffer(1, this.fiberNormalBuffer);
+            renderPass.setVertexBuffer(2, this.fiberMetaBuffer);
+            renderPass.setVertexBuffer(3, this.fiberPathBuffer);
             renderPass.draw(this.fiberVertexCount);
 
-            // 2. Draw Instanced Neurons (Somas) [V2.6 Pipeline]
+            // 2. Draw Dense Point Cloud (Boutons / Varicosities) [V3.1]
+            if (this.pointCloudInstanceCount > 0) {
+                renderPass.setPipeline(this.pointCloudPipeline);
+                renderPass.setVertexBuffer(0, this.pointCloudQuadBuffer);
+                renderPass.setVertexBuffer(1, this.pointCloudInstanceBuffer);
+                renderPass.draw(6, this.pointCloudInstanceCount);
+            }
+
+            // 3. Draw Instanced Mesh Somas (Hubs / Medium) [V3.1 Pipeline]
             renderPass.setPipeline(this.somaPipeline);
             renderPass.setVertexBuffer(0, this.somaVertexBuffer); // Mesh
-            renderPass.setVertexBuffer(1, this.somaInstanceBuffer); // Positions
+            renderPass.setVertexBuffer(1, this.somaInstanceBuffer); // Rich instance data
             renderPass.setIndexBuffer(this.somaIndexBuffer, 'uint16');
-            // Draw call uses instance count
             renderPass.drawIndexed(this.somaIndexCount, this.somaInstanceCount);
 
-            // 3. Draw Emissive Sparks / Vesicles
+            // 4. Draw Emissive Sparks / Vesicles
             if (this.sparkInstanceCount > 0) {
                 renderPass.setPipeline(this.sparkPipeline);
                 renderPass.setVertexBuffer(0, this.sparkQuadBuffer);
@@ -1009,10 +1100,20 @@ export class BrainRenderer {
     // [BCI] Direct tensor injection — bypasses compute shader physics.
     // Used by TensorPlayer to stream pre-recorded or real-time BCI data frames.
     setVoxelData(float32Array) {
+        if (!float32Array || float32Array.length !== this.voxelCount) {
+            console.warn(`[BrainRenderer] Ignored human tensor update with invalid size: ${float32Array?.length ?? 'null'}`);
+            return;
+        }
+        this._lastHumanTensor.set(float32Array);
         this.device.queue.writeBuffer(this.tensorBuffer, 0, float32Array);
     }
 
     setAITensorData(float32Array) {
+        if (!float32Array || float32Array.length !== this.voxelCount) {
+            console.warn(`[BrainRenderer] Ignored AI tensor update with invalid size: ${float32Array?.length ?? 'null'}`);
+            return;
+        }
+        this._lastAITensor.set(float32Array);
         this.device.queue.writeBuffer(this.aiTensorBuffer, 0, float32Array);
     }
 

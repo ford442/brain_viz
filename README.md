@@ -1,77 +1,53 @@
-# Neuro-Weaver: 3D Volumetric Brain Visualization (V2.3)
+# Neuro-Weaver
 
-"The Neuro-Weaver" is a high-performance, WebGPU-based visualization engine that renders a stylized, animated human brain driven by volumetric tensor data. It moves beyond procedural noise to simulate structured signal flow, anatomical regions, and reactive stimuli.
+Neuro-Weaver is a WebGPU brain-visualization engine for comparative neural storytelling. It renders a live 32x32x32 tensor field as animated cortex, fibers, somas, and thermal volume, then layers routines, stimuli, audio reactivity, ONNX inference, and optional C++ WASM simulation on top.
 
-## 🧠 Core Features
+## SynaptiX First
 
-### 1. Volumetric Tensor Engine
-Unlike surface-only visualizations, this engine maintains a **32x32x32 3D Storage Buffer** representing neural activity density. A Compute Shader updates this volume in real-time, simulating diffusion, decay, and signal propagation across anatomical regions.
+**SynaptiX** is the fastest way to understand the project. It mirrors a human tensor against a synthetic or AI-driven tensor and highlights:
 
-### 2. Visualization Styles
-*   **0. Organic (Surface):** The default mode. A deformed sphere mimicking gyri and sulci, displacing vertices based on local activity.
-*   **1. Cyber (Wireframe):** A digital, grid-quantized aesthetic with sharp signal decay.
-*   **2. Connectome (Fibers):** Renders the internal "Manhattan-style" circuit grid.
-    *   **Activity Trails:** Signals pulse and travel along fibers.
-    *   **Instanced Somas:** Spheres (neurons) at grid intersections scale dynamically with local activity.
-*   **3. Heatmap (Volumetric):** Renders the brain shell with a thermal gradient (Blue -> Cyan -> Red) representing aggregate volumetric activity.
+- resonance: where the fields align
+- divergence: where synthetic activation drifts from human activity
+- anatomy mapping: occipital for early visual features, temporal/parietal for mid-level integration, frontal for deeper reasoning traces
 
-### 3. Interactive Stimuli & Anatomy
-*   **Region Injection:** Inject signals into specific lobes:
-    *   **Frontal:** High retention (Complex thought).
-    *   **Occipital:** Fast decay (Visual processing).
-    *   **Temporal/Parietal:** Varied diffusion rates.
-*   **Clip Plane:** Interactively slice through the mesh (Z-axis) to reveal internal structures and activity.
-*   **Flow Speed:** Control the velocity of signal pulses along the connectome fibers.
+Out of the box, SynaptiX ships with built-in "phantom" activations, so first-time users do not need external tensor files.
 
-## 🎮 Controls
-*   **Mouse Drag:** Rotate the view.
-*   **Mouse Scroll:** Zoom in/out.
-*   **UI Panel:**
-    *   **Style Mode:** Switch between Organic, Cyber, Connectome, Heatmap.
-    *   **Clip Plane Z:** Slice the brain mesh.
-    *   **Signal Flow Speed:** Adjust pulse velocity (Connectome mode).
-    *   **Stimulus Buttons:** "Poke" specific brain regions or trigger a "Calm State".
+## Quick Start
 
-## 🛠️ Technology Stack
-*   **Graphics API:** WebGPU
-*   **Shading Language:** WGSL (Vertex, Fragment, Compute)
-*   **Language:** Vanilla JavaScript (ES Modules). No frameworks.
-*   **Architecture:**
-    *   `BrainRenderer`: Manages GPU device, pipelines, and render loop.
-    *   `BrainGeometry`: Generates procedural brain mesh and fiber grids.
-    *   `Compute Shader`: Handles physics/signal logic (Diffusion, Decay).
-    *   `BrainTensorEngine` (C++ WASM): Optional hybrid simulation path — see below.
-
-## 🧪 C++ WASM Simulation Engine (Phase 1)
-
-A native C++ simulation backend can optionally replace the WebGPU compute shader for tensor physics.  The render pipeline is identical in both modes.
-
-**Build the WASM module** (requires [Emscripten](https://emscripten.org/)):
 ```bash
-npm run build:wasm
+npm install
+npm run dev
 ```
 
-**Enable at runtime:** click the **"Simulation Engine"** toggle in the Activity tab of the control panel, or call `renderer.enableWasmMode()` from the browser console.
+Open the local URL in Chrome or Edge with WebGPU enabled.
 
-See [`docs/wasm-engine.md`](docs/wasm-engine.md) for full technical details.
+Then try one of these:
 
-## 🚀 Running Locally
-1.  **Clone (shallow recommended):**
-    The repository contains large binary assets (WASM, ONNX models, verification media). For a faster clone, use:
-    ```bash
-    git clone --depth 1 https://github.com/ford442/brain_viz.git
-    ```
-2.  **Install Dependencies:**
-    ```bash
-    npm install
-    ```
-3.  **Start Dev Server:**
-    ```bash
-    npm run dev
-    ```
-4.  **Open in Browser:**
-    Navigate to the URL provided (usually `http://localhost:5173`).
-    *Requires a browser with WebGPU support (Chrome 113+, Edge, etc.).*
+1. Press `X` to run the SynaptiX showcase.
+2. Open the `SynaptiX` tab and click `Run SynaptiX Showcase (X)`.
+3. Load `/routines/synaptix_resonance.json` or `/routines/synaptix_hallucination.json` through the routine UI.
 
-## 📜 License
-MIT
+## What You’ll See
+
+- `Organic`, `Cyber`, `Connectome`, and `Heatmap` are the baseline render styles.
+- `SynaptiX` adds a second AI tensor buffer and comparative shader path.
+- Built-in phantoms include aligned-prefrontal, hallucination-spike, visual-mismatch, and full-resonance.
+- The showcase animates camera moves, bilateral stimuli, blend shifts, and resonance transitions without requiring external assets.
+
+## Common Commands
+
+```bash
+npm run build
+npm run preview
+python test_run.py
+python verification/verify_synaptix.py
+```
+
+## SynaptiX Notes
+
+- Human activity lives in `tensorBuffer`; AI activity lives in `aiTensorBuffer`.
+- The renderer blends them visually using `aiInfluence`, `resonanceThreshold`, and `aiLayer`.
+- Non-32^3 activations are projected into the brain volume by `src/synaptix-engine.js`.
+- Story routines for SynaptiX are served from [`public/routines`](public/routines).
+
+See [docs/synaptix.md](docs/synaptix.md) for the mapping table, routine vocabulary, and instructions for recording your own activations.
