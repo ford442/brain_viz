@@ -10,9 +10,10 @@
 - [x] **"Deep Thought" Script:** Hardcode the demo routine (Organic -> Visual Input -> Connectome Processing -> Heatmap Aftermath).
 - [x] **Playback UI:** Add a "Run Sequence" button and a transport clock (Play/Stop/Loop) to the DOM.
 ### Phase 2: Advanced Choreography
+- [ ] **Dynamic FOV Interpolation:** Smoothly interpolate the actual camera FOV during rapid movements to increase cinematic speed feel.
 - [x] **Camera Coordinates Map:** Define explicit spline regions for complex camera angles.
 - [x] **Parameter Interpolation/Easing:** Enhance routines with advanced smooth interpolation logic.
-- [ ] **Camera Collision Detection Improvements:** Enhance pathfinding camera transitions to avoid mesh intersections during large field of view shifts.
+- [x] **Camera Collision Detection Improvements:** Enhance pathfinding camera transitions to avoid mesh intersections during large field of view shifts.
 - [x] **Routine Logic & Extensibility Refactor:** Ensure `tick()` loop uses `performance.now()`, `executeEvent` is extensible, and WebGPU context gracefully degrades.
 - [x] **Memory Fragmentation:** Implement memory fragmentation event and routine.
 - [x] **Parameter Interpolation/Easing:** Added parameter interpolation.
@@ -197,6 +198,7 @@
 * [2026-03-12] - Completed Phase 2 (Routine Variables/Math). Implemented `math` event type and string interpolation for state variables in `routine-player.js`. Added mini-routine 'w' to `main.js`.
 * [2026-03-11] - Completed Phase 2 (Branching/Conditional Routines). Implemented branch event type and internal state. Added mini-routine 'b' to main.js.
 * [2026-03-09] - Completed Phase 2 (Spline Camera Coordinates). Modified `camera` event handler in `routine-player.js` to support spline interpolation across multiple targets. Added new mini-routine 'v' to `main.js`. Added "Interactive Brain Regions" to Dream Log.
+* *Idea:* "Visualize specific neurotransmitter pathways:" E.g., showing the Dopamine pathway from the VTA to the Nucleus Accumbens.
 * *Idea:* "Oxytocin Burst" - Visualizing trust and bonding as synchronized pulses across both hemispheres.
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "Adaptive Routines" - What if routines could adapt based on real-time emotion detection via webcam?
