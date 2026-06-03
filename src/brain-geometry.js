@@ -64,6 +64,9 @@ export class BrainGeometry {
 
         // 2. Generate Organic Connectome Fibers (replaces Manhattan grid for style=2)
         this.generateOrganicConnectomeFibers();
+
+        // 3. Generate AI Fiber Pathways (laser-straight, high-frequency, for SynaptiX)
+        this.generateAIFiberPathways();
     }
 
     applyBrainDeformation(x, y, z) {
@@ -172,6 +175,107 @@ export class BrainGeometry {
     // Generates curved, branching, anatomically-guided white-matter tracts using
     // quadratic Bézier splines seeded from 16 major bilateral bundles.
     // Replaces the Manhattan circuit grid for style=2 Connectome mode.
+    // [SynaptiX] Generate random point inside brain volume
+    randomPointInBrain() {
+        for (let attempt = 0; attempt < 50; attempt++) {
+            const x = (Math.random() - 0.5) * 2.8;
+            const y = (Math.random() - 0.5) * 2.8;
+            const z = (Math.random() - 0.5) * 2.8;
+            if (this.isInsideBrain(x, y, z)) return [x, y, z];
+        }
+        return [0.0, 0.0, 0.0];
+    }
+
+    // [SynaptiX] AI fiber pathways: thin, laser-straight with high-frequency geometric jitter
+    generateAIFiberPathways() {
+        const NUM_AI_FIBERS = 180;
+        const BUNDLE_ID_AI = 100;
+        for (let i = 0; i < NUM_AI_FIBERS; i++) {
+            const start = this.randomPointInBrain();
+            const end = this.randomPointInBrain();
+            const segments = 10;
+            let prev = start;
+            for (let s = 1; s <= segments; s++) {
+                const t = s / segments;
+                // Linear interpolation base
+                const bx = start[0] + (end[0] - start[0]) * t;
+                const by = start[1] + (end[1] - start[1]) * t;
+                const bz = start[2] + (end[2] - start[2]) * t;
+                // High-frequency geometric jitter (laser-straight but sharp angles)
+                const jitter = 0.06;
+                const jx = Math.sin(t * 48.0 + i * 3.71) * jitter;
+                const jy = Math.cos(t * 37.0 + i * 2.13) * jitter;
+                const jz = Math.sin(t * 55.0 + i * 5.47) * jitter;
+                const curr = [bx + jx, by + jy, bz + jz];
+                if (s > 1) {
+                    this.addFiberRibbonSegment(prev, curr, 0.012, BUNDLE_ID_AI, 0.08, t);
+                    // AI quanta sparks every 3rd segment
+                    if (s % 3 === 0) {
+                        const mid = [(prev[0]+curr[0])*0.5, (prev[1]+curr[1])*0.5, (prev[2]+curr[2])*0.5];
+                        const tangent = [curr[0]-prev[0], curr[1]-prev[1], curr[2]-prev[2]];
+                        this.addSparkSource(mid, tangent, 0.55, t, BUNDLE_ID_AI, 0.08, 3.0);
+                    }
+                }
+                prev = curr;
+            }
+            // Terminal spark at fiber end
+            const endTangent = [end[0]-start[0], end[1]-start[1], end[2]-start[2]];
+            this.addSparkSource(end, endTangent, 0.7, 0.0, BUNDLE_ID_AI, 0.08, 3.0);
+        }
+
+        // [SynaptiX] Human vesicle sparks — add extra blue-glow sparks along existing organic fibers
+        // We reuse some of the organic fiber midpoint sparks but with kind=2.0
+        // (These are added dynamically below by re-walking the bundle structure)
+        this.generateHumanVesicleSparks();
+
+        // [SynaptiX] Fusion hotspot sparks — placed at random intersection-like points
+        this.generateFusionHotspotSparks();
+    }
+
+    // [SynaptiX] Add deep-blue human vesicle sparks along organic bundles
+    generateHumanVesicleSparks() {
+        const BUNDLES = [
+            { s:[-0.9,  0.2,  0.55], c:[ 0.0,  0.85,  0.4], e:[ 0.9,  0.2,  0.55], r:0.07, m:0.9, id:0, n:8 },
+            { s:[-0.85, 0.2, -0.45], c:[ 0.0,  0.65, -0.6], e:[ 0.85, 0.2, -0.45], r:0.065, m:0.9, id:0, n:6 },
+            { s:[-0.35, 0.85,  0.3], c:[-0.4,  0.05,  0.45], e:[-0.1, -0.85,  0.1], r:0.06, m:0.88, id:1, n:6 },
+            { s:[ 0.35, 0.85,  0.3], c:[ 0.4,  0.05,  0.45], e:[ 0.1, -0.85,  0.1], r:0.06, m:0.88, id:1, n:6 },
+            { s:[-0.2,  0.05, -0.85], c:[-0.65, -0.3, -0.45], e:[-0.8, -0.05,  0.15], r:0.05, m:0.82, id:2, n:5 },
+            { s:[ 0.2,  0.05, -0.85], c:[ 0.65, -0.3, -0.45], e:[ 0.8, -0.05,  0.15], r:0.05, m:0.82, id:2, n:5 },
+        ];
+        for (const bun of BUNDLES) {
+            for (let s = 0; s < bun.n; s++) {
+                const jit = bun.r * 0.7;
+                const rnd = () => (Math.random() - 0.5) * 2;
+                const pS = [bun.s[0]+rnd()*jit, bun.s[1]+rnd()*jit, bun.s[2]+rnd()*jit];
+                const pC = [bun.c[0]+rnd()*jit*0.4, bun.c[1]+rnd()*jit*0.4, bun.c[2]+rnd()*jit*0.4];
+                const pE = [bun.e[0]+rnd()*jit, bun.e[1]+rnd()*jit, bun.e[2]+rnd()*jit];
+                const pts = this.generateSplinePath(pS, pC, pE, 12);
+                for (let i = 1; i < pts.length - 2; i += 3) {
+                    const mid = pts[i];
+                    if (this.isInsideBrain(mid[0], mid[1], mid[2])) {
+                        const tangent = [pts[i+1][0]-pts[i-1][0], pts[i+1][1]-pts[i-1][1], pts[i+1][2]-pts[i-1][2]];
+                        this.addSparkSource(mid, tangent, 0.4, i/pts.length, bun.id, bun.m, 2.0);
+                    }
+                }
+            }
+        }
+    }
+
+    // [SynaptiX] Fusion hotspot sparks — white-gold bursts where human+AI might resonate
+    generateFusionHotspotSparks() {
+        for (let i = 0; i < 40; i++) {
+            const pt = this.randomPointInBrain();
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.random() * Math.PI;
+            const tangent = [
+                Math.sin(phi) * Math.cos(theta),
+                Math.sin(phi) * Math.sin(theta),
+                Math.cos(phi)
+            ];
+            this.addSparkSource(pt, tangent, 0.85, Math.random(), 200 + i, 0.5, 4.0);
+        }
+    }
+
     generateOrganicConnectomeFibers() {
         // Bundle descriptor fields:
         //   s  — spline start  [x,y,z]
@@ -393,7 +497,17 @@ export class BrainGeometry {
     }
 
     getVertexData() { return new Float32Array(this.vertices); }
-    getNormalData() { return new Float32Array(this.normals); }
+    // [Fix] Normals must be vec4 to match shared vertex shader layout with fiber pipeline
+    getNormalData() {
+        const padded = new Float32Array(this.normals.length / 3 * 4);
+        for (let i = 0; i < this.normals.length / 3; i++) {
+            padded[i * 4 + 0] = this.normals[i * 3 + 0];
+            padded[i * 4 + 1] = this.normals[i * 3 + 1];
+            padded[i * 4 + 2] = this.normals[i * 3 + 2];
+            padded[i * 4 + 3] = 0.0;
+        }
+        return padded;
+    }
     getIndexData() { return new Uint32Array(this.indices); }
     getIndexCount() { return this.indices.length; }
     getFiberData() { return new Float32Array(this.fibers); }

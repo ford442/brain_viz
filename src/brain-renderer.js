@@ -5,12 +5,12 @@ import { vertexShader, fragmentShader, computeShader, somaVertexShader, somaFrag
 import { Mat4 } from './math-utils.js';
 import { WasmTensorEngine } from './wasm-engine.js'; // [Phase 1 WASM]
 
-const RENDER_UNIFORM_FLOAT_COUNT = 64;
+const RENDER_UNIFORM_FLOAT_COUNT = 72;
 const UNIFORM_BUFFER_ALIGNMENT = 256;
 const RENDER_UNIFORM_BUFFER_SIZE = Math.ceil(
     (RENDER_UNIFORM_FLOAT_COUNT * Float32Array.BYTES_PER_ELEMENT) / UNIFORM_BUFFER_ALIGNMENT
 ) * UNIFORM_BUFFER_ALIGNMENT;
-const COMPUTE_UNIFORM_BUFFER_SIZE = 96;
+const COMPUTE_UNIFORM_BUFFER_SIZE = 112;
 
 export class BrainRenderer {
     constructor(canvas) {
@@ -72,7 +72,10 @@ export class BrainRenderer {
             hypoxiaStress: 0.0, // Cellular stress response (0.0-1.0)
             metabolicRate: 1.0, // ATP consumption multiplier (0.5-2.0)
             mitochondrialFunction: 1.0, // ATP synthesis efficiency (0.0-1.0)
-            fogDensity: 0.0 // Volumetric Fog
+            fogDensity: 0.0, // Volumetric Fog
+            aiInfluence: 0.5,
+            resonanceThreshold: 0.2,
+            aiLayer: 0.0,
         };
 
         // Voxel Grid Settings
@@ -180,7 +183,8 @@ export class BrainRenderer {
         const renderBindGroupLayout = this.device.createBindGroupLayout({
             entries: [
                 { binding: 0, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
-                { binding: 1, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } }
+                { binding: 1, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } },
+                { binding: 2, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } }
             ]
         });
         
@@ -191,7 +195,8 @@ export class BrainRenderer {
             layout: renderBindGroupLayout,
             entries: [
                 { binding: 0, resource: { buffer: this.uniformBuffer } },
-                { binding: 1, resource: { buffer: this.tensorBuffer } }
+                { binding: 1, resource: { buffer: this.tensorBuffer } },
+                { binding: 2, resource: { buffer: this.aiTensorBuffer } }
             ]
         });
         
@@ -203,7 +208,7 @@ export class BrainRenderer {
                 entryPoint: 'main',
                 buffers: [
                     { arrayStride: 12, attributes: [{ shaderLocation: 0, offset: 0, format: 'float32x3' }] }, // Pos
-                    { arrayStride: 12, attributes: [{ shaderLocation: 1, offset: 0, format: 'float32x3' }] }  // Normal
+                    { arrayStride: 16, attributes: [{ shaderLocation: 1, offset: 0, format: 'float32x4' }] }  // Normal (padded to match shared shader)
                 ]
             },
             fragment: {
@@ -269,6 +274,13 @@ export class BrainRenderer {
             size: this.voxelBufferSize * 4, // 32x32x32 floats
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
         });
+
+        this.aiTensorBuffer = this.device.createBuffer({
+            size: this.voxelBufferSize * 4,
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+        });
+        // Initialize with zeros
+        this.device.queue.writeBuffer(this.aiTensorBuffer, 0, new Float32Array(this.voxelCount));
 
         // [Phase 3/8] Fiber Direction Buffer: vec4 per voxel (xyz = direction, w = padding)
         // Procedurally generated anatomical prior for anisotropic diffusion
@@ -481,13 +493,15 @@ export class BrainRenderer {
         const computeLayout = this.device.createBindGroupLayout({
              entries: [{ binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
                        { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
-                       { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } }]
+                       { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
+                       { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } }]
         });
         this.computeBindGroup = this.device.createBindGroup({
             layout: computeLayout,
             entries: [{ binding: 0, resource: { buffer: this.tensorBuffer } },
                       { binding: 1, resource: { buffer: this.computeUniformBuffer } },
-                      { binding: 2, resource: { buffer: this.fiberDirectionBuffer } }]
+                      { binding: 2, resource: { buffer: this.fiberDirectionBuffer } },
+                      { binding: 3, resource: { buffer: this.aiTensorBuffer } }]
         });
         this.computePipeline = this.device.createComputePipeline({
             layout: this.device.createPipelineLayout({ bindGroupLayouts: [computeLayout] }),
@@ -763,6 +777,10 @@ export class BrainRenderer {
         const OFFSET_ZOOM = 61;
         const OFFSET_HEAVY_METAL = 62;
         const OFFSET_FLUID_ACTIVE = 63;
+        const OFFSET_AI_INFLUENCE = 64;
+        const OFFSET_RESONANCE_THRESHOLD = 65;
+        const OFFSET_SYNAPTIX_ACTIVE = 66;
+        const OFFSET_AI_LAYER = 67;
 
         const uData = new Float32Array(RENDER_UNIFORM_FLOAT_COUNT);
         uData.set(mvp, OFFSET_MVP);
@@ -800,11 +818,16 @@ export class BrainRenderer {
         uData[OFFSET_ZOOM] = this.zoom;
         uData[OFFSET_HEAVY_METAL] = this.params.heavyMetal;
         uData[OFFSET_FLUID_ACTIVE] = this.params.fluidActive;
+        uData[OFFSET_AI_INFLUENCE] = this.params.aiInfluence;
+        uData[OFFSET_RESONANCE_THRESHOLD] = this.params.resonanceThreshold;
+        uData[OFFSET_SYNAPTIX_ACTIVE] = this.params.style >= 4.0 ? 1.0 : 0.0;
+        uData[OFFSET_AI_LAYER] = this.params.aiLayer;
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         
-        // Compute Uniforms layout (64 bytes total):
-        // 32 bytes scalar block + 16 bytes stimulus block + 12 bytes hypoxia block + 8 bytes avalanche controls + 16 bytes trailing padding.
+        // Compute Uniforms layout (112 bytes total):
+        // 32 bytes scalar block + 16 bytes stimulus block + 12 bytes hypoxia block
+        // + 20 bytes hazards + 16 bytes padding + 16 bytes SynaptiX params.
         const cBuf = new ArrayBuffer(COMPUTE_UNIFORM_BUFFER_SIZE);
         const dv = new DataView(cBuf);
         dv.setFloat32(0, this.time, true);
@@ -840,6 +863,11 @@ export class BrainRenderer {
         dv.setFloat32(68, this.stimulus.mercuryActive, true);
         dv.setFloat32(72, this.params.cognitiveLoad, true);
         dv.setFloat32(76, this.params.stress, true);
+
+        // [SynaptiX] AI Tensor Mirror params (offset 88)
+        dv.setFloat32(88, this.params.aiInfluence, true);
+        dv.setFloat32(92, this.params.resonanceThreshold, true);
+        dv.setFloat32(96, this.params.style >= 4.0 ? 1.0 : 0.0, true);
 
         // Upload to GPU
         this.device.queue.writeBuffer(this.computeUniformBuffer, 0, cBuf);
@@ -919,15 +947,18 @@ export class BrainRenderer {
         
         renderPass.setBindGroup(0, this.bindGroup);
         
-        if (this.params.style >= 2.0 && this.params.style < 3.0) {
-            // --- CONNECTOME MODE ---
+        const isSynaptiX = this.params.style >= 4.0;
+        const isConnectome = this.params.style >= 2.0 && this.params.style < 3.0;
+
+        if (isConnectome || isSynaptiX) {
+            // --- CONNECTOME / SYNAPTIX MODE ---
 
             // 1. Draw Fibers
             renderPass.setPipeline(this.fiberPipeline);
             renderPass.setVertexBuffer(0, this.fiberBuffer);
-            renderPass.setVertexBuffer(1, this.fiberMetaBuffer); 
+            renderPass.setVertexBuffer(1, this.fiberMetaBuffer);
             renderPass.setVertexBuffer(2, this.fiberPathBuffer);
-            renderPass.draw(this.fiberVertexCount); 
+            renderPass.draw(this.fiberVertexCount);
 
             // 2. Draw Instanced Neurons (Somas) [V2.6 Pipeline]
             renderPass.setPipeline(this.somaPipeline);
@@ -944,8 +975,10 @@ export class BrainRenderer {
                 renderPass.setVertexBuffer(1, this.sparkInstanceBuffer);
                 renderPass.draw(6, this.sparkInstanceCount);
             }
+        }
 
-        } else {
+        if (!isConnectome || isSynaptiX) {
+            // --- SOLID MESH MODE (Organic / Cyber / Heatmap / SynaptiX overlay) ---
             renderPass.setPipeline(this.pipeline);
             renderPass.setVertexBuffer(0, this.vertexBuffer);
             renderPass.setVertexBuffer(1, this.normalBuffer);
@@ -977,6 +1010,10 @@ export class BrainRenderer {
     // Used by TensorPlayer to stream pre-recorded or real-time BCI data frames.
     setVoxelData(float32Array) {
         this.device.queue.writeBuffer(this.tensorBuffer, 0, float32Array);
+    }
+
+    setAITensorData(float32Array) {
+        this.device.queue.writeBuffer(this.aiTensorBuffer, 0, float32Array);
     }
 
     start() { this.isRunning = true; this.render(); }

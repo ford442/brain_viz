@@ -242,6 +242,14 @@ struct Uniforms {
     zoom: f32, // Camera zoom for distance math
     heavyMetal: f32,
     fluidActive: f32, // Procedural Volumetric Fluid Dynamics
+    aiInfluence: f32,
+    resonanceThreshold: f32,
+    synaptiXActive: f32,
+    aiLayer: f32,
+    pad3: f32,
+    pad4: f32,
+    pad5: f32,
+    pad6: f32,
 }
 
 struct VertexInput {
@@ -267,6 +275,30 @@ struct VertexOutput {
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 // [Verified] Volumetric Data: Flattened 3D buffer representing brain activity
 @group(0) @binding(1) var<storage, read> activityTensor: array<f32>;
+@group(0) @binding(2) var<storage, read> aiTensor: array<f32>;
+
+fn getAIVoxelValue(worldPos: vec3<f32>) -> f32 {
+    let normPos = (worldPos / BRAIN_RANGE) * 0.5 + 0.5;
+    if (any(normPos < vec3<f32>(0.0)) || any(normPos > vec3<f32>(1.0))) { return 0.0; }
+    let x = u32(normPos.x * f32(VOXEL_DIM));
+    let y = u32(normPos.y * f32(VOXEL_DIM));
+    let z = u32(normPos.z * f32(VOXEL_DIM));
+    let index = min(z, VOXEL_DIM-1u) * VOXEL_DIM * VOXEL_DIM + min(y, VOXEL_DIM-1u) * VOXEL_DIM + min(x, VOXEL_DIM-1u);
+    return aiTensor[index];
+}
+
+fn sampleSmoothedAIVoxelValue(worldPos: vec3<f32>) -> f32 {
+    let step = (BRAIN_RANGE / f32(VOXEL_DIM)) * 0.45;
+    let center = getAIVoxelValue(worldPos);
+    let neighbors =
+        getAIVoxelValue(worldPos + vec3<f32>( step, 0.0, 0.0)) +
+        getAIVoxelValue(worldPos + vec3<f32>(-step, 0.0, 0.0)) +
+        getAIVoxelValue(worldPos + vec3<f32>(0.0,  step, 0.0)) +
+        getAIVoxelValue(worldPos + vec3<f32>(0.0, -step, 0.0)) +
+        getAIVoxelValue(worldPos + vec3<f32>(0.0, 0.0,  step)) +
+        getAIVoxelValue(worldPos + vec3<f32>(0.0, 0.0, -step));
+    return (center * 0.5) + (neighbors * (0.5 / 6.0));
+}
 
 fn calculateSignalFlow(startPos: vec3<f32>, endPos: vec3<f32>, time: f32, speed: f32, segmentPhase: f32, flowBias: f32, myelin: f32, radius: f32, bundleId: f32) -> f32 {
     let midpoint = mix(startPos, endPos, 0.5);
@@ -302,13 +334,14 @@ fn calculateSignalFlow(startPos: vec3<f32>, endPos: vec3<f32>, time: f32, speed:
 fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOutput {
     var output: VertexOutput;
     var finalPos = input.position;
-    var finalNormal = input.normal;
+    var finalNormal = normalize(input.position);
     var finalColor = vec3<f32>(0.0);
     var signalStrength = 0.0;
     output.fiberMaterial = vec3<f32>(0.0);
     output.fiberTangent = vec3<f32>(0.0, 0.0, 1.0);
     
     let activity = sampleSmoothedVoxelValue(input.position);
+    let aiActivity = sampleSmoothedAIVoxelValue(input.position);
 
     let worldPos = (uniforms.modelMatrix * vec4<f32>(finalPos, 1.0)).xyz;
 
@@ -322,27 +355,47 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
         let bundleId = input.fiberMeta.y;
         let myelin = clamp(input.fiberMeta.z, 0.0, 1.0);
         let segmentPhase = input.fiberMeta.w;
+        let isAI = bundleId >= 100.0;
         let degradation = clamp(uniforms.cortisol, 0.0, 1.0);
         let effectiveMyelin = myelin * (1.0 - degradation * (1.0 - myelin));
-        let effectiveRadius = radius * mix(0.45, 1.0, effectiveMyelin);
+        // AI fibers: thinner, sharper
+        let effectiveRadius = radius * mix(0.45, 1.0, effectiveMyelin) * select(1.0, 0.35, isAI);
 
-        let conductionSpeed = uniforms.flowSpeed * (0.45 + effectiveMyelin * 1.65 + effectiveRadius * 18.0);
+        // AI conduction: faster, higher frequency
+        let aiSpeedMul = select(1.0, 2.4, isAI);
+        let conductionSpeed = uniforms.flowSpeed * aiSpeedMul * (0.45 + effectiveMyelin * 1.65 + effectiveRadius * 18.0);
         signalStrength = calculateSignalFlow(input.fiberStart, input.fiberEnd, uniforms.time, conductionSpeed, segmentPhase, getRegionPhysics(mix(input.fiberStart, input.fiberEnd, 0.5), uniforms.style).z, effectiveMyelin, effectiveRadius, bundleId);
         let tangent = normalize(input.fiberEnd - input.fiberStart);
         let refAxis = select(vec3<f32>(0.0, 1.0, 0.0), vec3<f32>(1.0, 0.0, 0.0), abs(tangent.y) > 0.82);
         let sideAxis = normalize(cross(tangent, refAxis));
         finalNormal = normalize(cross(sideAxis, tangent));
 
-        let hue = bundleId * 0.83 + uniforms.colorShift * 2.3;
-        let bundleColor = vec3<f32>(
-            0.35 + 0.65 * (0.5 + 0.5 * sin(hue)),
-            0.35 + 0.65 * (0.5 + 0.5 * sin(hue + 2.094)),
-            0.35 + 0.65 * (0.5 + 0.5 * sin(hue + 4.188))
-        );
+        // [SynaptiX] AI fiber color: magenta→violet, human: cyan→emerald
+        var bundleColor: vec3<f32>;
+        if (isAI) {
+            let aiHue = (bundleId - 100.0) * 0.21 + uniforms.time * 0.4;
+            bundleColor = vec3<f32>(
+                0.85 + 0.15 * sin(aiHue),
+                0.15 + 0.25 * sin(aiHue + 2.5),
+                0.75 + 0.25 * sin(aiHue + 1.2)
+            );
+        } else {
+            let hue = bundleId * 0.83 + uniforms.colorShift * 2.3;
+            bundleColor = vec3<f32>(
+                0.35 + 0.65 * (0.5 + 0.5 * sin(hue)),
+                0.35 + 0.65 * (0.5 + 0.5 * sin(hue + 2.094)),
+                0.35 + 0.65 * (0.5 + 0.5 * sin(hue + 4.188))
+            );
+        }
 
         let hierarchy = clamp(effectiveRadius * 16.0, 0.0, 1.0);
         let brightness = mix(0.35, 1.55, effectiveMyelin) * mix(0.65, 1.45, hierarchy);
-        let pulseColor = mix(vec3<f32>(0.1, 0.8, 1.0), vec3<f32>(1.0, 0.9, 0.35), uniforms.colorShift);
+        var pulseColor: vec3<f32>;
+        if (isAI) {
+            pulseColor = vec3<f32>(1.0, 0.2, 0.9);
+        } else {
+            pulseColor = mix(vec3<f32>(0.1, 0.8, 1.0), vec3<f32>(1.0, 0.9, 0.35), uniforms.colorShift);
+        }
         let pulseBoost = signalStrength * (0.5 + effectiveMyelin * 0.9 + hierarchy * 0.6);
 
         finalColor = bundleColor * brightness + pulseColor * pulseBoost;
@@ -374,49 +427,69 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     }
     // --- GHOST MODE ---
     else {
-        let displacement = input.normal * activity * 0.05;
-        finalPos = input.position + displacement;
+        // --- SYNAPTIX MODE ---
+        if (uniforms.style >= 4.0) {
+            // Dual displacement: human breathes slowly, AI snaps with polygonal ridges
+            let humanDisp = normalize(input.position) * activity * 0.05;
+            // AI polygonal ridge displacement — sharp geometric facets
+            let gridCoord = input.position * 22.0;
+            let grid = abs(fract(gridCoord) - 0.5);
+            let ridge = step(0.42, max(grid.x, max(grid.y, grid.z)));
+            let aiRidge = normalize(input.position) * ridge * aiActivity * 0.04;
+            let aiDisp = normalize(input.position) * aiActivity * 0.02;
+            finalPos = input.position + humanDisp + aiDisp + aiRidge;
 
-        // [Phase 5] Cortisol Structural Decay
-        if (uniforms.cortisol > 0.0) {
-            let decayFactor = 1.0 - (uniforms.cortisol * 0.3);
-            finalPos *= max(0.0, decayFactor);
+            // Pass AI activity via signal field
+            signalStrength = aiActivity;
+
+            // Base color will be computed in fragment shader
+            finalColor = vec3<f32>(0.0);
         }
+        else {
+            let displacement = normalize(input.position) * activity * 0.05;
+            finalPos = input.position + displacement;
 
-        // [Phase 2] Cognitive Stress Distortion
-        if (uniforms.stress > 0.0) {
-            let noiseFreq = 15.0;
-            let stressDisp = sin(finalPos.x * noiseFreq + uniforms.time * 10.0) * cos(finalPos.y * noiseFreq + uniforms.time * 8.0) * sin(finalPos.z * noiseFreq);
-            finalPos += input.normal * stressDisp * uniforms.stress * 0.5;
-        }
+            // [Phase 5] Cortisol Structural Decay
+            if (uniforms.cortisol > 0.0) {
+                let decayFactor = 1.0 - (uniforms.cortisol * 0.3);
+                finalPos *= max(0.0, decayFactor);
+            }
 
-        // [Phase 5] Cortisol Structural Decay
-        if (uniforms.cortisol > 0.0) {
-            // Decay structural integrity based on cortisol level (shrinks vertices inward, especially higher activity areas)
-            let decayErosion = uniforms.cortisol * 0.2 * (1.0 - activity);
-            finalPos -= input.normal * decayErosion;
-        }
+            // [Phase 2] Cognitive Stress Distortion
+            if (uniforms.stress > 0.0) {
+                let noiseFreq = 15.0;
+                let stressDisp = sin(finalPos.x * noiseFreq + uniforms.time * 10.0) * cos(finalPos.y * noiseFreq + uniforms.time * 8.0) * sin(finalPos.z * noiseFreq);
+                finalPos += normalize(input.position) * stressDisp * uniforms.stress * 0.5;
+            }
 
-        // [Phase 6] Heavy Metal Structural Alteration
-        if (uniforms.heavyMetal > 0.0) {
-            let lesionNoise = fract(sin(dot(finalPos.xyz, vec3(12.9898, 78.233, 45.164))) * 43758.5453);
-            let erosion = uniforms.heavyMetal * 0.3 * lesionNoise;
-            finalPos -= input.normal * erosion;
-        }
+            // [Phase 5] Cortisol Structural Decay
+            if (uniforms.cortisol > 0.0) {
+                // Decay structural integrity based on cortisol level (shrinks vertices inward, especially higher activity areas)
+                let decayErosion = uniforms.cortisol * 0.2 * (1.0 - activity);
+                finalPos -= normalize(input.position) * decayErosion;
+            }
 
-        finalColor = vec3<f32>(0.2, 0.6, 1.0);
+            // [Phase 6] Heavy Metal Structural Alteration
+            if (uniforms.heavyMetal > 0.0) {
+                let lesionNoise = fract(sin(dot(finalPos.xyz, vec3(12.9898, 78.233, 45.164))) * 43758.5453);
+                let erosion = uniforms.heavyMetal * 0.3 * lesionNoise;
+                finalPos -= normalize(input.position) * erosion;
+            }
 
-        // Style 1 (Cyber): Digital Grid
-        if (uniforms.style > 0.5 && uniforms.style < 1.5) {
-            finalColor = vec3<f32>(0.0, 0.9, 0.5);
+            finalColor = vec3<f32>(0.2, 0.6, 1.0);
 
-            // Grid Effect: Local space grid lines
-            let gridScale = 20.0;
-            let g = abs(fract(input.position * gridScale) - 0.5);
-            let gridLine = step(0.48, max(g.x, max(g.y, g.z)));
+            // Style 1 (Cyber): Digital Grid
+            if (uniforms.style > 0.5 && uniforms.style < 1.5) {
+                finalColor = vec3<f32>(0.0, 0.9, 0.5);
 
-            if (gridLine > 0.5) {
-                finalColor += vec3<f32>(0.6, 1.0, 0.8) * activity * 2.0;
+                // Grid Effect: Local space grid lines
+                let gridScale = 20.0;
+                let g = abs(fract(input.position * gridScale) - 0.5);
+                let gridLine = step(0.48, max(g.x, max(g.y, g.z)));
+
+                if (gridLine > 0.5) {
+                    finalColor += vec3<f32>(0.6, 1.0, 0.8) * activity * 2.0;
+                }
             }
         }
     }
@@ -486,9 +559,41 @@ struct Uniforms {
     zoom: f32,
     heavyMetal: f32,
     fluidActive: f32,
+    aiInfluence: f32,
+    resonanceThreshold: f32,
+    synaptiXActive: f32,
+    aiLayer: f32,
+    pad3: f32,
+    pad4: f32,
+    pad5: f32,
+    pad6: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var<storage, read> activityTensor: array<f32>;
+@group(0) @binding(2) var<storage, read> aiTensor: array<f32>;
+
+fn getAIVoxelValue(worldPos: vec3<f32>) -> f32 {
+    let normPos = (worldPos / BRAIN_RANGE) * 0.5 + 0.5;
+    if (any(normPos < vec3<f32>(0.0)) || any(normPos > vec3<f32>(1.0))) { return 0.0; }
+    let x = u32(normPos.x * f32(VOXEL_DIM));
+    let y = u32(normPos.y * f32(VOXEL_DIM));
+    let z = u32(normPos.z * f32(VOXEL_DIM));
+    let index = min(z, VOXEL_DIM-1u) * VOXEL_DIM * VOXEL_DIM + min(y, VOXEL_DIM-1u) * VOXEL_DIM + min(x, VOXEL_DIM-1u);
+    return aiTensor[index];
+}
+
+fn sampleSmoothedAIVoxelValue(worldPos: vec3<f32>) -> f32 {
+    let step = (BRAIN_RANGE / f32(VOXEL_DIM)) * 0.45;
+    let center = getAIVoxelValue(worldPos);
+    let neighbors =
+        getAIVoxelValue(worldPos + vec3<f32>( step, 0.0, 0.0)) +
+        getAIVoxelValue(worldPos + vec3<f32>(-step, 0.0, 0.0)) +
+        getAIVoxelValue(worldPos + vec3<f32>(0.0,  step, 0.0)) +
+        getAIVoxelValue(worldPos + vec3<f32>(0.0, -step, 0.0)) +
+        getAIVoxelValue(worldPos + vec3<f32>(0.0, 0.0,  step)) +
+        getAIVoxelValue(worldPos + vec3<f32>(0.0, 0.0, -step));
+    return (center * 0.5) + (neighbors * (0.5 / 6.0));
+}
 
 struct FragmentInput {
     @location(0) worldPos: vec3<f32>,
@@ -498,8 +603,6 @@ struct FragmentInput {
     @location(4) clipDist: f32,
     @location(5) signal: f32,
     @location(6) distToCenter: f32, // [Phase 6]
-    @location(7) fiberMaterial: vec3<f32>,
-    @location(8) fiberTangent: vec3<f32>,
     @location(7) fiberMaterial: vec3<f32>,
     @location(8) fiberTangent: vec3<f32>,
 }
@@ -517,6 +620,94 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
     let viewDir = normalize(vec3<f32>(0.0, 0.0, 5.0) - input.worldPos);
     let NdotV = abs(dot(normal, viewDir));
     let rim = pow(1.0 - NdotV, 3.0);
+
+    // --- SYNAPTIX MODE (Style 4.0) ---
+    // activityTensor now contains compute-blended human+AI composite.
+    // aiTensor still holds raw AI for comparison.
+    if (uniforms.style >= 4.0) {
+        // [SynaptiX] Bichromatic volumetric raymarch through both tensors
+        let rayOrigin = vec3<f32>(0.0, 0.0, uniforms.zoom);
+        let rayDir = normalize(input.worldPos - rayOrigin);
+        let bounds = raySphereBounds(rayOrigin, rayDir, BRAIN_RANGE);
+
+        var volumeColor = vec3<f32>(0.0);
+        var volumeAlpha = 0.0;
+        if (bounds.y > bounds.x) {
+            let planeNormal = uniforms.slicePlane.xyz;
+            let planeOffset = uniforms.slicePlane.w;
+            var startT = max(bounds.x, 0.0);
+            var endT = bounds.y;
+            let originPlane = dot(rayOrigin, planeNormal) + planeOffset;
+            let dirPlane = dot(rayDir, planeNormal);
+            if (abs(dirPlane) > 1e-4) {
+                let planeT = -originPlane / dirPlane;
+                if (originPlane < 0.0) {
+                    startT = max(startT, planeT);
+                } else if (originPlane + dirPlane * endT < 0.0) {
+                    endT = min(endT, planeT);
+                }
+            }
+            if (endT > startT) {
+                let span = endT - startT;
+                let stepCount: u32 = 24u;
+                let stepSize = span / f32(stepCount);
+                var t = startT;
+                var transmittance = 1.0;
+                for (var i = 0u; i < 28u; i = i + 1u) {
+                    if (i >= stepCount || transmittance < 0.03) { break; }
+                    let samplePos = rayOrigin + rayDir * (t + stepSize * 0.5);
+                    let jitter = 0.86 + 0.14 * hashNoise3(samplePos * 2.75 + vec3<f32>(uniforms.time * 0.08));
+                    let humanVal = clamp(getVoxelValue(samplePos) * jitter, 0.0, 1.0);
+                    let aiVal = clamp(getAIVoxelValue(samplePos) * jitter, 0.0, 1.0);
+                    let density = max(humanVal, aiVal);
+                    if (density > 0.0005) {
+                        // Bichromatic: cyan for human, magenta for AI
+                        var sampleColor = vec3<f32>(0.0, 0.85, 1.0) * humanVal;
+                        sampleColor = mix(sampleColor, vec3<f32>(1.0, 0.0, 0.85) * aiVal, aiVal * 0.7);
+                        // White-gold resonance at overlap
+                        let diff = abs(humanVal - aiVal);
+                        let resonance = 1.0 - smoothstep(0.0, uniforms.resonanceThreshold, diff);
+                        sampleColor += vec3<f32>(1.0, 0.92, 0.55) * resonance * max(humanVal, aiVal) * 1.8;
+                        let depthT = clamp((t + stepSize * 0.5 - startT) / span, 0.0, 1.0);
+                        let depthTint = mix(vec3<f32>(0.55, 0.75, 1.0), vec3<f32>(1.0, 0.58, 0.12), depthT);
+                        let emission = sampleColor * depthTint;
+                        let alpha = 1.0 - exp(-density * stepSize * 8.5);
+                        volumeColor += transmittance * emission * alpha;
+                        transmittance *= (1.0 - alpha * 0.9);
+                    } else {
+                        transmittance *= 0.995;
+                    }
+                    t += stepSize;
+                }
+                volumeAlpha = clamp(1.0 - transmittance, 0.0, 1.0);
+            }
+        }
+
+        let blended = input.activity; // Composite from compute shader
+        let aiRaw = input.signal;     // Raw AI from aiTensor
+
+        // Bichromatic shell: cyan base, magenta where AI dominates
+        var mixedColor = vec3<f32>(0.0, 0.85, 1.0) * blended;
+        mixedColor = mix(mixedColor, vec3<f32>(1.0, 0.0, 0.85) * blended, aiRaw * 0.7);
+
+        // Resonance burst: white-gold where human and AI align
+        let diff = abs(blended - aiRaw);
+        let resonance = 1.0 - smoothstep(0.0, uniforms.resonanceThreshold, diff);
+        mixedColor += vec3<f32>(1.0, 0.92, 0.55) * resonance * blended * 2.5;
+
+        // Divergence noise: violet chaos where they differ
+        let divergence = smoothstep(uniforms.resonanceThreshold * 2.0, uniforms.resonanceThreshold * 5.0, diff);
+        let noise = hashNoise3(input.worldPos * 4.0 + vec3<f32>(uniforms.time * 0.6));
+        mixedColor += vec3<f32>(0.7, 0.15, 0.9) * divergence * noise * 0.4;
+
+        // Blend shell over volumetric background
+        mixedColor = mix(volumeColor, mixedColor, 0.55 + rim * 0.3);
+        let rimAlpha = smoothstep(0.5, 1.0, rim);
+        let glassAlpha = 0.04 + rimAlpha * 0.22;
+        let finalAlpha = clamp(glassAlpha + blended * 0.18 + volumeAlpha * 0.25, 0.0, 0.55);
+
+        return vec4<f32>(mixedColor, finalAlpha);
+    }
 
     // [Neuro-Weaver] Style 3.0: Translucent Heatmap Shell
     // Volume raymarch through the tensor so the interior reads as a true thermal body
@@ -541,6 +732,9 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
     if (uniforms.style >= 2.0) {
         // [Neuro-Weaver] Style 2.0: Translucent Fibers with activity glow
         // Lighting: anisotropic highlight along the tract with a soft rim
+        // [SynaptiX] AI fibers (bundleId >= 100) get magenta-violet treatment
+        let isAIFiber = input.fiberMaterial.z > 10.0; // hierarchy proxy; actually use color check or re-pass
+        // Re-derive from color: AI fibers have high red component
         let tangent = normalize(input.fiberTangent);
         let normal = normalize(input.normal);
         let lightDir = normalize(uniforms.lightDir);
@@ -564,9 +758,21 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
         let avalanche = smoothstep(0.56, 0.92, input.signal + localDensity * 0.55);
 
         let fiberBase = input.color * (0.24 + ndotl * 0.72) * ambientOcclusion;
-        let metallic = mix(vec3<f32>(0.4, 0.5, 0.62), vec3<f32>(1.0, 0.95, 0.8), myelin);
+        // [SynaptiX] AI fibers: violet metallic, human: steel-gold metallic
+        var metallic: vec3<f32>;
+        if (input.color.r > 0.7 && input.color.g < 0.4) {
+            metallic = mix(vec3<f32>(0.75, 0.25, 0.85), vec3<f32>(1.0, 0.6, 0.95), myelin);
+        } else {
+            metallic = mix(vec3<f32>(0.4, 0.5, 0.62), vec3<f32>(1.0, 0.95, 0.8), myelin);
+        }
         let highlight = metallic * (specular * (0.6 + radius * 0.4) + rim * 0.32 + tangentFacing * 0.08);
-        let activityGlow = vec3<f32>(0.12, 0.45, 0.9) * input.signal * mix(0.55, 1.0, myelin);
+        // [SynaptiX] AI activity glow = magenta, human = cyan
+        var activityGlow: vec3<f32>;
+        if (input.color.r > 0.7 && input.color.g < 0.4) {
+            activityGlow = vec3<f32>(0.9, 0.15, 0.75) * input.signal * mix(0.55, 1.0, myelin);
+        } else {
+            activityGlow = vec3<f32>(0.12, 0.45, 0.9) * input.signal * mix(0.55, 1.0, myelin);
+        }
         let avalancheColor = vec3<f32>(1.0, 0.92, 0.58) * avalanche * (0.45 + localDensity * 0.8);
         let finalRgb = fiberBase + highlight + activityGlow + avalancheColor;
 
@@ -632,6 +838,14 @@ struct Uniforms {
     zoom: f32,
     heavyMetal: f32,
     fluidActive: f32,
+    aiInfluence: f32,
+    resonanceThreshold: f32,
+    synaptiXActive: f32,
+    aiLayer: f32,
+    pad3: f32,
+    pad4: f32,
+    pad5: f32,
+    pad6: f32,
 }
 
 struct VertexInput {
@@ -648,6 +862,7 @@ struct VertexOutput {
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var<storage, read> activityTensor: array<f32>;
+@group(0) @binding(2) var<storage, read> aiTensor: array<f32>;
 
 fn getVoxelValue(worldPos: vec3<f32>) -> f32 {
     let normPos = (worldPos / BRAIN_RANGE) * 0.5 + 0.5;
@@ -674,6 +889,29 @@ fn sampleSmoothedVoxelValue(worldPos: vec3<f32>) -> f32 {
     return (center * 0.5) + (neighbors * (0.5 / 6.0));
 }
 
+fn getAIVoxelValue(worldPos: vec3<f32>) -> f32 {
+    let normPos = (worldPos / BRAIN_RANGE) * 0.5 + 0.5;
+    if (any(normPos < vec3<f32>(0.0)) || any(normPos > vec3<f32>(1.0))) { return 0.0; }
+    let x = u32(normPos.x * f32(VOXEL_DIM));
+    let y = u32(normPos.y * f32(VOXEL_DIM));
+    let z = u32(normPos.z * f32(VOXEL_DIM));
+    let index = min(z, VOXEL_DIM-1u) * VOXEL_DIM * VOXEL_DIM + min(y, VOXEL_DIM-1u) * VOXEL_DIM + min(x, VOXEL_DIM-1u);
+    return aiTensor[index];
+}
+
+fn sampleSmoothedAIVoxelValue(worldPos: vec3<f32>) -> f32 {
+    let step = (BRAIN_RANGE / f32(VOXEL_DIM)) * 0.45;
+    let center = getAIVoxelValue(worldPos);
+    let neighbors =
+        getAIVoxelValue(worldPos + vec3<f32>( step, 0.0, 0.0)) +
+        getAIVoxelValue(worldPos + vec3<f32>(-step, 0.0, 0.0)) +
+        getAIVoxelValue(worldPos + vec3<f32>(0.0,  step, 0.0)) +
+        getAIVoxelValue(worldPos + vec3<f32>(0.0, -step, 0.0)) +
+        getAIVoxelValue(worldPos + vec3<f32>(0.0, 0.0,  step)) +
+        getAIVoxelValue(worldPos + vec3<f32>(0.0, 0.0, -step));
+    return (center * 0.5) + (neighbors * (0.5 / 6.0));
+}
+
 @vertex
 fn main_soma(input: VertexInput) -> VertexOutput {
     var output: VertexOutput;
@@ -693,6 +931,7 @@ fn main_soma(input: VertexInput) -> VertexOutput {
     }
 
     let activity = sampleSmoothedVoxelValue(advectedInstancePos);
+    let aiActivity = sampleSmoothedAIVoxelValue(advectedInstancePos);
 
     // [Verified] Instanced Neurons: Somas scaled by local tensor activity
     // [Neuro-Weaver] Reactive scaling to visualize firing intensity (0.02 base + activity)
@@ -730,7 +969,14 @@ fn main_soma(input: VertexInput) -> VertexOutput {
         c2 = mix(c2, vec3<f32>(1.0, 0.9, 0.5), uniforms.colorShift); // Gold
     }
 
-    output.color = mix(c1, c2, activity);
+    if (uniforms.style >= 4.0) {
+        // activity is compute-blended composite; aiActivity is raw AI
+        var mixedColor = vec3<f32>(0.0, 0.85, 1.0) * activity;
+        mixedColor = mix(mixedColor, vec3<f32>(1.0, 0.0, 0.85) * activity, aiActivity * 0.7);
+        output.color = mixedColor;
+    } else {
+        output.color = mix(c1, c2, activity);
+    }
 
     // [Phase 5] Sparkle Logic: Flash Color
     if (uniforms.sparkle > 0.0 && activity > 0.1) {
@@ -778,6 +1024,14 @@ struct Uniforms {
     zoom: f32,
     heavyMetal: f32,
     fluidActive: f32,
+    aiInfluence: f32,
+    resonanceThreshold: f32,
+    synaptiXActive: f32,
+    aiLayer: f32,
+    pad3: f32,
+    pad4: f32,
+    pad5: f32,
+    pad6: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
@@ -834,6 +1088,14 @@ struct Uniforms {
     zoom: f32,
     heavyMetal: f32,
     fluidActive: f32,
+    aiInfluence: f32,
+    resonanceThreshold: f32,
+    synaptiXActive: f32,
+    aiLayer: f32,
+    pad3: f32,
+    pad4: f32,
+    pad5: f32,
+    pad6: f32,
 }
 
 struct SparkInput {
@@ -853,6 +1115,30 @@ struct SparkOutput {
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var<storage, read> activityTensor: array<f32>;
+@group(0) @binding(2) var<storage, read> aiTensor: array<f32>;
+
+fn getAIVoxelValue(worldPos: vec3<f32>) -> f32 {
+    let normPos = (worldPos / BRAIN_RANGE) * 0.5 + 0.5;
+    if (any(normPos < vec3<f32>(0.0)) || any(normPos > vec3<f32>(1.0))) { return 0.0; }
+    let x = u32(normPos.x * f32(VOXEL_DIM));
+    let y = u32(normPos.y * f32(VOXEL_DIM));
+    let z = u32(normPos.z * f32(VOXEL_DIM));
+    let index = min(z, VOXEL_DIM-1u) * VOXEL_DIM * VOXEL_DIM + min(y, VOXEL_DIM-1u) * VOXEL_DIM + min(x, VOXEL_DIM-1u);
+    return aiTensor[index];
+}
+
+fn sampleSmoothedAIVoxelValue(worldPos: vec3<f32>) -> f32 {
+    let step = (BRAIN_RANGE / f32(VOXEL_DIM)) * 0.45;
+    let center = getAIVoxelValue(worldPos);
+    let neighbors =
+        getAIVoxelValue(worldPos + vec3<f32>( step, 0.0, 0.0)) +
+        getAIVoxelValue(worldPos + vec3<f32>(-step, 0.0, 0.0)) +
+        getAIVoxelValue(worldPos + vec3<f32>(0.0,  step, 0.0)) +
+        getAIVoxelValue(worldPos + vec3<f32>(0.0, -step, 0.0)) +
+        getAIVoxelValue(worldPos + vec3<f32>(0.0, 0.0,  step)) +
+        getAIVoxelValue(worldPos + vec3<f32>(0.0, 0.0, -step));
+    return (center * 0.5) + (neighbors * (0.5 / 6.0));
+}
 
 @vertex
 fn main(input: SparkInput) -> SparkOutput {
@@ -865,11 +1151,36 @@ fn main(input: SparkInput) -> SparkOutput {
     let myelin = clamp(input.material.y, 0.0, 1.0);
     let kind = input.material.z;
 
+    // [SynaptiX] Particle kinds:
+    //   kind 0.0 = standard organic spark (cyan-white)
+    //   kind 1.0 = fiber midpoint spark (warm)
+    //   kind 2.0 = human vesicle (deep blue-cyan, slow)
+    //   kind 3.0 = AI quanta (bright magenta-orange, fast)
+    //   kind 4.0 = fusion burst (white-gold, intense)
+    var sparkTint: vec3<f32>;
+    var speedMul: f32 = 1.0;
+    var sizeMul: f32 = 1.0;
+    if (kind > 3.5) {
+        sparkTint = vec3<f32>(1.0, 0.95, 0.7);
+        speedMul = 0.6;
+        sizeMul = 1.6;
+    } else if (kind > 2.5) {
+        sparkTint = vec3<f32>(1.0, 0.35, 0.85);
+        speedMul = 2.2;
+        sizeMul = 0.75;
+    } else if (kind > 1.5) {
+        sparkTint = vec3<f32>(0.15, 0.55, 1.0);
+        speedMul = 0.7;
+        sizeMul = 1.2;
+    } else {
+        sparkTint = mix(vec3<f32>(0.2, 0.9, 1.0), vec3<f32>(1.0, 0.75, 0.25), clamp(kind * 0.5 + bundleId * 0.05, 0.0, 1.0));
+    }
+
     let localActivity = sampleSmoothedVoxelValue(anchor);
     let pulseSpeed = uniforms.flowSpeed * mix(0.55, 1.25, localActivity + uniforms.fluidActive * 0.2);
-    let travel = (fract(uniforms.time * pulseSpeed + input.anchorPhase.w + bundleId * 0.071) - 0.5);
+    let travel = (fract(uniforms.time * pulseSpeed * speedMul + input.anchorPhase.w + bundleId * 0.071) - 0.5);
     let trailScale = mix(0.10, 0.34, localActivity) * mix(0.8, 1.25, strength);
-    var center = anchor + tangent * (travel * trailScale);
+    let center = anchor + tangent * (travel * trailScale);
 
     let cameraPos = vec3<f32>(0.0, 0.0, uniforms.zoom);
     let viewDir = normalize(cameraPos - center);
@@ -880,15 +1191,33 @@ fn main(input: SparkInput) -> SparkOutput {
     side = normalize(side);
     let up = normalize(cross(tangent, side));
 
-    let size = mix(0.014, 0.052, strength) * mix(0.75, 1.35, myelin);
+    let size = mix(0.014, 0.052, strength) * mix(0.75, 1.35, myelin) * sizeMul;
     let offset = side * input.corner.x * size + up * input.corner.y * size;
     let worldPos = center + offset;
 
     let thermal = getHeatmapColor(clamp(localActivity * 1.1 + strength * 0.35, 0.0, 1.0));
-    let sparkTint = mix(vec3<f32>(0.2, 0.9, 1.0), vec3<f32>(1.0, 0.75, 0.25), clamp(kind * 0.5 + bundleId * 0.05, 0.0, 1.0));
-    output.color = thermal * sparkTint;
+    if (uniforms.style >= 4.0) {
+        // localActivity is compute-blended composite; aiRaw is raw AI
+        let aiRaw = sampleSmoothedAIVoxelValue(anchor);
+        if (kind > 3.5) {
+            // Fusion burst: white-gold, intensity from resonance
+            let diff = abs(localActivity - aiRaw);
+            let resonance = 1.0 - smoothstep(0.0, uniforms.resonanceThreshold, diff);
+            output.color = vec3<f32>(1.0, 0.95, 0.55) * (0.6 + resonance * 1.8);
+        } else if (kind > 2.5) {
+            output.color = sparkTint * localActivity;
+        } else if (kind > 1.5) {
+            output.color = sparkTint * localActivity;
+        } else {
+            var mixedColor = vec3<f32>(0.0, 0.85, 1.0) * localActivity;
+            mixedColor = mix(mixedColor, vec3<f32>(1.0, 0.0, 0.85) * localActivity, aiRaw * 0.7);
+            output.color = mixedColor;
+        }
+    } else {
+        output.color = thermal * sparkTint;
+    }
     output.uv = input.corner;
-    output.alpha = clamp((0.14 + localActivity * 0.55 + strength * 0.3) * mix(0.7, 1.2, myelin), 0.08, 1.0);
+    output.alpha = clamp((0.14 + localActivity * 0.55 + strength * 0.3) * mix(0.7, 1.2, myelin) * sizeMul, 0.08, 1.0);
     output.position = uniforms.mvpMatrix * vec4<f32>(worldPos, 1.0);
     output.clipDist = dot(worldPos, uniforms.slicePlane.xyz) + uniforms.slicePlane.w;
     return output;
@@ -926,6 +1255,14 @@ struct Uniforms {
     zoom: f32,
     heavyMetal: f32,
     fluidActive: f32,
+    aiInfluence: f32,
+    resonanceThreshold: f32,
+    synaptiXActive: f32,
+    aiLayer: f32,
+    pad3: f32,
+    pad4: f32,
+    pad5: f32,
+    pad6: f32,
 }
 
 struct SparkInput {
@@ -978,11 +1315,17 @@ struct TensorParams {
     mercuryActive: f32,
     heavyMetal: f32,
     pad2: f32,
+    // [SynaptiX] AI Tensor Mirror params (offset 88)
+    aiInfluence: f32,
+    resonanceThreshold: f32,
+    synaptiXActive: f32,
+    pad3: f32,
 }
 
 @group(0) @binding(0) var<storage, read_write> activityTensor: array<f32>;
 @group(0) @binding(1) var<uniform> params: TensorParams;
 @group(0) @binding(2) var<storage, read> fiberDirections: array<vec4<f32>>;
+@group(0) @binding(3) var<storage, read> aiTensor: array<f32>;
 
 fn getIndex(x: u32, y: u32, z: u32) -> u32 {
     return z * params.voxelDim * params.voxelDim + y * params.voxelDim + x;
@@ -1169,6 +1512,24 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
         decay = min(decay, 0.999 - (params.heavyMetal * 0.05));
     }
 
+    // [SynaptiX] AI ↔ Human Tensor Mirror (Compute Blend)
+    if (params.synaptiXActive > 0.5) {
+        let aiVal = aiTensor[index];
+        // AI geometric decay: sharper falloff, attention sparsity
+        var processedAI = pow(aiVal, 0.85) * 0.94;
+        // Blend human and AI tensors
+        var blended = mix(val, processedAI, params.aiInfluence);
+        // Resonance detection: cognitive alignment burst
+        let diff = abs(val - processedAI);
+        let resonance = 1.0 - smoothstep(0.0, params.resonanceThreshold, diff);
+        // White-gold interference boost at resonance
+        blended = blended + resonance * 0.8 * max(val, processedAI);
+        // Divergence damping: suppress where AI diverges strongly from human
+        let divergence = smoothstep(params.resonanceThreshold * 2.0, params.resonanceThreshold * 4.0, diff);
+        blended = blended * (1.0 - divergence * 0.25);
+        val = blended;
+    }
+
     val *= decay;
     activityTensor[index] = clamp(val, 0.0, 1.0);
 }
@@ -1217,6 +1578,14 @@ struct Uniforms {
     zoom: f32,
     heavyMetal: f32,
     fluidActive: f32,
+    aiInfluence: f32,
+    resonanceThreshold: f32,
+    synaptiXActive: f32,
+    aiLayer: f32,
+    pad3: f32,
+    pad4: f32,
+    pad5: f32,
+    pad6: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var tDiffuse: texture_2d<f32>;

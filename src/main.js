@@ -5,6 +5,7 @@ import { InferenceEngine } from './inference-engine.js';
 import { RoutinePlayer } from './routine-player.js'; // [NEW]
 import { AudioReactor } from './audio-reactor.js';   // [NEW]
 import { TensorPlayer } from './tensor-player.js'; // [BCI]
+import { SynaptiXEngine } from './synaptix-engine.js';
 import { MINI_ROUTINES } from './mini-routines.js';
 import { FilterUIOverlay, initUIControls, initDirectorTools, initTooltips, flashButton, glowRegionButtons, initRangeTooltips } from './ui-utils.js';
 import { setupLegendPanel, setupOverlays, setupRoutineTransport, setupBciPanel } from './ui-panels.js';
@@ -44,7 +45,14 @@ async function init() {
         altitude: document.getElementById('altitude'), // Altitude/Hypoxia
         oxygen: document.getElementById('oxygen'), // Altitude/Hypoxia (read-only)
         metabolicRate: document.getElementById('metabolic'), // Altitude/Hypoxia
-        style: document.getElementById('style-mode')
+        style: document.getElementById('style-mode'),
+        aiInfluence: document.getElementById('aiInfluence'),
+        resonanceThreshold: document.getElementById('resonanceThreshold'),
+        aiLayer: document.getElementById('aiLayer'),
+        fusionParticles: document.getElementById('fusion-particles'),
+        frameScrubber: document.getElementById('frame-scrubber'),
+        frameRate: document.getElementById('frame-rate'),
+        liveSourceEnable: document.getElementById('live-source-enable')
     };
     
     const labels = {
@@ -74,7 +82,13 @@ async function init() {
         lightDirZ: document.getElementById('val-lightDirZ'), // [Phase 2]
         altitude: document.getElementById('val-altitude'), // Altitude/Hypoxia
         oxygen: document.getElementById('val-oxygen'), // Altitude/Hypoxia (read-only)
-        metabolicRate: document.getElementById('val-metabolic') // Altitude/Hypoxia
+        metabolicRate: document.getElementById('val-metabolic'), // Altitude/Hypoxia
+        aiInfluence: document.getElementById('val-aiInfluence'),
+        resonanceThreshold: document.getElementById('val-resonanceThreshold'),
+        aiLayer: document.getElementById('val-aiLayer'),
+        frameIndex: document.getElementById('val-frame-index'),
+        frameTotal: document.getElementById('val-frame-total'),
+        frameRate: document.getElementById('val-frame-rate')
     };
     
     if (!navigator.gpu) {
@@ -183,6 +197,12 @@ async function init() {
             { time: 0.0, type: 'camera', target: 'frontal-tour', duration: 5.0, ease: 'sineInOut' }
         ];
 
+        MINI_ROUTINES['x'] = [
+            { type: 'style', value: 4.0 },
+            { type: 'lerp', key: 'aiInfluence', value: 0.7, duration: 2.0 },
+            { type: 'lerp', key: 'resonanceThreshold', value: 0.15, duration: 2.0 }
+        ];
+
 
 
         // === Audio Reactor (Brain DJ Mode) ===
@@ -209,7 +229,7 @@ async function init() {
     const legendPanel = document.getElementById('legend-panel');
     if (legendPanel) {
         const newEntry = document.createElement('div');
-        newEntry.innerHTML = '<b>M</b> : Memory Fragmentation<br><b>S</b> : Frontal Tour (Spline)';
+        newEntry.innerHTML = '<b>M</b> : Memory Fragmentation<br><b>S</b> : Frontal Tour (Spline)<br><b>X</b> : SynaptiX Mode';
         legendPanel.appendChild(newEntry);
     }
 
@@ -217,6 +237,7 @@ async function init() {
         const controls = document.getElementById('controls');
         const transport = setupRoutineTransport(player, controls);
         const tensorPlayer = new TensorPlayer(renderer);
+        const synaptixEngine = new SynaptiXEngine(renderer);
         setupBciPanel(renderer, controls, tensorPlayer);
 
         const inferenceEngine = new InferenceEngine();
@@ -294,7 +315,141 @@ async function init() {
         };
         controls.appendChild(audioBtn);
 
+        // [SynaptiX] Wire AI tensor file loading
+        const aiTensorFileInput = document.getElementById('ai-tensor-file');
+        if (aiTensorFileInput) {
+            aiTensorFileInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                await synaptixEngine.loadTensorFile(file);
+            });
+        }
+
+        // [SynaptiX] Wire AI pattern generation
+        const aiPatternSelect = document.getElementById('ai-pattern');
+        const btnGenerateAI = document.getElementById('btn-generate-ai');
+        if (btnGenerateAI && aiPatternSelect) {
+            btnGenerateAI.addEventListener('click', () => {
+                const pattern = aiPatternSelect.value;
+                if (pattern && pattern !== 'none') {
+                    synaptixEngine.generatePattern(pattern);
+                }
+            });
+        }
+
+        // [SynaptiX] Wire SynaptiX tab style dropdown
+        const styleSynaptix = document.getElementById('style-mode-synaptix');
+        if (styleSynaptix) {
+            styleSynaptix.addEventListener('change', (evt) => {
+                const selectedStyle = parseFloat(evt.target.value);
+                renderer.setParams({ style: selectedStyle });
+                const mainStyle = document.getElementById('style-mode');
+                if (mainStyle) mainStyle.value = selectedStyle;
+            });
+        }
+
+        // [SynaptiX] Wire Layer scrubber
+        if (inputs.aiLayer) {
+            inputs.aiLayer.addEventListener('input', (evt) => {
+                const layer = parseInt(evt.target.value, 10);
+                renderer.setParams({ aiLayer: layer / 63.0 });
+                if (labels.aiLayer) labels.aiLayer.textContent = layer;
+            });
+        }
+
+        // [SynaptiX] Wire Fusion Particles toggle
+        if (inputs.fusionParticles) {
+            inputs.fusionParticles.addEventListener('change', (evt) => {
+                synaptixEngine.fusionParticlesEnabled = evt.target.checked;
+                // Mirror to renderer params for shader visibility if needed
+                renderer.setParams({ fusionParticles: evt.target.checked ? 1.0 : 0.0 });
+            });
+        }
+
+        // [SynaptiX] Wire preset pattern buttons
+        document.querySelectorAll('.synaptix-preset').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const pattern = btn.dataset.pattern;
+                if (pattern) {
+                    synaptixEngine.generatePattern(pattern);
+                    // Auto-switch to SynaptiX style if not already
+                    if (renderer.params.style < 4.0) {
+                        renderer.setParams({ style: 4.0 });
+                        const mainStyle = document.getElementById('style-mode');
+                        if (mainStyle) mainStyle.value = '4';
+                        if (styleSynaptix) styleSynaptix.value = '4';
+                    }
+                }
+            });
+        });
+
+        // [SynaptiX] Wire Token Playback controls
+        const btnFramePlay = document.getElementById('btn-frame-play');
+        const btnFramePause = document.getElementById('btn-frame-pause');
+        if (btnFramePlay) {
+            btnFramePlay.addEventListener('click', () => {
+                const rate = inputs.frameRate ? parseInt(inputs.frameRate.value, 10) : 4;
+                synaptixEngine.playFrames(rate);
+            });
+        }
+        if (btnFramePause) {
+            btnFramePause.addEventListener('click', () => {
+                synaptixEngine.pauseFrames();
+            });
+        }
+        if (inputs.frameRate) {
+            inputs.frameRate.addEventListener('input', (evt) => {
+                const rate = parseInt(evt.target.value, 10);
+                synaptixEngine.framePlaybackRate = rate;
+                if (labels.frameRate) labels.frameRate.textContent = rate;
+            });
+        }
+        if (inputs.frameScrubber) {
+            inputs.frameScrubber.addEventListener('input', (evt) => {
+                const idx = parseInt(evt.target.value, 10);
+                synaptixEngine.scrubToFrame(idx);
+                if (labels.frameIndex) labels.frameIndex.textContent = idx;
+            });
+        }
+
+        // [SynaptiX] Wire Live Source toggle skeleton
+        const liveSourceStatus = document.getElementById('live-source-status');
+        if (inputs.liveSourceEnable) {
+            inputs.liveSourceEnable.addEventListener('change', (evt) => {
+                if (evt.target.checked) {
+                    // Skeleton: user provides callback via window.setSynaptiXLiveSource
+                    if (window.setSynaptiXLiveSource && typeof window.setSynaptiXLiveSource === 'function') {
+                        window.setSynaptiXLiveSource(synaptixEngine);
+                        if (liveSourceStatus) liveSourceStatus.textContent = 'status: connected (callback)';
+                    } else {
+                        console.warn('[SynaptiX] No live source callback found. Define window.setSynaptiXLiveSource(engine) to connect.');
+                        if (liveSourceStatus) liveSourceStatus.textContent = 'status: no callback defined';
+                        evt.target.checked = false;
+                    }
+                } else {
+                    synaptixEngine.setLiveCallback(null);
+                    if (liveSourceStatus) liveSourceStatus.textContent = 'status: disconnected';
+                }
+            });
+        }
+
         initUIControls(renderer, inputs, labels);
+
+        // [SynaptiX] Patch main style dropdown for preset 4 and SynaptiX tab sync
+        const mainStyleDropdown = document.getElementById('style-mode');
+        if (mainStyleDropdown) {
+            mainStyleDropdown.addEventListener('change', () => {
+                const selectedStyle = parseFloat(mainStyleDropdown.value);
+                if (selectedStyle === 4.0) {
+                    renderer.setParams({ frequency: 3.0, smoothing: 0.85, amplitude: 0.8 });
+                    if (inputs.frequency) { inputs.frequency.value = 3.0; if (labels.frequency) labels.frequency.textContent = (3.0).toFixed(2); }
+                    if (inputs.smoothing) { inputs.smoothing.value = 0.85; if (labels.smoothing) labels.smoothing.textContent = (0.85).toFixed(2); }
+                    if (inputs.amplitude) { inputs.amplitude.value = 0.8; if (labels.amplitude) labels.amplitude.textContent = (0.8).toFixed(2); }
+                }
+                const synaptixStyle = document.getElementById('style-mode-synaptix');
+                if (synaptixStyle) synaptixStyle.value = String(selectedStyle);
+            });
+        }
         initRangeTooltips(controls);
         initTooltips();
         const directorLabels = initDirectorTools(renderer, player);
@@ -302,6 +457,9 @@ async function init() {
         // ==================== MAIN UPDATE LOOP ====================
         const updateLoop = (timestamp) => {
             tensorPlayer.update(timestamp);
+
+            // [SynaptiX] Update frame playback and live source polling
+            if (synaptixEngine) synaptixEngine.update(timestamp);
 
             // Audio Reactivity (Brain DJ Mode)
             if (audioReactor.isActive) {
@@ -348,6 +506,51 @@ async function init() {
             if (labels.amplitude) labels.amplitude.textContent = renderer.params.amplitude.toFixed(2);
             if (inputs.flowSpeed) inputs.flowSpeed.value = renderer.params.flowSpeed;
             if (labels.flowSpeed) labels.flowSpeed.textContent = renderer.params.flowSpeed.toFixed(2);
+            if (inputs.aiInfluence) inputs.aiInfluence.value = renderer.params.aiInfluence;
+            if (labels.aiInfluence) labels.aiInfluence.textContent = renderer.params.aiInfluence.toFixed(2);
+            if (inputs.resonanceThreshold) inputs.resonanceThreshold.value = renderer.params.resonanceThreshold;
+            if (labels.resonanceThreshold) labels.resonanceThreshold.textContent = renderer.params.resonanceThreshold.toFixed(2);
+            if (inputs.aiLayer) {
+                const layerVal = Math.round((renderer.params.aiLayer || 0) * 63);
+                inputs.aiLayer.value = layerVal;
+                if (labels.aiLayer) labels.aiLayer.textContent = layerVal;
+            }
+
+            // [SynaptiX] Update resonance stats display
+            const stats = synaptixEngine.computeResonanceStats();
+            const barHuman = document.getElementById('bar-human-energy');
+            const barAI = document.getElementById('bar-ai-energy');
+            const barResonance = document.getElementById('bar-resonance');
+            const valHuman = document.getElementById('val-human-energy');
+            const valAI = document.getElementById('val-ai-energy');
+            const valResonance = document.getElementById('val-resonance');
+            if (barHuman) barHuman.style.width = `${stats.humanEnergy}%`;
+            if (barAI) barAI.style.width = `${stats.aiEnergy}%`;
+            if (barResonance) barResonance.style.width = `${stats.resonance}%`;
+            if (valHuman) valHuman.textContent = `${stats.humanEnergy.toFixed(1)}%`;
+            if (valAI) valAI.textContent = `${stats.aiEnergy.toFixed(1)}%`;
+            if (valResonance) valResonance.textContent = `${stats.resonance.toFixed(1)}%`;
+
+            // [SynaptiX] Sync frame scrubber
+            if (inputs.frameScrubber && synaptixEngine.frameSequence.length > 0) {
+                inputs.frameScrubber.max = String(synaptixEngine.frameSequence.length - 1);
+                inputs.frameScrubber.disabled = false;
+                if (labels.frameTotal) labels.frameTotal.textContent = synaptixEngine.frameSequence.length;
+                if (labels.frameIndex) labels.frameIndex.textContent = synaptixEngine.frameIndex;
+                if (parseInt(inputs.frameScrubber.value, 10) !== synaptixEngine.frameIndex) {
+                    inputs.frameScrubber.value = synaptixEngine.frameIndex;
+                }
+            }
+
+            // Sync style dropdowns
+            const mainStyle = document.getElementById('style-mode');
+            const synaptixStyle = document.getElementById('style-mode-synaptix');
+            if (mainStyle && parseFloat(mainStyle.value) !== renderer.params.style) {
+                mainStyle.value = String(renderer.params.style);
+            }
+            if (synaptixStyle && parseFloat(synaptixStyle.value) !== renderer.params.style) {
+                synaptixStyle.value = String(renderer.params.style);
+            }
 
             // Routine UI Updates
             const routineDot = document.getElementById('routine-status-dot');

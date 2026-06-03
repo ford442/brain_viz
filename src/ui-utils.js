@@ -34,6 +34,7 @@ export function initUIControls(renderer, uiInputs, uiLabels) {
             renderer.setParams({ style: selectedStyle });
             // Style presets...
             const stylePresets = {
+                4: { frequency: 3.0, smoothing: 0.85, amplitude: 0.8 },
                 3: { amplitude: 1.0, smoothing: 0.95 },
                 2: { frequency: 8.0, smoothing: 0.2, amplitude: 1.5 },
                 1: { frequency: 5.0, smoothing: 0.5 },
@@ -45,6 +46,9 @@ export function initUIControls(renderer, uiInputs, uiLabels) {
                 if(uiInputs[pKey]) uiInputs[pKey].value = activePreset[pKey];
                 syncParam(pKey, activePreset[pKey]);
             });
+            // Sync SynaptiX style dropdown
+            const synaptixStyle = document.getElementById('style-mode-synaptix');
+            if (synaptixStyle) synaptixStyle.value = String(selectedStyle);
             // [Phase 10] Mode-change toast
             const controls = document.getElementById('controls');
             if (controls) {
