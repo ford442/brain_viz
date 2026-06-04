@@ -619,6 +619,8 @@ export class RoutinePlayer {
                     this.renderer.setCameraParams({ rotation: { y: currentVal } });
                 } else if (lerp.key === 'cameraZoom') {
                     this.renderer.setCameraParams({ zoom: currentVal });
+                } else if (lerp.key === 'cameraFov') {
+                    this.renderer.setCameraParams({ fov: currentVal });
                 }
             } else if (lerp.key === 'playbackSpeed') {
                 this.setPlaybackSpeed(currentVal);

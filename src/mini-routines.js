@@ -1,4 +1,10 @@
 export const MINI_ROUTINES = {
+    'O': [
+        { type: 'camera', target: 'occipital', duration: 1.0, ease: 'sineInOut', avoidCollision: false },
+        { type: 'camera', target: 'frontal', duration: 3.0, ease: 'sineInOut', avoidCollision: true }, // Will trigger pathfinding and FOV bump
+        { type: 'text', message: 'Dynamic FOV Shift', duration: 3.0 }
+    ],
+
     'x': [
         { time: 0.0, type: 'text', message: 'SynaptiX Showcase', duration: 2.0 },
         { time: 0.0, type: 'synaptix', action: 'phantom-sequence', sequence: 'resonance', aiInfluence: 0.68, resonanceThreshold: 0.16, sourceInfo: 'Built-in SynaptiX resonance phantoms' },

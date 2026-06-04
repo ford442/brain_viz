@@ -24,7 +24,7 @@ export function handleCamera(player, evt) {
                 const coords = player.regions[target];
                 const rotX = Math.atan2(coords[1], Math.sqrt(coords[0]**2 + coords[2]**2));
                 const rotY = Math.atan2(coords[0], coords[2]);
-                return { rotation: { x: rotX, y: rotY }, zoom: 3.5 };
+                return { rotation: { x: rotX, y: rotY }, zoom: 3.5, fov: Math.PI / 4 };
             } else {
                 console.warn(`[Routine] Unknown camera target: ${target}`);
                 return null;
@@ -49,6 +49,7 @@ export function handleCamera(player, evt) {
         let pathX = [player.renderer.targetRotation.x];
         let pathY = [player.renderer.targetRotation.y];
         let pathZoom = [player.renderer.targetZoom];
+        let pathFov = [player.renderer.targetFov || Math.PI / 4];
 
         let hasValidPath = false;
 
@@ -72,6 +73,12 @@ export function handleCamera(player, evt) {
                     pathZoom.push(stepParams.zoom);
                 } else {
                     pathZoom.push(pathZoom[pathZoom.length - 1]);
+                }
+
+                if (stepParams.fov !== undefined) {
+                    pathFov.push(stepParams.fov);
+                } else {
+                    pathFov.push(pathFov[pathFov.length - 1]);
                 }
             }
         }
@@ -106,6 +113,16 @@ export function handleCamera(player, evt) {
                 isCamera: true,
                 ease: ease
             });
+
+            player.activeLerps.push({
+                key: 'cameraFov',
+                startVal: player.renderer.targetFov || Math.PI / 4,
+                path: pathFov,
+                elapsed: 0,
+                duration: duration,
+                isCamera: true,
+                ease: ease
+            });
         }
         return;
     }
@@ -119,6 +136,10 @@ export function handleCamera(player, evt) {
         params.zoom = evt.zoom;
     }
 
+    if (evt.fov !== undefined) {
+        params.fov = evt.fov;
+    }
+
     if (evt.duration && evt.duration > 0 && player.renderer.targetRotation) {
         console.log(`[Routine] Camera Transition started (${evt.duration}s)`);
         const duration = evt.duration;
@@ -130,10 +151,12 @@ export function handleCamera(player, evt) {
             const pathRotX = [player.renderer.targetRotation.x];
             const pathRotY = [player.renderer.targetRotation.y];
             const pathZoom = [player.renderer.targetZoom];
+            const pathFov = [player.renderer.targetFov || Math.PI / 4];
 
             let prevX = player.renderer.targetRotation.x;
             let prevY = player.renderer.targetRotation.y;
             let prevZoom = player.renderer.targetZoom;
+            let prevFov = player.renderer.targetFov || Math.PI / 4;
 
             for (const point of evt.path) {
                 let pointParams = {};
@@ -148,14 +171,17 @@ export function handleCamera(player, evt) {
                 const px = (pointParams.rotation && pointParams.rotation.x !== undefined) ? pointParams.rotation.x : prevX;
                 const py = (pointParams.rotation && pointParams.rotation.y !== undefined) ? pointParams.rotation.y : prevY;
                 const pz = pointParams.zoom !== undefined ? pointParams.zoom : prevZoom;
+                const pf = pointParams.fov !== undefined ? pointParams.fov : prevFov;
 
                 pathRotX.push(px);
                 pathRotY.push(py);
                 pathZoom.push(pz);
+                pathFov.push(pf);
 
                 prevX = px;
                 prevY = py;
                 prevZoom = pz;
+                prevFov = pf;
             }
 
             player.activeLerps.push({
@@ -188,15 +214,27 @@ export function handleCamera(player, evt) {
                 ease: ease
             });
 
+            player.activeLerps.push({
+                key: 'cameraFov',
+                startVal: player.renderer.targetFov || Math.PI / 4,
+                path: pathFov,
+                elapsed: 0,
+                duration: duration,
+                isCamera: true,
+                ease: ease
+            });
+
         } else {
             // Standard linear/eased lerp or Pathfinding arc
             const currentRotX = player.renderer.targetRotation.x;
             const currentRotY = player.renderer.targetRotation.y;
             const currentZoom = player.renderer.targetZoom;
+            const currentFov = player.renderer.targetFov || Math.PI / 4;
 
             const targetRotX = (params.rotation && params.rotation.x !== undefined) ? params.rotation.x : currentRotX;
             const targetRotY = (params.rotation && params.rotation.y !== undefined) ? params.rotation.y : currentRotY;
             const targetZoom = params.zoom !== undefined ? params.zoom : currentZoom;
+            const targetFov = params.fov !== undefined ? params.fov : currentFov;
 
             const deltaY = Math.abs(targetRotY - currentRotY);
             const deltaX = Math.abs(targetRotX - currentRotX);
@@ -224,6 +262,10 @@ export function handleCamera(player, evt) {
                 const maxZoom = Math.max(currentZoom, targetZoom);
                 const midZoom = maxZoom + bump;
 
+                // Temporary cinematic FOV push during pathfinding
+                const fovBump = Math.min(rotMag * 0.1, Math.PI / 4); // Up to 45 deg extra FOV
+                const midFov = Math.min(currentFov + fovBump, Math.PI - 0.2);
+
                 player.activeLerps.push({
                     key: 'cameraRotX',
                     startVal: currentRotX,
@@ -248,6 +290,16 @@ export function handleCamera(player, evt) {
                     key: 'cameraZoom',
                     startVal: currentZoom,
                     path: [currentZoom, midZoom, midZoom, targetZoom],
+                    elapsed: 0,
+                    duration: duration,
+                    isCamera: true,
+                    ease: ease
+                });
+
+                player.activeLerps.push({
+                    key: 'cameraFov',
+                    startVal: currentFov,
+                    path: [currentFov, midFov, midFov, targetFov],
                     elapsed: 0,
                     duration: duration,
                     isCamera: true,
@@ -283,6 +335,18 @@ export function handleCamera(player, evt) {
                         key: 'cameraZoom',
                         startVal: currentZoom,
                         endVal: targetZoom,
+                        elapsed: 0,
+                        duration: duration,
+                        isCamera: true,
+                        ease: ease
+                    });
+                }
+
+                if (params.fov !== undefined) {
+                    player.activeLerps.push({
+                        key: 'cameraFov',
+                        startVal: currentFov,
+                        endVal: targetFov,
                         elapsed: 0,
                         duration: duration,
                         isCamera: true,
