@@ -29,6 +29,8 @@ export class BrainRenderer {
         this.targetRotation = { x: 0.3, y: 0 };
         this.zoom = 3.5;
         this.targetZoom = 3.5; // [Neuro-Weaver] Smooth Zoom Target
+        this.fov = Math.PI / 4;
+        this.targetFov = Math.PI / 4;
         this.time = 0;
         this.isRunning = false;
         this.tensorPlaybackMode = false; // [BCI] When true, compute shader skipped; TensorPlayer drives the voxel buffer
@@ -142,13 +144,16 @@ export class BrainRenderer {
     }
 
     // [Neuro-Weaver] Camera Control API
-    setCameraParams({ rotation, zoom }) {
+    setCameraParams({ rotation, zoom, fov }) {
         if (rotation) {
             if (rotation.x !== undefined) this.targetRotation.x = rotation.x;
             if (rotation.y !== undefined) this.targetRotation.y = rotation.y;
         }
         if (zoom !== undefined) {
             this.targetZoom = Math.max(2, Math.min(10, zoom));
+        }
+        if (fov !== undefined) {
+            this.targetFov = Math.max(0.1, Math.min(Math.PI - 0.1, fov));
         }
     }
 
@@ -784,9 +789,10 @@ export class BrainRenderer {
         this.rotation.x += (this.targetRotation.x - this.rotation.x) * 0.1;
         this.rotation.y += (this.targetRotation.y - this.rotation.y) * 0.1;
         this.zoom += (this.targetZoom - this.zoom) * 0.1;
+        this.fov += (this.targetFov - this.fov) * 0.1;
         
         const aspect = this.canvas.width / this.canvas.height;
-        const projection = Mat4.perspective(Math.PI / 4, aspect, 0.1, 100.0);
+        const projection = Mat4.perspective(this.fov, aspect, 0.1, 100.0);
         const view = Mat4.lookAt([0, 0, this.zoom], [0, 0, 0], [0, 1, 0]);
 
         // [Phase 2] Camera Shake Logic
