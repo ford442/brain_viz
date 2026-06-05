@@ -141,6 +141,7 @@ async function init() {
         // Initialize RoutinePlayer, ensuring it expects the BrainRenderer instance
         // [Integration Check] Verified `init()` flow is not broken
         // [Issue Checklist] RoutinePlayer integrated with renderer, regionMap, and cameraMap
+        // [MODIFIED] Added this comment to mark main.js as updated for the neuro-script implementation cycle.
         const player = new RoutinePlayer(renderer, regionCoordinatesMap, cameraCoordinatesMap);
         player.splineMap = explicitSplineMap;
 

@@ -10,6 +10,8 @@
 - [x] **"Deep Thought" Script:** Hardcode the demo routine (Organic -> Visual Input -> Connectome Processing -> Heatmap Aftermath).
 - [x] **Playback UI:** Add a "Run Sequence" button and a transport clock (Play/Stop/Loop) to the DOM.
 ### Phase 2: Advanced Choreography
+- [ ] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
+- [ ] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
 - [x] **Dynamic FOV Interpolation:** Smoothly interpolate the actual camera FOV during rapid movements to increase cinematic speed feel.
 - [x] **Camera Coordinates Map:** Define explicit spline regions for complex camera angles.
 - [x] **Parameter Interpolation/Easing:** Enhance routines with advanced smooth interpolation logic.
@@ -212,6 +214,7 @@
 * *Idea:* "Memory Fragmentation: Visualize memory loss as mesh decoupling."
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "Neuromodulation Interface" - What if we allowed users to connect external API data to drive these neuromodulators directly?
+* *Idea:* "What if we visualized Dopamine pathways as glowing trails?"
 ## 📜 Changelog
 * [2026-05-31] - Completed Routine Logic Refactor. Ensured `tick()` uses `performance.now()`, `executeEvent` uses switch, and WebGPU degrades safely. Added tasks for Interpolation and Camera Maps, and Serotonin to Dream Log.
 * [2026-05-30] - Completed Phase 10 (Auditory Hallucinations). Implemented `auditory_hallucination` event handler in `routine-handlers.js` to simulate rapid flashes via generated stimulus events. Added mini-routine 'A' to `mini-routines.js`. Added neural synchronization idea to Dream Log.
