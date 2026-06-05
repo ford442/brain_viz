@@ -151,7 +151,7 @@ const HELPERS = `
         return vec2<f32>(-b - s, -b + s);
     }
 
-    fn raymarchHeatmapVolume(rayOrigin: vec3<f32>, rayDir: vec3<f32>, tMin: f32, tMax: f32, planeNormal: vec3<f32>, planeOffset: f32) -> vec4<f32> {
+    fn raymarchHeatmapVolume(rayOrigin: vec3<f32>, rayDir: vec3<f32>, tMin: f32, tMax: f32, planeNormal: vec3<f32>, planeOffset: f32, time: f32) -> vec4<f32> {
         var startT = max(tMin, 0.0);
         var endT = tMax;
 
@@ -187,7 +187,7 @@ const HELPERS = `
 
             let samplePos = rayOrigin + rayDir * (t + stepSize * 0.5);
             let depthT = clamp((t + stepSize * 0.5 - startT) / span, 0.0, 1.0);
-            let jitter = 0.86 + 0.14 * hashNoise3(samplePos * 2.75 + vec3<f32>(uniforms.time * 0.08));
+            let jitter = 0.86 + 0.14 * hashNoise3(samplePos * 2.75 + vec3<f32>(time * 0.08));
             let density = clamp(getVoxelValue(samplePos) * jitter, 0.0, 1.0);
 
             if (density > 0.0005) {
@@ -254,9 +254,7 @@ struct Uniforms {
 
 struct VertexInput {
     @location(0) position: vec3<f32>,
-    @location(1) fiberMeta: vec4<f32>,
-    @location(2) fiberStart: vec3<f32>,
-    @location(3) fiberEnd: vec3<f32>,
+    @location(1) normal: vec4<f32>,
 }
 
 struct VertexOutput {
@@ -335,7 +333,7 @@ fn calculateSignalFlow(startPos: vec3<f32>, endPos: vec3<f32>, time: f32, speed:
 fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOutput {
     var output: VertexOutput;
     var finalPos = input.position;
-    var finalNormal = normalize(input.position);
+    var finalNormal = normalize(input.normal.xyz);
     var finalColor = vec3<f32>(0.0);
     var signalStrength = 0.0;
     output.fiberMaterial = vec3<f32>(0.0);
@@ -347,90 +345,8 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
 
     let worldPos = (uniforms.modelMatrix * vec4<f32>(finalPos, 1.0)).xyz;
 
-    // --- CONNECTOME MODE ---
-    // [V2.3] Traveling Pulse Logic (Activity Trails)
-    // [Neuro-Weaver] Simulates information flow along the axon fibers using spatial phase offset
-    // Signals travel along the fibers based on vertex index and flow speed
-    if (uniforms.style >= 2.0 && uniforms.style < 3.0) {
-        finalPos = input.position;
-        let radius = max(0.002, input.fiberMeta.x);
-        let bundleId = input.fiberMeta.y;
-        let myelin = clamp(input.fiberMeta.z, 0.0, 1.0);
-        let segmentPhase = input.fiberMeta.w;
-        let isAI = bundleId >= 100.0;
-        let degradation = clamp(uniforms.cortisol, 0.0, 1.0);
-        let effectiveMyelin = myelin * (1.0 - degradation * (1.0 - myelin));
-        let humanSignal = signalStrength;
-        let aiSignal = calculateSignalFlow(
-            input.fiberStart,
-            input.fiberEnd,
-            uniforms.time,
-            uniforms.flowSpeed * 2.4 * (0.4 + effectiveMyelin * 0.8 + radius * 10.0),
-            segmentPhase,
-            getRegionPhysics(mix(input.fiberStart, input.fiberEnd, 0.5), uniforms.style).z,
-            0.12,
-            radius * 0.35,
-            bundleId + 100.0
-        );
-        let resonance = 1.0 - smoothstep(0.0, uniforms.resonanceThreshold, abs(humanSignal - aiSignal));
-        // AI fibers: thinner, sharper; human fibers stay thick and wobbly.
-        let effectiveRadius = radius * mix(0.45, 1.0, effectiveMyelin) * select(1.0, 0.35, isAI);
-
-        // AI conduction: faster, higher frequency
-        let aiSpeedMul = select(1.0, 2.4, isAI);
-        let conductionSpeed = uniforms.flowSpeed * aiSpeedMul * (0.45 + effectiveMyelin * 1.65 + effectiveRadius * 18.0);
-        signalStrength = calculateSignalFlow(input.fiberStart, input.fiberEnd, uniforms.time, conductionSpeed, segmentPhase, getRegionPhysics(mix(input.fiberStart, input.fiberEnd, 0.5), uniforms.style).z, effectiveMyelin, effectiveRadius, bundleId);
-        let tangent = normalize(input.fiberEnd - input.fiberStart);
-        let refAxis = select(vec3<f32>(0.0, 1.0, 0.0), vec3<f32>(1.0, 0.0, 0.0), abs(tangent.y) > 0.82);
-        let sideAxis = normalize(cross(tangent, refAxis));
-        finalNormal = normalize(cross(sideAxis, tangent));
-
-        // [SynaptiX] AI fiber color: magenta→violet, human: cyan→emerald
-        var bundleColor: vec3<f32>;
-        if (isAI) {
-            let aiHue = (bundleId - 100.0) * 0.21 + uniforms.time * 0.4;
-            bundleColor = vec3<f32>(
-                0.85 + 0.15 * sin(aiHue),
-                0.15 + 0.25 * sin(aiHue + 2.5),
-                0.75 + 0.25 * sin(aiHue + 1.2)
-            );
-        } else {
-            let wave = sin(uniforms.time * 1.2 + segmentPhase * 9.0 + input.position.y * 3.0) * 0.5 + 0.5;
-            bundleColor = mix(vec3<f32>(0.0, 0.82, 1.0), vec3<f32>(0.08, 0.95, 0.48), wave);
-        }
-
-        let hierarchy = clamp(effectiveRadius * 16.0, 0.0, 1.0);
-        let brightness = mix(0.35, 1.55, effectiveMyelin) * mix(0.65, 1.45, hierarchy);
-        var pulseColor: vec3<f32>;
-        if (isAI) {
-            pulseColor = vec3<f32>(1.0, 0.2, 0.9);
-        } else {
-            pulseColor = mix(vec3<f32>(0.1, 0.8, 1.0), vec3<f32>(1.0, 0.9, 0.35), uniforms.colorShift);
-        }
-        let pulseBoost = signalStrength * (0.5 + effectiveMyelin * 0.9 + hierarchy * 0.6);
-
-        if (isAI) {
-            let spiky = smoothstep(0.68, 0.96, signalStrength + aiActivity * 0.5 + sin(uniforms.time * 14.0 + segmentPhase * 20.0) * 0.12);
-            finalColor = bundleColor * (0.45 + brightness * 0.7) + pulseColor * (pulseBoost * 1.4 + spiky * 0.55);
-        } else {
-            let wobble = 0.88 + 0.12 * sin(uniforms.time * 2.0 + segmentPhase * 7.0 + input.position.x * 4.0);
-            finalColor = bundleColor * brightness * wobble + pulseColor * (pulseBoost * 0.9);
-        }
-        finalColor += vec3<f32>(1.0, 0.92, 0.55) * resonance * select(0.08, 0.18, isAI);
-
-        if (uniforms.sparkle > 0.0) {
-            let flicker = sin(uniforms.time * 40.0 + f32(vertexIndex) * 0.1 + bundleId);
-            if (flicker > 0.8) {
-                finalColor += vec3<f32>(1.0) * uniforms.sparkle * (0.4 + effectiveMyelin * 0.6);
-            }
-        }
-
-        output.fiberMaterial = vec3<f32>(effectiveMyelin, effectiveRadius, hierarchy);
-        output.fiberTangent = tangent;
-        output.fiberFlags = vec2<f32>(select(0.0, 1.0, isAI), resonance);
-    }
     // --- SYNAPTIX SURFACE MODE ---
-    else if (uniforms.style >= 4.0) {
+    if (uniforms.style >= 4.0) {
         // Dual displacement fields: slow organic breathing vs sharp AI gyri.
         let humanWave = 0.55 + 0.45 * sin(uniforms.time * 1.35 + activity * 4.0 + input.position.y * 3.5);
         let humanDisp = normalize(input.position) * activity * (0.02 + humanWave * 0.035);
@@ -732,7 +648,7 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
             discard;
         }
 
-        let volume = raymarchHeatmapVolume(rayOrigin, rayDir, bounds.x, bounds.y, uniforms.slicePlane.xyz, uniforms.slicePlane.w);
+        let volume = raymarchHeatmapVolume(rayOrigin, rayDir, bounds.x, bounds.y, uniforms.slicePlane.xyz, uniforms.slicePlane.w, uniforms.time);
         let shellTint = getHeatmapColor(pow(input.activity, 0.9));
         let rimBoost = smoothstep(0.4, 1.0, rim) * 0.22;
         let shellBurst = smoothstep(0.68, 0.98, input.activity) * 0.18;
@@ -1568,8 +1484,6 @@ fn main(input: SparkInput) -> SparkOutput {
 `;
 
 export const sparkFragmentShader = `
-${HELPERS}
-
 struct Uniforms {
     mvpMatrix: mat4x4<f32>,
     modelMatrix: mat4x4<f32>,
