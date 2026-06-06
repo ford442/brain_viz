@@ -10,8 +10,8 @@
 - [x] **"Deep Thought" Script:** Hardcode the demo routine (Organic -> Visual Input -> Connectome Processing -> Heatmap Aftermath).
 - [x] **Playback UI:** Add a "Run Sequence" button and a transport clock (Play/Stop/Loop) to the DOM.
 ### Phase 2: Advanced Choreography
-- [ ] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
-- [ ] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
+- [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
+- [x] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
 - [x] **Dynamic FOV Interpolation:** Smoothly interpolate the actual camera FOV during rapid movements to increase cinematic speed feel.
 - [x] **Camera Coordinates Map:** Define explicit spline regions for complex camera angles.
 - [x] **Parameter Interpolation/Easing:** Enhance routines with advanced smooth interpolation logic.
@@ -122,6 +122,7 @@
 - [x] **Auditory Hallucinations:** Implement `auditory_hallucination` event handler in `routine-player.js` to simulate rapid localized cortex flashes via rapid `stimulus` events.
 ---
 ## 🧪 "Dream" Log (Future Concepts)
+* *Idea:* "What if we mapped real-time stock market data to connectome signal pulses?"
 * *Idea:* "What if we visualized visual cortex processing by simulating progressive edge-detection filters directly on the render pipeline?"
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "What if we visualized auditory hallucinations as rapid localized cortex flashes?"

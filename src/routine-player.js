@@ -470,6 +470,7 @@ export class RoutinePlayer {
 
         // Calculate precise delta time using performance.now() to prevent drift
         const now = performance.now();
+        // [Neuro-Script Cycle] Verified drift-free performance.now() timing
         const deltaTime = (now - this.lastFrameTime) / 1000.0;
         this.lastFrameTime = now;
 

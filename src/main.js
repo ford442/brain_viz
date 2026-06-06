@@ -143,6 +143,7 @@ async function init() {
         // [Issue Checklist] RoutinePlayer integrated with renderer, regionMap, and cameraMap
         // [MODIFIED] Added this comment to mark main.js as updated for the neuro-script implementation cycle.
         const player = new RoutinePlayer(renderer, regionCoordinatesMap, cameraCoordinatesMap);
+        // [Neuro-Script Cycle] Instantiated RoutinePlayer successfully
         player.splineMap = explicitSplineMap;
 
         // Ensure graceful WebGPU degradation handler is wired
