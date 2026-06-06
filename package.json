@@ -6,8 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "npm run build:wasm && vite build",
+    "build_colab": "npm run build:wasm_build && vite build",
     "preview": "vite preview",
     "build:wasm": "bash scripts/build_wasm.sh",
+    "build:wasm_colab": "bash scripts/build_wasm_colab.sh",
     "build:wasm:debug": "bash scripts/build_wasm.sh --debug"
   },
   "devDependencies": {

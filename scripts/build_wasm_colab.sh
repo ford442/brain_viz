@@ -14,7 +14,7 @@
 # Output: public/wasm/brain_tensor_engine.{js,wasm}
 
 set -euo pipefail
-source /root/emsdk/emsdk_env.sh
+source /content/buil*/emsdk/emsdk_env.sh
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
