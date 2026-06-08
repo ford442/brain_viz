@@ -121,7 +121,13 @@
 - [x] **Dendritic Growth / Neuroplasticity:** Implement `neuroplasticity` event handler to simulate real-time growth of new connections by modulating the `growth` uniform over time. Bound to a routine.
 - [x] **Auditory Hallucinations:** Implement `auditory_hallucination` event handler in `routine-player.js` to simulate rapid localized cortex flashes via rapid `stimulus` events.
 ---
+### Phase 11: Robust Expression & Hardening
+- [x] **Timeline Compensation + Catch-Up Logic:** Implement catch-up logic in the scheduler. When a long frame or async operation causes drift, intelligently compensate while preserving intent.
+- [ ] **Graceful WebGPU Degradation + Recovery Telemetry:** When context is lost/recovered, automatically log the event with timing data, and offer a reconnect that restores the timeline position.
+
+---
 ## 🧪 "Dream" Log (Future Concepts)
+* *Idea:* "A shared Neuro-Script Exchange where people can publish, fork, and remix visualization routines. The player becomes both a performance instrument and a collaborative canvas."
 * *Idea:* "What if we mapped real-time stock market data to connectome signal pulses?"
 * *Idea:* "What if we visualized visual cortex processing by simulating progressive edge-detection filters directly on the render pipeline?"
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
