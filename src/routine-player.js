@@ -404,6 +404,7 @@ export class RoutinePlayer {
         this.stop();
         this.isPlaying = true;
         this.elapsedTime = 0;
+        this.timeDebt = 0;
         this.lastFrameTime = performance.now();
         this.cursor = 0;
         this.activeLerps = [];
@@ -437,6 +438,7 @@ export class RoutinePlayer {
     stop() {
         this.isPlaying = false;
         this.elapsedTime = 0;
+        this.timeDebt = 0;
         if (this.timerId) {
             cancelAnimationFrame(this.timerId);
             this.timerId = null;
@@ -471,8 +473,26 @@ export class RoutinePlayer {
         // Calculate precise delta time using performance.now() to prevent drift
         const now = performance.now();
         // [Neuro-Script Cycle] Verified drift-free performance.now() timing
-        const deltaTime = (now - this.lastFrameTime) / 1000.0;
+        let deltaTime = (now - this.lastFrameTime) / 1000.0;
         this.lastFrameTime = now;
+
+        // [Phase 11] Timeline Compensation & Catch-up Logic
+        // If the frame stalls (e.g., ONNX inference block, tab backgrounded),
+        // cap the maximum deltaTime so we don't jump too far ahead in a single frame.
+        // We accumulate the "debt" and slowly burn it off over subsequent frames
+        // to smoothly catch up without destroying visual intent.
+        if (!this.timeDebt) this.timeDebt = 0;
+        const MAX_FRAME_DT = 0.1; // 100ms cap
+        if (deltaTime > MAX_FRAME_DT) {
+            this.timeDebt += (deltaTime - MAX_FRAME_DT);
+            deltaTime = MAX_FRAME_DT;
+            console.log(`[Routine Engine] Timeline stall detected. Compensating. Debt: ${this.timeDebt.toFixed(2)}s`);
+        } else if (this.timeDebt > 0) {
+            // Burn off debt up to the max frame budget
+            const catchup = Math.min(this.timeDebt, MAX_FRAME_DT - deltaTime);
+            deltaTime += catchup;
+            this.timeDebt -= catchup;
+        }
 
         // [Phase 3] Continuous Audio-Driven Respiration
         if (this.respirationActive) {
