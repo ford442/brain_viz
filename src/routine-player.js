@@ -58,14 +58,10 @@ export class RoutinePlayer {
 
         this._deviceLost = false;
 
-        // [Safety Requirement] Graceful degradation if WebGPU context is lost or invalid
-        if (this.renderer && this.renderer.device && this.renderer.device.lost) {
-             this.renderer.device.lost.then((lostInfo) => {
-                 console.error("[Routine Player] WebGPU Context is Lost. Halting routine playback safely.", lostInfo);
-                 this._deviceLost = true;
-                 this.stop();
-             });
-        }
+        // Note: Graceful WebGPU degradation and recovery telemetry
+        // is now primarily handled in main.js to allow UI-level reconnects.
+        // We still track _deviceLost internally to stop the tick loop.
+        this._deviceLost = false;
     }
 
     initAudio() {
