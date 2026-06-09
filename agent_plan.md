@@ -123,10 +123,11 @@
 ---
 ### Phase 11: Robust Expression & Hardening
 - [x] **Timeline Compensation + Catch-Up Logic:** Implement catch-up logic in the scheduler. When a long frame or async operation causes drift, intelligently compensate while preserving intent.
-- [ ] **Graceful WebGPU Degradation + Recovery Telemetry:** When context is lost/recovered, automatically log the event with timing data, and offer a reconnect that restores the timeline position.
+- [x] **Graceful WebGPU Degradation + Recovery Telemetry:** When context is lost/recovered, automatically log the event with timing data, and offer a reconnect that restores the timeline position.
 
 ---
 ## 🧪 "Dream" Log (Future Concepts)
+* *Idea:* "What if we visualized visual cortex processing by simulating progressive edge-detection filters directly on the render pipeline?
 * *Idea:* "A shared Neuro-Script Exchange where people can publish, fork, and remix visualization routines. The player becomes both a performance instrument and a collaborative canvas."
 * *Idea:* "What if we mapped real-time stock market data to connectome signal pulses?"
 * *Idea:* "What if we visualized visual cortex processing by simulating progressive edge-detection filters directly on the render pipeline?"
@@ -223,6 +224,7 @@
 * *Idea:* "Neuromodulation Interface" - What if we allowed users to connect external API data to drive these neuromodulators directly?
 * *Idea:* "What if we visualized Dopamine pathways as glowing trails?"
 ## 📜 Changelog
+* [2026-06-08] - Completed Phase 11 (Graceful WebGPU Degradation + Recovery Telemetry). Implemented robust WebGPU device.lost handling, telemetry logging, and UI for timeline-restoring recovery in `main.js`. Added 'Visual Cortex Filter' idea to Dream Log.
 * [2026-05-31] - Completed Routine Logic Refactor. Ensured `tick()` uses `performance.now()`, `executeEvent` uses switch, and WebGPU degrades safely. Added tasks for Interpolation and Camera Maps, and Serotonin to Dream Log.
 * [2026-05-30] - Completed Phase 10 (Auditory Hallucinations). Implemented `auditory_hallucination` event handler in `routine-handlers.js` to simulate rapid flashes via generated stimulus events. Added mini-routine 'A' to `mini-routines.js`. Added neural synchronization idea to Dream Log.
 * [2026-05-28] - Completed Phase 2 (Memory Fragmentation). Implemented `memory_fragmentation` event and updated `agent_plan.md` as per neuro-script cycle. Added auditory hallucination idea to Dream Log.
