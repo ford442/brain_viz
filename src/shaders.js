@@ -1169,15 +1169,17 @@ fn main_soma(input: VertexInput) -> VertexOutput {
 
     // Dynamic scale: base + activity burst + pulse
     var scale = baseScale;
-    let firing = activity * 3.0;
-    let pulse = 1.0 + 0.35 * sin(uniforms.time * 6.0 + phase) * activity;
-    scale *= (1.0 + firing) * pulse;
+    let peakActivity = max(activity, aiActivity * 0.9);
+    let firing = peakActivity * 3.0;
+    let firingSpike = smoothstep(0.5, 0.98, peakActivity);
+    let pulse = 1.0 + (0.22 + firingSpike * 0.28) * sin(uniforms.time * 6.0 + phase) * peakActivity;
+    scale *= (1.0 + firing + firingSpike * 0.85) * pulse;
 
     if (typeId < 0.5) { scale *= 1.5; }
     else if (typeId < 1.5) { scale *= 1.0; }
     else { scale *= 0.6; }
 
-    scale *= uniforms.pointCloudDensity;
+    scale *= (0.82 + min(uniforms.pointCloudDensity, 2.0) * 0.18);
 
     if (length(advectedInstancePos) > uniforms.growth * 1.8) {
         scale = 0.0;
@@ -1204,11 +1206,11 @@ fn main_soma(input: VertexInput) -> VertexOutput {
     var color: vec3<f32>;
     if (uniforms.style >= 4.0) {
         if (isAI) {
-            color = vec3<f32>(0.85, 0.25, 0.95) * (0.5 + activity);
-            color += vec3<f32>(1.0, 0.6, 0.9) * aiActivity * 0.8;
+            color = vec3<f32>(0.85, 0.25, 0.95) * (0.45 + peakActivity);
+            color += vec3<f32>(1.0, 0.6, 0.9) * (aiActivity * 0.8 + firingSpike * 0.3);
         } else {
-            color = vec3<f32>(0.1, 0.75, 1.0) * (0.5 + activity);
-            color += vec3<f32>(0.6, 0.9, 1.0) * activity * 0.5;
+            color = vec3<f32>(0.1, 0.75, 1.0) * (0.45 + peakActivity);
+            color += vec3<f32>(0.6, 0.9, 1.0) * (activity * 0.5 + firingSpike * 0.25);
         }
         let resonance = 1.0 - smoothstep(0.0, uniforms.resonanceThreshold, abs(activity - aiActivity));
         color += vec3<f32>(1.0, 0.92, 0.55) * resonance * max(activity, aiActivity) * 1.5;
@@ -1224,8 +1226,8 @@ fn main_soma(input: VertexInput) -> VertexOutput {
         }
     }
 
-    if (activity > 0.7) {
-        color += vec3<f32>(1.0, 0.95, 0.8) * (activity - 0.7) * 3.0;
+    if (peakActivity > 0.68) {
+        color += vec3<f32>(1.0, 0.95, 0.8) * (peakActivity - 0.68) * 3.8;
     }
 
     if (uniforms.sparkle > 0.0 && activity > 0.1) {
@@ -2015,6 +2017,7 @@ struct VertexOutput {
     @location(1) uv: vec2<f32>,
     @location(2) alpha: f32,
     @location(3) clipDist: f32,
+    @location(4) pointData: vec4<f32>,
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
@@ -2091,10 +2094,19 @@ fn main(input: VertexInput) -> VertexOutput {
     let activity = sampleSmoothedVoxelValue(pos);
     let aiActivity = sampleSmoothedAIVoxelValue(pos);
 
-    var scale = baseScale * uniforms.pointCloudDensity;
-    let firing = activity * 2.5;
-    let pulse = 1.0 + 0.25 * sin(uniforms.time * 8.0 + phase) * activity;
-    scale *= (1.0 + firing) * pulse;
+    let densityScale = 0.55 + min(uniforms.pointCloudDensity, 2.0) * 0.45;
+    var scale = baseScale * densityScale;
+    let peakActivity = max(activity, aiActivity * 0.95);
+    let firing = peakActivity * 2.7;
+    let firingSpike = smoothstep(0.48, 0.98, peakActivity);
+    let pulse = 1.0 + (0.18 + firingSpike * 0.52) * sin(uniforms.time * (8.0 + typeId) + phase) * peakActivity;
+    scale *= (1.0 + firing + firingSpike * 1.2) * pulse;
+
+    if (typeId > 4.5) {
+        scale *= 0.78;
+    } else if (typeId > 3.5) {
+        scale *= 0.92;
+    }
 
     if (length(pos) > uniforms.growth * 1.8) {
         scale = 0.0;
@@ -2113,17 +2125,17 @@ fn main(input: VertexInput) -> VertexOutput {
     let offset = side * input.corner.x * scale + trueUp * input.corner.y * scale;
     let worldPos = pos + offset;
 
+    let resonance = 1.0 - smoothstep(0.0, uniforms.resonanceThreshold + 0.025, abs(activity - aiActivity));
     var color: vec3<f32>;
     if (uniforms.style >= 4.0) {
         if (isAI) {
-            color = vec3<f32>(0.9, 0.3, 1.0) * (0.4 + activity);
-            color += vec3<f32>(0.7, 0.15, 0.85) * aiActivity * 0.6;
+            color = vec3<f32>(0.72, 0.16, 1.0) * (0.35 + peakActivity);
+            color += vec3<f32>(1.0, 0.4, 0.92) * (aiActivity * 0.95 + firingSpike * 0.45);
         } else {
-            color = vec3<f32>(0.15, 0.7, 0.95) * (0.4 + activity);
-            color += vec3<f32>(0.5, 0.85, 1.0) * activity * 0.4;
+            color = vec3<f32>(0.08, 0.62, 1.0) * (0.35 + peakActivity);
+            color += vec3<f32>(0.6, 0.94, 1.0) * (activity * 0.8 + firingSpike * 0.35);
         }
-        let resonance = 1.0 - smoothstep(0.0, uniforms.resonanceThreshold, abs(activity - aiActivity));
-        color += vec3<f32>(1.0, 0.95, 0.7) * resonance * max(activity, aiActivity) * 1.2;
+        color += vec3<f32>(1.0, 0.96, 0.72) * resonance * max(activity, aiActivity) * 1.85;
     } else {
         if (isAI) {
             color = mix(vec3<f32>(0.5, 0.1, 0.55), vec3<f32>(0.95, 0.4, 1.0), activity);
@@ -2135,20 +2147,27 @@ fn main(input: VertexInput) -> VertexOutput {
         if (typeId > 3.5) {
             color = mix(color, vec3<f32>(0.95, 0.85, 0.6), 0.35); // varicosity tint
         }
+        if (typeId > 4.5) {
+            color = mix(color, vec3<f32>(0.95, 0.98, 1.0), 0.2);
+        }
     }
 
-    if (activity > 0.65) {
-        color += vec3<f32>(1.0, 0.95, 0.85) * (activity - 0.65) * 2.5;
+    if (peakActivity > 0.6) {
+        color += vec3<f32>(1.0, 0.95, 0.85) * (peakActivity - 0.6) * 3.5;
     }
 
-    var alpha = clamp(0.35 + activity * 0.65, 0.0, 1.0);
-    if (isAI) { alpha *= 0.9; }
+    var alpha = clamp(0.18 + peakActivity * 0.72 + firingSpike * 0.35 + resonance * 0.22, 0.0, 1.0);
+    if (typeId > 4.5) {
+        alpha *= 0.85;
+    }
+    if (isAI) { alpha *= 0.96; }
 
     output.position = uniforms.mvpMatrix * vec4<f32>(worldPos, 1.0);
     output.color = color;
     output.uv = input.corner;
     output.alpha = alpha;
     output.clipDist = dot(worldPos, uniforms.slicePlane.xyz) + uniforms.slicePlane.w;
+    output.pointData = vec4<f32>(typeId, select(0.0, 1.0, isAI), resonance, firingSpike);
     return output;
 }
 `;
@@ -2193,14 +2212,36 @@ struct FragmentInput {
     @location(1) uv: vec2<f32>,
     @location(2) alpha: f32,
     @location(3) clipDist: f32,
+    @location(4) pointData: vec4<f32>,
 }
 
 @fragment
 fn main(input: FragmentInput) -> @location(0) vec4<f32> {
     if (input.clipDist < 0.0) { discard; }
     let d = length(input.uv);
-    let falloff = exp(-d * d * 5.0);
-    let col = input.color * falloff;
-    return vec4<f32>(col, clamp(input.alpha * falloff, 0.0, 1.0));
+    let typeId = input.pointData.x;
+    let isAI = input.pointData.y;
+    let resonance = input.pointData.z;
+    let firingSpike = input.pointData.w;
+
+    let softFalloff = exp(-d * d * 5.5);
+    let beadCore = pow(max(0.0, 1.0 - d), 3.5);
+    let arborHalo = exp(-d * d * 2.6);
+    let aiDiamond = pow(max(0.0, 1.0 - max(abs(input.uv.x), abs(input.uv.y))), 5.0);
+    let aiStar = pow(max(0.0, 1.0 - (abs(input.uv.x) + abs(input.uv.y)) * 0.92), 8.0);
+
+    var falloff = mix(softFalloff, beadCore, 0.25);
+    if (typeId > 3.5 && typeId <= 4.5) {
+        falloff = mix(softFalloff, beadCore, 0.65);
+    } else if (typeId > 4.5) {
+        falloff = mix(softFalloff, arborHalo, 0.55) + beadCore * 0.25;
+    }
+    if (isAI > 0.5) {
+        falloff = mix(falloff, aiDiamond + aiStar * 0.6, 0.72);
+    }
+
+    let flare = 1.0 + firingSpike * 0.55 + resonance * 0.4;
+    let col = input.color * falloff * flare;
+    return vec4<f32>(col, clamp(input.alpha * falloff * (0.9 + resonance * 0.2), 0.0, 1.0));
 }
 `;

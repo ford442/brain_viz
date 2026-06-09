@@ -1038,6 +1038,9 @@ export class BrainRenderer {
         
         const isSynaptiX = this.params.style >= 4.0;
         const isConnectome = this.params.style >= 2.0 && this.params.style < 3.0;
+        const pointDensity = Math.max(0.0, this.params.pointCloudDensity ?? 1.0);
+        const pointCloudDrawCount = Math.floor(this.pointCloudInstanceCount * Math.min(1.0, pointDensity));
+        const somaDrawCount = Math.floor(this.somaInstanceCount * Math.min(1.0, 0.35 + pointDensity * 0.65));
 
         if (isConnectome || isSynaptiX) {
             // --- CONNECTOME / SYNAPTIX MODE ---
@@ -1051,19 +1054,21 @@ export class BrainRenderer {
             renderPass.draw(this.fiberVertexCount);
 
             // 2. Draw Dense Point Cloud (Boutons / Varicosities) [V3.1]
-            if (this.pointCloudInstanceCount > 0) {
+            if (pointCloudDrawCount > 0) {
                 renderPass.setPipeline(this.pointCloudPipeline);
                 renderPass.setVertexBuffer(0, this.pointCloudQuadBuffer);
                 renderPass.setVertexBuffer(1, this.pointCloudInstanceBuffer);
-                renderPass.draw(6, this.pointCloudInstanceCount);
+                renderPass.draw(6, pointCloudDrawCount);
             }
 
             // 3. Draw Instanced Mesh Somas (Hubs / Medium) [V3.1 Pipeline]
-            renderPass.setPipeline(this.somaPipeline);
-            renderPass.setVertexBuffer(0, this.somaVertexBuffer); // Mesh
-            renderPass.setVertexBuffer(1, this.somaInstanceBuffer); // Rich instance data
-            renderPass.setIndexBuffer(this.somaIndexBuffer, 'uint16');
-            renderPass.drawIndexed(this.somaIndexCount, this.somaInstanceCount);
+            if (somaDrawCount > 0) {
+                renderPass.setPipeline(this.somaPipeline);
+                renderPass.setVertexBuffer(0, this.somaVertexBuffer); // Mesh
+                renderPass.setVertexBuffer(1, this.somaInstanceBuffer); // Rich instance data
+                renderPass.setIndexBuffer(this.somaIndexBuffer, 'uint16');
+                renderPass.drawIndexed(this.somaIndexCount, somaDrawCount);
+            }
 
             // 4. Draw Emissive Sparks / Vesicles
             if (this.sparkInstanceCount > 0) {

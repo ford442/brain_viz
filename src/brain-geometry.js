@@ -93,7 +93,10 @@ export class BrainGeometry {
         // 4. Generate U-fibers (shallow association fibers)
         this.generateUFibers();
 
-        // 5. Build per-voxel fiber affinity map from actual bundles
+        // 5. Generate cortical mantle micro-node cloud for dense connectome rendering
+        this.generateCorticalMantleCloud();
+
+        // 6. Build per-voxel fiber affinity map from actual bundles
         this.buildFiberAffinityMap();
     }
 
@@ -336,6 +339,99 @@ export class BrainGeometry {
         this.pointCloudInstances.push(x, y, z, scale, typeId, bundleId, phase, 0.0);
     }
 
+    randomUnitVector(bias = null, biasStrength = 0.0) {
+        const z = this.random() * 2.0 - 1.0;
+        const theta = this.random() * Math.PI * 2.0;
+        const r = Math.sqrt(Math.max(0.0, 1.0 - z * z));
+        let x = r * Math.cos(theta);
+        let y = z;
+        let zz = r * Math.sin(theta);
+
+        if (bias && biasStrength > 0.0) {
+            x += bias[0] * biasStrength;
+            y += bias[1] * biasStrength;
+            zz += bias[2] * biasStrength;
+        }
+
+        const len = Math.sqrt(x * x + y * y + zz * zz) || 1.0;
+        return [x / len, y / len, zz / len];
+    }
+
+    addPointCluster(center, count, spread, scaleMin, scaleMax, typeId, bundleId, bias = null, anisotropy = [1.0, 1.0, 1.0]) {
+        for (let i = 0; i < count; i++) {
+            const dir = this.randomUnitVector(bias, bias ? 0.6 : 0.0);
+            const radius = spread * (0.15 + Math.pow(this.random(), 1.8) * 0.85);
+            const x = center[0] + dir[0] * radius * anisotropy[0];
+            const y = center[1] + dir[1] * radius * anisotropy[1];
+            const z = center[2] + dir[2] * radius * anisotropy[2];
+            if (!this.isInsideBrain(x, y, z)) continue;
+            const scale = scaleMin + (scaleMax - scaleMin) * this.random();
+            this.addPointCloudInstance(x, y, z, scale, typeId, bundleId, this.random() * Math.PI * 2.0);
+        }
+    }
+
+    generateCorticalMantleCloud() {
+        const mantleSamples = 3200;
+        const sparseCoreSamples = 320;
+        const corticalBundles = 8;
+
+        for (let i = 0; i < mantleSamples; i++) {
+            const dir = this.randomUnitVector();
+            const surface = this.sampleCorticalSurface(dir[0], dir[1], dir[2], true);
+            const depth = 0.015 + Math.pow(this.random(), 2.5) * 0.22;
+            const tangentA = this.randomUnitVector([dir[1], -dir[0], dir[2] * 0.2], 0.45);
+            const tangentB = this.randomUnitVector([-dir[2], dir[0] * 0.3, dir[1]], 0.35);
+            const lateralJitter = (this.random() - 0.5) * 0.05;
+            const verticalJitter = (this.random() - 0.5) * 0.035;
+            const radius = surface.radius - depth;
+            const x = dir[0] * radius + tangentA[0] * lateralJitter + tangentB[0] * verticalJitter;
+            const y = dir[1] * radius + tangentA[1] * lateralJitter + tangentB[1] * verticalJitter;
+            const z = dir[2] * radius + tangentA[2] * lateralJitter + tangentB[2] * verticalJitter;
+            if (!this.isInsideBrain(x, y, z)) continue;
+
+            const corticalBias = this.getCorticalBias(x, y, z);
+            const bundleId = Math.floor(this.random() * corticalBundles);
+            const typeId = corticalBias > 0.82 ? 5 : 3;
+            const scale = (0.003 + this.random() * 0.006) * (0.8 + corticalBias * 0.9);
+            this.addPointCloudInstance(x, y, z, scale, typeId, bundleId, this.random() * Math.PI * 2.0);
+
+            if (this.random() < 0.06 * corticalBias) {
+                this.addSomaInstance(
+                    x,
+                    y,
+                    z,
+                    0.008 + corticalBias * 0.008 + this.random() * 0.004,
+                    this.random() < 0.35 ? 1 : 2,
+                    bundleId,
+                    this.random() * Math.PI * 2.0,
+                    this.random()
+                );
+            }
+
+            if (this.random() < 0.04) {
+                this.addPointCluster([x, y, z], 5 + Math.floor(corticalBias * 6), 0.03 + corticalBias * 0.025, 0.0025, 0.006, 5, bundleId, dir, [1.0, 0.7, 1.0]);
+            }
+        }
+
+        for (let i = 0; i < sparseCoreSamples; i++) {
+            const p = this.randomPointInBrain();
+            const corticalBias = this.getCorticalBias(p[0], p[1], p[2]);
+            if (corticalBias > 0.45) continue;
+            this.addPointCloudInstance(
+                p[0],
+                p[1],
+                p[2],
+                0.003 + this.random() * 0.004,
+                4,
+                20 + (i % 6),
+                this.random() * Math.PI * 2.0
+            );
+            if (this.random() < 0.08) {
+                this.addSomaInstance(p[0], p[1], p[2], 0.008 + this.random() * 0.004, 2, 20 + (i % 6), this.random() * Math.PI * 2.0, this.random());
+            }
+        }
+    }
+
     generateAIFiberPathways() {
         const NUM_AI_FIBERS = 180;
         const BUNDLE_ID_AI = 100;
@@ -462,6 +558,7 @@ export class BrainGeometry {
             if (this.isInsideBrain(hubPos[0], hubPos[1], hubPos[2])) {
                 this.addSomaInstance(hubPos[0], hubPos[1], hubPos[2], bun.r * 0.55, 0, bun.id, this.random()*6.28, this.random());
                 this.addSparkSource(hubPos, [hubPos[0], hubPos[1], hubPos[2]], 0.55, 0.0, bun.id, bun.m, 0.0);
+                this.addPointCluster(hubPos, 18, bun.r * 0.8, bun.r * 0.08, bun.r * 0.18, 5, bun.id, hubPos, [1.0, 0.7, 1.0]);
             }
 
             for (let s = 0; s < bun.n; s++) {
@@ -492,19 +589,31 @@ export class BrainGeometry {
 
                     // [V3.1] Dense boutons along fiber, denser near cortical surface
                     const corticalBias = this.getCorticalBias((x1+x2)*0.5, (y1+y2)*0.5, (z1+z2)*0.5);
-                    const nBoutons = Math.floor(3 * corticalBias) + 1;
+                    const nBoutons = 2 + Math.floor(5 * corticalBias) + (t > 0.65 ? 2 : 0);
                     for (let b = 0; b < nBoutons; b++) {
                         const bt = this.random();
                         const bx = x1 + (x2-x1)*bt + (this.random()-0.5)*radius*0.5;
                         const by = y1 + (y2-y1)*bt + (this.random()-0.5)*radius*0.5;
                         const bz = z1 + (z2-z1)*bt + (this.random()-0.5)*radius*0.5;
                         if (this.isInsideBrain(bx, by, bz)) {
-                            this.addPointCloudInstance(bx, by, bz, radius * 0.35, 3, bun.id, this.random()*6.28);
+                            const beadType = b === 0 && t > 0.7 ? 5 : 3;
+                            this.addPointCloudInstance(bx, by, bz, radius * (0.22 + corticalBias * 0.22), beadType, bun.id, this.random()*6.28);
+                        }
+                    }
+
+                    const varicosityCount = 1 + Math.floor(corticalBias * 2.0) + (t > 0.75 ? 1 : 0);
+                    for (let v = 0; v < varicosityCount; v++) {
+                        const vt = 0.18 + this.random() * 0.64;
+                        const vx = x1 + (x2 - x1) * vt;
+                        const vy = y1 + (y2 - y1) * vt;
+                        const vz = z1 + (z2 - z1) * vt;
+                        if (this.isInsideBrain(vx, vy, vz)) {
+                            this.addPointCloudInstance(vx, vy, vz, radius * (0.26 + 0.12 * this.random()), 4, bun.id, this.random() * 6.28);
                         }
                     }
 
                     // Medium mesh soma every 3 segments
-                    if (i % 3 === 0 && i > 0 && i < pts.length - 2) {
+                    if (i % 2 === 0 && i > 0 && i < pts.length - 2 && corticalBias > 0.28) {
                         const mp = [(x1+x2)*0.5, (y1+y2)*0.5, (z1+z2)*0.5];
                         this.addSomaInstance(mp[0], mp[1], mp[2], bun.r * 0.22 * (1.0 - t*0.3), 1, bun.id, this.random()*6.28, this.random());
                     }
@@ -525,6 +634,7 @@ export class BrainGeometry {
 
                 // Terminal arbor with cortical-bias density
                 this.addTerminalBranches(pts[pts.length - 1], bun.b, bun.r * 0.5, bun.id, 1.0);
+                this.addPointCluster(pts[pts.length - 1], 8 + Math.floor(bun.b * 2.5), bun.r * 0.85, bun.r * 0.08, bun.r * 0.22, 5, bun.id, pts[pts.length - 1], [1.0, 0.75, 1.0]);
             }
         }
     }
@@ -544,15 +654,16 @@ export class BrainGeometry {
     }
 
     addTerminalBranches(origin, count, segRadius, bundleId, branchPhase = 0.0) {
-        const DEPTH = 4;
+        const DEPTH = 5;
         const corticalBias = this.getCorticalBias(origin[0], origin[1], origin[2]);
-        const adjustedCount = Math.max(2, Math.floor(count * (0.5 + corticalBias * 1.8)));
+        const adjustedCount = Math.max(4, Math.floor(count * (1.0 + corticalBias * 3.2)));
         for (let i = 0; i < adjustedCount; i++) {
             const theta = this.random() * Math.PI * 2;
             const phi   = this.random() * Math.PI * 0.6;
             const dx = Math.sin(phi) * Math.cos(theta);
             const dy = Math.cos(phi) * 0.6 + (this.random() - 0.5) * 0.4;
             const dz = Math.sin(phi) * Math.sin(theta);
+            const branchDir = [dx, dy, dz];
 
             let [px, py, pz] = origin;
             let len = segRadius;
@@ -573,11 +684,17 @@ export class BrainGeometry {
                         branchPhase + (d / DEPTH) * 0.15,
                         d === DEPTH - 1
                     );
-                    // Varicosity bead along branch
-                    if (d < DEPTH - 1) {
-                        const vmid = [(px+nx)*0.5, (py+ny)*0.5, (pz+nz)*0.5];
+                    // Varicosity beads along branch
+                    const beadCount = 1 + Math.floor(corticalBias * 2.5) + (d >= DEPTH - 2 ? 1 : 0);
+                    for (let bead = 0; bead < beadCount; bead++) {
+                        const vb = 0.2 + this.random() * 0.6;
+                        const vmid = [
+                            px + (nx - px) * vb,
+                            py + (ny - py) * vb,
+                            pz + (nz - pz) * vb
+                        ];
                         if (this.isInsideBrain(vmid[0], vmid[1], vmid[2])) {
-                            this.addPointCloudInstance(vmid[0], vmid[1], vmid[2], len * 0.45, 4, bundleId, this.random()*6.28);
+                            this.addPointCloudInstance(vmid[0], vmid[1], vmid[2], len * (0.22 + this.random() * 0.28), 4, bundleId, this.random()*6.28);
                         }
                     }
                 }
@@ -585,15 +702,18 @@ export class BrainGeometry {
                 len *= 0.65;
             }
             // Terminal bouton cluster at tip
-            const tipCount = Math.floor(4 * corticalBias) + 1;
+            const tipCount = 6 + Math.floor(12 * corticalBias);
             for (let b = 0; b < tipCount; b++) {
                 const jx = (this.random()-0.5)*len*0.8;
                 const jy = (this.random()-0.5)*len*0.8;
                 const jz = (this.random()-0.5)*len*0.8;
                 const tx = px + jx, ty = py + jy, tz = pz + jz;
                 if (this.isInsideBrain(tx, ty, tz)) {
-                    this.addPointCloudInstance(tx, ty, tz, len * 0.4, 3, bundleId, this.random()*6.28);
+                    this.addPointCloudInstance(tx, ty, tz, len * (0.25 + this.random() * 0.2), 5, bundleId, this.random()*6.28);
                 }
+            }
+            if (this.isInsideBrain(px, py, pz)) {
+                this.addPointCluster([px, py, pz], 4 + Math.floor(corticalBias * 6.0), len * 1.8, len * 0.18, len * 0.35, 5, bundleId, branchDir, [1.0, 0.8, 1.0]);
             }
         }
     }
