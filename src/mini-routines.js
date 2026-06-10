@@ -1,4 +1,16 @@
 export const MINI_ROUTINES = {
+    'Z': [ // Clip Plane / Internal Reveal Showcase
+        { time: 0.0, type: 'text', message: 'Internal Reveal: Deep Slice', duration: 4.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome view
+        { time: 0.0, type: 'camera', target: 'frontal', duration: 1.0 },
+        { time: 1.0, type: 'clip', sliceZ: 0.0, duration: 3.0, ease: 'sineInOut' }, // Slice inwards to center
+        { time: 1.0, type: 'camera', target: 'occipital', duration: 4.0, avoidCollision: true }, // Orbit while slicing
+        { time: 5.0, type: 'text', message: 'Memory Consolidation Revealed', duration: 3.0 },
+        { time: 5.0, type: 'serotonin', intensity: 1.2, duration: 2.0 }, // Serotonin glow on the exposed internal
+        { time: 8.0, type: 'clip', sliceZ: 2.0, duration: 3.0, ease: 'sineInOut' }, // Restore volume
+        { time: 8.0, type: 'camera', target: 'global', duration: 2.0 }
+    ],
+
     'O': [
         { type: 'camera', target: 'occipital', duration: 1.0, ease: 'sineInOut', avoidCollision: false },
         { type: 'camera', target: 'frontal', duration: 3.0, ease: 'sineInOut', avoidCollision: true }, // Will trigger pathfinding and FOV bump
