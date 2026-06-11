@@ -8,7 +8,7 @@ from playwright.sync_api import sync_playwright
 
 
 ROOT = Path(__file__).resolve().parents[1]
-APP_URL = "http://127.0.0.1:5180/?renderer=webgl"
+APP_URL = "http://127.0.0.1:5184/?renderer=webgl"
 
 
 def wait_for_server(url: str, timeout: float = 25.0) -> None:
@@ -25,7 +25,7 @@ def wait_for_server(url: str, timeout: float = 25.0) -> None:
 
 def launch_dev_server() -> subprocess.Popen:
     return subprocess.Popen(
-        ["npm", "run", "dev", "--", "--host", "127.0.0.1", "--port", "5180", "--strictPort"],
+        ["npm", "run", "dev", "--", "--host", "127.0.0.1", "--port", "5184", "--strictPort"],
         cwd=ROOT,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
@@ -42,10 +42,7 @@ def verify() -> None:
         with sync_playwright() as p:
             browser = p.chromium.launch(
                 headless=True,
-                args=[
-                    "--no-sandbox",
-                    "--disable-gpu",
-                ],
+                args=["--no-sandbox", "--disable-gpu"],
             )
             page = browser.new_page(viewport={"width": 1440, "height": 960})
             errors = []
@@ -54,33 +51,33 @@ def verify() -> None:
 
             page.goto(APP_URL, wait_until="domcontentloaded")
             page.wait_for_selector("#canvas", state="attached", timeout=10000)
-            page.wait_for_timeout(2500)
+            page.wait_for_timeout(2000)
 
             overlay_visible = page.locator("#error.visible").count() > 0
             if overlay_visible:
                 raise AssertionError("Error overlay became visible")
 
-            page.click('[data-tab="tab-synaptix"]')
+            # Heartbeat routine
+            page.keyboard.press("h")
+            page.wait_for_timeout(3500)
+            page.screenshot(path=str(output_dir / "routine_heartbeat.png"))
+
+            # Respiration routine
+            page.keyboard.press("r")
+            page.wait_for_timeout(3500)
+            page.screenshot(path=str(output_dir / "routine_respiration.png"))
+
+            # Electrical exposure routine
+            page.keyboard.press("e")
+            page.wait_for_timeout(3000)
+            page.screenshot(path=str(output_dir / "routine_electrical.png"))
+
+            # Calm state via button (open Stimulus tab first)
+            page.evaluate("() => document.querySelector('[data-tab=\\'tab-stimulus\\']')?.click()")
             page.wait_for_timeout(300)
-            page.select_option("#ai-pattern", "aligned-prefrontal")
-            page.evaluate("() => document.querySelector('#btn-generate-ai')?.click()")
-            page.wait_for_timeout(700)
-            page.screenshot(path=str(output_dir / "synaptix_pure_ai.png"))
-
-            page.evaluate("() => document.querySelector('#stim-frontal')?.click()")
-            page.wait_for_timeout(400)
-            page.screenshot(path=str(output_dir / "synaptix_pure_human.png"))
-
-            page.evaluate("() => window.__synaptixDebug.runShowcase()")
-            page.wait_for_timeout(2200)
-
-            state = page.evaluate("() => window.__synaptixDebug.getState()")
-            assert state["style"] >= 4, state
-            assert state["frameCount"] >= 4, state
-            assert state["aiInfluence"] >= 0.6, state
-            assert state["resonanceThreshold"] <= 0.2, state
-
-            page.screenshot(path=str(output_dir / "synaptix_resonant_blend.png"))
+            page.evaluate("() => document.getElementById('stim-calm')?.click()")
+            page.wait_for_timeout(800)
+            page.screenshot(path=str(output_dir / "routine_calm.png"))
 
             if errors:
                 hard_errors = [
@@ -91,8 +88,7 @@ def verify() -> None:
                     raise AssertionError("Console/page errors detected:\n" + "\n".join(hard_errors[:8]))
 
             browser.close()
-            print("SynaptiX verification passed.")
-            print(f"State: {state}")
+            print("Routine verification passed.")
     finally:
         server.terminate()
         try:
@@ -105,5 +101,5 @@ if __name__ == "__main__":
     try:
         verify()
     except Exception as exc:
-        print(f"verify_synaptix failed: {exc}")
+        print(f"verify_routine failed: {exc}")
         sys.exit(1)

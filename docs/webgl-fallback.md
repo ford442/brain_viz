@@ -79,3 +79,27 @@ Then check:
 - backend status shows `active: webgl`
 - style changes still affect cortex/fiber/tensor output
 - WebGL debug controls visibly change the scene
+
+### Automated Verification
+
+The Playwright-based verification suite uses the WebGL2 fallback by default (`?renderer=webgl`) because:
+
+- **WebGPU headless is unreliable** — Chromium's SwiftShader + `--enable-unsafe-webgpu` frequently triggers `GPUDeviceLostInfo` and context-loss errors.
+- **WebGL2 is deterministic** — Screenshots are stable across runs in headless mode.
+- **Debug controls are scriptable** — Wireframe, tensor visibility, and layer isolation can be toggled via DOM inputs for targeted visual regression.
+
+Run the full suite:
+
+```bash
+python verification/verify_suite.py
+```
+
+Individual checks:
+
+```bash
+python verification/verify_brain.py      # Cycles all 5 styles + wireframe/isolation debug
+python verification/verify_stimulus.py   # Frontal / parietal / temporal / occipital / deep stimuli
+python verification/verify_camera.py     # Camera presets and spline fly-throughs
+python verification/verify_routine.py    # Mini-routines (heartbeat, respiration, electrical)
+python verification/verify_synaptix.py   # SynaptiX AI↔Human resonance blending
+```

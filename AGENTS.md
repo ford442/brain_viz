@@ -290,14 +290,22 @@ There is **no automated unit test suite** (no Jest/Vitest configuration). Testin
 python test_run.py
 ```
 
-**Python verification scripts** (run individually for targeted feature checks):
-- `verification/verify_brain.py` — Basic brain rendering verification
-- `verification/verify_brain_v2.py` — Extended rendering checks
-- `verification/verify_brain_viz.py` — Full visualization pipeline check
-- `verification/verify_routine.py` — Routine player event sequencing
-- `verification/verify_camera_routine.py` — Camera move verification
-- `verification/verify_connectome.py` — Connectome/fiber mode check
-- `verification/verify_cyber.py` — Cyber/wireframe mode check
+**Automated verification via WebGL fallback (recommended for CI):**
+All Playwright-based verification scripts force `?renderer=webgl` for reliable headless execution. WebGPU requires `--enable-unsafe-webgpu` and SwiftShader, which frequently loses the GPU context in automated environments. The WebGL path provides deterministic screenshots and stable console behavior.
+
+```bash
+# Run the full suite
+python verification/verify_suite.py
+
+# Or run individual checks
+python verification/verify_brain.py      # Style cycling + WebGL debug controls
+python verification/verify_stimulus.py   # Region stimulus injection
+python verification/verify_camera.py     # Camera preset + spline moves
+python verification/verify_routine.py    # Mini-routines (heartbeat, respiration, electrical)
+python verification/verify_synaptix.py   # SynaptiX AI↔Human resonance
+```
+
+**Legacy / aspirational verification scripts** (not yet revived):
 - `verification/verify_adrenaline.py` — Adrenaline stimulus routine
 - `verification/verify_noradrenaline.py` — Noradrenaline stimulus routine
 - `verification/verify_oxytocin.py` — Oxytocin stimulus routine
@@ -320,7 +328,6 @@ python test_run.py
 - `verification/verify_timeline_editor.py` — Timeline editor checks
 - `verification/verify_director_tools.py` — Director tool verification
 - `verification/verify_ai.py` — ONNX inference engine verification
-- `verification/verify_suite.py` / `verify_suite_v2.py` — Aggregated verification suites
 - `verification/test_flashback.py` — Memory flashback routine test
 - `verification/test_glitch.py` — Glitch storm routine test
 

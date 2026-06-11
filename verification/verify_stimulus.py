@@ -8,7 +8,7 @@ from playwright.sync_api import sync_playwright
 
 
 ROOT = Path(__file__).resolve().parents[1]
-APP_URL = "http://127.0.0.1:5180/?renderer=webgl"
+APP_URL = "http://127.0.0.1:5182/?renderer=webgl"
 
 
 def wait_for_server(url: str, timeout: float = 25.0) -> None:
@@ -25,7 +25,7 @@ def wait_for_server(url: str, timeout: float = 25.0) -> None:
 
 def launch_dev_server() -> subprocess.Popen:
     return subprocess.Popen(
-        ["npm", "run", "dev", "--", "--host", "127.0.0.1", "--port", "5180", "--strictPort"],
+        ["npm", "run", "dev", "--", "--host", "127.0.0.1", "--port", "5182", "--strictPort"],
         cwd=ROOT,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
@@ -42,10 +42,7 @@ def verify() -> None:
         with sync_playwright() as p:
             browser = p.chromium.launch(
                 headless=True,
-                args=[
-                    "--no-sandbox",
-                    "--disable-gpu",
-                ],
+                args=["--no-sandbox", "--disable-gpu"],
             )
             page = browser.new_page(viewport={"width": 1440, "height": 960})
             errors = []
@@ -54,33 +51,36 @@ def verify() -> None:
 
             page.goto(APP_URL, wait_until="domcontentloaded")
             page.wait_for_selector("#canvas", state="attached", timeout=10000)
-            page.wait_for_timeout(2500)
+            page.wait_for_timeout(2000)
 
             overlay_visible = page.locator("#error.visible").count() > 0
             if overlay_visible:
                 raise AssertionError("Error overlay became visible")
 
-            page.click('[data-tab="tab-synaptix"]')
+            # Open Stimulus tab so region buttons are visible
+            page.click('[data-tab="tab-stimulus"]')
             page.wait_for_timeout(300)
-            page.select_option("#ai-pattern", "aligned-prefrontal")
-            page.evaluate("() => document.querySelector('#btn-generate-ai')?.click()")
-            page.wait_for_timeout(700)
-            page.screenshot(path=str(output_dir / "synaptix_pure_ai.png"))
 
-            page.evaluate("() => document.querySelector('#stim-frontal')?.click()")
+            regions = [
+                ("stim-frontal", "stimulus_frontal"),
+                ("stim-parietal", "stimulus_parietal"),
+                ("stim-temporal", "stimulus_temporal"),
+                ("stim-occipital", "stimulus_occipital"),
+                ("stim-deep", "stimulus_deep"),
+            ]
+            for btn_id, name in regions:
+                page.evaluate(f"() => document.getElementById('{btn_id}')?.click()")
+                page.wait_for_timeout(600)
+                page.screenshot(path=str(output_dir / f"{name}.png"))
+
+            # Test calm + reset
+            page.evaluate("() => document.getElementById('stim-calm')?.click()")
             page.wait_for_timeout(400)
-            page.screenshot(path=str(output_dir / "synaptix_pure_human.png"))
+            page.screenshot(path=str(output_dir / "stimulus_calm.png"))
 
-            page.evaluate("() => window.__synaptixDebug.runShowcase()")
-            page.wait_for_timeout(2200)
-
-            state = page.evaluate("() => window.__synaptixDebug.getState()")
-            assert state["style"] >= 4, state
-            assert state["frameCount"] >= 4, state
-            assert state["aiInfluence"] >= 0.6, state
-            assert state["resonanceThreshold"] <= 0.2, state
-
-            page.screenshot(path=str(output_dir / "synaptix_resonant_blend.png"))
+            page.evaluate("() => document.getElementById('stim-reset')?.click()")
+            page.wait_for_timeout(400)
+            page.screenshot(path=str(output_dir / "stimulus_reset.png"))
 
             if errors:
                 hard_errors = [
@@ -91,8 +91,7 @@ def verify() -> None:
                     raise AssertionError("Console/page errors detected:\n" + "\n".join(hard_errors[:8]))
 
             browser.close()
-            print("SynaptiX verification passed.")
-            print(f"State: {state}")
+            print("Stimulus verification passed.")
     finally:
         server.terminate()
         try:
@@ -105,5 +104,5 @@ if __name__ == "__main__":
     try:
         verify()
     except Exception as exc:
-        print(f"verify_synaptix failed: {exc}")
+        print(f"verify_stimulus failed: {exc}")
         sys.exit(1)
