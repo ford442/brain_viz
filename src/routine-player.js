@@ -649,6 +649,11 @@ export class RoutinePlayer {
 
     // [Event Handling Requirement] The executeEvent switch statement must be extensible
     executeEvent(event) {
+        if (!event || typeof event.type !== 'string') {
+            console.warn("[Routine Engine] Cannot execute invalid event. Missing or invalid 'type':", event);
+            return;
+        }
+
         // First resolve dynamic variables from state
         const resolvedEvt = this.resolveEventVariables(event);
 
