@@ -452,7 +452,8 @@ export class RoutinePlayer {
         // Ensure WebGPU context gracefully degrades
         // V2.9 verified: gracefully stop if device is lost
         const isDeviceLost = this._deviceLost;
-        const rendererMissing = !this.renderer || !this.renderer.device;
+        const isDeviceLostNow = this.renderer && this.renderer.device && this.renderer.device.isLost;
+        const rendererMissing = !this.renderer || !this.renderer.device || isDeviceLostNow;
 
         if (rendererMissing || isDeviceLost) {
              console.warn("[Routine Engine] WebGPU Context is invalid or lost. Stopping playback gracefully.");
@@ -746,5 +747,18 @@ export class RoutinePlayer {
 
         this.activeLerps.push(lerpObj);
     }
+
+    getAPI() {
+        return {
+            play: () => this.play(),
+            stop: () => this.stop(),
+            pause: () => this.pause(),
+            resume: () => this.resume(),
+            loadRoutine: (data) => this.loadRoutine(data),
+            generateProceduralRoutine: (duration, intensity) => this.generateProceduralRoutine(duration, intensity),
+            get isPlaying() { return this._player.isPlaying; },
+            get elapsedTime() { return this._player.elapsedTime; },
+            _player: this
+        };
+    }
 }
-// End of routine player
