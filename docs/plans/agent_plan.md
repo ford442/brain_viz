@@ -76,9 +76,10 @@
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 - [x] **GUI Timeline Editor:** Create a visual timeline editor for creating custom routines interactively.
-- [ ] **Visualizer API:** Create a public API for external modules to interact with the routine player.
+- [x] **Visualizer API:** Create a public API for external modules to interact with the routine player.
 
 ### Phase 3: "Brain DJ" Mode (Live Performance)
+- [ ] **Advanced Trigger System:** Allow complex multi-key combinations to trigger routines.
 - [x] **Keyboard Triggers:** Bind number keys (1-9) to specific mini-routines (e.g., Press '1' for "Sudden Surprise", '2' for "Calm Down").
 - [x] **Audio Reactivity:** Connect the Web Audio API to drive `amplitude` and `stimulus` intensity based on microphone input or music.
 - [x] **Procedural Routine Generation:** Add a button to generate infinite random routines on the fly for continuous playback.

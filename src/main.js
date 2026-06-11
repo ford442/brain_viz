@@ -212,6 +212,7 @@ async function init() {
         console.log("[Neuro-Script Initialization Cycle] Routine Engine Instantiated.");
 
         window.playerState = player.state;
+        window.visualizerAPI = player.getAPI();
 
         player.registerHandler('style', () => {});
         player.registerHandler('mode-transition', () => {});
