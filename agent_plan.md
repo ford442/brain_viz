@@ -223,7 +223,9 @@
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "Neuromodulation Interface" - What if we allowed users to connect external API data to drive these neuromodulators directly?
 * *Idea:* "What if we visualized Dopamine pathways as glowing trails?"
+* *Idea:* "Region Injection API - Enable scripted or click-based localized energy injection at specific anatomical coordinates within the tensor volume."
 ## 📜 Changelog
+* [2026-06-10] - Completed Phase 12 (Clip Plane + Internal Reveal). Implemented `clip` event handler in `routine-handlers.js` and added routine 'Z'. Added Region Injection API idea to Dream Log.
 * [2026-06-08] - Completed Phase 11 (Graceful WebGPU Degradation + Recovery Telemetry). Implemented robust WebGPU device.lost handling, telemetry logging, and UI for timeline-restoring recovery in `main.js`. Added 'Visual Cortex Filter' idea to Dream Log.
 * [2026-05-31] - Completed Routine Logic Refactor. Ensured `tick()` uses `performance.now()`, `executeEvent` uses switch, and WebGPU degrades safely. Added tasks for Interpolation and Camera Maps, and Serotonin to Dream Log.
 * [2026-05-30] - Completed Phase 10 (Auditory Hallucinations). Implemented `auditory_hallucination` event handler in `routine-handlers.js` to simulate rapid flashes via generated stimulus events. Added mini-routine 'A' to `mini-routines.js`. Added neural synchronization idea to Dream Log.
@@ -260,3 +262,6 @@
 * *Idea:* "What if we visualized breathing rate visually using volumetric particle condensation near the olfactory bulb?"
 * *Idea:* "What if we allowed users to map their own custom audio features to arbitrary parameters via a GUI matrix?"
 * *Idea:* "What if we visualized neurotransmitter depletion as gradual mesh decimation?"
+
+### Phase 12: Interactive Volumetric Polish
+- [x] **Clip Plane + Internal Reveal:** Dynamic Z-axis slicing integration into the routine system.

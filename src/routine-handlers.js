@@ -671,6 +671,21 @@ export function createDefaultHandlers(player) {
     });
 
     // [Phase 2] Neuro-Sonification (Binaural Beats)
+
+    // [Phase 12] Clip Plane / Internal Reveal
+    handlers.set('clip', (evt) => {
+        const targetZ = evt.sliceZ !== undefined ? evt.sliceZ : 0.0; // 0.0 is center, 2.0 is outside
+        const duration = evt.duration || 2.0;
+        const ease = evt.ease || 'easeInOutSine';
+
+        player.startLerp({
+            key: 'sliceZ',
+            value: targetZ,
+            duration: duration,
+            ease: ease
+        });
+    });
+
     handlers.set('binaural', async (evt) => {
         player.initAudio();
         if (!player.audioContext) return;
