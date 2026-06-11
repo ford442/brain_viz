@@ -2,7 +2,7 @@
 
 ## 1. High-Level Architecture & Intent
 
-*   **Core Purpose:** This application is a 3D brain visualization tool that renders real-time, organic animations driven by tensor data. It is designed to eventually visualize EEG/BCI data but currently uses simulated tensor fields. It leverages WebGPU for high-performance compute and rendering.
+*   **Core Purpose:** This application is a 3D brain visualization tool that renders real-time, organic animations driven by tensor data. It is designed to eventually visualize EEG/BCI data but currently uses simulated tensor fields. WebGPU is the primary renderer, and a WebGL2 fallback exists for debugging and automation.
 *   **Tech Stack:**
     *   **Language:** Vanilla JavaScript (ES Modules). **No TypeScript**, no bundlers (except Vite for dev server), no frameworks (React/Vue).
     *   **Graphics/Compute:** WebGPU (API), WGSL (Shading Language).
@@ -15,13 +15,18 @@
 
 ## 2. Feature Map
 
-*   **Entry Point:** `main.js` bootstraps the application and handles WebGPU feature detection.
-*   **Rendering Engine:** `brain-renderer.js`
+*   **Entry Point:** `main.js` bootstraps the application and selects the renderer backend through `brain-renderer-factory.js`.
+*   **Rendering Engines:**
+    *   `brain-renderer.js`
     *   Manages the `requestAnimationFrame` loop.
     *   Handles resizing, camera state (orbit/zoom), and Uniform updates.
     *   Configures two distinct render pipelines:
         1.  **Solid/Mesh:** For the brain surface (Organic/Cyber styles).
         2.  **Fiber/Line:** For the internal circuit grid (Connectome style).
+    *   `brain-renderer-webgl.js`
+        *   Uses WebGL2 with CPU-side tensor updates and dynamic buffer uploads.
+        *   Shares geometry generation, tensor inputs, camera controls, and style state with the WebGPU path.
+        *   Adds debug-friendly wireframe, tensor-point, and layer-isolation controls.
 *   **Brain Generation:** `brain-geometry.js`
     *   `generate(rows, cols)`: Creates a deformed UV sphere to mimic gyri/sulci, then calls `generateOrganicConnectomeFibers()`.
     *   `generateOrganicConnectomeFibers()`: [V3.0] Creates curved, branching white-matter tracts using quadratic Bézier splines seeded from 16 anatomically-inspired bilateral bundles (corpus callosum, corticospinal tracts, optic radiations, SLF, arcuate fasciculus, cingulum, IFOF, uncinate fasciculus). Terminal arborisations fan out at endpoints. Stores per-segment metadata (`fiberMetadata`) for Phase 2 pipeline.
@@ -64,7 +69,7 @@
 ## 4. Inherent Limitations & "Here be Dragons"
 
 *   **Repository Size / Clone Performance:** The `.git` pack is ~32 MB because `node_modules` was accidentally committed to history early in the project and because large binaries (WASM runtimes, ONNX models, verification videos) are stored directly in the repo. To avoid downloading historical bloat, use shallow clones (`git clone --depth 1`). Future large binaries are tracked via Git LFS (see `.gitattributes`).
-*   **WebGPU Only:** The app will strictly **not work** on older browsers or devices without WebGPU support. There is no WebGL fallback.
+*   **Dual renderer model:** WebGPU is the authoritative path. WebGL2 exists as a debug/reference renderer with simplified CPU-side simulation and shading.
 *   **No TypeScript:** The codebase is pure JS. You must rely on JSDoc or inference. **Do not introduce TS syntax** (types, interfaces) into `.js` files.
 *   **Build Artifacts:** Do not edit files in `dist/`. Edit source files and run `npm run dev` to test.
 *   **Memory Management:** The application allocates buffers once at startup. Dynamic resizing of the window destroys and recreates the Depth Texture but *not* the geometry buffers. If the geometry generation parameters change, buffers must be explicitly destroyed and recreated.

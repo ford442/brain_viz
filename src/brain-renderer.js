@@ -205,7 +205,8 @@ export class BrainRenderer {
             entries: [
                 { binding: 0, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
                 { binding: 1, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } },
-                { binding: 2, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } }
+                { binding: 2, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } },
+                { binding: 3, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } }
             ]
         });
         
@@ -217,7 +218,8 @@ export class BrainRenderer {
             entries: [
                 { binding: 0, resource: { buffer: this.uniformBuffer } },
                 { binding: 1, resource: { buffer: this.tensorBuffer } },
-                { binding: 2, resource: { buffer: this.aiTensorBuffer } }
+                { binding: 2, resource: { buffer: this.aiTensorBuffer } },
+                { binding: 3, resource: { buffer: this.fiberDirectionBuffer } }
             ]
         });
         

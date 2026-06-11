@@ -1,6 +1,6 @@
 # Neuro-Weaver
 
-Neuro-Weaver is a WebGPU brain-visualization engine for comparative neural storytelling. It renders a live 32x32x32 tensor field as animated cortex, fibers, somas, and thermal volume, then layers routines, stimuli, audio reactivity, ONNX inference, and optional C++ WASM simulation on top.
+Neuro-Weaver is a brain-visualization engine for comparative neural storytelling. Its primary renderer is WebGPU, and it now ships with a toggleable WebGL2 fallback for debugging, automation, and renderer-port work. Both paths render the same 32x32x32 tensor field as animated cortex, fibers, somas, and thermal volume, then layer routines, stimuli, audio reactivity, ONNX inference, and optional C++ WASM simulation on top.
 
 ## SynaptiX First
 
@@ -21,6 +21,12 @@ npm run dev
 
 Open the local URL in Chrome or Edge with WebGPU enabled.
 
+Renderer selection:
+
+- `?renderer=webgpu` forces the full WebGPU pipeline.
+- `?renderer=webgl` forces the WebGL2 fallback/debug renderer.
+- The control-panel backend dropdown persists your last selection in `localStorage`.
+
 Then try one of these:
 
 1. Press `X` to run the SynaptiX showcase.
@@ -39,9 +45,19 @@ Then try one of these:
 ```bash
 npm run build
 npm run preview
-python test_run.py
-python verification/verify_synaptix.py
+python3 scripts/test_run.py
+python3 verification/verify_synaptix.py
 ```
+
+## WebGL2 Fallback
+
+Use the WebGL2 path when you need a visually inspectable reference renderer:
+
+- easier agent and CI smoke checks
+- debug helpers for wireframe, tensor points, and layer isolation
+- comparison target while porting scientific 3D features back into WGSL/WebGPU
+
+The WebGL2 path shares the same geometry generator, tensor buffers, camera state, style controls, and SynaptiX inputs. It is intentionally simpler than the WebGPU renderer: it approximates compute-driven volumetrics on the CPU so the scene remains debuggable in environments where WebGPU is hard to inspect automatically.
 
 ## SynaptiX Notes
 
@@ -51,3 +67,4 @@ python verification/verify_synaptix.py
 - Story routines for SynaptiX are served from [`public/routines`](public/routines).
 
 See [docs/synaptix.md](docs/synaptix.md) for the mapping table, routine vocabulary, and instructions for recording your own activations.
+See [docs/webgl-fallback.md](docs/webgl-fallback.md) for backend selection, debug controls, and WebGL-to-WebGPU porting notes.

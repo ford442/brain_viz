@@ -650,6 +650,15 @@
                 <div class="section-header" data-section="activity-render">Visualization & Slice</div>
                 <div class="section-content">
                     <div class="control-group">
+                        <label data-tooltip="Select the active rendering backend. The page reloads to switch between the full WebGPU path and the WebGL2 debug fallback.">Renderer Backend</label>
+                        <select id="renderer-backend">
+                            <option value="webgpu">WebGPU</option>
+                            <option value="webgl">WebGL2 Fallback</option>
+                        </select>
+                        <div id="renderer-status" style="font-size:10px;color:#99aabb;margin-top:4px;"></div>
+                        <div id="renderer-reload-note" style="font-size:10px;color:#556677;margin-top:2px;"></div>
+                    </div>
+                    <div class="control-group">
                         <label data-tooltip="Render mode: surface, wireframe, fibers, or thermal"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00e5e5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:6px;opacity:0.8;"><circle cx="12" cy="12" r="3"/><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/></svg>Visualization Style</label>
                         <select id="style-mode">
                             <option value="0">0. Organic (Surface)</option>
@@ -663,6 +672,25 @@
                         <!-- V2.2 Control: Slice Plane -->
                         <label data-tooltip="Cross-sectional cutting plane depth">Clip Plane Z (Slice) <span id="val-clip" class="value">2.0</span></label>
                         <input type="range" id="clip" min="-2.0" max="2.0" step="0.1" value="2.0">
+                    </div>
+                    <div id="webgl-debug-controls" style="display:none;">
+                        <div class="control-group">
+                            <label data-tooltip="WebGL2 debug helper: render the cortex in lines instead of filled triangles.">WebGL Wireframe</label>
+                            <input type="checkbox" id="webgl-debug-wireframe">
+                        </div>
+                        <div class="control-group">
+                            <label data-tooltip="WebGL2 debug helper: keep the tensor point cloud visible even outside Heatmap mode.">WebGL Tensor Debug</label>
+                            <input type="checkbox" id="webgl-debug-tensor" checked>
+                        </div>
+                        <div class="control-group">
+                            <label data-tooltip="WebGL2 debug helper: isolate one render layer at a time.">WebGL Style Isolation</label>
+                            <select id="webgl-debug-isolate">
+                                <option value="all">All Layers</option>
+                                <option value="mesh">Mesh Only</option>
+                                <option value="fibers">Fibers Only</option>
+                                <option value="tensor">Tensor Only</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 

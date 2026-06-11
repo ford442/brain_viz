@@ -42,8 +42,8 @@ Key capabilities:
 - `vite` — Dev server and build
 
 **Browser Requirements:**
-- Chrome 113+ or Edge 113+ with WebGPU enabled.
-- **No WebGL fallback exists.** The app will show an error on unsupported browsers.
+- Chrome 113+ or Edge 113+ with WebGPU enabled for the primary renderer.
+- A WebGL2 fallback renderer is available via `?renderer=webgl` for debugging, automation, and porting work.
 - COOP/COEP headers are configured in `vite.config.js` for `crossOriginIsolated` (required for multi-threaded WASM).
 
 ---
@@ -55,6 +55,8 @@ brain_viz/
 ├── index.html              # Main HTML with control panel UI
 ├── main.js                 # Application bootstrap, UI wiring, keyboard shortcuts, mini-routines
 ├── brain-renderer.js       # Core WebGPU engine: device, pipelines, render loop
+├── brain-renderer-webgl.js # WebGL2 fallback/debug renderer
+├── brain-renderer-factory.js # Backend selection + fallback bootstrap
 ├── brain-geometry.js       # Procedural brain mesh + circuit grid + soma positions
 ├── shaders.js              # WGSL shader strings (vertex, fragment, compute, post-process)
 ├── math-utils.js           # Mat4 operations + easing/spline utilities
@@ -68,7 +70,6 @@ brain_viz/
 ├── vite.config.js          # Vite config (COOP/COEP headers, ONNX exclude, WASM assets)
 ├── package.json            # npm manifest (includes build:wasm script)
 ├── deploy.py               # SFTP deployment script
-├── test_run.py             # Python smoke test (starts dev server, curls localhost)
 ├── test_compile.py         # Stub for build verification
 ├── test_shader.js          # Shader-related test stub
 ├── patch_render_test.js    # Render pipeline patch/test stub
@@ -139,6 +140,8 @@ brain_viz/
 ### Key Module Responsibilities
 
 - **`brain-renderer.js`** — Encapsulates the entire WebGPU state machine. Creates the device, configures the canvas, builds render/compute pipelines, manages uniform buffers, and runs `requestAnimationFrame`. Exposes `setParams()`, `injectStimulus()`, `calmState()`, `resetActivity()`, and `setVoxelData()`.
+- **`brain-renderer-webgl.js`** — WebGL2 fallback/debug renderer. Reuses the same CPU geometry generation, tensor inputs, camera contract, and style state, but approximates compute/volumetric behavior on the CPU for easier inspection.
+- **`brain-renderer-factory.js`** — Chooses `webgpu` or `webgl` from URL params / `localStorage`, initializes the requested backend first, and falls back only when needed.
 - **`synaptix-engine.js`** — Owns AI tensor ingestion/projecting, phantom presets, frame-sequence playback, and resonance stats for SynaptiX mode.
 - **`brain-geometry.js`** — Generates a deformed UV sphere (gyri/sulci approximation) and an internal Manhattan-style circuit grid. Provides vertex buffers, index buffers, fiber line buffers, and instanced soma positions.
 - **`shaders.js`** — Contains all WGSL code as exported JavaScript template strings. Includes vertex/fragment shaders for the brain surface, instanced soma shaders, compute shader for tensor physics, and post-processing shaders (chromatic aberration, grain, DoF).
@@ -173,9 +176,15 @@ npm run build:wasm
 npm run build:wasm:debug
 ```
 
+**Renderer selection:**
+```bash
+http://localhost:5173/?renderer=webgpu
+http://localhost:5173/?renderer=webgl
+```
+
 **Smoke test:**
 ```bash
-python test_run.py
+python3 scripts/test_run.py
 ```
 This starts `npm run dev` in a subprocess, waits 3 seconds, and checks that `http://localhost:5173` responds.
 
@@ -266,7 +275,7 @@ See [`docs/wasm-engine.md`](docs/wasm-engine.md) for the full specification.  Ke
 
 There is **no automated unit test suite** (no Jest/Vitest configuration). Testing is manual and visual:
 
-1. Run `npm run dev` and open the provided localhost URL in a WebGPU-capable browser.
+1. Run `npm run dev` and open the provided localhost URL in a modern browser.
 2. Verify the brain renders and animates smoothly (~60 FPS).
 3. Use the control panel to switch styles, adjust sliders, and click stimulus buttons.
 4. Press keyboard keys (`1`, `2`, `3`, `4`, `5`, `6`, `d`, `e`, `j`, `a`, `m`, `n`, etc.) to trigger mini-routines.
@@ -274,6 +283,7 @@ There is **no automated unit test suite** (no Jest/Vitest configuration). Testin
 6. Enable "AI Dreaming" to verify ONNX model loading and inference.
 7. Load a BCI pattern from the "BCI Tensor Playback" panel and press Play.
 8. **[Phase 1]** After running `npm run build:wasm`, click the "Simulation Engine" toggle in the Activity tab to enable WASM mode and verify the brain continues to render correctly.
+9. For automation/debug passes, switch to `?renderer=webgl` and use the WebGL debug controls for wireframe, tensor-point visibility, and layer isolation.
 
 **Python smoke test:**
 ```bash
@@ -345,7 +355,7 @@ python test_run.py
 ## 10. Inherent Limitations & "Here be Dragons"
 
 - **Repository size:** The `.git` pack is large (~32 MB) because `node_modules` was accidentally committed early in history, and large binaries (WASM, ONNX, verification media) are stored directly in the repo. **Use shallow clones:** `git clone --depth 1`. Future large binaries are tracked via Git LFS (see `.gitattributes`).
-- **WebGPU only:** No fallback for older browsers or devices without WebGPU.
+- **Backend split:** WebGPU remains the authoritative renderer. The WebGL2 fallback is a debug/reference path with simplified CPU-side simulation and shading, so visual parity is approximate rather than exact.
 - **Memory management:** Geometry buffers are allocated once at startup. Window resize destroys and recreates the depth texture and render target, but **not** the geometry buffers. If mesh parameters change, buffers must be explicitly destroyed and recreated in `brain-renderer.js`.
 - **Routine branching pauses the engine:** `choice` and `wait` events pause `RoutinePlayer` until user interaction or an external signal is received. Ensure UI handlers correctly call `player.resume()` or `player.triggerSignal()`.
 - **ONNX WASM path fragility:** `inference-engine.js` uses Vite-specific `?url` imports for WASM files. Changing the build tool would break this.

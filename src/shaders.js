@@ -498,6 +498,7 @@ struct Uniforms {
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var<storage, read> activityTensor: array<f32>;
 @group(0) @binding(2) var<storage, read> aiTensor: array<f32>;
+@group(0) @binding(3) var<storage, read> fiberDirections: array<vec4<f32>>;
 
 fn getAIVoxelValue(worldPos: vec3<f32>) -> f32 {
     let normPos = (worldPos / BRAIN_RANGE) * 0.5 + 0.5;
@@ -520,6 +521,45 @@ fn sampleSmoothedAIVoxelValue(worldPos: vec3<f32>) -> f32 {
         getAIVoxelValue(worldPos + vec3<f32>(0.0, 0.0,  step)) +
         getAIVoxelValue(worldPos + vec3<f32>(0.0, 0.0, -step));
     return (center * 0.5) + (neighbors * (0.5 / 6.0));
+}
+
+fn getFiberAffinity(index: u32, slot: u32) -> vec4<f32> {
+    return fiberDirections[index * 3u + slot];
+}
+
+fn worldToIndex(worldPosition: vec3<f32>) -> u32 {
+    let normalized = clamp((worldPosition / BRAIN_RANGE) * 0.5 + 0.5, vec3<f32>(0.0), vec3<f32>(0.99999));
+    let x = u32(normalized.x * f32(VOXEL_DIM));
+    let y = u32(normalized.y * f32(VOXEL_DIM));
+    let z = u32(normalized.z * f32(VOXEL_DIM));
+    return z * VOXEL_DIM * VOXEL_DIM + y * VOXEL_DIM + x;
+}
+
+fn sampleFiberCoupledSignal(worldPos: vec3<f32>, tangent: vec3<f32>, isAI: bool) -> vec3<f32> {
+    let idx = worldToIndex(worldPos);
+    let step = (BRAIN_RANGE / f32(VOXEL_DIM)) * 0.95;
+    var directional = 0.0;
+    var coverage = 0.0;
+    var alignment = 0.0;
+    for (var slot = 0u; slot < 3u; slot = slot + 1u) {
+        let aff = getFiberAffinity(idx, slot);
+        if (aff.w < 0.01) { continue; }
+        let axis = normalize(aff.xyz + vec3<f32>(0.0001, 0.0001, 0.0001));
+        let align = abs(dot(axis, tangent));
+        let forward = select(-axis, axis, dot(axis, tangent) >= 0.0);
+        let tractSample =
+            sampleSmoothedVoxelValue(worldPos + forward * step) * 0.55 +
+            sampleSmoothedVoxelValue(worldPos - forward * step * 0.65) * 0.25 +
+            sampleSmoothedVoxelValue(worldPos) * 0.20;
+        directional = directional + tractSample * aff.w * mix(0.55, 1.25, align);
+        coverage = coverage + aff.w;
+        alignment = max(alignment, align * aff.w);
+    }
+    if (coverage > 0.0) {
+        directional = directional / coverage;
+    }
+    let local = select(sampleSmoothedVoxelValue(worldPos), sampleSmoothedAIVoxelValue(worldPos), isAI);
+    return vec3<f32>(mix(local, directional, clamp(uniforms.fiberCoupling, 0.0, 1.0)), clamp(coverage, 0.0, 1.0), clamp(alignment, 0.0, 1.0));
 }
 
 struct FragmentInput {
@@ -865,8 +905,6 @@ fn main(input: FiberVertexInput) -> FiberVertexOutput {
     var output: FiberVertexOutput;
     let worldPos = (uniforms.modelMatrix * vec4<f32>(input.position, 1.0)).xyz;
     let worldNormal = normalize((uniforms.modelMatrix * vec4<f32>(input.normal.xyz, 0.0)).xyz);
-    let activity = sampleSmoothedVoxelValue(input.position);
-    let aiActivity = sampleSmoothedAIVoxelValue(input.position);
     let radius = max(0.0025, input.fiberMeta.x);
     let bundleId = input.fiberMeta.y;
     let myelin = clamp(input.fiberMeta.z, 0.0, 1.0);
@@ -877,9 +915,16 @@ fn main(input: FiberVertexInput) -> FiberVertexOutput {
     let hierarchy = clamp(radius * select(18.0, 48.0, isAI), 0.0, 1.0);
     let taper = clamp(1.0 - hierarchy * 0.45, 0.35, 1.0);
     let tangent = normalize(input.fiberEnd - input.fiberStart);
+    let coupledSignal = sampleFiberCoupledSignal(input.position, tangent, isAI);
+    let activity = sampleSmoothedVoxelValue(input.position);
+    let aiActivity = sampleSmoothedAIVoxelValue(input.position);
+    let tractActivity = coupledSignal.x;
+    let tractCoverage = coupledSignal.y;
+    let tractAlignment = coupledSignal.z;
     let midpoint = mix(input.fiberStart, input.fiberEnd, 0.5);
     let flowBias = getRegionPhysics(midpoint, uniforms.style).z;
-    let conductionSpeed = uniforms.flowSpeed * select(1.0, 2.35, isAI) * (0.45 + effectiveMyelin * 1.65 + radius * 18.0);
+    let conductionBoost = 1.0 + uniforms.fiberCoupling * (0.25 + tractCoverage * 0.45 + tractAlignment * 0.35);
+    let conductionSpeed = uniforms.flowSpeed * select(1.0, 2.35, isAI) * (0.45 + effectiveMyelin * 1.65 + radius * 18.0) * conductionBoost;
     let signalStrength = calculateSignalFlow(input.fiberStart, input.fiberEnd, uniforms.time, conductionSpeed, segmentPhase, flowBias, effectiveMyelin, radius, bundleId);
     let aiSignal = calculateSignalFlow(input.fiberStart, input.fiberEnd, uniforms.time, uniforms.flowSpeed * 2.4 * (0.4 + effectiveMyelin * 0.8 + radius * 10.0), segmentPhase, flowBias, 0.12, radius * 0.35, bundleId + 100.0);
     let resonance = 1.0 - smoothstep(0.0, uniforms.resonanceThreshold, abs(signalStrength - aiSignal));
@@ -892,17 +937,18 @@ fn main(input: FiberVertexInput) -> FiberVertexOutput {
             0.15 + 0.25 * sin(aiHue + 2.5),
             0.75 + 0.25 * sin(aiHue + 1.2)
         );
-        let spiky = smoothstep(0.68, 0.96, signalStrength + aiActivity * 0.5 + sin(uniforms.time * 14.0 + segmentPhase * 20.0) * 0.12);
+        let spiky = smoothstep(0.68, 0.96, signalStrength + max(aiActivity, tractActivity) * 0.5 + sin(uniforms.time * 14.0 + segmentPhase * 20.0) * 0.12);
         baseColor += vec3<f32>(1.0, 0.2, 0.9) * (signalStrength * 0.8 + spiky * 0.4);
     } else {
         let wave = sin(uniforms.time * 1.2 + segmentPhase * 9.0 + input.position.y * 3.0) * 0.5 + 0.5;
         baseColor = mix(vec3<f32>(0.0, 0.82, 1.0), vec3<f32>(0.08, 0.95, 0.48), wave);
-        baseColor += mix(vec3<f32>(0.1, 0.8, 1.0), vec3<f32>(1.0, 0.9, 0.35), uniforms.colorShift) * signalStrength * 0.85;
+        baseColor += mix(vec3<f32>(0.1, 0.8, 1.0), vec3<f32>(1.0, 0.9, 0.35), uniforms.colorShift) * max(signalStrength, tractActivity) * 0.85;
     }
 
     let ranvier = 0.75 + 0.25 * sin(segmentPhase * 42.0 + uniforms.time * 8.0 + dot(input.position, tangent) * 9.0);
     let sheath = mix(0.8, 1.25, effectiveMyelin) * ranvier;
     baseColor += vec3<f32>(1.0, 0.92, 0.55) * resonance * select(0.08, 0.18, isAI);
+    baseColor += vec3<f32>(0.8, 0.96, 1.0) * tractCoverage * tractAlignment * uniforms.fiberCoupling * 0.22;
 
     output.position = uniforms.mvpMatrix * vec4<f32>(input.position, 1.0);
     output.worldPos = worldPos;
@@ -910,7 +956,7 @@ fn main(input: FiberVertexInput) -> FiberVertexOutput {
     output.color = baseColor * sheath;
     output.activity = activity;
     output.clipDist = dot(worldPos, uniforms.slicePlane.xyz) + uniforms.slicePlane.w;
-    output.signal = select(signalStrength, aiActivity + signalStrength * 0.4, isAI);
+    output.signal = select(max(signalStrength, tractActivity), max(aiActivity, tractActivity) + signalStrength * 0.4, isAI);
     output.distToCenter = length(input.position);
     output.fiberMaterial = vec4<f32>(effectiveMyelin, radius, hierarchy, taper);
     output.fiberTangent = tangent;
@@ -1617,6 +1663,14 @@ fn getFiberAffinity(index: u32, slot: u32) -> vec4<f32> {
     return fiberDirections[index * 3u + slot];
 }
 
+fn sampleDirectionalActivity(worldPosition: vec3<f32>, axis: vec3<f32>, step: f32) -> f32 {
+    let axisN = normalize(axis + vec3<f32>(0.0001, 0.0001, 0.0001));
+    let center = getVoxelValue(worldPosition);
+    let forward = getVoxelValue(worldPosition + axisN * step);
+    let backward = getVoxelValue(worldPosition - axisN * step);
+    return center * 0.34 + max(forward, backward) * 0.46 + min(forward, backward) * 0.20;
+}
+
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     let index = globalId.x;
@@ -1667,25 +1721,33 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
 
     let avg = (valXm + valXp + valYm + valYp + valZm + valZp) / 6.0;
 
-    // [V3.2] Multi-direction anisotropic diffusion
-    var diffused = avg;
+    // [V3.2] Multi-direction anisotropic diffusion with tract-following transport
+    let voxelStep = (BRAIN_RANGE / f32(dim)) * 0.9;
+    var directionalTransport = 0.0;
+    var isotropicLeak = avg;
+    var crossingMix = 0.0;
     var totalFiberWeight = 0.0;
     for (var slot = 0u; slot < 3u; slot = slot + 1u) {
         let aff = getFiberAffinity(index, slot);
         let weight = aff.w;
         if (weight < 0.01) { continue; }
-        let fiberDir = aff.xyz;
-        let along = dot(gradient, fiberDir);
-        let perpVec = gradient - along * fiberDir;
-        let diffusionAlong = diffusion * 1.6 * weight;
-        let diffusionPerp  = diffusion * 0.35;
-        diffused = diffused + along * diffusionAlong + dot(perpVec, perpVec) * diffusionPerp * sign(along);
+        let fiberDir = normalize(aff.xyz + vec3<f32>(0.0001, 0.0001, 0.0001));
+        let alongSample = sampleDirectionalActivity(worldPosition, fiberDir, voxelStep);
+        let along = abs(dot(normalize(gradient + vec3<f32>(0.0001, 0.0001, 0.0001)), fiberDir));
+        directionalTransport = directionalTransport + alongSample * weight * mix(0.75, 1.35, along);
+        isotropicLeak = isotropicLeak - abs(dot(gradient, fiberDir)) * diffusion * weight * 0.08;
+        crossingMix = max(crossingMix, weight * (1.0 - along));
         totalFiberWeight = totalFiberWeight + weight;
     }
     if (totalFiberWeight > 0.0) {
-        diffused = avg + (diffused - avg) / totalFiberWeight;
+        directionalTransport = directionalTransport / totalFiberWeight;
+        let tractBias = clamp(totalFiberWeight * (0.7 + crossingMix * 0.55), 0.0, 1.0);
+        let diffused = mix(avg, directionalTransport, tractBias);
+        val = mix(val, diffused, clamp(0.45 + params.fiberCoupling * 0.35, 0.0, 0.92));
+        val = val - (avg - isotropicLeak) * clamp(params.fiberCoupling, 0.0, 1.0) * 0.16;
+    } else {
+        val = mix(val, avg, 0.7);
     }
-    val = mix(val, diffused, 0.7);
 
     // [V3.2] Highway bias: sustained activity along dominant fiber tracts
     if (params.fiberCoupling > 0.0) {
@@ -1693,14 +1755,21 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
             let aff = getFiberAffinity(index, slot);
             let weight = aff.w;
             if (weight < 0.01) { continue; }
-            let fiberDir = aff.xyz;
-            let step = (BRAIN_RANGE / f32(dim)) * 0.8;
-            let upstreamPos = worldPosition - fiberDir * step;
-            let downstreamPos = worldPosition + fiberDir * step;
+            let fiberDir = normalize(aff.xyz + vec3<f32>(0.0001, 0.0001, 0.0001));
+            let upstreamPos = worldPosition - fiberDir * voxelStep;
+            let downstreamPos = worldPosition + fiberDir * voxelStep;
             let upVal = getVoxelValue(upstreamPos);
             let downVal = getVoxelValue(downstreamPos);
-            let highway = max(upVal, downVal) * weight * params.fiberCoupling * 0.25;
-            val = val + highway;
+            let centerDrive = max(val, max(upVal, downVal));
+            let highway = max(upVal, downVal) * weight * params.fiberCoupling * 0.34;
+            let priming = centerDrive * weight * params.fiberCoupling * 0.12;
+            val = val + highway + priming;
+            if (params.synaptiXActive > 0.5) {
+                let aiUp = sampleAIActivation(upstreamPos, dim);
+                let aiDown = sampleAIActivation(downstreamPos, dim);
+                let resonanceDrive = max(aiUp, aiDown) * weight * params.aiInfluence * params.fiberCoupling * 0.18;
+                val = val + resonanceDrive;
+            }
         }
     }
 

@@ -826,7 +826,7 @@ export class BrainGeometry {
 
     // [V3.2] Shallow U-fibers (association fibers just under cortical surface)
     generateUFibers() {
-        const NUM_U_FIBERS = 150;
+        const NUM_U_FIBERS = 320;
         const BUNDLE_ID_U = 50;
         for (let i = 0; i < NUM_U_FIBERS; i++) {
             const theta = this.random() * Math.PI * 2;
@@ -849,13 +849,27 @@ export class BrainGeometry {
             const t2y = nz*t1x - nx*t1z;
             const t2z = nx*t1y - ny*t1x;
 
-            const arcLen = 0.08 + this.random() * 0.14;
-            const bend = (this.random() - 0.5) * arcLen * 0.5;
-            const start = [cx + t1x*arcLen, cy + t1y*arcLen, cz + t1z*arcLen];
-            const end = [cx - t1x*arcLen, cy - t1y*arcLen, cz - t1z*arcLen];
-            const control = [cx + t2x*bend, cy + t2y*bend, cz + t2z*bend];
+            const tangentMix = this.random() * 0.55 - 0.275;
+            const ux = t1x * (1.0 - Math.abs(tangentMix)) + t2x * tangentMix;
+            const uy = t1y * (1.0 - Math.abs(tangentMix)) + t2y * tangentMix;
+            const uz = t1z * (1.0 - Math.abs(tangentMix)) + t2z * tangentMix;
+            const uLen = Math.sqrt(ux*ux + uy*uy + uz*uz) || 1.0;
+            const dirx = ux / uLen;
+            const diry = uy / uLen;
+            const dirz = uz / uLen;
 
-            const pts = this.generateSplinePath(start, control, end, 6);
+            const arcLen = 0.11 + this.random() * 0.17;
+            const corticalInset = 0.84 + this.random() * 0.07;
+            const bend = (this.random() - 0.5) * arcLen * 0.9;
+            const start = [cx + dirx * arcLen, cy + diry * arcLen, cz + dirz * arcLen];
+            const end = [cx - dirx * arcLen, cy - diry * arcLen, cz - dirz * arcLen];
+            const control = [
+                cx * corticalInset + t2x * bend,
+                cy * corticalInset + t2y * bend,
+                cz * corticalInset + t2z * bend
+            ];
+
+            const pts = this.generateSplinePath(start, control, end, 8);
             for (let j = 0; j < pts.length - 1; j++) {
                 if (this.isInsideBrain(pts[j][0], pts[j][1], pts[j][2]) || this.isInsideBrain(pts[j+1][0], pts[j+1][1], pts[j+1][2])) {
                     this.addFiberTubeSegment(pts[j], pts[j+1], 0.006, 0.004, BUNDLE_ID_U, 0.15, j/(pts.length-1), false);
@@ -876,6 +890,7 @@ export class BrainGeometry {
         const brainRange = 1.6;
         const voxelCount = dim * dim * dim;
         const voxelAccumulators = new Array(voxelCount).fill(null).map(() => []);
+        const voxelRadius = brainRange * 2.0 / dim;
 
         const worldToVoxel = (wx, wy, wz) => {
             const nx = (wx / brainRange) * 0.5 + 0.5;
@@ -898,15 +913,36 @@ export class BrainGeometry {
                 const segLen = Math.sqrt(dx*dx + dy*dy + dz*dz);
                 if (segLen < 1e-6) continue;
                 const dir = [dx/segLen, dy/segLen, dz/segLen];
-                const samples = Math.max(1, Math.floor(segLen * 12));
+                const bundleBoost =
+                    cl.bundleId === 50 ? 0.75 :
+                    cl.bundleId >= 100 ? 0.9 :
+                    cl.bundleId >= 20 ? 1.15 :
+                    1.0;
+                const samples = Math.max(2, Math.ceil(segLen / (voxelRadius * 0.55)));
                 for (let s = 0; s < samples; s++) {
                     const t = (s + 0.5) / samples;
                     const sx = p0[0] + dx * t;
                     const sy = p0[1] + dy * t;
                     const sz = p0[2] + dz * t;
                     const [vx, vy, vz] = worldToVoxel(sx, sy, sz);
-                    const idx = vz * dim * dim + vy * dim + vx;
-                    voxelAccumulators[idx].push({ dir, weight: segLen * (cl.myelin || 0.5) });
+                    const localWeight = (segLen / samples) * (0.35 + (cl.myelin || 0.5)) * bundleBoost;
+                    for (let oz = -1; oz <= 1; oz++) {
+                        for (let oy = -1; oy <= 1; oy++) {
+                            for (let ox = -1; ox <= 1; ox++) {
+                                const nx = Math.max(0, Math.min(dim - 1, vx + ox));
+                                const ny = Math.max(0, Math.min(dim - 1, vy + oy));
+                                const nz = Math.max(0, Math.min(dim - 1, vz + oz));
+                                const idx = nz * dim * dim + ny * dim + nx;
+                                const dist2 = ox*ox + oy*oy + oz*oz;
+                                const spread = Math.exp(-dist2 * 0.75);
+                                const directionalBias = cl.bundleId === 50 ? 1.25 - Math.min(0.2, Math.abs(dir[1]) * 0.2) : 1.0;
+                                voxelAccumulators[idx].push({
+                                    dir,
+                                    weight: localWeight * spread * directionalBias
+                                });
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -942,10 +978,11 @@ export class BrainGeometry {
                 let found = false;
                 for (const s of summed) {
                     const dot = s.dx*a.dir[0] + s.dy*a.dir[1] + s.dz*a.dir[2];
-                    if (dot > 0.82) {
-                        s.dx += a.dir[0] * a.weight;
-                        s.dy += a.dir[1] * a.weight;
-                        s.dz += a.dir[2] * a.weight;
+                    if (Math.abs(dot) > 0.78) {
+                        const sign = dot >= 0.0 ? 1.0 : -1.0;
+                        s.dx += a.dir[0] * a.weight * sign;
+                        s.dy += a.dir[1] * a.weight * sign;
+                        s.dz += a.dir[2] * a.weight * sign;
                         s.weight += a.weight;
                         found = true;
                         break;

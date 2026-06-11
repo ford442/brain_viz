@@ -1,6 +1,6 @@
 // Main application entry point
 // Neuro-Weaver V2.8 Implementation - With Routine Engine
-import { BrainRenderer } from './brain-renderer.js';
+import { createBrainRenderer, buildRendererUrl, persistRendererPreference } from './brain-renderer-factory.js';
 import { InferenceEngine } from './inference-engine.js';
 import { RoutinePlayer } from './routine-player.js'; // [NEW]
 import { AudioReactor } from './audio-reactor.js';   // [NEW]
@@ -95,16 +95,58 @@ async function init() {
         frameRate: document.getElementById('val-frame-rate')
     };
     
-    if (!navigator.gpu) {
-        const msg = document.getElementById('error-message');
-        if (msg) msg.textContent = 'Your browser does not support WebGPU. Please use Chrome 113+ or Edge 113+ with WebGPU enabled.';
-        errorDiv.classList.add('visible');
-        return;
-    }
-    
     try {
-        const renderer = new BrainRenderer(canvas);
-        await renderer.initialize();
+        const rendererInfo = await createBrainRenderer(canvas);
+        const renderer = rendererInfo.renderer;
+        const rendererBackendInput = document.getElementById('renderer-backend');
+        const webglDebugWireframeInput = document.getElementById('webgl-debug-wireframe');
+        const webglDebugTensorInput = document.getElementById('webgl-debug-tensor');
+        const webglDebugIsolateInput = document.getElementById('webgl-debug-isolate');
+        const rendererStatus = document.getElementById('renderer-status');
+        const rendererNotes = document.getElementById('renderer-reload-note');
+        const webglDebugPanel = document.getElementById('webgl-debug-controls');
+
+        if (rendererBackendInput) {
+            rendererBackendInput.value = rendererInfo.rendererType;
+            rendererBackendInput.addEventListener('change', (evt) => {
+                const nextRenderer = evt.target.value === 'webgl' ? 'webgl' : 'webgpu';
+                persistRendererPreference(nextRenderer);
+                window.location.assign(buildRendererUrl(nextRenderer));
+            });
+        }
+
+        if (rendererStatus) {
+            const fallbackText = rendererInfo.fallbackReason ? ` | fallback: ${rendererInfo.fallbackReason}` : '';
+            rendererStatus.textContent = `active: ${rendererInfo.rendererType}${fallbackText}`;
+        }
+        if (rendererNotes) {
+            rendererNotes.textContent = rendererInfo.rendererType === 'webgl'
+                ? 'WebGL2 debug renderer active. Switch back to WebGPU for the full WGSL pipeline.'
+                : 'WebGPU renderer active. Switch to WebGL2 when you need easier automated inspection.';
+        }
+
+        const isWebGLRenderer = rendererInfo.rendererType === 'webgl';
+        if (webglDebugPanel) {
+            webglDebugPanel.style.display = isWebGLRenderer ? '' : 'none';
+        }
+        if (webglDebugWireframeInput) {
+            webglDebugWireframeInput.checked = renderer.getDebugOptions ? renderer.getDebugOptions().wireframe : false;
+            webglDebugWireframeInput.addEventListener('change', (evt) => {
+                renderer.setDebugOptions?.({ wireframe: evt.target.checked });
+            });
+        }
+        if (webglDebugTensorInput) {
+            webglDebugTensorInput.checked = renderer.getDebugOptions ? renderer.getDebugOptions().tensorField : false;
+            webglDebugTensorInput.addEventListener('change', (evt) => {
+                renderer.setDebugOptions?.({ tensorField: evt.target.checked });
+            });
+        }
+        if (webglDebugIsolateInput) {
+            webglDebugIsolateInput.value = renderer.getDebugOptions ? renderer.getDebugOptions().isolate : 'all';
+            webglDebugIsolateInput.addEventListener('change', (evt) => {
+                renderer.setDebugOptions?.({ isolate: evt.target.value });
+            });
+        }
         
         // --- 1. SETUP ROUTINE PLAYER ---
         // Define explicit regions for easy scripting and better camera angles
@@ -206,7 +248,9 @@ async function init() {
                  });
             }
         };
-        attachDeviceLostHandler(renderer, player);
+        if (rendererInfo.usingWebGPU) {
+            attachDeviceLostHandler(renderer, player);
+        }
 
         // Integration verified: RoutinePlayer instantiated safely without breaking init flow
         console.log("[Neuro-Script Initialization Cycle] Routine Engine Instantiated.");
@@ -401,7 +445,14 @@ async function init() {
         const wasmStatusDiv    = document.getElementById('wasm-status');
 
         if (wasmToggleBtn) {
+            if (rendererInfo.usingWebGL) {
+                wasmToggleBtn.textContent = '⚙️ WebGL2 Renderer (WASM compute unavailable)';
+                wasmToggleBtn.disabled = true;
+                wasmToggleBtn.style.opacity = '0.6';
+                if (wasmStatusDiv) wasmStatusDiv.textContent = 'WASM simulation is only wired into the WebGPU renderer path.';
+            }
             wasmToggleBtn.addEventListener('click', async () => {
+                if (rendererInfo.usingWebGL) return;
                 if (!renderer.wasmMode) {
                     wasmToggleBtn.textContent = '⏳ Loading WASM…';
                     wasmToggleBtn.disabled = true;
