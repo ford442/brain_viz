@@ -12,8 +12,8 @@
 ### Phase 2: Advanced Choreography
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
 - [x] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
-- [ ] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
-- [ ] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
+- [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
+- [x] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
 - [x] **Dynamic FOV Interpolation:** Smoothly interpolate the actual camera FOV during rapid movements to increase cinematic speed feel.
 - [x] **Camera Coordinates Map:** Define explicit spline regions for complex camera angles.
 - [x] **Parameter Interpolation/Easing:** Enhance routines with advanced smooth interpolation logic.
@@ -129,6 +129,7 @@
 
 ---
 ## 🧪 "Dream" Log (Future Concepts)
+* *Idea:* "What if we visualized visual cortex processing by simulating progressive edge-detection filters directly on the render pipeline?"
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "What if we visualized visual cortex processing by simulating progressive edge-detection filters directly on the render pipeline?
 * *Idea:* "A shared Neuro-Script Exchange where people can publish, fork, and remix visualization routines. The player becomes both a performance instrument and a collaborative canvas."
@@ -268,3 +269,6 @@
 
 ### Phase 12: Interactive Volumetric Polish
 - [x] **Clip Plane + Internal Reveal:** Dynamic Z-axis slicing integration into the routine system.
+
+### Phase 13: Neuromodulation Interface
+- [ ] **Region Injection API:** Enable scripted or click-based localized energy injection at specific anatomical coordinates within the tensor volume.
