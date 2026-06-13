@@ -228,7 +228,9 @@
 * *Idea:* "Neuromodulation Interface" - What if we allowed users to connect external API data to drive these neuromodulators directly?
 * *Idea:* "What if we visualized Dopamine pathways as glowing trails?"
 * *Idea:* "Region Injection API - Enable scripted or click-based localized energy injection at specific anatomical coordinates within the tensor volume."
+* *Idea:* "What if we allowed users to 'paint' energy directly onto the tensor volume using a continuous drag gesture?"
 ## 📜 Changelog
+* [2026-06-12] - Completed Phase 13 (Region Injection API). Implemented `injectRegion` on visualizer API and wired click-based energy injection in `main.js`. Added 'paint energy drag gesture' idea to Dream Log.
 * [2026-06-10] - Completed Phase 12 (Clip Plane + Internal Reveal). Implemented `clip` event handler in `routine-handlers.js` and added routine 'Z'. Added Region Injection API idea to Dream Log.
 * [2026-06-08] - Completed Phase 11 (Graceful WebGPU Degradation + Recovery Telemetry). Implemented robust WebGPU device.lost handling, telemetry logging, and UI for timeline-restoring recovery in `main.js`. Added 'Visual Cortex Filter' idea to Dream Log.
 * [2026-05-31] - Completed Routine Logic Refactor. Ensured `tick()` uses `performance.now()`, `executeEvent` uses switch, and WebGPU degrades safely. Added tasks for Interpolation and Camera Maps, and Serotonin to Dream Log.
@@ -271,4 +273,5 @@
 - [x] **Clip Plane + Internal Reveal:** Dynamic Z-axis slicing integration into the routine system.
 
 ### Phase 13: Neuromodulation Interface
-- [ ] **Region Injection API:** Enable scripted or click-based localized energy injection at specific anatomical coordinates within the tensor volume.
+- [x] **Region Injection API:** Enable scripted or click-based localized energy injection at specific anatomical coordinates within the tensor volume.
+- [ ] **API Event Easing:** Smooth out manual Region API injections (e.g., cross-fade the effects or add decay options so they feel natural instead of immediate spikes).
