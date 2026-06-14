@@ -13,7 +13,8 @@ export function createDefaultHandlers(player) {
         }
 
         const intensity = evt.intensity || 1.0;
-        player.renderer.injectStimulus(coords[0], coords[1], coords[2], intensity);
+        const duration = evt.duration || 0.0;
+        player.renderer.injectStimulus(coords[0], coords[1], coords[2], intensity, duration);
 
         // [Phase 3] Temporary boost to respiration rate on strong stimuli
         if (intensity > 0.5 && player.state.respirationRate !== undefined) {

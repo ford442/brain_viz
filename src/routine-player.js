@@ -757,8 +757,8 @@ export class RoutinePlayer {
             resume: () => this.resume(),
             loadRoutine: (data) => this.loadRoutine(data),
             generateProceduralRoutine: (duration, intensity) => this.generateProceduralRoutine(duration, intensity),
-            injectRegion: (target, intensity = 1.0) => {
-                this.executeEvent({ type: 'stimulus', target: target, intensity: intensity });
+            injectRegion: (target, intensity = 1.0, duration = 1.0) => {
+                this.executeEvent({ type: 'stimulus', target: target, intensity: intensity, duration: duration });
             },
             get isPlaying() { return this._player.isPlaying; },
             get elapsedTime() { return this._player.elapsedTime; },
