@@ -106,7 +106,9 @@ export class BrainRenderer {
             pos: [0, 0, 0],
             active: 0.0,
             electricalActive: 0.0,
-            mercuryActive: 0.0
+            mercuryActive: 0.0,
+            decayRate: 0.0,
+            lastTime: 0
         };
 
         // Altitude/Hypoxia Internal State
@@ -687,9 +689,9 @@ export class BrainRenderer {
     // to the Compute Shader uniforms in the next render cycle.
     // [V2.3] Stimulus Injection Logic: Triggers a volumetric pulse at the target coordinate
     // [Neuro-Weaver V2.8] Updated signature for clarity
-    injectStimulus(targetX, targetY, targetZ, intensity) {
+    injectStimulus(targetX, targetY, targetZ, intensity, duration = 0.0) {
         // [Neuro-Weaver] Validation: Prevent injection of invalid values
-        if ([targetX, targetY, targetZ, intensity].some(val => isNaN(val))) {
+        if ([targetX, targetY, targetZ, intensity, duration].some(val => isNaN(val))) {
              console.warn("Neuro-Weaver: Invalid stimulus parameters ignored");
              return;
         }
@@ -704,6 +706,12 @@ export class BrainRenderer {
         ];
         // Ensure intensity is non-negative
         this.stimulus.active = Math.max(0.0, intensity);
+        if (duration > 0) {
+            this.stimulus.decayRate = intensity / duration;
+            this.stimulus.lastTime = performance.now();
+        } else {
+            this.stimulus.decayRate = 0.0;
+        }
 
         // [Phase 1 WASM] Forward stimulus to the C++ engine when in WASM mode
         if (this.wasmMode && this.wasmEngine.available) {
@@ -961,7 +969,17 @@ export class BrainRenderer {
 
         // Auto-reset pulse (single frame injection)
         if (this.stimulus.active > 0) {
-             this.stimulus.active = 0.0;
+            if (this.stimulus.decayRate > 0) {
+                const now = performance.now();
+                const dt = (now - this.stimulus.lastTime) / 1000.0; // convert to seconds
+                this.stimulus.active = Math.max(0.0, this.stimulus.active - this.stimulus.decayRate * dt);
+                this.stimulus.lastTime = now;
+                if (this.stimulus.active === 0.0) {
+                    this.stimulus.decayRate = 0.0; // stop decaying once zero
+                }
+            } else {
+                this.stimulus.active = 0.0;
+            }
         }
         if (this.stimulus.electricalActive > 0) {
              this.stimulus.electricalActive = 0.0;

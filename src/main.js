@@ -327,7 +327,7 @@ async function init() {
                 console.log(`[Main] Explicit click detected. Injecting API stimulus at ${targetCoords.map(n => n.toFixed(2)).join(',')}`);
 
                 if (window.visualizerAPI && window.visualizerAPI.injectRegion) {
-                    window.visualizerAPI.injectRegion(targetCoords, 2.0);
+                    window.visualizerAPI.injectRegion(targetCoords, 2.0, 1.5);
 
                     // Add some visual feedback
                     if (renderer.params) {
