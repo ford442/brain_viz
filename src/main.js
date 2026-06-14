@@ -288,6 +288,60 @@ async function init() {
         });
         player.registerSubRoutines(MINI_ROUTINES);
 
+        // Click-based localized energy injection via new API
+        let mainIsDragging = false;
+        let mainDragDistance = 0;
+        let mainLastX = 0;
+        let mainLastY = 0;
+
+        canvas.addEventListener('mousedown', (e) => {
+            mainIsDragging = false;
+            mainDragDistance = 0;
+            mainLastX = e.clientX;
+            mainLastY = e.clientY;
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const dx = e.clientX - mainLastX;
+            const dy = e.clientY - mainLastY;
+            mainDragDistance += Math.sqrt(dx * dx + dy * dy);
+            if (mainDragDistance > 5) {
+                mainIsDragging = true;
+            }
+            mainLastX = e.clientX;
+            mainLastY = e.clientY;
+        });
+
+        canvas.addEventListener('mouseup', (e) => {
+            if (!mainIsDragging) {
+                // Determine a relative coordinate
+                const rect = canvas.getBoundingClientRect();
+                const u = (e.clientX - rect.left) / rect.width;
+                const v = (e.clientY - rect.top) / rect.height;
+
+                // Map screen roughly to tensor volume coordinates (-1.6 to 1.6)
+                const nx = (u - 0.5) * 2.0;
+                const ny = -(v - 0.5) * 2.0;
+
+                const targetCoords = [nx * 1.6, ny * 1.6, 0.0];
+                console.log(`[Main] Explicit click detected. Injecting API stimulus at ${targetCoords.map(n => n.toFixed(2)).join(',')}`);
+
+                if (window.visualizerAPI && window.visualizerAPI.injectRegion) {
+                    window.visualizerAPI.injectRegion(targetCoords, 2.0);
+
+                    // Add some visual feedback
+                    if (renderer.params) {
+                        renderer.params.sparkle = Math.min(1.0, (renderer.params.sparkle || 0) + 0.3);
+                        setTimeout(() => {
+                            if (renderer.params) {
+                                renderer.params.sparkle = Math.max(0.0, renderer.params.sparkle - 0.3);
+                            }
+                        }, 200);
+                    }
+                }
+            }
+        });
+
         MINI_ROUTINES['M'] = [
             { time: 0.0, type: 'text', message: 'Memory Fragmentation Sequence', duration: 2.0 },
             { time: 0.0, type: 'style', value: 1 },
