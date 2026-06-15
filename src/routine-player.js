@@ -759,6 +759,19 @@ export class RoutinePlayer {
             generateProceduralRoutine: (duration, intensity) => this.generateProceduralRoutine(duration, intensity),
             injectRegion: (target, intensity = 1.0, duration = 1.0) => {
                 this.executeEvent({ type: 'stimulus', target: target, intensity: intensity, duration: duration });
+                // Smooth visual feedback for explicit injections
+                if (this.renderer && this.renderer.params) {
+                    const baseSparkle = this.renderer.params.sparkle || 0;
+                    const baseFlow = this.renderer.params.flowSpeed || 4.0;
+
+                    this.startLerp({ key: 'sparkle', value: Math.min(1.0, baseSparkle + (0.15 * intensity)), duration: 0.2, ease: 'quadOut' });
+                    this.startLerp({ key: 'flowSpeed', value: baseFlow + (1.0 * intensity), duration: 0.2, ease: 'quadOut' });
+
+                    setTimeout(() => {
+                        this.startLerp({ key: 'sparkle', value: baseSparkle, duration: duration, ease: 'sineInOut' });
+                        this.startLerp({ key: 'flowSpeed', value: baseFlow, duration: duration, ease: 'sineInOut' });
+                    }, 200);
+                }
             },
             get isPlaying() { return this._player.isPlaying; },
             get elapsedTime() { return this._player.elapsedTime; },
