@@ -656,4 +656,10 @@ export const MINI_ROUTINES = {
         { time: 5.0, type: 'text', message: 'Connections established.', duration: 2.0 },
         { time: 6.0, type: 'calm' }
     ],
+    '*': [ // Synchronized Firing Patterns
+        { time: 0.0, type: 'text', message: 'Synchronized Multi-Region Burst', duration: 3.0 },
+        { time: 0.0, type: 'style', value: 2 },
+        { time: 0.0, type: 'sync_burst', duration: 5.0, intensity: 2.0, rate: 0.5 },
+        { time: 6.0, type: 'calm' }
+    ],
 };
