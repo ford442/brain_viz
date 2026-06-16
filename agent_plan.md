@@ -280,4 +280,7 @@
 - [x] **Parameter Interpolation/Easing:** Enhance region injection feedback parameters with smooth interpolation.
 
 ### Phase 14: Emergent Neural Behaviors
-- [ ] **Synchronized Firing Patterns:** Implement a `sync_burst` event to simulate coordinated multi-region firing with rhythmic interpolation.
+- [x] **Synchronized Firing Patterns:** Implement a `sync_burst` event to simulate coordinated multi-region firing with rhythmic interpolation.
+- [ ] **Dynamic Network Topology:** Modify fiber connections dynamically when continuous synchronized firing occurs over a set threshold.
+
+*Idea:* "What if prolonged synchronized bursts triggered long-term structural plasticity, permanently altering the connectome layout?"

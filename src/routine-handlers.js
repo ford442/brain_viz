@@ -1056,6 +1056,46 @@ export function createDefaultHandlers(player) {
         player.startLerp({ key: 'flowSpeed', value: 8.0, duration: duration, ease: ease });
     });
 
+    // [Phase 14] Synchronized Firing Patterns
+    handlers.set('sync_burst', (evt) => {
+        const duration = evt.duration || 5.0;
+        const intensity = evt.intensity || 1.5;
+        const rate = evt.rate || 0.5; // seconds per pulse
+        const numPulses = Math.floor(duration / rate);
+
+        const regions = Object.keys(player.regions);
+        if (regions.length > 0 && player.routine) {
+            const eventsToInsert = [];
+            for (let i = 0; i < numPulses; i++) {
+                const t = player.elapsedTime + (i * rate);
+
+                // Stimulate all regions simultaneously
+                for (const region of regions) {
+                    eventsToInsert.push({
+                        time: t, type: 'stimulus', target: region, intensity: intensity
+                    });
+                }
+
+                eventsToInsert.push({
+                    time: t, type: 'lerp', key: 'amplitude', value: 1.5 * intensity, duration: rate * 0.4, ease: 'quadOut'
+                });
+                eventsToInsert.push({
+                    time: t + (rate * 0.4), type: 'lerp', key: 'amplitude', value: 0.5, duration: rate * 0.6, ease: 'quadIn'
+                });
+            }
+            eventsToInsert.sort((a, b) => a.time - b.time);
+
+            let insertIdx = player.cursor;
+            for (const ev of eventsToInsert) {
+                while (insertIdx < player.routine.length && player.routine[insertIdx].time < ev.time) {
+                    insertIdx++;
+                }
+                player.routine.splice(insertIdx, 0, ev);
+                insertIdx++;
+            }
+        }
+    });
+
     // ── [SynaptiX] Comparative AI/Human Event Handlers ──
 
     // Load an AI tensor pattern by name or from a raw Float32Array
