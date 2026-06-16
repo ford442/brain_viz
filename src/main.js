@@ -328,16 +328,6 @@ async function init() {
 
                 if (window.visualizerAPI && window.visualizerAPI.injectRegion) {
                     window.visualizerAPI.injectRegion(targetCoords, 2.0, 1.5);
-
-                    // Add some visual feedback
-                    if (renderer.params) {
-                        renderer.params.sparkle = Math.min(1.0, (renderer.params.sparkle || 0) + 0.3);
-                        setTimeout(() => {
-                            if (renderer.params) {
-                                renderer.params.sparkle = Math.max(0.0, renderer.params.sparkle - 0.3);
-                            }
-                        }, 200);
-                    }
                 }
             }
         });

@@ -269,6 +269,7 @@
 * *Idea:* "What if we visualized breathing rate visually using volumetric particle condensation near the olfactory bulb?"
 * *Idea:* "What if we allowed users to map their own custom audio features to arbitrary parameters via a GUI matrix?"
 * *Idea:* "What if we visualized neurotransmitter depletion as gradual mesh decimation?"
+* *Idea:* "What if we visualize targeted neuro-stimulation (like TMS) as persistent magnetic field distortions?"
 
 ### Phase 12: Interactive Volumetric Polish
 - [x] **Clip Plane + Internal Reveal:** Dynamic Z-axis slicing integration into the routine system.
@@ -276,4 +277,7 @@
 ### Phase 13: Neuromodulation Interface
 - [x] **Region Injection API:** Enable scripted or click-based localized energy injection at specific anatomical coordinates within the tensor volume.
 - [x] **API Event Easing:** Smooth out manual Region API injections (e.g., cross-fade the effects or add decay options so they feel natural instead of immediate spikes).
-- [ ] **Parameter Interpolation/Easing:** Enhance region injection feedback parameters with smooth interpolation.
+- [x] **Parameter Interpolation/Easing:** Enhance region injection feedback parameters with smooth interpolation.
+
+### Phase 14: Emergent Neural Behaviors
+- [ ] **Synchronized Firing Patterns:** Implement a `sync_burst` event to simulate coordinated multi-region firing with rhythmic interpolation.
