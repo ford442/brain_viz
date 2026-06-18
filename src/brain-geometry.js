@@ -30,6 +30,7 @@ export class BrainGeometry {
             lobeFoldBias: 1.0,
             corticalThickness: 0.11,
             growth: 1.0,
+            networkTopology: 0.0,
             ...options
         };
     }
@@ -564,9 +565,15 @@ export class BrainGeometry {
             for (let s = 0; s < bun.n; s++) {
                 const jit = bun.r * 0.7;
                 const rnd = () => (this.random() - 0.5) * 2;
-                const pS = [bun.s[0]+rnd()*jit, bun.s[1]+rnd()*jit, bun.s[2]+rnd()*jit];
-                const pC = [bun.c[0]+rnd()*jit*0.4, bun.c[1]+rnd()*jit*0.4, bun.c[2]+rnd()*jit*0.4];
-                const pE = [bun.e[0]+rnd()*jit, bun.e[1]+rnd()*jit, bun.e[2]+rnd()*jit];
+
+                const topJit = (this.options.networkTopology || 0.0) * 0.5;
+                const topoOffsetS = [rnd()*topJit, rnd()*topJit, rnd()*topJit];
+                const topoOffsetC = [rnd()*topJit, rnd()*topJit, rnd()*topJit];
+                const topoOffsetE = [rnd()*topJit, rnd()*topJit, rnd()*topJit];
+
+                const pS = [bun.s[0]+rnd()*jit + topoOffsetS[0], bun.s[1]+rnd()*jit + topoOffsetS[1], bun.s[2]+rnd()*jit + topoOffsetS[2]];
+                const pC = [bun.c[0]+rnd()*jit*0.4 + topoOffsetC[0], bun.c[1]+rnd()*jit*0.4 + topoOffsetC[1], bun.c[2]+rnd()*jit*0.4 + topoOffsetC[2]];
+                const pE = [bun.e[0]+rnd()*jit + topoOffsetE[0], bun.e[1]+rnd()*jit + topoOffsetE[1], bun.e[2]+rnd()*jit + topoOffsetE[2]];
                 const pts = this.generateSplinePath(pS, pC, pE, 12);
                 this.fiberCenterlines.push({ pts, bundleId: bun.id, myelin: bun.m });
 
