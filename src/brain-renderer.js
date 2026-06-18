@@ -91,6 +91,7 @@ export class BrainRenderer {
             fissureDepth: 0.52,
             lobeFoldBias: 1.0,
             corticalThickness: 0.11,
+            networkTopology: 0.0,
         };
 
         // Voxel Grid Settings
@@ -585,7 +586,8 @@ export class BrainRenderer {
             fissureDepth: this.params.fissureDepth,
             lobeFoldBias: this.params.lobeFoldBias,
             corticalThickness: this.params.corticalThickness,
-            growth: this.params.growth
+            growth: this.params.growth,
+            networkTopology: this.params.networkTopology
         });
         geometry.generate(this.geometryRows, this.geometryCols);
         return geometry;
@@ -635,7 +637,7 @@ export class BrainRenderer {
     }
 
     setParams(newParams) {
-        const geometryKeys = ['foldScale', 'foldStrength', 'fissureDepth', 'lobeFoldBias', 'corticalThickness', 'growth'];
+        const geometryKeys = ['foldScale', 'foldStrength', 'fissureDepth', 'lobeFoldBias', 'corticalThickness', 'growth', 'networkTopology'];
         const geometryChanged = geometryKeys.some((key) => newParams[key] !== undefined && newParams[key] !== this.params[key]);
         this.params = { ...this.params, ...newParams };
         if (geometryChanged) {

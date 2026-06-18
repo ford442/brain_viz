@@ -349,6 +349,15 @@ async function init() {
             { time: 0.0, type: 'camera', target: 'frontal-tour', duration: 5.0, ease: 'sineInOut' }
         ];
 
+        MINI_ROUTINES['T'] = [
+            { time: 0.0, type: 'text', message: 'Dynamic Network Topology Shift', duration: 2.0 },
+            { time: 0.0, type: 'camera', target: 'overview', duration: 2.0, ease: 'sineInOut' },
+            { time: 1.0, type: 'dynamic_topology', intensity: 2.0, duration: 5.0 },
+            { time: 6.0, type: 'text', message: 'Structural Plasticity Active', duration: 2.0 },
+            { time: 10.0, type: 'dynamic_topology', intensity: 0.0, duration: 4.0 },
+            { time: 14.0, type: 'text', message: 'Topology Stabilized.', duration: 2.0 }
+        ];
+
         // === Audio Reactor (Brain DJ Mode) ===
         const audioReactor = new AudioReactor();
         player.audioReactor = audioReactor;
@@ -373,7 +382,7 @@ async function init() {
     const legendPanel = document.getElementById('legend-panel');
     if (legendPanel) {
         const newEntry = document.createElement('div');
-        newEntry.innerHTML = '<b>M</b> : Memory Fragmentation<br><b>S</b> : Frontal Tour (Spline)<br><b>X</b> : SynaptiX Mode';
+        newEntry.innerHTML = '<b>M</b> : Memory Fragmentation<br><b>S</b> : Frontal Tour (Spline)<br><b>T</b> : Dynamic Topology Shift<br><b>X</b> : SynaptiX Mode';
         legendPanel.appendChild(newEntry);
     }
 

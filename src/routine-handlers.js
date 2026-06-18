@@ -1056,12 +1056,31 @@ export function createDefaultHandlers(player) {
         player.startLerp({ key: 'flowSpeed', value: 8.0, duration: duration, ease: ease });
     });
 
+    // [Phase 14] Dynamic Network Topology
+    handlers.set('dynamic_topology', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const duration = evt.duration || 3.0;
+        const ease = evt.ease || 'sineInOut';
+        player.startLerp({ key: 'networkTopology', value: intensity, duration: duration, ease: ease });
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
+
     // [Phase 14] Synchronized Firing Patterns
     handlers.set('sync_burst', (evt) => {
         const duration = evt.duration || 5.0;
         const intensity = evt.intensity || 1.5;
         const rate = evt.rate || 0.5; // seconds per pulse
         const numPulses = Math.floor(duration / rate);
+
+        // Track continuous synchronized firing occurrences for plasticity
+        player.state.syncBurstCount = (player.state.syncBurstCount || 0) + 1;
+        if (player.state.syncBurstCount > 3) {
+            console.log("[Routine] Continuous synchronized firing detected. Triggering dynamic network topology shift.");
+            const plasticityIntensity = Math.min(2.0, (player.state.syncBurstCount - 3) * 0.5);
+            player.executeEvent({ type: 'dynamic_topology', intensity: plasticityIntensity, duration: 4.0, message: "Long-term structural plasticity triggered..." });
+        }
 
         const regions = Object.keys(player.regions);
         if (regions.length > 0 && player.routine) {
