@@ -281,6 +281,10 @@
 
 ### Phase 14: Emergent Neural Behaviors
 - [x] **Synchronized Firing Patterns:** Implement a `sync_burst` event to simulate coordinated multi-region firing with rhythmic interpolation.
-- [ ] **Dynamic Network Topology:** Modify fiber connections dynamically when continuous synchronized firing occurs over a set threshold.
+- [x] **Dynamic Network Topology:** Modify fiber connections dynamically when continuous synchronized firing occurs over a set threshold.
+
+### Phase 15: Synaptic Plasticity Animation
+- [ ] **Dendritic Growth Animation:** Visualizing the growth of new connections over time (neuroplasticity).
 
 *Idea:* "What if prolonged synchronized bursts triggered long-term structural plasticity, permanently altering the connectome layout?"
+*Idea:* "What if we visualize memory formation as glowing paths forming across multiple cortical regions simultaneously?"

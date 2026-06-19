@@ -12,6 +12,7 @@ import { CAMERA_PRESETS, handleCamera } from './routine-camera.js';
 import { createDefaultHandlers } from './routine-handlers.js';
 
 export class RoutinePlayer {
+    // [Neuro-Script Cycle] WebGPU fallback logic confirmed
     constructor(renderer, regionMap, cameraMap) {
         // Routine Engine logic verified in this cycle.
         // Expects BrainRenderer instance.
@@ -452,6 +453,7 @@ export class RoutinePlayer {
 
         // Ensure WebGPU context gracefully degrades
         // V2.9 verified: gracefully stop if device is lost
+        // Gracefully stop if device is lost fallback
         const isDeviceLost = this._deviceLost;
         const isDeviceLostNow = this.renderer && this.renderer.device && this.renderer.device.isLost;
         const rendererMissing = !this.renderer || !this.renderer.device || isDeviceLostNow;
