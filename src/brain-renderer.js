@@ -92,6 +92,9 @@ export class BrainRenderer {
             lobeFoldBias: 1.0,
             corticalThickness: 0.11,
             networkTopology: 0.0,
+            fiberSymmetry: 0.85,      // [V3.3] Bilateral connectome symmetry (0=free, 1=mirrored)
+            bundleCoherence: 0.6,     // [V3.3] Tightness of fibers within a tract bundle
+            connectomeVariant: 0.0,   // [V3.3] 0=Anatomical (DTI tracts), 1=Reasoning Pathways
         };
 
         // Voxel Grid Settings
@@ -587,7 +590,9 @@ export class BrainRenderer {
             lobeFoldBias: this.params.lobeFoldBias,
             corticalThickness: this.params.corticalThickness,
             growth: this.params.growth,
-            networkTopology: this.params.networkTopology
+            networkTopology: this.params.networkTopology,
+            fiberSymmetry: this.params.fiberSymmetry,
+            bundleCoherence: this.params.bundleCoherence
         });
         geometry.generate(this.geometryRows, this.geometryCols);
         return geometry;
@@ -637,7 +642,7 @@ export class BrainRenderer {
     }
 
     setParams(newParams) {
-        const geometryKeys = ['foldScale', 'foldStrength', 'fissureDepth', 'lobeFoldBias', 'corticalThickness', 'growth', 'networkTopology'];
+        const geometryKeys = ['foldScale', 'foldStrength', 'fissureDepth', 'lobeFoldBias', 'corticalThickness', 'growth', 'networkTopology', 'fiberSymmetry', 'bundleCoherence'];
         const geometryChanged = geometryKeys.some((key) => newParams[key] !== undefined && newParams[key] !== this.params[key]);
         this.params = { ...this.params, ...newParams };
         if (geometryChanged) {
@@ -873,6 +878,7 @@ export class BrainRenderer {
         const OFFSET_AI_LAYER = 67;
         const OFFSET_POINT_CLOUD_DENSITY = 68;
         const OFFSET_FIBER_COUPLING = 69;
+        const OFFSET_CONNECTOME_VARIANT = 70; // [V3.3] formerly pad5
 
         const uData = new Float32Array(RENDER_UNIFORM_FLOAT_COUNT);
         uData.set(mvp, OFFSET_MVP);
@@ -916,6 +922,7 @@ export class BrainRenderer {
         uData[OFFSET_AI_LAYER] = this.params.aiLayer;
         uData[OFFSET_POINT_CLOUD_DENSITY] = this.params.pointCloudDensity ?? 1.0;
         uData[OFFSET_FIBER_COUPLING] = this.params.fiberCoupling ?? 0.5;
+        uData[OFFSET_CONNECTOME_VARIANT] = this.params.connectomeVariant ?? 0.0;
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         

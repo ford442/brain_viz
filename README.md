@@ -40,6 +40,30 @@ Then try one of these:
 - Built-in phantoms include aligned-prefrontal, hallucination-spike, visual-mismatch, and full-resonance.
 - The showcase animates camera moves, bilateral stimuli, blend shifts, and resonance transitions without requiring external assets.
 
+## Switching Modes
+
+A segmented pill selector sits at the top of the control panel and is always visible. Click a pill, or use the keyboard:
+
+| Key | Mode | Description |
+| --- | --- | --- |
+| `1` | Organic | Smooth volumetric cortical surface shell. |
+| `2` | Cyber | Glowing wireframe circuit lattice. |
+| `3` | Connectome | Symmetrical glowing DTI fibre tracts (see below). |
+| `4` | Heatmap | Volumetric thermal activity field. |
+| `5` | SynaptiX | AI ↔ Human mirror comparison (`X` still runs the full showcase). |
+
+The active mode is highlighted with a glow and a brief mode toast. Switching only updates a uniform — no pipeline rebuild — so rapid toggling is glitch-free in both the WebGPU and WebGL2 backends. Mode hotkeys are ignored while typing in a text field or slider.
+
+### Connectome modes
+
+The Connectome view defaults to **anatomical tractography**: bilaterally symmetric fibre bundles coloured by local orientation (DTI-style L-R red / I-S green / A-P blue) with a luminous emissive core. Three sliders tune it (Activity tab):
+
+- **Connectome Variant** — `0` Anatomical DTI tracts ↔ `1` abstract *Reasoning Pathways* routing for SynaptiX storytelling.
+- **Fiber Symmetry** — `0` free/organic ↔ `1` mirrored hemispheres.
+- **Bundle Coherence** — higher values tighten fibres within each tract for a cleaner look.
+
+All three keep the existing real-time signal pulsing, soma scaling, and spark pipelines intact.
+
 ## Common Commands
 
 ```bash

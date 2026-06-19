@@ -248,7 +248,7 @@ struct Uniforms {
     aiLayer: f32,
     pointCloudDensity: f32,
     fiberCoupling: f32,
-    pad5: f32,
+    connectomeVariant: f32,
     pad6: f32,
 }
 
@@ -492,7 +492,7 @@ struct Uniforms {
     aiLayer: f32,
     pointCloudDensity: f32,
     fiberCoupling: f32,
-    pad5: f32,
+    connectomeVariant: f32,
     pad6: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
@@ -818,7 +818,7 @@ struct Uniforms {
     aiLayer: f32,
     pointCloudDensity: f32,
     fiberCoupling: f32,
-    pad5: f32,
+    connectomeVariant: f32,
     pad6: f32,
 }
 
@@ -940,8 +940,14 @@ fn main(input: FiberVertexInput) -> FiberVertexOutput {
         let spiky = smoothstep(0.68, 0.96, signalStrength + max(aiActivity, tractActivity) * 0.5 + sin(uniforms.time * 14.0 + segmentPhase * 20.0) * 0.12);
         baseColor += vec3<f32>(1.0, 0.2, 0.9) * (signalStrength * 0.8 + spiky * 0.4);
     } else {
+        // [V3.3] Anatomical (variant 0): classic DTI tractography palette — encode local
+        // fiber orientation as RGB (L-R red, I-S green, A-P blue) for colourful glowing tracts.
+        let dtiDir = normalize(abs(tangent) + vec3<f32>(0.04));
+        let dtiColor = pow(dtiDir, vec3<f32>(0.62)); // brighten toward luminous pastel tracts
+        // Reasoning Pathways (variant 1): flowing teal -> gold routing for SynaptiX storytelling.
         let wave = sin(uniforms.time * 1.2 + segmentPhase * 9.0 + input.position.y * 3.0) * 0.5 + 0.5;
-        baseColor = mix(vec3<f32>(0.0, 0.82, 1.0), vec3<f32>(0.08, 0.95, 0.48), wave);
+        let reasoning = mix(vec3<f32>(0.0, 0.82, 1.0), vec3<f32>(0.08, 0.95, 0.48), wave);
+        baseColor = mix(dtiColor, reasoning, clamp(uniforms.connectomeVariant, 0.0, 1.0));
         baseColor += mix(vec3<f32>(0.1, 0.8, 1.0), vec3<f32>(1.0, 0.9, 0.35), uniforms.colorShift) * max(signalStrength, tractActivity) * 0.85;
     }
 
@@ -1003,7 +1009,7 @@ struct Uniforms {
     aiLayer: f32,
     pointCloudDensity: f32,
     fiberCoupling: f32,
-    pad5: f32,
+    connectomeVariant: f32,
     pad6: f32,
 }
 
@@ -1078,8 +1084,16 @@ fn main(input: FiberFragmentInput) -> @location(0) vec4<f32> {
     let avalanche = smoothstep(0.56, 0.92, input.signal + localDensity * 0.55);
     let avalancheColor = vec3<f32>(1.0, 0.92, 0.58) * max(avalanche, resonance) * (0.45 + localDensity * 0.8);
     let twistShade = 0.92 + 0.08 * sin(dot(input.worldPos, tangent) * 18.0 + uniforms.time * 4.0);
-    let finalRgb = diffuse * twistShade + highlight + activityGlow + avalancheColor + vec3<f32>(1.0, 0.95, 0.65) * resonance * 0.35;
-    let alpha = clamp(0.18 + input.signal * 0.34 + ndotl * 0.16 + rim * 0.16 + anisotropic * 0.12, 0.12, 0.94) * ambientOcclusion * mix(0.8, 1.0, taper);
+
+    // [V3.3] Luminous tractography glow — a soft emissive core that keeps tracts mesmerizing
+    // in both stills and motion, plus a warm electric tint in the Reasoning Pathways variant.
+    let glowPulse = 0.6 + 0.4 * sin(uniforms.time * 3.0 + input.distToCenter * 6.0 + input.signal * 4.0);
+    let emissive = input.color * (0.35 + input.signal * 0.9) * glowPulse * mix(1.0, 1.25, myelin);
+    let reasoningWarm = vec3<f32>(1.0, 0.55, 0.15) * clamp(uniforms.connectomeVariant, 0.0, 1.0) * input.signal * 0.4;
+    let glowLuma = max(emissive.r, max(emissive.g, emissive.b));
+
+    let finalRgb = diffuse * twistShade + highlight + activityGlow + avalancheColor + emissive + reasoningWarm + vec3<f32>(1.0, 0.95, 0.65) * resonance * 0.35;
+    let alpha = clamp(0.18 + input.signal * 0.4 + ndotl * 0.16 + rim * 0.18 + anisotropic * 0.12 + glowLuma * 0.12, 0.12, 0.96) * ambientOcclusion * mix(0.82, 1.0, taper);
 
     return vec4<f32>(finalRgb, alpha);
 }
@@ -1118,7 +1132,7 @@ struct Uniforms {
     aiLayer: f32,
     pointCloudDensity: f32,
     fiberCoupling: f32,
-    pad5: f32,
+    connectomeVariant: f32,
     pad6: f32,
 }
 
@@ -1325,7 +1339,7 @@ struct Uniforms {
     aiLayer: f32,
     pointCloudDensity: f32,
     fiberCoupling: f32,
-    pad5: f32,
+    connectomeVariant: f32,
     pad6: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
@@ -1397,7 +1411,7 @@ struct Uniforms {
     aiLayer: f32,
     pointCloudDensity: f32,
     fiberCoupling: f32,
-    pad5: f32,
+    connectomeVariant: f32,
     pad6: f32,
 }
 
@@ -1566,7 +1580,7 @@ struct Uniforms {
     aiLayer: f32,
     pointCloudDensity: f32,
     fiberCoupling: f32,
-    pad5: f32,
+    connectomeVariant: f32,
     pad6: f32,
 }
 
@@ -1945,7 +1959,7 @@ struct Uniforms {
     aiLayer: f32,
     pointCloudDensity: f32,
     fiberCoupling: f32,
-    pad5: f32,
+    connectomeVariant: f32,
     pad6: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
@@ -2070,7 +2084,7 @@ struct Uniforms {
     aiLayer: f32,
     pointCloudDensity: f32,
     fiberCoupling: f32,
-    pad5: f32,
+    connectomeVariant: f32,
     pad6: f32,
 }
 
@@ -2271,7 +2285,7 @@ struct Uniforms {
     aiLayer: f32,
     pointCloudDensity: f32,
     fiberCoupling: f32,
-    pad5: f32,
+    connectomeVariant: f32,
     pad6: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;

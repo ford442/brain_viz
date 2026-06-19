@@ -21,6 +21,19 @@
 - **Interactivity**: Allow users to explore different brain regions, time ranges, or visualization modes.
 - **Future Potential**: Multi-user, live BCI integration, or exportable art pieces.
 
+## Visualization Modes & Shortcuts
+A segmented pill selector at the top of the control panel switches the active render style. Keyboard shortcuts (ignored while typing in a field):
+
+| Key | Mode | Description |
+| --- | --- | --- |
+| `1` | Organic | Smooth volumetric cortical surface shell. |
+| `2` | Cyber | Glowing wireframe circuit lattice. |
+| `3` | Connectome | Symmetrical glowing DTI fibre tracts. |
+| `4` | Heatmap | Volumetric thermal activity field. |
+| `5` | SynaptiX | AI ↔ Human mirror comparison (`X` runs the full showcase). |
+
+Connectome mode defaults to anatomical, bilaterally symmetric DTI tracts. Tune it with the **Connectome Variant** (Anatomical ↔ Reasoning Pathways), **Fiber Symmetry**, and **Bundle Coherence** sliders on the Activity tab.
+
 ## Common Tasks
 - Improve data parsing and real-time streaming
 - Add new visualization modes or particle systems

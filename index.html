@@ -174,6 +174,56 @@
             opacity: 1;
             transform: translateY(0);
         }
+        /* [V3.3] Segmented visualization-mode selector */
+        .mode-selector {
+            display: flex;
+            gap: 4px;
+            margin: 6px 0 12px;
+            padding: 4px;
+            background: rgba(0, 20, 40, 0.6);
+            border: 1px solid rgba(0, 229, 229, 0.2);
+            border-radius: 8px;
+        }
+        .mode-pill {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            padding: 6px 2px;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            color: #8899bb;
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease, transform 0.15s ease, box-shadow 0.25s ease;
+        }
+        .mode-pill:hover { color: #ccffee; background: rgba(0, 229, 229, 0.08); }
+        .mode-pill .mode-key {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            opacity: 0.7;
+            border: 1px solid currentColor;
+            border-radius: 3px;
+            padding: 0 4px;
+            line-height: 1.5;
+        }
+        .mode-pill.active {
+            background: rgba(0, 229, 229, 0.18);
+            border-color: rgba(0, 229, 229, 0.6);
+            color: #00e5e5;
+            box-shadow: 0 0 12px rgba(0, 229, 229, 0.25);
+            transform: translateY(-1px);
+        }
+        .mode-pill.synaptix.active {
+            background: rgba(255, 0, 204, 0.18);
+            border-color: rgba(255, 0, 204, 0.6);
+            color: #ff5fd6;
+            box-shadow: 0 0 12px rgba(255, 0, 204, 0.25);
+        }
         .value, .val-display {
             float: right;
             font-family: 'JetBrains Mono', monospace;
@@ -584,6 +634,14 @@
     <div id="controls">
         <h2>NEURO-WEAVER V2.6 <span id="routine-status-dot" class="routine-dot"></span></h2>
 
+        <div id="mode-selector" class="mode-selector" role="tablist" aria-label="Visualization mode">
+            <button class="mode-pill active" data-style="0" data-tooltip="Organic surface — smooth volumetric cortical shell (hotkey 1)"><span class="mode-key">1</span><span class="mode-name">Organic</span></button>
+            <button class="mode-pill" data-style="1" data-tooltip="Cyber wireframe — glowing circuit lattice (hotkey 2)"><span class="mode-key">2</span><span class="mode-name">Cyber</span></button>
+            <button class="mode-pill" data-style="2" data-tooltip="Connectome — symmetrical glowing DTI fibre tracts (hotkey 3)"><span class="mode-key">3</span><span class="mode-name">Connectome</span></button>
+            <button class="mode-pill" data-style="3" data-tooltip="Heatmap — volumetric thermal activity field (hotkey 4)"><span class="mode-key">4</span><span class="mode-name">Heatmap</span></button>
+            <button class="mode-pill synaptix" data-style="4" data-tooltip="SynaptiX — AI ↔ Human mirror comparison (hotkey 5)"><span class="mode-key">5</span><span class="mode-name">SynaptiX</span></button>
+        </div>
+
         <div class="tab-bar">
             <button class="tab-btn active" data-tab="tab-activity">Activity</button>
             <button class="tab-btn" data-tab="tab-neurochemical">Neurochemical</button>
@@ -636,6 +694,18 @@
                     <div class="control-group">
                         <label data-tooltip="Bidirectional tensor↔fiber coupling strength (0 = off)">Fiber Coupling <span id="val-fiberCoupling" class="value">0.50</span></label>
                         <input type="range" id="fiberCoupling" min="0.0" max="1.0" step="0.01" value="0.5">
+                    </div>
+                    <div class="control-group">
+                        <label data-tooltip="Connectome palette: 0 = Anatomical DTI tracts, 1 = abstract Reasoning Pathways routing">Connectome Variant <span id="val-connectomeVariant" class="value">0.00</span></label>
+                        <input type="range" id="connectomeVariant" min="0.0" max="1.0" step="0.01" value="0.0">
+                    </div>
+                    <div class="control-group">
+                        <label data-tooltip="Bilateral symmetry of fibre bundles (0 = free/organic, 1 = mirrored hemispheres)">Fiber Symmetry <span id="val-fiberSymmetry" class="value">0.85</span></label>
+                        <input type="range" id="fiberSymmetry" min="0.0" max="1.0" step="0.01" value="0.85">
+                    </div>
+                    <div class="control-group">
+                        <label data-tooltip="Tightness of fibres within each tract bundle (higher = cleaner tractography)">Bundle Coherence <span id="val-bundleCoherence" class="value">0.60</span></label>
+                        <input type="range" id="bundleCoherence" min="0.0" max="1.0" step="0.01" value="0.6">
                     </div>
                     <div class="control-group">
                         <label data-tooltip="Volumetric cerebrospinal fluid simulation strength">Fluid Dynamics <span id="val-fluidActive" class="value">0.00</span></label>

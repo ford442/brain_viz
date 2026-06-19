@@ -9,6 +9,7 @@ import { SynaptiXEngine } from './synaptix-engine.js';
 import { MINI_ROUTINES } from './mini-routines.js';
 import { FilterUIOverlay, initUIControls, initDirectorTools, initTooltips, flashButton, glowRegionButtons, initRangeTooltips } from './ui-utils.js';
 import { setupLegendPanel, setupOverlays, setupRoutineTransport, setupBciPanel } from './ui-panels.js';
+import { setupModeSelector } from './ui-mode-selector.js';
 
 async function init() {
     // Main script updated for neuro-script cycle.
@@ -29,6 +30,9 @@ async function init() {
         growth: document.getElementById('growth'), // [Phase 6]
         pointCloudDensity: document.getElementById('pointCloudDensity'), // [V3.1]
         fiberCoupling: document.getElementById('fiberCoupling'), // [V3.2]
+        connectomeVariant: document.getElementById('connectomeVariant'), // [V3.3]
+        fiberSymmetry: document.getElementById('fiberSymmetry'), // [V3.3]
+        bundleCoherence: document.getElementById('bundleCoherence'), // [V3.3]
         shake: document.getElementById('shake'), // [Phase 2]
         stress: document.getElementById('stress'), // [Phase 2] Stress Distortion
         cortisol: document.getElementById('cortisol'), // [Phase 5] Cortisol Decay
@@ -69,6 +73,9 @@ async function init() {
         growth: document.getElementById('val-growth'), // [Phase 6]
         pointCloudDensity: document.getElementById('val-pointCloudDensity'), // [V3.1]
         fiberCoupling: document.getElementById('val-fiberCoupling'), // [V3.2]
+        connectomeVariant: document.getElementById('val-connectomeVariant'), // [V3.3]
+        fiberSymmetry: document.getElementById('val-fiberSymmetry'), // [V3.3]
+        bundleCoherence: document.getElementById('val-bundleCoherence'), // [V3.3]
         shake: document.getElementById('val-shake'), // [Phase 2]
         stress: document.getElementById('val-stress'), // [Phase 2] Stress Distortion
         cortisol: document.getElementById('val-cortisol'), // [Phase 5] Cortisol Decay
@@ -98,6 +105,8 @@ async function init() {
     try {
         const rendererInfo = await createBrainRenderer(canvas);
         const renderer = rendererInfo.renderer;
+        // [V3.3] Prominent always-visible mode selector (pills + hotkeys 1-5).
+        const modeSelector = setupModeSelector(renderer);
         const rendererBackendInput = document.getElementById('renderer-backend');
         const webglDebugWireframeInput = document.getElementById('webgl-debug-wireframe');
         const webglDebugTensorInput = document.getElementById('webgl-debug-tensor');
@@ -370,6 +379,16 @@ async function init() {
                     player.triggerSignal('continue_scan');
                 }
             }
+
+            // [V3.3] Mode hotkeys: 1=Organic, 2=Cyber, 3=Connectome, 4=Heatmap, 5=SynaptiX.
+            // Skip while typing in a field so prompts/sliders aren't hijacked.
+            const tag = (e.target && e.target.tagName) || '';
+            const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (e.target && e.target.isContentEditable);
+            if (!typing && !e.ctrlKey && !e.metaKey && !e.altKey && e.key >= '1' && e.key <= '5') {
+                modeSelector.applyStyle(parseFloat(e.key) - 1.0);
+                return;
+            }
+
             const routine = MINI_ROUTINES[e.key] || MINI_ROUTINES[e.key.toLowerCase()] || MINI_ROUTINES[e.key.toUpperCase()];
             if (routine) {
                 console.log(`[Main] Triggering Mini-Routine: ${e.key}`);
@@ -382,7 +401,7 @@ async function init() {
     const legendPanel = document.getElementById('legend-panel');
     if (legendPanel) {
         const newEntry = document.createElement('div');
-        newEntry.innerHTML = '<b>M</b> : Memory Fragmentation<br><b>S</b> : Frontal Tour (Spline)<br><b>D</b> : Dynamic Topology Shift<br><b>X</b> : SynaptiX Mode';
+        newEntry.innerHTML = '<b>1-5</b> : Switch Mode (Organic/Cyber/Connectome/Heatmap/SynaptiX)<br><b>M</b> : Memory Fragmentation<br><b>S</b> : Frontal Tour (Spline)<br><b>D</b> : Dynamic Topology Shift<br><b>X</b> : SynaptiX Mode';
         legendPanel.appendChild(newEntry);
     }
 
@@ -904,6 +923,7 @@ async function init() {
             if (synaptixStyle && parseFloat(synaptixStyle.value) !== renderer.params.style) {
                 synaptixStyle.value = String(renderer.params.style);
             }
+            modeSelector.syncActive(renderer.params.style);
 
             // Routine UI Updates
             const routineDot = document.getElementById('routine-status-dot');

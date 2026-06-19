@@ -31,6 +31,8 @@ export class BrainGeometry {
             corticalThickness: 0.11,
             growth: 1.0,
             networkTopology: 0.0,
+            fiberSymmetry: 0.85,
+            bundleCoherence: 0.6,
             ...options
         };
     }
@@ -529,51 +531,106 @@ export class BrainGeometry {
     }
 
     generateOrganicConnectomeFibers() {
-        const BUNDLES = [
+        // [V3.3] Bilateral connectome: midline-symmetric commissural bundles plus
+        // left-hemisphere lateral bundles whose right-hemisphere twin is mirror-generated.
+        // fiberSymmetry (0..1) blends each right fiber toward a mirror of its left partner;
+        // bundleCoherence (0..1) tightens fibers within a bundle for a cleaner tractography look.
+        const symmetry = this.saturate(this.options.fiberSymmetry ?? 0.85);
+        const coherence = this.saturate(this.options.bundleCoherence ?? 0.6);
+
+        // Commissural / midline bundles span both hemispheres (already x-symmetric).
+        const COMMISSURAL = [
             { s:[-0.9,  0.2,  0.55], c:[ 0.0,  0.85,  0.4], e:[ 0.9,  0.2,  0.55], r:0.07, m:0.9, id:0, n:28, b:6 },
             { s:[-0.85, 0.2, -0.45], c:[ 0.0,  0.65, -0.6], e:[ 0.85, 0.2, -0.45], r:0.065, m:0.9, id:0, n:24, b:5 },
-            { s:[-0.35, 0.85,  0.3], c:[-0.4,  0.05,  0.45], e:[-0.1, -0.85,  0.1], r:0.06, m:0.88, id:1, n:22, b:4 },
-            { s:[ 0.35, 0.85,  0.3], c:[ 0.4,  0.05,  0.45], e:[ 0.1, -0.85,  0.1], r:0.06, m:0.88, id:1, n:22, b:4 },
-            { s:[-0.2,  0.05, -0.85], c:[-0.65, -0.3, -0.45], e:[-0.8, -0.05,  0.15], r:0.05, m:0.82, id:2, n:20, b:5 },
-            { s:[ 0.2,  0.05, -0.85], c:[ 0.65, -0.3, -0.45], e:[ 0.8, -0.05,  0.15], r:0.05, m:0.82, id:2, n:20, b:5 },
-            { s:[-0.8,  0.45,  0.5], c:[-1.0,  0.3, -0.05], e:[-0.8,  0.1, -0.65], r:0.055, m:0.78, id:3, n:20, b:3 },
-            { s:[ 0.8,  0.45,  0.5], c:[ 1.0,  0.3, -0.05], e:[ 0.8,  0.1, -0.65], r:0.055, m:0.78, id:3, n:20, b:3 },
-            { s:[-0.6,  0.35,  0.5], c:[-0.3,  0.7,  0.2], e:[-0.85, -0.2,  0.05], r:0.05, m:0.76, id:4, n:18, b:3 },
-            { s:[ 0.6,  0.35,  0.5], c:[ 0.3,  0.7,  0.2], e:[ 0.85, -0.2,  0.05], r:0.05, m:0.76, id:4, n:18, b:3 },
-            { s:[-0.1,  0.6,  0.5], c:[-0.15, 0.6,  0.0], e:[-0.1,  0.3, -0.6], r:0.045, m:0.74, id:5, n:16, b:2 },
-            { s:[ 0.1,  0.6,  0.5], c:[ 0.15, 0.6,  0.0], e:[ 0.1,  0.3, -0.6], r:0.045, m:0.74, id:5, n:16, b:2 },
-            { s:[-0.75, 0.2,  0.6], c:[-0.8, -0.1,  0.0], e:[-0.65, -0.1, -0.75], r:0.05, m:0.75, id:6, n:18, b:3 },
-            { s:[ 0.75, 0.2,  0.6], c:[ 0.8, -0.1,  0.0], e:[ 0.65, -0.1, -0.75], r:0.05, m:0.75, id:6, n:18, b:3 },
-            { s:[-0.65, -0.3,  0.35], c:[-0.5,  0.1,  0.65], e:[-0.55, 0.4,  0.65], r:0.045, m:0.72, id:7, n:16, b:3 },
-            { s:[ 0.65, -0.3,  0.35], c:[ 0.5,  0.1,  0.65], e:[ 0.55, 0.4,  0.65], r:0.045, m:0.72, id:7, n:16, b:3 },
         ];
 
-        for (const bun of BUNDLES) {
-            // Bundle-level hub at control point
-            const hubJitter = bun.r * 0.25;
-            const hubPos = [
-                bun.c[0] + (this.random()-0.5)*hubJitter,
-                bun.c[1] + (this.random()-0.5)*hubJitter,
-                bun.c[2] + (this.random()-0.5)*hubJitter
-            ];
-            if (this.isInsideBrain(hubPos[0], hubPos[1], hubPos[2])) {
-                this.addSomaInstance(hubPos[0], hubPos[1], hubPos[2], bun.r * 0.55, 0, bun.id, this.random()*6.28, this.random());
-                this.addSparkSource(hubPos, [hubPos[0], hubPos[1], hubPos[2]], 0.55, 0.0, bun.id, bun.m, 0.0);
-                this.addPointCluster(hubPos, 18, bun.r * 0.8, bun.r * 0.08, bun.r * 0.18, 5, bun.id, hubPos, [1.0, 0.7, 1.0]);
+        // Left-hemisphere lateral bundles; the right hemisphere is mirror-generated.
+        const LATERAL = [
+            { s:[-0.35, 0.85,  0.3], c:[-0.4,  0.05,  0.45], e:[-0.1, -0.85,  0.1], r:0.06, m:0.88, id:1, n:22, b:4 },
+            { s:[-0.2,  0.05, -0.85], c:[-0.65, -0.3, -0.45], e:[-0.8, -0.05,  0.15], r:0.05, m:0.82, id:2, n:20, b:5 },
+            { s:[-0.8,  0.45,  0.5], c:[-1.0,  0.3, -0.05], e:[-0.8,  0.1, -0.65], r:0.055, m:0.78, id:3, n:20, b:3 },
+            { s:[-0.6,  0.35,  0.5], c:[-0.3,  0.7,  0.2], e:[-0.85, -0.2,  0.05], r:0.05, m:0.76, id:4, n:18, b:3 },
+            { s:[-0.1,  0.6,  0.5], c:[-0.15, 0.6,  0.0], e:[-0.1,  0.3, -0.6], r:0.045, m:0.74, id:5, n:16, b:2 },
+            { s:[-0.75, 0.2,  0.6], c:[-0.8, -0.1,  0.0], e:[-0.65, -0.1, -0.75], r:0.05, m:0.75, id:6, n:18, b:3 },
+            { s:[-0.65, -0.3,  0.35], c:[-0.5,  0.1,  0.65], e:[-0.55, 0.4,  0.65], r:0.045, m:0.72, id:7, n:16, b:3 },
+        ];
+
+        for (const bun of COMMISSURAL) {
+            this.buildConnectomeBundle(bun, coherence, null);
+        }
+        for (const bun of LATERAL) {
+            const captured = this.buildConnectomeBundle(bun, coherence, null);
+            const mirrored = {
+                s: [-bun.s[0], bun.s[1], bun.s[2]],
+                c: [-bun.c[0], bun.c[1], bun.c[2]],
+                e: [-bun.e[0], bun.e[1], bun.e[2]],
+                r: bun.r, m: bun.m, id: bun.id, n: bun.n, b: bun.b
+            };
+            this.buildConnectomeBundle(mirrored, coherence, { jitter: captured, symmetry });
+        }
+    }
+
+    // [V3.3] Generate one connectome bundle. When mirrorSource is provided, each
+    // sub-fiber's centerline jitter is blended toward a reflected copy of the source
+    // bundle so the two hemispheres read as bilaterally symmetric. Returns the array of
+    // per-sub-fiber jitter so a partner bundle can mirror it.
+    buildConnectomeBundle(bun, coherence, mirrorSource) {
+        const captured = [];
+        const symmetry = mirrorSource ? this.saturate(mirrorSource.symmetry) : 0.0;
+        const jitterScale = 1.0 - coherence * 0.7;
+
+        // Bundle-level hub at control point
+        const hubJitter = bun.r * 0.25;
+        const hubPos = [
+            bun.c[0] + (this.random()-0.5)*hubJitter,
+            bun.c[1] + (this.random()-0.5)*hubJitter,
+            bun.c[2] + (this.random()-0.5)*hubJitter
+        ];
+        if (this.isInsideBrain(hubPos[0], hubPos[1], hubPos[2])) {
+            this.addSomaInstance(hubPos[0], hubPos[1], hubPos[2], bun.r * 0.55, 0, bun.id, this.random()*6.28, this.random());
+            this.addSparkSource(hubPos, [hubPos[0], hubPos[1], hubPos[2]], 0.55, 0.0, bun.id, bun.m, 0.0);
+            this.addPointCluster(hubPos, 18, bun.r * 0.8, bun.r * 0.08, bun.r * 0.18, 5, bun.id, hubPos, [1.0, 0.7, 1.0]);
+        }
+
+        for (let s = 0; s < bun.n; s++) {
+            const jit = bun.r * 0.7 * jitterScale;
+            const rnd = () => (this.random() - 0.5) * 2;
+            const topJit = (this.options.networkTopology || 0.0) * 0.5;
+
+            // Always draw a fresh jitter set (keeps the RNG stream and per-fiber variety).
+            const fresh = {
+                jS: [rnd()*jit, rnd()*jit, rnd()*jit],
+                jC: [rnd()*jit*0.4, rnd()*jit*0.4, rnd()*jit*0.4],
+                jE: [rnd()*jit, rnd()*jit, rnd()*jit],
+                tS: [rnd()*topJit, rnd()*topJit, rnd()*topJit],
+                tC: [rnd()*topJit, rnd()*topJit, rnd()*topJit],
+                tE: [rnd()*topJit, rnd()*topJit, rnd()*topJit],
+            };
+            captured.push(fresh);
+
+            let j = fresh;
+            if (mirrorSource && mirrorSource.jitter[s]) {
+                const src = mirrorSource.jitter[s];
+                const mir = (v) => [-v[0], v[1], v[2]]; // reflect across the x = 0 midplane
+                const blend = (a, b) => [
+                    a[0] + (b[0]-a[0])*symmetry,
+                    a[1] + (b[1]-a[1])*symmetry,
+                    a[2] + (b[2]-a[2])*symmetry
+                ];
+                j = {
+                    jS: blend(fresh.jS, mir(src.jS)),
+                    jC: blend(fresh.jC, mir(src.jC)),
+                    jE: blend(fresh.jE, mir(src.jE)),
+                    tS: blend(fresh.tS, mir(src.tS)),
+                    tC: blend(fresh.tC, mir(src.tC)),
+                    tE: blend(fresh.tE, mir(src.tE)),
+                };
             }
 
-            for (let s = 0; s < bun.n; s++) {
-                const jit = bun.r * 0.7;
-                const rnd = () => (this.random() - 0.5) * 2;
-
-                const topJit = (this.options.networkTopology || 0.0) * 0.5;
-                const topoOffsetS = [rnd()*topJit, rnd()*topJit, rnd()*topJit];
-                const topoOffsetC = [rnd()*topJit, rnd()*topJit, rnd()*topJit];
-                const topoOffsetE = [rnd()*topJit, rnd()*topJit, rnd()*topJit];
-
-                const pS = [bun.s[0]+rnd()*jit + topoOffsetS[0], bun.s[1]+rnd()*jit + topoOffsetS[1], bun.s[2]+rnd()*jit + topoOffsetS[2]];
-                const pC = [bun.c[0]+rnd()*jit*0.4 + topoOffsetC[0], bun.c[1]+rnd()*jit*0.4 + topoOffsetC[1], bun.c[2]+rnd()*jit*0.4 + topoOffsetC[2]];
-                const pE = [bun.e[0]+rnd()*jit + topoOffsetE[0], bun.e[1]+rnd()*jit + topoOffsetE[1], bun.e[2]+rnd()*jit + topoOffsetE[2]];
+            {
+                const pS = [bun.s[0]+j.jS[0]+j.tS[0], bun.s[1]+j.jS[1]+j.tS[1], bun.s[2]+j.jS[2]+j.tS[2]];
+                const pC = [bun.c[0]+j.jC[0]+j.tC[0], bun.c[1]+j.jC[1]+j.tC[1], bun.c[2]+j.jC[2]+j.tC[2]];
+                const pE = [bun.e[0]+j.jE[0]+j.tE[0], bun.e[1]+j.jE[1]+j.tE[1], bun.e[2]+j.jE[2]+j.tE[2]];
                 const pts = this.generateSplinePath(pS, pC, pE, 12);
                 this.fiberCenterlines.push({ pts, bundleId: bun.id, myelin: bun.m });
 
@@ -644,6 +701,7 @@ export class BrainGeometry {
                 this.addPointCluster(pts[pts.length - 1], 8 + Math.floor(bun.b * 2.5), bun.r * 0.85, bun.r * 0.08, bun.r * 0.22, 5, bun.id, pts[pts.length - 1], [1.0, 0.75, 1.0]);
             }
         }
+        return captured;
     }
 
     generateSplinePath(start, control, end, segments) {

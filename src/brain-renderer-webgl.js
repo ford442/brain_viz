@@ -280,7 +280,9 @@ export class BrainRendererWebGL {
             fissureDepth: this.params.fissureDepth,
             lobeFoldBias: this.params.lobeFoldBias,
             corticalThickness: this.params.corticalThickness,
-            growth: this.params.growth
+            growth: this.params.growth,
+            fiberSymmetry: this.params.fiberSymmetry,
+            bundleCoherence: this.params.bundleCoherence
         });
         geometry.generate(this.geometryRows, this.geometryCols);
         return geometry;
@@ -437,7 +439,7 @@ export class BrainRendererWebGL {
     }
 
     setParams(newParams) {
-        const geometryKeys = ['foldScale', 'foldStrength', 'fissureDepth', 'lobeFoldBias', 'corticalThickness', 'growth'];
+        const geometryKeys = ['foldScale', 'foldStrength', 'fissureDepth', 'lobeFoldBias', 'corticalThickness', 'growth', 'fiberSymmetry', 'bundleCoherence'];
         const geometryChanged = geometryKeys.some((key) => newParams[key] !== undefined && newParams[key] !== this.params[key]);
         this.params = { ...this.params, ...newParams };
         if (geometryChanged) {
