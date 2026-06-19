@@ -388,3 +388,14 @@ When adding new physiological simulations, consult or update `SCIENTIFIC_ACCURAC
 3. **New BCI pattern?** Add a generator method to `tensor-player.js` and register it in `BUILTIN_PATTERNS`.
 4. **New UI control?** Add the HTML input to `index.html`, map it in `main.js` `initUIControls()`, and ensure `routine-player.js` can lerp it if needed.
 5. **New post-processing effect?** Modify `postFragmentShader` in `shaders.js` and add the corresponding parameter to `renderer.params`.
+
+---
+
+## Cursor Cloud specific instructions
+
+Dependencies are refreshed automatically on startup by the update script (`npm install`, plus the Python Playwright + Chromium install used by the verification suite). The notes below are non-obvious caveats; standard commands live in §4 and §7 and `package.json`.
+
+- **Use the WebGL renderer for all headless/automated/manual testing in this VM.** WebGPU is not available in the automation browser, so open `http://localhost:5173/?renderer=webgl`. The default `?renderer=webgpu` will show an error overlay or blank canvas here.
+- **The verification suite uses Python Playwright, not the npm `playwright` dependency.** It needs `pip install playwright` and `python3 -m playwright install chromium` (both handled by the update script). Run it with `python3 verification/verify_suite.py`. Each script spawns its *own* dev server on port `5181` (`--strictPort`), so it is independent of any `npm run dev` you have running on `5173`.
+- **`npm run build` is not runnable as-is** because it first runs `npm run build:wasm`, which `source`s Emscripten from `/root/emsdk/emsdk_env.sh` (not installed). The WASM engine is optional with a graceful runtime fallback — to build just the frontend bundle, run `npx vite build`. Only install/activate emsdk if you specifically need WASM hybrid mode.
+- **`verification/` and `dist/` are gitignored**, so screenshots produced by the verify scripts and the Vite build output never dirty the working tree.
