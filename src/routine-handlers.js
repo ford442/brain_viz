@@ -1056,6 +1056,19 @@ export function createDefaultHandlers(player) {
         player.startLerp({ key: 'flowSpeed', value: 8.0, duration: duration, ease: ease });
     });
 
+    // [Phase 15] Dendritic Growth Animation
+    handlers.set('dendritic_growth', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.5;
+        const duration = evt.duration || 5.0;
+        const ease = evt.ease || 'sineInOut';
+
+        player.startLerp({ key: 'growth', value: intensity, duration: duration, ease: ease });
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
+
     // [Phase 14] Dynamic Network Topology
     handlers.set('dynamic_topology', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;

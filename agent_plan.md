@@ -284,7 +284,12 @@
 - [x] **Dynamic Network Topology:** Modify fiber connections dynamically when continuous synchronized firing occurs over a set threshold.
 
 ### Phase 15: Synaptic Plasticity Animation
-- [ ] **Dendritic Growth Animation:** Visualizing the growth of new connections over time (neuroplasticity).
+- [x] **Dendritic Growth Animation:** Visualizing the growth of new connections over time (neuroplasticity).
+
+### Phase 16: Cinematic Polish
+- [ ] **Parameter Interpolation/Easing:** Enhance routines with smooth interpolation and advanced easing.
+- [ ] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles and fly-throughs.
 
 *Idea:* "What if prolonged synchronized bursts triggered long-term structural plasticity, permanently altering the connectome layout?"
 *Idea:* "What if we visualize memory formation as glowing paths forming across multiple cortical regions simultaneously?"
+*Idea:* "What if we visualized Serotonin levels as color shifts?"

@@ -656,6 +656,15 @@ export const MINI_ROUTINES = {
         { time: 5.0, type: 'text', message: 'Connections established.', duration: 2.0 },
         { time: 6.0, type: 'calm' }
     ],
+    '+': [ // Dendritic Growth Animation
+        { time: 0.0, type: 'text', message: 'Dendritic Growth Initiated', duration: 3.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'camera', target: 'overview', duration: 2.0 },
+        { time: 1.0, type: 'dendritic_growth', intensity: 1.8, duration: 4.0 },
+        { time: 5.0, type: 'text', message: 'New Pathways Formed', duration: 2.0 },
+        { time: 7.0, type: 'dendritic_growth', intensity: 1.0, duration: 3.0 },
+        { time: 10.0, type: 'calm' }
+    ],
     '*': [ // Synchronized Firing Patterns
         { time: 0.0, type: 'text', message: 'Synchronized Multi-Region Burst', duration: 3.0 },
         { time: 0.0, type: 'style', value: 2 },
