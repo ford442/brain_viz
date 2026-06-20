@@ -672,6 +672,9 @@ export class RoutinePlayer {
         } else {
             // [Event Handling Requirement] Fallback extensible switch statement
             switch (resolvedEvt.type) {
+                case 'clear_lerps':
+                    this.clearLerps();
+                    break;
                 default:
                     console.warn(`[Routine Engine] Unrecognized Event Type: '${resolvedEvt.type}'. Extensible switch/registry lacks this handler.`);
                     break;
@@ -703,6 +706,12 @@ export class RoutinePlayer {
             }
         }
         return resolved;
+    }
+
+
+    clearLerps() {
+        this.activeLerps = [];
+        console.log("[Routine Engine] All active lerps cancelled.");
     }
 
     startLerp(event) {
@@ -759,6 +768,7 @@ export class RoutinePlayer {
             resume: () => this.resume(),
             loadRoutine: (data) => this.loadRoutine(data),
             generateProceduralRoutine: (duration, intensity) => this.generateProceduralRoutine(duration, intensity),
+            clearLerps: () => this.clearLerps(),
             injectRegion: (target, intensity = 1.0, duration = 1.0) => {
                 this.executeEvent({ type: 'stimulus', target: target, intensity: intensity, duration: duration });
                 // Smooth visual feedback for explicit injections

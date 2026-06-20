@@ -269,6 +269,8 @@ async function init() {
 
         window.playerState = player.state;
         window.visualizerAPI = player.getAPI();
+        // [Neuro-Script Cycle] Implemented clearLerps API feature
+
 
         player.registerHandler('style', () => {});
         player.registerHandler('mode-transition', () => {});
