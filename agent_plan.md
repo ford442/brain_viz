@@ -287,8 +287,13 @@
 - [x] **Dendritic Growth Animation:** Visualizing the growth of new connections over time (neuroplasticity).
 
 ### Phase 16: Cinematic Polish
-- [ ] **Parameter Interpolation/Easing:** Enhance routines with smooth interpolation and advanced easing.
-- [ ] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles and fly-throughs.
+- [x] **Parameter Interpolation/Easing:** Enhance routines with smooth interpolation and advanced easing.
+- [x] **Camera Coordinates Map:** Define explicit regions for better camera angles and fly-throughs.
+
+
+### Phase 17: Advanced Routine Control
+- [ ] **Routine Lerp Cancellation:** Implement `clearLerps()` to allow abrupt cancellation of all active interpolations.
+- [ ] **Dynamic Environment Reactions:** Allow scripts to define spatial distortions simulating targeted TMS (Transcranial Magnetic Stimulation).
 
 *Idea:* "What if prolonged synchronized bursts triggered long-term structural plasticity, permanently altering the connectome layout?"
 *Idea:* "What if we visualize memory formation as glowing paths forming across multiple cortical regions simultaneously?"
