@@ -249,7 +249,11 @@ struct Uniforms {
     pointCloudDensity: f32,
     fiberCoupling: f32,
     connectomeVariant: f32,
-    pad6: f32,
+    tmsActive: f32,
+    tmsCenter: vec3<f32>,
+    tmsPulse: f32,
+    tmsRadius: f32,
+    pad2: vec2<f32>,
 }
 
 struct VertexInput {
@@ -334,14 +338,26 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     var output: VertexOutput;
     var finalPos = input.position;
     var finalNormal = normalize(input.normal.xyz);
+
+    // TMS Distortion
+    if (uniforms.tmsActive > 0.0) {
+        let dist = distance(finalPos, uniforms.tmsCenter);
+        let radius = uniforms.tmsRadius;
+        let falloff = exp(-(dist * dist) / (radius * radius));
+        let pull = normalize(finalPos - uniforms.tmsCenter + vec3<f32>(0.001));
+        let twist = cross(pull, vec3<f32>(0.0, 1.0, 0.0));
+        let distortion = (pull * 0.1 + twist * 0.15) * falloff * uniforms.tmsPulse;
+        finalPos = finalPos + distortion;
+    }
+
     var finalColor = vec3<f32>(0.0);
     var signalStrength = 0.0;
     output.fiberMaterial = vec3<f32>(0.0);
     output.fiberTangent = vec3<f32>(0.0, 0.0, 1.0);
     output.fiberFlags = vec2<f32>(0.0);
     
-    let activity = sampleSmoothedVoxelValue(input.position);
-    let aiActivity = sampleSmoothedAIVoxelValue(input.position);
+    let activity = sampleSmoothedVoxelValue(finalPos);
+    let aiActivity = sampleSmoothedAIVoxelValue(finalPos);
 
     let worldPos = (uniforms.modelMatrix * vec4<f32>(finalPos, 1.0)).xyz;
 
@@ -493,7 +509,11 @@ struct Uniforms {
     pointCloudDensity: f32,
     fiberCoupling: f32,
     connectomeVariant: f32,
-    pad6: f32,
+    tmsActive: f32,
+    tmsCenter: vec3<f32>,
+    tmsPulse: f32,
+    tmsRadius: f32,
+    pad2: vec2<f32>,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var<storage, read> activityTensor: array<f32>;
@@ -819,7 +839,11 @@ struct Uniforms {
     pointCloudDensity: f32,
     fiberCoupling: f32,
     connectomeVariant: f32,
-    pad6: f32,
+    tmsActive: f32,
+    tmsCenter: vec3<f32>,
+    tmsPulse: f32,
+    tmsRadius: f32,
+    pad2: vec2<f32>,
 }
 
 struct FiberVertexInput {
@@ -903,7 +927,20 @@ fn calculateSignalFlow(startPos: vec3<f32>, endPos: vec3<f32>, time: f32, speed:
 @vertex
 fn main(input: FiberVertexInput) -> FiberVertexOutput {
     var output: FiberVertexOutput;
-    let worldPos = (uniforms.modelMatrix * vec4<f32>(input.position, 1.0)).xyz;
+
+    var finalPos = input.position;
+    // TMS Distortion
+    if (uniforms.tmsActive > 0.0) {
+        let dist = distance(finalPos, uniforms.tmsCenter);
+        let radius = uniforms.tmsRadius;
+        let falloff = exp(-(dist * dist) / (radius * radius));
+        let pull = normalize(finalPos - uniforms.tmsCenter + vec3<f32>(0.001));
+        let twist = cross(pull, vec3<f32>(0.0, 1.0, 0.0));
+        let distortion = (pull * 0.1 + twist * 0.15) * falloff * uniforms.tmsPulse;
+        finalPos = finalPos + distortion;
+    }
+    let worldPos = (uniforms.modelMatrix * vec4<f32>(finalPos, 1.0)).xyz;
+
     let worldNormal = normalize((uniforms.modelMatrix * vec4<f32>(input.normal.xyz, 0.0)).xyz);
     let radius = max(0.0025, input.fiberMeta.x);
     let bundleId = input.fiberMeta.y;
@@ -915,9 +952,9 @@ fn main(input: FiberVertexInput) -> FiberVertexOutput {
     let hierarchy = clamp(radius * select(18.0, 48.0, isAI), 0.0, 1.0);
     let taper = clamp(1.0 - hierarchy * 0.45, 0.35, 1.0);
     let tangent = normalize(input.fiberEnd - input.fiberStart);
-    let coupledSignal = sampleFiberCoupledSignal(input.position, tangent, isAI);
-    let activity = sampleSmoothedVoxelValue(input.position);
-    let aiActivity = sampleSmoothedAIVoxelValue(input.position);
+    let coupledSignal = sampleFiberCoupledSignal(finalPos, tangent, isAI);
+    let activity = sampleSmoothedVoxelValue(finalPos);
+    let aiActivity = sampleSmoothedAIVoxelValue(finalPos);
     let tractActivity = coupledSignal.x;
     let tractCoverage = coupledSignal.y;
     let tractAlignment = coupledSignal.z;
@@ -956,7 +993,7 @@ fn main(input: FiberVertexInput) -> FiberVertexOutput {
     baseColor += vec3<f32>(1.0, 0.92, 0.55) * resonance * select(0.08, 0.18, isAI);
     baseColor += vec3<f32>(0.8, 0.96, 1.0) * tractCoverage * tractAlignment * uniforms.fiberCoupling * 0.22;
 
-    output.position = uniforms.mvpMatrix * vec4<f32>(input.position, 1.0);
+    output.position = uniforms.mvpMatrix * vec4<f32>(finalPos, 1.0);
     output.worldPos = worldPos;
     output.normal = worldNormal;
     output.color = baseColor * sheath;
@@ -1010,7 +1047,11 @@ struct Uniforms {
     pointCloudDensity: f32,
     fiberCoupling: f32,
     connectomeVariant: f32,
-    pad6: f32,
+    tmsActive: f32,
+    tmsCenter: vec3<f32>,
+    tmsPulse: f32,
+    tmsRadius: f32,
+    pad2: vec2<f32>,
 }
 
 struct FiberFragmentInput {
@@ -1133,7 +1174,11 @@ struct Uniforms {
     pointCloudDensity: f32,
     fiberCoupling: f32,
     connectomeVariant: f32,
-    pad6: f32,
+    tmsActive: f32,
+    tmsCenter: vec3<f32>,
+    tmsPulse: f32,
+    tmsRadius: f32,
+    pad2: vec2<f32>,
 }
 
 struct VertexInput {
@@ -1222,6 +1267,18 @@ fn main_soma(input: VertexInput) -> VertexOutput {
             sin(input.instancePos.x * 2.0 + timeSpeed) * cos(input.instancePos.y * 3.0 - timeSpeed)
         ) * 0.5 * uniforms.fluidActive;
         advectedInstancePos = input.instancePos + flowVelocity;
+    }
+
+
+    // TMS Distortion
+    if (uniforms.tmsActive > 0.0) {
+        let dist = distance(advectedInstancePos, uniforms.tmsCenter);
+        let radius = uniforms.tmsRadius;
+        let falloff = exp(-(dist * dist) / (radius * radius));
+        let pull = normalize(advectedInstancePos - uniforms.tmsCenter + vec3<f32>(0.001));
+        let twist = cross(pull, vec3<f32>(0.0, 1.0, 0.0));
+        let distortion = (pull * 0.1 + twist * 0.15) * falloff * uniforms.tmsPulse;
+        advectedInstancePos = advectedInstancePos + distortion;
     }
 
     let activity = sampleSmoothedVoxelValue(advectedInstancePos);
@@ -1340,7 +1397,11 @@ struct Uniforms {
     pointCloudDensity: f32,
     fiberCoupling: f32,
     connectomeVariant: f32,
-    pad6: f32,
+    tmsActive: f32,
+    tmsCenter: vec3<f32>,
+    tmsPulse: f32,
+    tmsRadius: f32,
+    pad2: vec2<f32>,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
@@ -1412,7 +1473,11 @@ struct Uniforms {
     pointCloudDensity: f32,
     fiberCoupling: f32,
     connectomeVariant: f32,
-    pad6: f32,
+    tmsActive: f32,
+    tmsCenter: vec3<f32>,
+    tmsPulse: f32,
+    tmsRadius: f32,
+    pad2: vec2<f32>,
 }
 
 struct SparkInput {
@@ -1581,7 +1646,11 @@ struct Uniforms {
     pointCloudDensity: f32,
     fiberCoupling: f32,
     connectomeVariant: f32,
-    pad6: f32,
+    tmsActive: f32,
+    tmsCenter: vec3<f32>,
+    tmsPulse: f32,
+    tmsRadius: f32,
+    pad2: vec2<f32>,
 }
 
 struct SparkInput {
@@ -1960,7 +2029,11 @@ struct Uniforms {
     pointCloudDensity: f32,
     fiberCoupling: f32,
     connectomeVariant: f32,
-    pad6: f32,
+    tmsActive: f32,
+    tmsCenter: vec3<f32>,
+    tmsPulse: f32,
+    tmsRadius: f32,
+    pad2: vec2<f32>,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var tDiffuse: texture_2d<f32>;
@@ -2085,7 +2158,11 @@ struct Uniforms {
     pointCloudDensity: f32,
     fiberCoupling: f32,
     connectomeVariant: f32,
-    pad6: f32,
+    tmsActive: f32,
+    tmsCenter: vec3<f32>,
+    tmsPulse: f32,
+    tmsRadius: f32,
+    pad2: vec2<f32>,
 }
 
 struct VertexInput {
@@ -2286,7 +2363,11 @@ struct Uniforms {
     pointCloudDensity: f32,
     fiberCoupling: f32,
     connectomeVariant: f32,
-    pad6: f32,
+    tmsActive: f32,
+    tmsCenter: vec3<f32>,
+    tmsPulse: f32,
+    tmsRadius: f32,
+    pad2: vec2<f32>,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 

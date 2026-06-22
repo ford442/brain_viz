@@ -231,6 +231,7 @@
 * *Idea:* "What if we allowed users to 'paint' energy directly onto the tensor volume using a continuous drag gesture?"
 * *Idea:* "What if we visualized visual cortex processing by simulating progressive edge-detection filters directly on the render pipeline?"
 ## 📜 Changelog
+* [2026-06-22] - Completed Phase 17 (Advanced Routine Control). Verified `clearLerps()` functionality and implemented Transcranial Magnetic Stimulation (TMS) spatial distortions via `tmsActive` uniform and `tms_distortion` events.
 * [2026-06-12] - Completed Phase 13 (Region Injection API). Implemented `injectRegion` on visualizer API and wired click-based energy injection in `main.js`. Added 'paint energy drag gesture' idea to Dream Log.
 * [2026-06-10] - Completed Phase 12 (Clip Plane + Internal Reveal). Implemented `clip` event handler in `routine-handlers.js` and added routine 'Z'. Added Region Injection API idea to Dream Log.
 * [2026-06-08] - Completed Phase 11 (Graceful WebGPU Degradation + Recovery Telemetry). Implemented robust WebGPU device.lost handling, telemetry logging, and UI for timeline-restoring recovery in `main.js`. Added 'Visual Cortex Filter' idea to Dream Log.
@@ -292,8 +293,8 @@
 
 
 ### Phase 17: Advanced Routine Control
-- [ ] **Routine Lerp Cancellation:** Implement `clearLerps()` to allow abrupt cancellation of all active interpolations.
-- [ ] **Dynamic Environment Reactions:** Allow scripts to define spatial distortions simulating targeted TMS (Transcranial Magnetic Stimulation).
+- [x] **Routine Lerp Cancellation:** Implement `clearLerps()` to allow abrupt cancellation of all active interpolations.
+- [x] **Dynamic Environment Reactions:** Allow scripts to define spatial distortions simulating targeted TMS (Transcranial Magnetic Stimulation).
 
 *Idea:* "What if prolonged synchronized bursts triggered long-term structural plasticity, permanently altering the connectome layout?"
 *Idea:* "What if we visualize memory formation as glowing paths forming across multiple cortical regions simultaneously?"

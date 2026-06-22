@@ -5,10 +5,10 @@ import { vertexShader, fragmentShader, fiberVertexShader, fiberFragmentShader, c
 import { Mat4 } from './math-utils.js';
 import { WasmTensorEngine } from './wasm-engine.js'; // [Phase 1 WASM]
 
-const RENDER_UNIFORM_FLOAT_COUNT = 72;
+// RENDER_UNIFORM_FLOAT_COUNT is now 80 (see inside method)
 const UNIFORM_BUFFER_ALIGNMENT = 256;
 const RENDER_UNIFORM_BUFFER_SIZE = Math.ceil(
-    (RENDER_UNIFORM_FLOAT_COUNT * Float32Array.BYTES_PER_ELEMENT) / UNIFORM_BUFFER_ALIGNMENT
+    (80 * Float32Array.BYTES_PER_ELEMENT) / UNIFORM_BUFFER_ALIGNMENT
 ) * UNIFORM_BUFFER_ALIGNMENT;
 const COMPUTE_UNIFORM_BUFFER_SIZE = 112;
 
@@ -696,6 +696,22 @@ export class BrainRenderer {
     // to the Compute Shader uniforms in the next render cycle.
     // [V2.3] Stimulus Injection Logic: Triggers a volumetric pulse at the target coordinate
     // [Neuro-Weaver V2.8] Updated signature for clarity
+
+    triggerTMS(center, strength = 1.2, radius = 0.28, durationMs = 650) {
+        this.tms = {
+            center: center,
+            strength: strength,
+            radius: radius,
+            duration: durationMs,
+            startTime: performance.now()
+        };
+        this.params.tmsCenterX = center[0];
+        this.params.tmsCenterY = center[1];
+        this.params.tmsCenterZ = center[2];
+        this.params.tmsActive = strength;
+        this.params.tmsRadius = radius;
+    }
+
     injectStimulus(targetX, targetY, targetZ, intensity, duration = 0.0) {
         // [Neuro-Weaver] Validation: Prevent injection of invalid values
         if ([targetX, targetY, targetZ, intensity, duration].some(val => isNaN(val))) {
@@ -761,6 +777,8 @@ export class BrainRenderer {
         this.params.aperture = 0.0;
         this.params.stress = 0.0;
         this.params.cortisol = 0.0;
+
+        this.tms = null;
         this.params.cognitiveLoad = 0.0;
     }
 
@@ -879,7 +897,12 @@ export class BrainRenderer {
         const OFFSET_POINT_CLOUD_DENSITY = 68;
         const OFFSET_FIBER_COUPLING = 69;
         const OFFSET_CONNECTOME_VARIANT = 70; // [V3.3] formerly pad5
+        const OFFSET_TMS_ACTIVE = 71;
+        const OFFSET_TMS_CENTER = 72; // vec3 takes 3
+        const OFFSET_TMS_PULSE = 75;
+        const OFFSET_PAD3 = 76; // vec3 takes 3
 
+        const RENDER_UNIFORM_FLOAT_COUNT = 80;
         const uData = new Float32Array(RENDER_UNIFORM_FLOAT_COUNT);
         uData.set(mvp, OFFSET_MVP);
         uData.set(model, OFFSET_MODEL);
@@ -923,6 +946,12 @@ export class BrainRenderer {
         uData[OFFSET_POINT_CLOUD_DENSITY] = this.params.pointCloudDensity ?? 1.0;
         uData[OFFSET_FIBER_COUPLING] = this.params.fiberCoupling ?? 0.5;
         uData[OFFSET_CONNECTOME_VARIANT] = this.params.connectomeVariant ?? 0.0;
+        uData[OFFSET_TMS_ACTIVE] = this.params.tmsActive;
+        uData[OFFSET_TMS_CENTER] = this.params.tmsCenterX;
+        uData[OFFSET_TMS_CENTER + 1] = this.params.tmsCenterY;
+        uData[OFFSET_TMS_CENTER + 2] = this.params.tmsCenterZ;
+        uData[OFFSET_TMS_PULSE] = this.params.tmsPulse;
+        uData[OFFSET_PAD3] = this.params.tmsRadius; // OFFSET_PAD3 is offset 76
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         
@@ -1001,6 +1030,26 @@ export class BrainRenderer {
             render() {
         // [V2.3] Main Render Loop
         if (!this.isRunning) return;
+
+        if (this.tms) {
+            const elapsed = performance.now() - this.tms.startTime;
+            if (elapsed > this.tms.duration) {
+                this.tms = null;
+                this.params.tmsActive = 0.0;
+                this.params.tmsPulse = 0.0;
+            } else {
+                const rawProgress = elapsed / this.tms.duration;
+                // smooth 0 -> 1 -> 0 pulse using sine
+                this.params.tmsPulse = Math.sin(rawProgress * Math.PI) * this.tms.strength;
+
+                // Add volumetric bias (energy impact)
+                // We'll do this by injecting stimulus each frame of the pulse
+                const pulseIntensity = this.params.tmsPulse * 0.1;
+                if (pulseIntensity > 0.01) {
+                    this.injectStimulus(this.params.tmsCenterX, this.params.tmsCenterY, this.params.tmsCenterZ, pulseIntensity, 0.0);
+                }
+            }
+        }
         if (this.geometryDirty && (!this.lastGeometryRebuildTime || performance.now() - this.lastGeometryRebuildTime >= this.geometryRebuildIntervalMs)) {
             this.rebuildGeometry();
         }
