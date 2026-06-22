@@ -74,6 +74,25 @@ export function createDefaultHandlers(player) {
     });
 
     // [Phase 6] Procedural Volumetric Fluid Dynamics
+
+    // [Phase 17] TMS Spatial Distortions
+    const tmsHandler = (evt) => {
+        let coords = [0, 0, 0];
+        if (typeof evt.target === 'string' && player.regions[evt.target]) {
+            coords = player.regions[evt.target];
+        } else if (Array.isArray(evt.target)) {
+            coords = evt.target;
+        }
+
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.2;
+        const radius = evt.radius !== undefined ? evt.radius : 0.28;
+        const duration = evt.duration !== undefined ? evt.duration * 1000 : 650; // duration is in ms for renderer
+
+        player.renderer.triggerTMS(coords, intensity, radius, duration);
+    };
+    handlers.set('tms_distortion', tmsHandler);
+    handlers.set('apply_tms', tmsHandler);
+
     handlers.set('fluid', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
         if (evt.duration) {

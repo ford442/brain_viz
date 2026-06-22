@@ -630,14 +630,14 @@ export const MINI_ROUTINES = {
         { time: 7.0, type: 'lerp', key: 'colorShift', value: 0.0, duration: 3.0 },
         { time: 10.0, type: 'calm' }
     ],
-    'T': [ // Heavy Metal Accumulation
-        { time: 0.0, type: 'text', message: 'Long-term Heavy Metal Exposure', duration: 3.0 },
-        { time: 0.0, type: 'style', value: 0 },
-        { time: 0.0, type: 'heavy_metal', value: 1.0, duration: 5.0 },
-        { time: 5.0, type: 'text', message: 'Permanent structural alterations observed.', duration: 3.0 },
-        { time: 8.0, type: 'calm' },
-        { time: 8.0, type: 'heavy_metal', value: 0.0, duration: 2.0 },
-        { time: 8.0, type: 'camera', target: 'global', duration: 2.0 }
+    'T': [ // Transcranial Magnetic Stimulation
+        { time: 0.0, type: 'text', message: 'Targeted Neuro-Stimulation (TMS)', duration: 3.0 },
+        { time: 0.0, type: 'camera', target: 'frontal', duration: 1.0 },
+        { time: 1.0, type: 'tms_distortion', target: 'frontal-lobe', intensity: 2.0, radius: 0.35, duration: 1.5 },
+        { time: 2.0, type: 'tms_distortion', target: 'parietal-lobe', intensity: 2.0, radius: 0.35, duration: 1.5 },
+        { time: 3.0, type: 'tms_distortion', target: 'occipital-lobe', intensity: 2.0, radius: 0.35, duration: 1.5 },
+        { time: 5.0, type: 'camera', target: 'global', duration: 2.0 },
+        { time: 7.0, type: 'calm' }
     ],
 
     'A': [ // Auditory Hallucination
