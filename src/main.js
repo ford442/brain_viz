@@ -193,6 +193,11 @@ async function init() {
         // [Integration Check] Verified `init()` flow is not broken
         // [Issue Checklist] RoutinePlayer integrated with renderer, regionMap, and cameraMap
         // [Neuro-Script Cycle] RoutinePlayer initialized and evaluated
+        // Check Dependencies: ensure RoutinePlayer expects a BrainRenderer instance
+        if (!renderer) {
+            console.error("BrainRenderer instance missing. Cannot initialize RoutinePlayer.");
+            return;
+        }
         const player = new RoutinePlayer(renderer, regionCoordinatesMap, cameraCoordinatesMap);
 
         // Expose player to global scope for external API triggers and debugging
