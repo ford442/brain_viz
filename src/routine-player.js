@@ -458,6 +458,7 @@ export class RoutinePlayer {
         const isDeviceLostNow = this.renderer && this.renderer.device && this.renderer.device.isLost;
         const rendererMissing = !this.renderer || !this.renderer.device || isDeviceLostNow;
 
+        // Safety: If WebGPU context is lost or invalid, the routine player should degrade gracefully (stop ticking).
         if (rendererMissing || isDeviceLost) {
              console.warn("[Routine Engine] WebGPU Context is invalid or lost. Stopping playback gracefully.");
              this.stop();
@@ -470,7 +471,7 @@ export class RoutinePlayer {
              return;
         }
 
-        // Calculate precise delta time using performance.now() to prevent drift
+        // Routine Logic: Ensure the tick() loop uses performance.now() for drift-free timing.
         const now = performance.now();
         // [Neuro-Script Cycle] Verified drift-free performance.now() timing
         let deltaTime = (now - this.lastFrameTime) / 1000.0;
@@ -671,9 +672,19 @@ export class RoutinePlayer {
             }
         } else {
             // [Event Handling Requirement] Fallback extensible switch statement
+            // Event Handling: The executeEvent switch statement must be extensible.
             switch (resolvedEvt.type) {
                 case 'clear_lerps':
                     this.clearLerps();
+                    break;
+                case 'pause':
+                    this.pause();
+                    break;
+                case 'resume':
+                    this.resume();
+                    break;
+                case 'stop':
+                    this.stop();
                     break;
                 default:
                     console.warn(`[Routine Engine] Unrecognized Event Type: '${resolvedEvt.type}'. Extensible switch/registry lacks this handler.`);
