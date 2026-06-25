@@ -131,9 +131,11 @@
 
 ### Phase 18: Routine Logic Refinement
 - [x] **Routine Logic & Extensibility Refactor:** Ensure `tick()` loop uses `performance.now()`, `executeEvent` is extensible, and WebGPU context gracefully degrades.
-- [ ] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
-- [ ] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
+- [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
+- [x] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
+- [ ] **Procedural Serotonin Fluid Sim:** Enhance Serotonin visualizing not just with color shift but with volumetric fluid dynamics.
 ## 🧪 "Dream" Log (Future Concepts)
+* *Idea:* "What if we visualized neurotransmitter binding kinetics using particle physics on the synapses?"
 * *Idea:* "What if we visualized visual cortex processing by simulating progressive edge-detection filters directly on the render pipeline?"
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "What if we visualized visual cortex processing by simulating progressive edge-detection filters directly on the render pipeline?
