@@ -133,8 +133,10 @@
 - [x] **Routine Logic & Extensibility Refactor:** Ensure `tick()` loop uses `performance.now()`, `executeEvent` is extensible, and WebGPU context gracefully degrades.
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
 - [x] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
-- [ ] **Procedural Serotonin Fluid Sim:** Enhance Serotonin visualizing not just with color shift but with volumetric fluid dynamics.
+- [x] **Procedural Serotonin Fluid Sim:** Enhance Serotonin visualizing not just with color shift but with volumetric fluid dynamics.
+
 ## 🧪 "Dream" Log (Future Concepts)
+* *Idea:* "What if prolonged synchronized bursts triggered long-term structural plasticity, permanently altering the connectome layout?"
 * *Idea:* "What if we visualized neurotransmitter binding kinetics using particle physics on the synapses?"
 * *Idea:* "What if we visualized visual cortex processing by simulating progressive edge-detection filters directly on the render pipeline?"
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
