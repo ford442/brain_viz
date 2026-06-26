@@ -107,14 +107,15 @@ export function createDefaultHandlers(player) {
         }
     });
 
-    // [Phase 2] Serotonin Color Shift
+    // [Phase 2] Serotonin Color Shift & Fluid Sim
     handlers.set('serotonin', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
         const duration = evt.duration || 3.0;
 
-        // Gradually shift color toward serotonin representation and speed up flow
+        // Gradually shift color toward serotonin representation, speed up flow, and activate fluid dynamics
         player.startLerp({ key: 'colorShift', value: 0.5 * intensity, duration: 2.0, ease: 'sineInOut' });
         player.startLerp({ key: 'flowSpeed', value: 8.0 * intensity, duration: 2.0, ease: 'cubicIn' });
+        player.startLerp({ key: 'fluidActive', value: 1.5 * intensity, duration: 2.0, ease: 'sineInOut' });
 
         // Smoothly fade back after full surge is reached
         if (duration > 0) {
@@ -126,7 +127,8 @@ export function createDefaultHandlers(player) {
 
                 const revertEvents = [
                     { time: revertTime, type: 'lerp', key: 'colorShift', value: 0.0, duration: duration, ease: ease },
-                    { time: revertTime, type: 'lerp', key: 'flowSpeed', value: 4.0, duration: duration, ease: 'quadOut' }
+                    { time: revertTime, type: 'lerp', key: 'flowSpeed', value: 4.0, duration: duration, ease: 'quadOut' },
+                    { time: revertTime, type: 'lerp', key: 'fluidActive', value: 0.0, duration: duration, ease: ease }
                 ];
 
                 let insertIdx = player.currentEventIndex ?? player.cursor;
