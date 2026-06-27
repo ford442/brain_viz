@@ -17,6 +17,20 @@ export const MINI_ROUTINES = {
         { type: 'text', message: 'Dynamic FOV Shift', duration: 3.0 }
     ],
 
+    'K': [
+        { time: 0.0, type: 'text', message: 'Memory Formation Sequence', duration: 4.0 },
+        { time: 0.0, type: 'camera', target: 'temporal-lobe', duration: 3.0, ease: 'sineInOut' },
+        { time: 1.0, type: 'memory_formation', intensity: 2.5, duration: 4.0 },
+        { time: 5.0, type: 'camera', target: 'global', duration: 3.0, ease: 'sineInOut' }
+    ],
+
+    'Y': [
+        { time: 0.0, type: 'text', message: 'Memory Formation Sequence', duration: 4.0 },
+        { time: 0.0, type: 'camera', target: 'temporal-lobe', duration: 3.0, ease: 'sineInOut' },
+        { time: 1.0, type: 'memory_formation', intensity: 2.5, duration: 4.0 },
+        { time: 5.0, type: 'camera', target: 'global', duration: 3.0, ease: 'sineInOut' }
+    ],
+
     'x': [
         { time: 0.0, type: 'text', message: 'SynaptiX Showcase', duration: 2.0 },
         { time: 0.0, type: 'synaptix', action: 'phantom-sequence', sequence: 'resonance', aiInfluence: 0.68, resonanceThreshold: 0.16, sourceInfo: 'Built-in SynaptiX resonance phantoms' },
@@ -346,6 +360,13 @@ export const MINI_ROUTINES = {
         { time: 3.0, type: 'speed', value: 1.0, duration: 1.0, ease: 'linear' }, // Back to normal
         { time: 4.0, type: 'calm' }
     ],
+    'K': [
+        { time: 0.0, type: 'text', message: 'Memory Formation Sequence', duration: 4.0 },
+        { time: 0.0, type: 'camera', target: 'temporal-lobe', duration: 3.0, ease: 'sineInOut' },
+        { time: 1.0, type: 'memory_formation', intensity: 2.5, duration: 4.0 },
+        { time: 5.0, type: 'camera', target: 'global', duration: 3.0, ease: 'sineInOut' }
+    ],
+
     'x': [ // Advanced Time Modulation Demo
         { time: 0.0, type: 'text', message: 'Advanced Time Dilation: Modulate Speed...', duration: 2.0 },
         { time: 0.0, type: 'style', value: 2 }, // Connectome
