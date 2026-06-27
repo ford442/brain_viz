@@ -1090,6 +1090,22 @@ export function createDefaultHandlers(player) {
         }
     });
 
+
+    // [Phase 19] Memory Formation
+    handlers.set('memory_formation', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 2.0;
+        const duration = evt.duration || 5.0;
+        const ease = evt.ease || 'sineInOut';
+
+        player.startLerp({ key: 'sparkle', value: intensity, duration: duration, ease: ease });
+        player.startLerp({ key: 'growth', value: intensity * 1.5, duration: duration, ease: ease });
+        player.startLerp({ key: 'flowSpeed', value: 5.0 * intensity, duration: duration, ease: ease });
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
+
     // [Phase 14] Dynamic Network Topology
     handlers.set('dynamic_topology', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;

@@ -66,6 +66,7 @@ export function setupLegendPanel() {
                 <div class="legend-item"><span class="legend-key">W</span><span>Sensory Overload</span></div>
                 <div class="legend-item"><span class="legend-key">A</span><span>Auditory Hallucination</span></div>
                 <div class="legend-item"><span class="legend-key">Q</span><span>Neuroplasticity</span></div>
+                <div class="legend-item"><span class="legend-key">K</span><span>Memory Formation</span></div>
                 <div class="legend-item"><span class="legend-key">N</span><span>Myelin Degradation</span></div>
                 <div class="legend-item"><span class="legend-key">*</span><span>Sync Burst</span></div>
                 <div class="legend-item"><span class="legend-key">D</span><span>Dynamic Topology</span></div>
