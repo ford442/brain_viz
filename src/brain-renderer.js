@@ -74,6 +74,7 @@ export class BrainRenderer {
             cortisol: 0.0, // [Phase 5] Cortisol Structural Decay
             myelin_degradation: 0.0, // [V3.1] Connectome myelin loss visualization
             fluidActive: 0.0, // [Phase 6] Procedural Volumetric Fluid Dynamics
+            edgeDetection: 0.0, // Visual Cortex Edge Detection
             // Altitude/Hypoxia Simulation Parameters
             altitude: 0.0, // Altitude in meters (0-8000)
             oxygenLevel: 1.0, // Oxygen saturation (1.0-0.3)
@@ -900,7 +901,8 @@ export class BrainRenderer {
         const OFFSET_TMS_ACTIVE = 71;
         const OFFSET_TMS_CENTER = 72; // vec3 takes 3
         const OFFSET_TMS_PULSE = 75;
-        const OFFSET_PAD3 = 76; // vec3 takes 3
+        const OFFSET_PAD3 = 76;
+        const OFFSET_EDGE_DETECTION = 77;
 
         const RENDER_UNIFORM_FLOAT_COUNT = 80;
         const uData = new Float32Array(RENDER_UNIFORM_FLOAT_COUNT);
@@ -952,6 +954,7 @@ export class BrainRenderer {
         uData[OFFSET_TMS_CENTER + 2] = this.params.tmsCenterZ;
         uData[OFFSET_TMS_PULSE] = this.params.tmsPulse;
         uData[OFFSET_PAD3] = this.params.tmsRadius; // OFFSET_PAD3 is offset 76
+        uData[OFFSET_EDGE_DETECTION] = this.params.edgeDetection;
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         

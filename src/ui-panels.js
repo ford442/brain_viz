@@ -71,6 +71,7 @@ export function setupLegendPanel() {
                 <div class="legend-item"><span class="legend-key">*</span><span>Sync Burst</span></div>
                 <div class="legend-item"><span class="legend-key">D</span><span>Dynamic Topology</span></div>
                 <div class="legend-item"><span class="legend-key">+</span><span>Dendritic Growth</span></div>
+                <div class="legend-item"><span class="legend-key">E</span><span>Visual Cortex Processing</span></div>
             </div>
         </div>
         <div class="legend-section">
