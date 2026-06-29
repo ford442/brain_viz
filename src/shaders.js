@@ -874,6 +874,7 @@ struct FiberVertexOutput {
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var<storage, read> activityTensor: array<f32>;
 @group(0) @binding(2) var<storage, read> aiTensor: array<f32>;
+@group(0) @binding(3) var<storage, read> fiberDirections: array<vec4<f32>>;
 
 fn getAIVoxelValue(worldPos: vec3<f32>) -> f32 {
     let normPos = (worldPos / BRAIN_RANGE) * 0.5 + 0.5;
@@ -896,6 +897,45 @@ fn sampleSmoothedAIVoxelValue(worldPos: vec3<f32>) -> f32 {
         getAIVoxelValue(worldPos + vec3<f32>(0.0, 0.0,  step)) +
         getAIVoxelValue(worldPos + vec3<f32>(0.0, 0.0, -step));
     return (center * 0.5) + (neighbors * (0.5 / 6.0));
+}
+
+fn getFiberAffinity(index: u32, slot: u32) -> vec4<f32> {
+    return fiberDirections[index * 3u + slot];
+}
+
+fn worldToIndex(worldPosition: vec3<f32>) -> u32 {
+    let normalized = clamp((worldPosition / BRAIN_RANGE) * 0.5 + 0.5, vec3<f32>(0.0), vec3<f32>(0.99999));
+    let x = u32(normalized.x * f32(VOXEL_DIM));
+    let y = u32(normalized.y * f32(VOXEL_DIM));
+    let z = u32(normalized.z * f32(VOXEL_DIM));
+    return z * VOXEL_DIM * VOXEL_DIM + y * VOXEL_DIM + x;
+}
+
+fn sampleFiberCoupledSignal(worldPos: vec3<f32>, tangent: vec3<f32>, isAI: bool) -> vec3<f32> {
+    let idx = worldToIndex(worldPos);
+    let step = (BRAIN_RANGE / f32(VOXEL_DIM)) * 0.95;
+    var directional = 0.0;
+    var coverage = 0.0;
+    var alignment = 0.0;
+    for (var slot = 0u; slot < 3u; slot = slot + 1u) {
+        let aff = getFiberAffinity(idx, slot);
+        if (aff.w < 0.01) { continue; }
+        let axis = normalize(aff.xyz + vec3<f32>(0.0001, 0.0001, 0.0001));
+        let align = abs(dot(axis, tangent));
+        let forward = select(-axis, axis, dot(axis, tangent) >= 0.0);
+        let tractSample =
+            sampleSmoothedVoxelValue(worldPos + forward * step) * 0.55 +
+            sampleSmoothedVoxelValue(worldPos - forward * step * 0.65) * 0.25 +
+            sampleSmoothedVoxelValue(worldPos) * 0.20;
+        directional = directional + tractSample * aff.w * mix(0.55, 1.25, align);
+        coverage = coverage + aff.w;
+        alignment = max(alignment, align * aff.w);
+    }
+    if (coverage > 0.0) {
+        directional = directional / coverage;
+    }
+    let local = select(sampleSmoothedVoxelValue(worldPos), sampleSmoothedAIVoxelValue(worldPos), isAI);
+    return vec3<f32>(mix(local, directional, clamp(uniforms.fiberCoupling, 0.0, 1.0)), clamp(coverage, 0.0, 1.0), clamp(alignment, 0.0, 1.0));
 }
 
 fn calculateSignalFlow(startPos: vec3<f32>, endPos: vec3<f32>, time: f32, speed: f32, segmentPhase: f32, flowBias: f32, myelin: f32, radius: f32, bundleId: f32) -> f32 {
