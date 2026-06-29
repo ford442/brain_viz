@@ -108,6 +108,19 @@ export function createDefaultHandlers(player) {
     });
 
     // [Phase 2] Serotonin Color Shift & Fluid Sim
+
+    handlers.set('visual_cortex_filter', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const duration = evt.duration || 2.0;
+        const ease = evt.ease || 'sineInOut';
+
+        player.startLerp({ key: 'edgeDetection', value: intensity, duration: duration, ease: ease });
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
+
     handlers.set('serotonin', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
         const duration = evt.duration || 3.0;

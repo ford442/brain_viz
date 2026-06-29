@@ -253,7 +253,8 @@ struct Uniforms {
     tmsCenter: vec3<f32>,
     tmsPulse: f32,
     tmsRadius: f32,
-    pad2: vec2<f32>,
+    edgeDetection: f32,
+    pad2: f32,
 }
 
 struct VertexInput {
@@ -513,7 +514,8 @@ struct Uniforms {
     tmsCenter: vec3<f32>,
     tmsPulse: f32,
     tmsRadius: f32,
-    pad2: vec2<f32>,
+    edgeDetection: f32,
+    pad2: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var<storage, read> activityTensor: array<f32>;
@@ -843,7 +845,8 @@ struct Uniforms {
     tmsCenter: vec3<f32>,
     tmsPulse: f32,
     tmsRadius: f32,
-    pad2: vec2<f32>,
+    edgeDetection: f32,
+    pad2: f32,
 }
 
 struct FiberVertexInput {
@@ -1051,7 +1054,8 @@ struct Uniforms {
     tmsCenter: vec3<f32>,
     tmsPulse: f32,
     tmsRadius: f32,
-    pad2: vec2<f32>,
+    edgeDetection: f32,
+    pad2: f32,
 }
 
 struct FiberFragmentInput {
@@ -1178,7 +1182,8 @@ struct Uniforms {
     tmsCenter: vec3<f32>,
     tmsPulse: f32,
     tmsRadius: f32,
-    pad2: vec2<f32>,
+    edgeDetection: f32,
+    pad2: f32,
 }
 
 struct VertexInput {
@@ -1401,7 +1406,8 @@ struct Uniforms {
     tmsCenter: vec3<f32>,
     tmsPulse: f32,
     tmsRadius: f32,
-    pad2: vec2<f32>,
+    edgeDetection: f32,
+    pad2: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
@@ -1477,7 +1483,8 @@ struct Uniforms {
     tmsCenter: vec3<f32>,
     tmsPulse: f32,
     tmsRadius: f32,
-    pad2: vec2<f32>,
+    edgeDetection: f32,
+    pad2: f32,
 }
 
 struct SparkInput {
@@ -1650,7 +1657,8 @@ struct Uniforms {
     tmsCenter: vec3<f32>,
     tmsPulse: f32,
     tmsRadius: f32,
-    pad2: vec2<f32>,
+    edgeDetection: f32,
+    pad2: f32,
 }
 
 struct SparkInput {
@@ -2033,7 +2041,8 @@ struct Uniforms {
     tmsCenter: vec3<f32>,
     tmsPulse: f32,
     tmsRadius: f32,
-    pad2: vec2<f32>,
+    edgeDetection: f32,
+    pad2: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var tDiffuse: texture_2d<f32>;
@@ -2119,6 +2128,30 @@ fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
         color += (noise - 0.5) * uniforms.grain;
     }
 
+    // Visual Cortex Edge Detection Filter
+    if (uniforms.edgeDetection > 0.0) {
+        let stepX = 1.0 / vec2<f32>(textureDimensions(tDiffuse)).x;
+        let stepY = 1.0 / vec2<f32>(textureDimensions(tDiffuse)).y;
+
+        let c00 = textureSample(tDiffuse, sDiffuse, uv + vec2<f32>(-stepX, -stepY)).rgb;
+        let c01 = textureSample(tDiffuse, sDiffuse, uv + vec2<f32>(0.0, -stepY)).rgb;
+        let c02 = textureSample(tDiffuse, sDiffuse, uv + vec2<f32>(stepX, -stepY)).rgb;
+        let c10 = textureSample(tDiffuse, sDiffuse, uv + vec2<f32>(-stepX, 0.0)).rgb;
+        let c12 = textureSample(tDiffuse, sDiffuse, uv + vec2<f32>(stepX, 0.0)).rgb;
+        let c20 = textureSample(tDiffuse, sDiffuse, uv + vec2<f32>(-stepX, stepY)).rgb;
+        let c21 = textureSample(tDiffuse, sDiffuse, uv + vec2<f32>(0.0, stepY)).rgb;
+        let c22 = textureSample(tDiffuse, sDiffuse, uv + vec2<f32>(stepX, stepY)).rgb;
+
+        let gx = -1.0 * c00 + 1.0 * c02 - 2.0 * c10 + 2.0 * c12 - 1.0 * c20 + 1.0 * c22;
+        let gy = -1.0 * c00 - 2.0 * c01 - 1.0 * c02 + 1.0 * c20 + 2.0 * c21 + 1.0 * c22;
+
+        let edge = length(gx) + length(gy);
+        let edgeColor = vec3<f32>(edge);
+
+        // Blend based on intensity
+        color = mix(color, edgeColor * vec3<f32>(0.5, 1.0, 0.5) + color * 0.2, uniforms.edgeDetection);
+    }
+
     return vec4<f32>(color, 1.0);
 }
 `;
@@ -2162,7 +2195,8 @@ struct Uniforms {
     tmsCenter: vec3<f32>,
     tmsPulse: f32,
     tmsRadius: f32,
-    pad2: vec2<f32>,
+    edgeDetection: f32,
+    pad2: f32,
 }
 
 struct VertexInput {
@@ -2367,7 +2401,8 @@ struct Uniforms {
     tmsCenter: vec3<f32>,
     tmsPulse: f32,
     tmsRadius: f32,
-    pad2: vec2<f32>,
+    edgeDetection: f32,
+    pad2: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
