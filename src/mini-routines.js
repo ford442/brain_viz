@@ -57,9 +57,13 @@ export const MINI_ROUTINES = {
         { time: 4.9, type: 'camera', target: 'close-up', duration: 1.8 },
         { time: 5.4, type: 'text', message: 'Human and synthetic activations converge.', duration: 2.2 }
     ],
-    'X': [
-        { time: 0.0, type: 'call', routine: 'x' }
+    'X': [ // Marker Event Showcase
+        { time: 0.0, type: 'text', message: 'Marker Event Test', duration: 2.0 },
+        { time: 0.5, type: 'marker', label: 'Marker Alpha' },
+        { time: 1.5, type: 'marker', label: 'Marker Beta' },
+        { time: 2.5, type: 'marker', label: 'Marker Gamma' }
     ],
+
     'H': [ // Heartbeat Pulse
         { time: 0.0, type: 'text', message: 'Heartbeat Simulation', duration: 3.0 },
         { time: 0.0, type: 'style', value: 2 }, // Connectome style for visible pulses
