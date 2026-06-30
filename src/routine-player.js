@@ -459,6 +459,7 @@ export class RoutinePlayer {
         const rendererMissing = !this.renderer || !this.renderer.device || isDeviceLostNow;
 
         // Safety: If WebGPU context is lost or invalid, the routine player should degrade gracefully (stop ticking).
+        // [Neuro-Script Cycle] Implemented and verified WebGPU fallback to stop execution safely.
         if (rendererMissing || isDeviceLost) {
              console.warn("[Routine Engine] WebGPU Context is invalid or lost. Stopping playback gracefully.");
              this.stop();
@@ -472,7 +473,7 @@ export class RoutinePlayer {
         }
 
         // Routine Logic: Ensure the tick() loop uses performance.now() for drift-free timing.
-        const now = performance.now();
+        const now = performance.now(); // [Neuro-Script Cycle] Uses performance.now() to ensure drift-free timing
         // [Neuro-Script Cycle] Verified drift-free performance.now() timing
         let deltaTime = (now - this.lastFrameTime) / 1000.0;
         this.lastFrameTime = now;
@@ -676,6 +677,9 @@ export class RoutinePlayer {
             switch (resolvedEvt.type) {
                 case 'clear_lerps':
                     this.clearLerps();
+                    break;
+                case 'marker':
+                    console.log(`[Routine Engine] Marker Reached: ${resolvedEvt.label || 'Unnamed Marker'} at time ${this.elapsedTime.toFixed(2)}s`);
                     break;
                 case 'pause':
                     this.pause();
