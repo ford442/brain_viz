@@ -27,15 +27,15 @@ const HELPERS = `
     // [Neuro-Weaver] Defines anatomical zones: Frontal, Occipital, Temporal, Parietal
     // With regional sensitivity to hypoxia
     fn getRegionPhysics(worldPosition: vec3<f32>, style: f32) -> vec3<f32> {
-        var decay = 0.96;
-        var diffusion = 0.1;
+        var decay = params.neuroPhysics.x; // Default from profile
+        var diffusion = params.neuroPhysics.y;
         var flowBias = 0.0;
         var oxygenSensitivity = 1.0; // Regional vulnerability to hypoxia
 
         // Frontal Lobe: High retention for complex thought, MOST vulnerable to hypoxia
         if (worldPosition.z > 0.5) {
-            decay = 0.998; // [Neuro-Weaver] V2.6: Hyper-retention for deep thought
-            diffusion = 0.15;
+            decay = mix(decay, 0.998, params.neuroRetention.x);
+            diffusion = mix(diffusion, 0.15, params.neuroRetention.x);
             flowBias = -1.0;
             oxygenSensitivity = 1.8; // Executive function degrades first
         }
@@ -43,50 +43,22 @@ const HELPERS = `
         // [Scientific Fix] Occipital is NOT particularly resistant - it's at terminal
         // PCA branches (watershed zone) and can be vulnerable to hypoxia
         else if (worldPosition.z < -0.5) {
-            decay = 0.92;
-            diffusion = 0.04;
+            decay = mix(decay, 0.92, params.neuroRetention.y);
+            diffusion = mix(diffusion, 0.04, params.neuroRetention.y);
             oxygenSensitivity = 1.0; // Neutral - not resistant, at watershed zone
         }
-        // Temporal Lobe: Auditory/Memory, memory centers vulnerable
-        else if (abs(worldPosition.x) > 0.8) {
-            decay = 0.95;
-            oxygenSensitivity = 1.2; // Memory vulnerable to hypoxia
-        }
-        // Parietal Lobe: Sensory integration, baseline sensitivity
-        else if (worldPosition.y > 0.6) {
-            decay = 0.94;
-            diffusion = 0.12;
-            oxygenSensitivity = 1.0;
+        // Temporal / Parietal logic...
+        else if (abs(worldPosition.x) > 0.5) {
+            decay = mix(decay, 0.95, params.neuroRetention.z); // Using temporal bias
+            diffusion = mix(diffusion, 0.08, params.neuroRetention.z);
+            flowBias = 0.5;
+            oxygenSensitivity = 1.2;
+        } else {
+            decay = mix(decay, 0.96, params.neuroRetention.w); // Parietal/center bias
         }
 
-        // Cyber Mode (Style 1): Digital signal logic
-        if (abs(style - 1.0) < 0.1) {
-            diffusion = 0.05;
-            decay = 0.92;
-            flowBias = 0.0;
-        }
-
-        // Store sensitivity multiplier in flowBias for later use
-        // (Will be applied when hypoxia physics is calculated)
         return vec3<f32>(decay, diffusion, flowBias);
     }
-
-    // [Neuro-Weaver] V2.6 Helper: Heatmap Color Ramp
-    fn getHeatmapColor(activity: f32) -> vec3<f32> {
-        // Thermal Gradient: Blue -> Green/Cyan -> Neon Orange
-        let c1 = vec3<f32>(0.0, 0.0, 0.6); // Deeper Blue
-        let c2 = vec3<f32>(0.0, 0.9, 0.5); // Brighter Teal
-        let c3 = vec3<f32>(1.0, 0.4, 0.0); // Neon Orange
-
-        if (activity < 0.5) {
-            return mix(c1, c2, activity * 2.0);
-        } else {
-            return mix(c2, c3, (activity - 0.5) * 2.0);
-        }
-    }
-
-    // Hypoxia Physics: Returns (decayModifier, diffusionModifier, frequencyBoost)
-    // Modulates neural signals based on oxygen availability and metabolic stress
     fn getHypoxiaPhysics(hypoxiaStress: f32, metabolicRate: f32, mitochondrialFunc: f32) -> vec3<f32> {
         // Decay increases with metabolic demand but limited by mitochondrial function
         // Signals burn out faster from ATP depletion
@@ -254,7 +226,8 @@ struct Uniforms {
     tmsPulse: f32,
     tmsRadius: f32,
     edgeDetection: f32,
-    pad2: f32,
+    pulseSaturation: f32,
+    trailLength: f32,
 }
 
 struct VertexInput {
@@ -515,7 +488,8 @@ struct Uniforms {
     tmsPulse: f32,
     tmsRadius: f32,
     edgeDetection: f32,
-    pad2: f32,
+    pulseSaturation: f32,
+    trailLength: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var<storage, read> activityTensor: array<f32>;
@@ -846,7 +820,8 @@ struct Uniforms {
     tmsPulse: f32,
     tmsRadius: f32,
     edgeDetection: f32,
-    pad2: f32,
+    pulseSaturation: f32,
+    trailLength: f32,
 }
 
 struct FiberVertexInput {
@@ -1095,7 +1070,8 @@ struct Uniforms {
     tmsPulse: f32,
     tmsRadius: f32,
     edgeDetection: f32,
-    pad2: f32,
+    pulseSaturation: f32,
+    trailLength: f32,
 }
 
 struct FiberFragmentInput {
@@ -1223,7 +1199,8 @@ struct Uniforms {
     tmsPulse: f32,
     tmsRadius: f32,
     edgeDetection: f32,
-    pad2: f32,
+    pulseSaturation: f32,
+    trailLength: f32,
 }
 
 struct VertexInput {
@@ -1447,7 +1424,8 @@ struct Uniforms {
     tmsPulse: f32,
     tmsRadius: f32,
     edgeDetection: f32,
-    pad2: f32,
+    pulseSaturation: f32,
+    trailLength: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
@@ -1524,7 +1502,8 @@ struct Uniforms {
     tmsPulse: f32,
     tmsRadius: f32,
     edgeDetection: f32,
-    pad2: f32,
+    pulseSaturation: f32,
+    trailLength: f32,
 }
 
 struct SparkInput {
@@ -1608,7 +1587,7 @@ fn main(input: SparkInput) -> SparkOutput {
     let localActivity = sampleSmoothedVoxelValue(anchor);
     let pulseSpeed = uniforms.flowSpeed * mix(0.55, 1.25, localActivity + uniforms.fluidActive * 0.2);
     let travel = (fract(uniforms.time * pulseSpeed * speedMul + input.anchorPhase.w + bundleId * 0.071) - 0.5);
-    let trailScale = mix(0.10, 0.34, localActivity) * mix(0.8, 1.25, strength);
+    let trailScale = mix(0.10, 0.34, localActivity) * mix(0.8, 1.25, strength) * uniforms.trailLength;
     let center = anchor + tangent * (travel * trailScale);
 
     let cameraPos = vec3<f32>(0.0, 0.0, uniforms.zoom);
@@ -1698,7 +1677,8 @@ struct Uniforms {
     tmsPulse: f32,
     tmsRadius: f32,
     edgeDetection: f32,
-    pad2: f32,
+    pulseSaturation: f32,
+    trailLength: f32,
 }
 
 struct SparkInput {
@@ -1757,6 +1737,10 @@ struct TensorParams {
     synaptiXActive: f32,
     // [V3.2] Fiber-volume coupling (offset 100)
     fiberCoupling: f32,
+    pad3: vec2<f32>,         // offset 104 -> padding to 112 (vec2 has 8-byte alignment)
+    // [Phase 21] Neuromodulator physics (offset 112)
+    neuroPhysics: vec4<f32>, // x=decayRate, y=diffusionRate, z=pulseSaturation, w=trailLength
+    neuroRetention: vec4<f32>, // x=frontal, y=occipital, z=temporal, w=parietal (offset 128)
 }
 
 @group(0) @binding(0) var<storage, read_write> activityTensor: array<f32>;
@@ -2082,7 +2066,8 @@ struct Uniforms {
     tmsPulse: f32,
     tmsRadius: f32,
     edgeDetection: f32,
-    pad2: f32,
+    pulseSaturation: f32,
+    trailLength: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var tDiffuse: texture_2d<f32>;
@@ -2236,7 +2221,8 @@ struct Uniforms {
     tmsPulse: f32,
     tmsRadius: f32,
     edgeDetection: f32,
-    pad2: f32,
+    pulseSaturation: f32,
+    trailLength: f32,
 }
 
 struct VertexInput {
@@ -2331,10 +2317,10 @@ fn main(input: VertexInput) -> VertexOutput {
     let densityScale = 0.55 + min(uniforms.pointCloudDensity, 2.0) * 0.45;
     var scale = baseScale * densityScale;
     let peakActivity = max(activity, aiActivity * 0.95);
-    let firing = peakActivity * 2.7;
+    let firing = peakActivity * 2.7 * uniforms.pulseSaturation;
     let firingSpike = smoothstep(0.48, 0.98, peakActivity);
-    let pulse = 1.0 + (0.18 + firingSpike * 0.52) * sin(uniforms.time * (8.0 + typeId) + phase) * peakActivity;
-    scale *= (1.0 + firing + firingSpike * 1.2) * pulse;
+    let pulse = 1.0 + (0.18 + firingSpike * 0.52 * uniforms.pulseSaturation) * sin(uniforms.time * (8.0 + typeId) + phase) * peakActivity;
+    scale *= (1.0 + firing + firingSpike * 1.2 * uniforms.pulseSaturation) * pulse;
 
     if (typeId > 4.5) {
         scale *= 0.78;
@@ -2442,7 +2428,8 @@ struct Uniforms {
     tmsPulse: f32,
     tmsRadius: f32,
     edgeDetection: f32,
-    pad2: f32,
+    pulseSaturation: f32,
+    trailLength: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 

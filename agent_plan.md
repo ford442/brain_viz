@@ -144,7 +144,18 @@
 ### Phase 20: Render Pipeline Innovations
 - [x] **Visual Cortex Edge Detection Filter:** Simulate visual cortex processing by simulating progressive edge-detection filters directly on the render pipeline.
 
+
+### Phase 21: Custom Neuromodulator UI
+- [x] **Data Model & Profile Definitions:** Create `src/neuromodulators.js` and define 5 built-in profiles (Dopamine, Serotonin, Acetylcholine, GABA, Custom).
+- [x] **UI Panel Extension:** Add a new "Neuromodulator" tab in `ui-panels.js` with sliders for key parameters and "Save as Custom" support.
+- [x] **Compute Shader Integration:** Expose the active profile via a uniform/storage buffer and modify the diffusion/decay compute pass.
+- [x] **Routine / Marker Event Integration:** Extend the `neuromodulator` event system so routines can change profiles dynamically. Update demo routines.
+- [x] **Visual Feedback:** Subtle UI accent color matching the profile's signature color.
+- [x] **Persistence & Export:** Save profile state in `localStorage`.
+- [x] **Documentation & Legend Update:** Update `README.md`, in-app help, and add tooltips to parameters.
+
 ## 🧪 "Dream" Log (Future Concepts)
+
 * *Idea:* "What if we allowed users to configure a custom neuromodulator in the UI?"
 * *Idea:* "What if prolonged synchronized bursts triggered long-term structural plasticity, permanently altering the connectome layout?"
 * *Idea:* "What if we visualized neurotransmitter binding kinetics using particle physics on the synapses?"

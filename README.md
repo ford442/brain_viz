@@ -83,6 +83,14 @@ Use the WebGL2 path when you need a visually inspectable reference renderer:
 
 The WebGL2 path shares the same geometry generator, tensor buffers, camera state, style controls, and SynaptiX inputs. It is intentionally simpler than the WebGPU renderer: it approximates compute-driven volumetrics on the CPU so the scene remains debuggable in environments where WebGPU is hard to inspect automatically.
 
+## Custom Neuromodulator UI
+In Phase 21, we introduced a live-editable neuromodulator interface. Located in the right-side control panel, you can now toggle between predefined chemical profiles (Dopamine, Serotonin, Acetylcholine, GABA) or create your own custom profile.
+These parameters directly map to WebGPU compute uniforms and affect:
+- **Diffusion Rate**: How fast signal spreads between voxels.
+- **Decay Rate**: How long activity persists.
+- **Pulse Saturation & Trail Length**: Visual properties of the signaling.
+- **Regional Retention Biases**: Allow defining lobe-specific biases, mimicking specific functional states like high frontal-lobe retention during a dopamine flow state.
+
 ## SynaptiX Notes
 
 - Human activity lives in `tensorBuffer`; AI activity lives in `aiTensorBuffer`.

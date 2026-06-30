@@ -1273,5 +1273,17 @@ export function createDefaultHandlers(player) {
         }
     });
 
+
+    // [Phase 21] Neuromodulator Switch
+    handlers.set('neuromodulator', (evt) => {
+        const profileKey = evt.profile;
+        if (profileKey && window.updateNeuromodulatorUI) {
+            window.updateNeuromodulatorUI(profileKey);
+        }
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: evt.duration || 3.0 });
+        }
+    });
+
     return handlers;
 }
