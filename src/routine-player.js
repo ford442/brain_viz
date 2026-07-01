@@ -784,6 +784,20 @@ export class RoutinePlayer {
             loadRoutine: (data) => this.loadRoutine(data),
             generateProceduralRoutine: (duration, intensity) => this.generateProceduralRoutine(duration, intensity),
             clearLerps: () => this.clearLerps(),
+            setNeuromodulatorParams: (profile) => {
+                if (this.renderer) {
+                    this.renderer.setParams({
+                        decayRate: profile.decayRate,
+                        diffusionRate: profile.diffusionRate,
+                        pulseSaturation: profile.pulseSaturation,
+                        trailLength: profile.trailLength,
+                        retentionBiasX: profile.retentionBias.frontal,
+                        retentionBiasY: profile.retentionBias.occipital,
+                        retentionBiasZ: profile.retentionBias.temporal,
+                        retentionBiasW: profile.retentionBias.parietal
+                    });
+                }
+            },
             injectRegion: (target, intensity = 1.0, duration = 1.0) => {
                 this.executeEvent({ type: 'stimulus', target: target, intensity: intensity, duration: duration });
                 // Smooth visual feedback for explicit injections

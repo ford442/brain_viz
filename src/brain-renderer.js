@@ -10,7 +10,7 @@ const UNIFORM_BUFFER_ALIGNMENT = 256;
 const RENDER_UNIFORM_BUFFER_SIZE = Math.ceil(
     (80 * Float32Array.BYTES_PER_ELEMENT) / UNIFORM_BUFFER_ALIGNMENT
 ) * UNIFORM_BUFFER_ALIGNMENT;
-const COMPUTE_UNIFORM_BUFFER_SIZE = 112;
+const COMPUTE_UNIFORM_BUFFER_SIZE = 144;
 
 export class BrainRenderer {
     constructor(canvas) {
@@ -58,6 +58,17 @@ export class BrainRenderer {
             sliceZ: 2.0,  // Slice plane Z value (Starts outside bounds)
             flowSpeed: 4.0, // V2.3: Signal Speed
             colorShift: 0.0, // [Phase 5] Serotonin Color Shift
+
+            // [Phase 21] Neuromodulator physics defaults
+            decayRate: 0.96,
+            diffusionRate: 0.1,
+            pulseSaturation: 1.0,
+            trailLength: 1.0,
+            retentionBiasX: 0.5,
+            retentionBiasY: 0.0,
+            retentionBiasZ: 0.2,
+            retentionBiasW: 0.2,
+
             sparkle: 0.0, // [Phase 5] Synaptic Sparkles
             growth: 1.0, // [Phase 6] Dendritic Growth (0.0 - 1.0)
             shake: 0.0, // [Phase 2] Camera Shake Intensity (Trauma/Panic)
@@ -903,6 +914,8 @@ export class BrainRenderer {
         const OFFSET_TMS_PULSE = 75;
         const OFFSET_PAD3 = 76;
         const OFFSET_EDGE_DETECTION = 77;
+        const OFFSET_PULSE_SATURATION = 78;
+        const OFFSET_TRAIL_LENGTH = 79;
 
         const RENDER_UNIFORM_FLOAT_COUNT = 80;
         const uData = new Float32Array(RENDER_UNIFORM_FLOAT_COUNT);
@@ -954,7 +967,9 @@ export class BrainRenderer {
         uData[OFFSET_TMS_CENTER + 2] = this.params.tmsCenterZ;
         uData[OFFSET_TMS_PULSE] = this.params.tmsPulse;
         uData[OFFSET_PAD3] = this.params.tmsRadius; // OFFSET_PAD3 is offset 76
-        uData[OFFSET_EDGE_DETECTION] = this.params.edgeDetection;
+        uData[OFFSET_EDGE_DETECTION] = this.params.edgeDetection || 0.0;
+        uData[OFFSET_PULSE_SATURATION] = this.params.pulseSaturation !== undefined ? this.params.pulseSaturation : 1.0;
+        uData[OFFSET_TRAIL_LENGTH] = this.params.trailLength !== undefined ? this.params.trailLength : 1.0;
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         
@@ -1004,6 +1019,17 @@ export class BrainRenderer {
 
         // [V3.2] Fiber-volume coupling strength (offset 100)
         dv.setFloat32(100, this.params.fiberCoupling ?? 0.5, true);
+
+        // [Phase 21] Neuromodulator physics (offset 112 & 128)
+        dv.setFloat32(112, this.params.decayRate !== undefined ? this.params.decayRate : 0.96, true);
+        dv.setFloat32(116, this.params.diffusionRate !== undefined ? this.params.diffusionRate : 0.1, true);
+        dv.setFloat32(120, this.params.pulseSaturation !== undefined ? this.params.pulseSaturation : 1.0, true);
+        dv.setFloat32(124, this.params.trailLength !== undefined ? this.params.trailLength : 1.0, true);
+
+        dv.setFloat32(128, this.params.retentionBiasX !== undefined ? this.params.retentionBiasX : 0.5, true); // frontal
+        dv.setFloat32(132, this.params.retentionBiasY !== undefined ? this.params.retentionBiasY : 0.0, true); // occipital
+        dv.setFloat32(136, this.params.retentionBiasZ !== undefined ? this.params.retentionBiasZ : 0.2, true); // temporal
+        dv.setFloat32(140, this.params.retentionBiasW !== undefined ? this.params.retentionBiasW : 0.2, true); // parietal
 
         // Upload to GPU
         this.device.queue.writeBuffer(this.computeUniformBuffer, 0, cBuf);

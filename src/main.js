@@ -8,7 +8,7 @@ import { TensorPlayer } from './tensor-player.js'; // [BCI]
 import { SynaptiXEngine } from './synaptix-engine.js';
 import { MINI_ROUTINES } from './mini-routines.js';
 import { FilterUIOverlay, initUIControls, initDirectorTools, initTooltips, flashButton, glowRegionButtons, initRangeTooltips } from './ui-utils.js';
-import { setupLegendPanel, setupOverlays, setupRoutineTransport, setupBciPanel } from './ui-panels.js';
+import { setupLegendPanel, setupOverlays, setupRoutineTransport, setupBciPanel, setupNeuromodulatorPanel } from './ui-panels.js';
 import { setupModeSelector } from './ui-mode-selector.js';
 
 async function init() {
@@ -428,6 +428,7 @@ async function init() {
         const synaptixEngine = new SynaptiXEngine(renderer);
         renderer.synaptixEngine = synaptixEngine;
         setupBciPanel(renderer, controls, tensorPlayer);
+        setupNeuromodulatorPanel(renderer, controls);
         const styleSynaptix = document.getElementById('style-mode-synaptix');
         const synaptixSourceStatus = document.getElementById('synaptix-source-status');
         const synaptixShowcaseButton = document.getElementById('btn-synaptix-showcase');
