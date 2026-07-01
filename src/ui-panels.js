@@ -89,6 +89,7 @@ export function setupLegendPanel() {
                 <div class="legend-item"><span class="legend-key">V</span><span>Map Fly-Through</span></div>
                 <div class="legend-item"><span class="legend-key">O</span><span>Dynamic FOV</span></div>
                 <div class="legend-item"><span class="legend-key">Z</span><span>Clip Reveal</span></div>
+                <div class="legend-item"><span class="legend-key">X</span><span>Marker Event</span></div>
                 <div class="legend-item"><span class="legend-key">L</span><span>Lobe Tour</span></div>
                 <div class="legend-item"><span class="legend-key">i</span><span>Interactive</span></div>
             </div>

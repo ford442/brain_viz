@@ -79,6 +79,7 @@
 - [x] **Heartbeat Simulation:** Implement a heartbeat event type that triggers rhythmic cardiovascular pulses.
 - [x] **Respiration Simulation:** Implement a respiration event type that links to heartbeat and modulates flow speed and overall scene intensity.
 - [x] **Interactive Timeline Editor:** Created a visual, drag-and-drop timeline editor for sequence building instead of writing JSON directly.
+- [x] **Routine Markers:** Add a 'marker' event type to log specific points in the timeline for external syncing.
 ### Phase 3: "Brain DJ" Mode (Live Performance)
 - [x] **Dynamic Environment Reactions:** Allow respiration rate to dynamically react to visual stimuli or events.
 - [x] **Keyboard Triggers:** Bind number keys (1-9) to specific mini-routines (e.g., Press '1' for "Sudden Surprise", '2' for "Calm Down").
@@ -153,6 +154,9 @@
 - [x] **Visual Feedback:** Subtle UI accent color matching the profile's signature color.
 - [x] **Persistence & Export:** Save profile state in `localStorage`.
 - [x] **Documentation & Legend Update:** Update `README.md`, in-app help, and add tooltips to parameters.
+### Phase 21: Routine Engine Extensibility
+- [ ] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
+- [ ] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
 
 ## 🧪 "Dream" Log (Future Concepts)
 
@@ -255,6 +259,7 @@
 * *Idea:* "What if we visualized Dopamine pathways as glowing trails?"
 * *Idea:* "Region Injection API - Enable scripted or click-based localized energy injection at specific anatomical coordinates within the tensor volume."
 * *Idea:* "What if we allowed users to 'paint' energy directly onto the tensor volume using a continuous drag gesture?"
+* *Idea:* "What if we visualized marker events as floating text particles within the tensor volume?"
 ## 📜 Changelog
 * [2026-06-22] - Completed Phase 17 (Advanced Routine Control). Verified `clearLerps()` functionality and implemented Transcranial Magnetic Stimulation (TMS) spatial distortions via `tmsActive` uniform and `tms_distortion` events.
 * [2026-06-12] - Completed Phase 13 (Region Injection API). Implemented `injectRegion` on visualizer API and wired click-based energy injection in `main.js`. Added 'paint energy drag gesture' idea to Dream Log.
