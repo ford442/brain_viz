@@ -90,6 +90,21 @@ export function createDefaultHandlers(player) {
 
         player.renderer.triggerTMS(coords, intensity, radius, duration);
     };
+    // [Phase 2.5] Synaptic Binding Kinetics
+    handlers.set('synapse_kinetics', (evt) => {
+        const duration = evt.duration || 2.0;
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const ease = evt.ease || 'quadOut';
+
+        // Modulate sparkle for particle effect and saturation for kinetic energy
+        player.startLerp({ key: 'sparkle', value: intensity * 1.5, duration: duration, ease: ease });
+        player.startLerp({ key: 'pulseSaturation', value: 1.0 + (intensity * 0.5), duration: duration, ease: ease });
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
+
     handlers.set('tms_distortion', tmsHandler);
     handlers.set('apply_tms', tmsHandler);
 
