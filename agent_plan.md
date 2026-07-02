@@ -155,10 +155,16 @@
 - [x] **Persistence & Export:** Save profile state in `localStorage`.
 - [x] **Documentation & Legend Update:** Update `README.md`, in-app help, and add tooltips to parameters.
 ### Phase 21: Routine Engine Extensibility
-- [ ] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
-- [ ] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
+- [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
+- [x] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
+
+### Phase 22: Advanced Interpolation and Extensibility
+- [ ] **Interpolation Easing Curves:** Implement cubic/sine easing curves for spline interpolation.
+- [ ] **Dynamic Camera Coordinate Region Mapping:** Allow runtime addition of named camera regions.
 
 ## 🧪 "Dream" Log (Future Concepts)
+
+*Idea:* "What if we mapped real-time galvanic skin response to mesh structural noise?"
 
 * *Idea:* "What if we allowed users to configure a custom neuromodulator in the UI?"
 * *Idea:* "What if prolonged synchronized bursts triggered long-term structural plasticity, permanently altering the connectome layout?"
