@@ -4,6 +4,7 @@
 **Velocity:** 1 Feature per Cycle
 ---
 ## 🧠 Strategic Roadmap
+**Neuro-Script Implementation Cycle — Round 2**
 ### Phase 1: The Sequencing Core (Routine Engine)
 - [x] **Routine Player Module:** Implement `routine-player.js` to handle time-based event execution (Stimulus, Style Change, Parameter Tweaks). [x] RoutinePlayer + main.js integration (already existed and was enhanced in prior work)
 - [x] **Main Integration:** Refactor `main.js` to initialize `RoutinePlayer` and expose it to the UI.
@@ -154,6 +155,9 @@
 - [x] **Visual Feedback:** Subtle UI accent color matching the profile's signature color.
 - [x] **Persistence & Export:** Save profile state in `localStorage`.
 - [x] **Documentation & Legend Update:** Update `README.md`, in-app help, and add tooltips to parameters.
+### Phase 2.5: Dream Implementations
+- [x] **Binding Kinetics:** Implemented a visual effect simulating neurotransmitter binding kinetics using particle physics parameters on the synapses.
+
 ### Phase 21: Routine Engine Extensibility
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
 - [x] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
@@ -164,6 +168,7 @@
 
 ## 🧪 "Dream" Log (Future Concepts)
 
+* *Idea:* "What if we visualized the brain's baseline shake and glitch intensity mapped directly to a user's real-time heart rate variability?"
 *Idea:* "What if we mapped real-time galvanic skin response to mesh structural noise?"
 
 * *Idea:* "What if we allowed users to configure a custom neuromodulator in the UI?"
