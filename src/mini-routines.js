@@ -424,12 +424,15 @@ export const MINI_ROUTINES = {
         { time: 20.0, type: 'camera', target: 'temporal-lobe-right', duration: 3.0, ease: 'quadInOut' },
         { time: 24.0, type: 'camera', target: 'global', duration: 3.0, ease: 'quadOut' }
     ],
-    'V': [ // Spline Camera Map Fly-Through Demo
-        { time: 0.0, type: 'text', message: 'Spline Camera Map Fly-Through...', duration: 5.0 },
-        { time: 0.0, type: 'style', value: 2 },
-        { time: 0.0, type: 'camera', path: ['cortex-top', 'right-hemisphere', 'brainstem', 'left-hemisphere', 'overview'], duration: 10.0, ease: 'linear' },
-        { time: 10.0, type: 'calm' },
-        { time: 10.0, type: 'text', message: 'Map Fly-Through Complete', duration: 2.0 }
+    'V': [ // HRV Glitch Sync Demo
+        { time: 0.0, type: 'text', message: 'HRV Glitch Sync Initiated...', duration: 3.0 },
+        { time: 0.0, type: 'hrv_sync', intensity: 0.5, duration: 2.0 },
+        { time: 2.0, type: 'hrv_sync', intensity: 1.5, duration: 0.5, ease: 'expoInOut' },
+        { time: 3.0, type: 'text', message: 'Heart Rate Variability Spiking', duration: 3.0 },
+        { time: 3.0, type: 'hrv_sync', intensity: 2.0, duration: 2.0, ease: 'backOut' },
+        { time: 6.0, type: 'hrv_sync', intensity: 0.0, duration: 4.0, ease: 'sineInOut' },
+        { time: 6.0, type: 'text', message: 'HRV Stabilized', duration: 4.0 },
+        { time: 10.0, type: 'calm' }
     ],
     'i': [ // Interactive Visual Overlays Demo
         { time: 0.0, type: 'text', message: 'Interactive Overlay Initiated...', duration: 2.0 },

@@ -87,7 +87,7 @@ export function setupLegendPanel() {
                 <div class="legend-item"><span class="legend-key">g</span><span>Fog</span></div>
                 <div class="legend-item"><span class="legend-key">f</span><span>Filters</span></div>
                 <div class="legend-item"><span class="legend-key">v</span><span>Fly-Through</span></div>
-                <div class="legend-item"><span class="legend-key">V</span><span>Map Fly-Through</span></div>
+                <div class="legend-item"><span class="legend-key">V</span><span>HRV Glitch Sync</span></div>
                 <div class="legend-item"><span class="legend-key">O</span><span>Dynamic FOV</span></div>
                 <div class="legend-item"><span class="legend-key">Z</span><span>Clip Reveal</span></div>
                 <div class="legend-item"><span class="legend-key">X</span><span>Marker Event</span></div>

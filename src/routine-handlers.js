@@ -1300,5 +1300,21 @@ export function createDefaultHandlers(player) {
         }
     });
 
+    // HRV Glitch Sync (maps heart rate variability to visual distortions)
+    handlers.set('hrv_sync', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const duration = evt.duration || 2.0;
+        const ease = evt.ease || 'sineInOut';
+
+        // Modulate aberration, grain, and shake based on HRV intensity
+        player.startLerp({ key: 'aberration', value: intensity * 2.0, duration: duration, ease: ease });
+        player.startLerp({ key: 'grain', value: intensity * 1.5, duration: duration, ease: ease });
+        player.startLerp({ key: 'shake', value: intensity * 0.2, duration: duration, ease: ease });
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
+
     return handlers;
 }

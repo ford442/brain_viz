@@ -163,12 +163,13 @@
 - [x] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
 
 ### Phase 22: Advanced Interpolation and Extensibility
-- [ ] **Interpolation Easing Curves:** Implement cubic/sine easing curves for spline interpolation.
-- [ ] **Dynamic Camera Coordinate Region Mapping:** Allow runtime addition of named camera regions.
+- [x] **Interpolation Easing Curves:** Implement cubic/sine easing curves for spline interpolation.
+- [x] **Dynamic Camera Coordinate Region Mapping:** Allow runtime addition of named camera regions.
+
+### Phase 23: Biofeedback Synchronization
+- [x] **HRV Glitch Sync:** Implement `hrv_sync` event mapping heart rate variability to visual distortions (aberration, grain, shake).
 
 ## 🧪 "Dream" Log (Future Concepts)
-
-* *Idea:* "What if we visualized the brain's baseline shake and glitch intensity mapped directly to a user's real-time heart rate variability?"
 *Idea:* "What if we mapped real-time galvanic skin response to mesh structural noise?"
 
 * *Idea:* "What if we allowed users to configure a custom neuromodulator in the UI?"

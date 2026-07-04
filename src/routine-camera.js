@@ -19,6 +19,18 @@ export function handleCamera(player, evt) {
             const preset = CAMERA_PRESETS[target] || player.cameraMap[target] || player.customPresets[target];
             if (preset) {
                 return { ...preset };
+            } else if (player.cameraRegions && player.cameraRegions.has(target)) {
+                const region = player.cameraRegions.get(target);
+                const coords = region.coords;
+                const rotX = Math.atan2(coords[1], Math.sqrt(coords[0]**2 + coords[2]**2));
+                const rotY = Math.atan2(coords[0], coords[2]);
+                return {
+                    rotation: { x: rotX, y: rotY },
+                    zoom: 3.5,
+                    fov: Math.PI / 4,
+                    duration: region.duration,
+                    easing: region.easing
+                };
             } else if (player.regions[target]) {
                 // Auto-calculate camera angles for region coordinates
                 const coords = player.regions[target];
