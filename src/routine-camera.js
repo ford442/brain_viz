@@ -20,24 +20,17 @@ export function handleCamera(player, evt) {
             if (preset) {
                 return { ...preset };
             } else if (player.cameraRegions && player.cameraRegions.has(target)) {
-                // Dynamic camera coordinate region mapping calculation
-                const regionConfig = player.cameraRegions.get(target);
-                const coords = regionConfig.coords;
-                const x = coords.x !== undefined ? coords.x : coords[0];
-                const y = coords.y !== undefined ? coords.y : coords[1];
-                const z = coords.z !== undefined ? coords.z : coords[2];
-                const rotX = Math.atan2(y, Math.sqrt(x**2 + z**2));
-                const rotY = Math.atan2(x, z);
-
-                // If the event didn't override duration/easing, try using the region defaults
-                if (evt.duration === undefined && regionConfig.duration !== undefined) {
-                    evt.duration = regionConfig.duration / 1000.0; // from ms to s
-                }
-                if (evt.ease === undefined && regionConfig.easing !== undefined) {
-                    evt.ease = regionConfig.easing;
-                }
-
-                return { rotation: { x: rotX, y: rotY }, zoom: 3.5, fov: Math.PI / 4 };
+                const region = player.cameraRegions.get(target);
+                const coords = region.coords;
+                const rotX = Math.atan2(coords[1], Math.sqrt(coords[0]**2 + coords[2]**2));
+                const rotY = Math.atan2(coords[0], coords[2]);
+                return {
+                    rotation: { x: rotX, y: rotY },
+                    zoom: 3.5,
+                    fov: Math.PI / 4,
+                    duration: region.duration,
+                    easing: region.easing
+                };
             } else if (player.regions[target]) {
                 // Auto-calculate camera angles for region coordinates
                 const coords = player.regions[target];

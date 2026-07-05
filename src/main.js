@@ -12,7 +12,7 @@ import { setupLegendPanel, setupOverlays, setupRoutineTransport, setupBciPanel, 
 import { setupModeSelector } from './ui-mode-selector.js';
 
 async function init() {
-    // Main script updated for neuro-script cycle.
+    // Main script updated for neuro-script cycle. HRV sync added.
     const canvas = document.getElementById('canvas');
     const filterOverlay = new FilterUIOverlay(canvas);
     const errorDiv = document.getElementById('error');

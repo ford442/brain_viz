@@ -781,6 +781,23 @@ export class RoutinePlayer {
         this.activeLerps.push(lerpObj);
     }
 
+    syncHRV(peakTime, intensity) {
+        // Fallback to overview or default camera path if no regions are defined
+        let targetRegion = 'overview';
+        if (this.cameraRegions && this.cameraRegions.size > 0) {
+            // Pick a random region to switch to
+            const regions = Array.from(this.cameraRegions.keys());
+            targetRegion = regions[Math.floor(Math.random() * regions.length)];
+        }
+
+        console.log(`[Routine] Triggering external HRV Sync: peakTime=${peakTime}, intensity=${intensity}`);
+
+        // Inject the hrv_sync event
+        this.executeEvent({ type: 'hrv_sync', intensity: intensity, duration: peakTime });
+        // And inject a camera transition
+        this.executeEvent({ type: 'camera', target: targetRegion, duration: peakTime, ease: 'sineInOut' });
+    }
+
     getAPI() {
         return {
             play: () => this.play(),
