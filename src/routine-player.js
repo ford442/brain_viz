@@ -35,6 +35,7 @@ export class RoutinePlayer {
         this.lastPauseTime = 0;
         this.subRoutines = {}; // [Phase 2] Sub-Routine System
         this.customPresets = {}; // [Phase 2] Custom Camera Presets
+        this.cameraRegions = new Map(); // Dynamic Camera Coordinate Region Mapping
         this.state = {
             respirationRate: 1.0 // [Phase 3] Dynamic Environment Reactions
         }; // [Phase 2] Internal State for Branching
@@ -157,6 +158,11 @@ export class RoutinePlayer {
     updateCameraMap(map) {
         this.cameraMap = { ...this.cameraMap, ...map };
         console.log(`[Routine] Updated Camera Coordinates Map.`);
+    }
+
+    addCameraRegion(regionName, coords, duration = 4000, easing = 'cubicInOut') {
+        this.cameraRegions.set(regionName, { coords, duration, easing });
+        console.log(`[Routine] Added named camera region: ${regionName} at [${coords.x || coords[0]}, ${coords.y || coords[1]}, ${coords.z || coords[2]}]`);
     }
 
     registerSubRoutines(map) {
@@ -801,6 +807,9 @@ export class RoutinePlayer {
             loadRoutine: (data) => this.loadRoutine(data),
             generateProceduralRoutine: (duration, intensity) => this.generateProceduralRoutine(duration, intensity),
             clearLerps: () => this.clearLerps(),
+            addCameraRegion: (regionName, coords, duration, easing) => this.addCameraRegion(regionName, coords, duration, easing),
+            addCameraPreset: (name, params) => this.addCameraPreset(name, params),
+            updateCameraMap: (map) => this.updateCameraMap(map),
             setNeuromodulatorParams: (profile) => {
                 if (this.renderer) {
                     this.renderer.setParams({
