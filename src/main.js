@@ -997,4 +997,6 @@ async function init() {
 init();
 
 // [Neuro-Script Cycle] Verified main.js integration for Marker Event
+// [Phase 2.5] Flow state added
+// [Phase 2.5] Dynamic weather added
 // Update cycle triggered for automated checks

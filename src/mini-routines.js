@@ -1,5 +1,24 @@
 export const MINI_ROUTINES = {
 
+    'W': [ // Dynamic Weather Simulation
+        { time: 0.0, type: 'text', message: 'Storm Approaching: Modulating Weather', duration: 4.0 },
+        { time: 0.0, type: 'style', value: 0 },
+        { time: 0.0, type: 'camera', target: 'overview', duration: 2.0, ease: 'sineInOut' },
+        { time: 2.0, type: 'dynamic_weather', intensity: 2.5, duration: 6.0, message: 'High Fog & Low Light...' },
+        { time: 10.0, type: 'dynamic_weather', intensity: 1.0, duration: 6.0, message: 'Clearing up...' },
+        { time: 16.0, type: 'calm' },
+        { time: 16.0, type: 'text', message: 'Weather Normalized', duration: 3.0 }
+    ],
+
+    'F': [ // Flow State Synchronization
+        { time: 0.0, type: 'text', message: 'Entering Flow State', duration: 3.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome view
+        { time: 0.0, type: 'camera', target: 'overview', duration: 2.0, ease: 'sineInOut' },
+        { time: 2.0, type: 'flow_state', intensity: 1.5, duration: 4.0, message: 'Neural Synchronization...' },
+        { time: 8.0, type: 'calm' },
+        { time: 8.0, type: 'text', message: 'Flow State Concluded', duration: 3.0 }
+    ],
+
     'E': [ // Visual Cortex Edge Detection Filter
         { time: 0.0, type: 'text', message: 'Visual Cortex Processing', duration: 3.0 },
         { time: 0.0, type: 'neuromodulator', profile: 'acetylcholine' },
