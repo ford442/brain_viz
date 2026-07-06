@@ -105,6 +105,36 @@ export function createDefaultHandlers(player) {
         }
     });
 
+    handlers.set('dynamic_weather', (evt) => {
+        const duration = evt.duration || 5.0;
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const ease = evt.ease || 'sineInOut';
+
+        player.startLerp({ key: 'fogDensity', value: 0.1 * intensity, duration: duration, ease: ease });
+        player.startLerp({ key: 'dirIntensity', value: 0.2 + (0.5 * (1.0 / intensity)), duration: duration, ease: ease });
+        player.startLerp({ key: 'ambientLight', value: 0.05 + (0.1 * (1.0 / intensity)), duration: duration, ease: ease });
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
+
+    handlers.set('flow_state', (evt) => {
+        const duration = evt.duration || 3.0;
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const ease = evt.ease || 'sineInOut';
+
+        // Glowing harmonic waves
+        player.startLerp({ key: 'sparkle', value: intensity * 1.8, duration: duration, ease: ease });
+        player.startLerp({ key: 'flowSpeed', value: 2.0 + (intensity * 8.0), duration: duration, ease: ease });
+        player.startLerp({ key: 'amplitude', value: 0.8 + (intensity * 1.2), duration: duration, ease: ease });
+        player.startLerp({ key: 'frequency', value: 1.0 + (intensity * 3.0), duration: duration, ease: ease });
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
+
     handlers.set('tms_distortion', tmsHandler);
     handlers.set('apply_tms', tmsHandler);
 

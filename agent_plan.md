@@ -158,6 +158,10 @@
 ### Phase 2.5: Dream Implementations
 - [x] **Binding Kinetics:** Implemented a visual effect simulating neurotransmitter binding kinetics using particle physics parameters on the synapses.
 
+### Phase 2.5 Extension: New Visualizations
+- [x] **Flow State Synchronization:** Visualized neural synchronization during flow states as glowing harmonic waves using `flow_state` event.
+- [x] **Dynamic Weather Systems:** Mapped weather simulation to global illumination and fog density using `dynamic_weather` event.
+
 ### Phase 21: Routine Engine Extensibility
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
 - [x] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
@@ -272,7 +276,9 @@
 * *Idea:* "Region Injection API - Enable scripted or click-based localized energy injection at specific anatomical coordinates within the tensor volume."
 * *Idea:* "What if we allowed users to 'paint' energy directly onto the tensor volume using a continuous drag gesture?"
 * *Idea:* "What if we visualized marker events as floating text particles within the tensor volume?"
+* *Idea:* "What if we visualized cognitive dissonance as conflicting directional flows in the tensor volume, causing localized turbulence?"
 ## 📜 Changelog
+* [2026-07-05] - Completed Phase 2.5 Extension (Flow State Synchronization). Visualized neural synchronization during flow states as glowing harmonic waves using `flow_state` event.
 * [2026-06-22] - Completed Phase 17 (Advanced Routine Control). Verified `clearLerps()` functionality and implemented Transcranial Magnetic Stimulation (TMS) spatial distortions via `tmsActive` uniform and `tms_distortion` events.
 * [2026-06-12] - Completed Phase 13 (Region Injection API). Implemented `injectRegion` on visualizer API and wired click-based energy injection in `main.js`. Added 'paint energy drag gesture' idea to Dream Log.
 * [2026-06-10] - Completed Phase 12 (Clip Plane + Internal Reveal). Implemented `clip` event handler in `routine-handlers.js` and added routine 'Z'. Added Region Injection API idea to Dream Log.
