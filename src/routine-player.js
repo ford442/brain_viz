@@ -848,4 +848,5 @@ export class RoutinePlayer {
 }
 // [Phase 2.5] Flow state added
 // [Phase 2.5] Dynamic weather added
+// [Phase 2.5] GSR Sync logic extended
 // Update cycle triggered for automated checks

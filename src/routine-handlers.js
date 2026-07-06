@@ -1330,6 +1330,21 @@ export function createDefaultHandlers(player) {
         }
     });
 
+    // Galvanic Skin Response (GSR) Sync (maps GSR to mesh structural noise)
+    handlers.set('gsr_sync', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const duration = evt.duration || 3.0;
+        const ease = evt.ease || 'sineInOut';
+
+        // Modulate stress (structural noise) and flow speed based on GSR arousal
+        player.startLerp({ key: 'stress', value: intensity * 1.5, duration: duration, ease: ease });
+        player.startLerp({ key: 'flowSpeed', value: 4.0 + (intensity * 2.0), duration: duration, ease: ease });
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
+
     // HRV Glitch Sync (maps heart rate variability to visual distortions)
     handlers.set('hrv_sync', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;

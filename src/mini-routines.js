@@ -293,7 +293,7 @@ export const MINI_ROUTINES = {
         { time: 12.0, type: 'text', message: 'Default Lights', duration: 2.0 },
         { time: 12.0, type: 'light', dirX: 1.0, dirY: 1.0, dirZ: 1.0, dirIntensity: 0.8, ambient: 0.2, duration: 2.0 }
     ],
-    'G': [ // Glitch Storm
+    '!': [ // Glitch Storm (moved from G)
         { time: 0.0, type: 'text', message: 'DATA CORRUPTION DETECTED', duration: 2.0 },
         { time: 0.0, type: 'glitch', intensity: 1.0, autoRestore: false },
         { time: 0.2, type: 'glitch', intensity: 1.5, autoRestore: true },
@@ -443,6 +443,14 @@ export const MINI_ROUTINES = {
         { time: 20.0, type: 'camera', target: 'temporal-lobe-right', duration: 3.0, ease: 'quadInOut' },
         { time: 24.0, type: 'camera', target: 'global', duration: 3.0, ease: 'quadOut' }
     ],
+    'G': [ // GSR Sync Demo
+        { time: 0.0, type: 'text', message: 'Galvanic Skin Response (GSR) Sync', duration: 2.0 },
+        { time: 0.0, type: 'gsr_sync', intensity: 1.5, duration: 4.0 },
+        { time: 5.0, type: 'gsr_sync', intensity: 0.0, duration: 3.0 },
+        { time: 8.0, type: 'text', message: 'GSR Baseline Restored', duration: 2.0 },
+        { time: 9.0, type: 'calm' }
+    ],
+
     'V': [ // HRV Glitch Sync Demo
         { time: 0.0, type: 'text', message: 'HRV Glitch Sync Initiated...', duration: 3.0 },
         { time: 0.0, type: 'hrv_sync', intensity: 0.5, duration: 2.0 },
