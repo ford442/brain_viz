@@ -228,6 +228,9 @@ struct Uniforms {
     edgeDetection: f32,
     pulseSaturation: f32,
     trailLength: f32,
+    lesionCenter: vec3<f32>,
+    lesionActive: f32,
+    lesionRadius: f32,
 }
 
 struct VertexInput {
@@ -490,6 +493,9 @@ struct Uniforms {
     edgeDetection: f32,
     pulseSaturation: f32,
     trailLength: f32,
+    lesionCenter: vec3<f32>,
+    lesionActive: f32,
+    lesionRadius: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var<storage, read> activityTensor: array<f32>;
@@ -670,6 +676,13 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
         let glassAlpha = 0.04 + rimAlpha * 0.22;
         let finalAlpha = clamp(glassAlpha + blended * 0.18 + volumeAlpha * 0.25, 0.0, 0.55);
 
+        if (uniforms.lesionActive > 0.0) {
+            let dist = distance(input.worldPos, uniforms.lesionCenter);
+            if (dist < uniforms.lesionRadius) {
+                let lesionFactor = (1.0 - (dist / uniforms.lesionRadius)) * uniforms.lesionActive;
+                mixedColor = mix(mixedColor, vec3<f32>(0.1, 0.1, 0.1), lesionFactor);
+            }
+        }
         return vec4<f32>(mixedColor, finalAlpha);
     }
 
@@ -690,6 +703,13 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
         let shellBurst = smoothstep(0.68, 0.98, input.activity) * 0.18;
         let mixedColor = mix(volume.rgb, shellTint + vec3<f32>(1.0, 0.88, 0.5) * shellBurst, 0.12 + rimBoost);
         let alpha = clamp(volume.a + 0.08 + rimBoost + shellBurst * 0.15, 0.0, 0.94);
+        if (uniforms.lesionActive > 0.0) {
+            let dist = distance(input.worldPos, uniforms.lesionCenter);
+            if (dist < uniforms.lesionRadius) {
+                let lesionFactor = (1.0 - (dist / uniforms.lesionRadius)) * uniforms.lesionActive;
+                mixedColor = mix(mixedColor, vec3<f32>(0.1, 0.1, 0.1), lesionFactor);
+            }
+        }
         return vec4<f32>(mixedColor, alpha);
     }
 
@@ -742,6 +762,13 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
         let finalRgb = fiberBase + highlight + activityGlow + avalancheColor + vec3<f32>(1.0, 0.95, 0.65) * resonance * 0.35;
 
         let alpha = clamp(0.22 + (input.signal * 0.36) + (ndotl * 0.18) + (rim * 0.14) + avalanche * 0.1 + resonance * 0.12, 0.12, 0.9) * ambientOcclusion;
+        if (uniforms.lesionActive > 0.0) {
+            let dist = distance(input.worldPos, uniforms.lesionCenter);
+            if (dist < uniforms.lesionRadius) {
+                let lesionFactor = (1.0 - (dist / uniforms.lesionRadius)) * uniforms.lesionActive;
+                finalRgb = mix(finalRgb, vec3<f32>(0.1, 0.1, 0.1), lesionFactor);
+            }
+        }
         return vec4<f32>(finalRgb, alpha);
     }
 
@@ -772,6 +799,13 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
     let fogColor = vec3<f32>(0.02, 0.02, 0.05); // Deep space background color
     col = mix(fogColor, col, clamp(fogFactor, 0.0, 1.0));
 
+    if (uniforms.lesionActive > 0.0) {
+        let dist = distance(input.worldPos, uniforms.lesionCenter);
+        if (dist < uniforms.lesionRadius) {
+            let lesionFactor = (1.0 - (dist / uniforms.lesionRadius)) * uniforms.lesionActive;
+            col = mix(col, vec3<f32>(0.1, 0.1, 0.1), lesionFactor);
+        }
+    }
     return vec4<f32>(col, clamp(finalAlpha, 0.0, 1.0));
 }
 `;
@@ -822,6 +856,9 @@ struct Uniforms {
     edgeDetection: f32,
     pulseSaturation: f32,
     trailLength: f32,
+    lesionCenter: vec3<f32>,
+    lesionActive: f32,
+    lesionRadius: f32,
 }
 
 struct FiberVertexInput {
@@ -1072,6 +1109,9 @@ struct Uniforms {
     edgeDetection: f32,
     pulseSaturation: f32,
     trailLength: f32,
+    lesionCenter: vec3<f32>,
+    lesionActive: f32,
+    lesionRadius: f32,
 }
 
 struct FiberFragmentInput {
@@ -1201,6 +1241,9 @@ struct Uniforms {
     edgeDetection: f32,
     pulseSaturation: f32,
     trailLength: f32,
+    lesionCenter: vec3<f32>,
+    lesionActive: f32,
+    lesionRadius: f32,
 }
 
 struct VertexInput {
@@ -1426,6 +1469,9 @@ struct Uniforms {
     edgeDetection: f32,
     pulseSaturation: f32,
     trailLength: f32,
+    lesionCenter: vec3<f32>,
+    lesionActive: f32,
+    lesionRadius: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
@@ -1452,8 +1498,15 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
     let depth = length(input.worldPos - cameraPos);
     let fogFactor = exp(-uniforms.fogDensity * depth * 0.5);
     let fogColor = vec3<f32>(0.02, 0.02, 0.05);
-    let col = mix(fogColor, lit, clamp(fogFactor, 0.0, 1.0));
+    var col = mix(fogColor, lit, clamp(fogFactor, 0.0, 1.0));
 
+    if (uniforms.lesionActive > 0.0) {
+        let dist = distance(input.worldPos, uniforms.lesionCenter);
+        if (dist < uniforms.lesionRadius) {
+            let lesionFactor = (1.0 - (dist / uniforms.lesionRadius)) * uniforms.lesionActive;
+            col = mix(col, vec3<f32>(0.1, 0.1, 0.1), lesionFactor);
+        }
+    }
     return vec4<f32>(col, 1.0);
 }
 `;
@@ -1504,6 +1557,9 @@ struct Uniforms {
     edgeDetection: f32,
     pulseSaturation: f32,
     trailLength: f32,
+    lesionCenter: vec3<f32>,
+    lesionActive: f32,
+    lesionRadius: f32,
 }
 
 struct SparkInput {
@@ -1679,6 +1735,9 @@ struct Uniforms {
     edgeDetection: f32,
     pulseSaturation: f32,
     trailLength: f32,
+    lesionCenter: vec3<f32>,
+    lesionActive: f32,
+    lesionRadius: f32,
 }
 
 struct SparkInput {
@@ -1741,6 +1800,9 @@ struct TensorParams {
     // [Phase 21] Neuromodulator physics (offset 112)
     neuroPhysics: vec4<f32>, // x=decayRate, y=diffusionRate, z=pulseSaturation, w=trailLength
     neuroRetention: vec4<f32>, // x=frontal, y=occipital, z=temporal, w=parietal (offset 128)
+    lesionCenter: vec3<f32>,
+    lesionActive: f32,
+    lesionRadius: f32,
 }
 
 @group(0) @binding(0) var<storage, read_write> activityTensor: array<f32>;
@@ -1977,6 +2039,15 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
         decay = min(decay, 0.999 - (params.heavyMetal * 0.05));
     }
 
+    if (params.lesionActive > 0.0) {
+        let dist = distance(worldPosition, params.lesionCenter);
+        if (dist < params.lesionRadius) {
+            let lesionFalloff = 1.0 - (dist / params.lesionRadius);
+            val *= (1.0 - (params.lesionActive * lesionFalloff));
+            decay = min(decay, 1.0 - (0.5 * params.lesionActive * lesionFalloff));
+        }
+    }
+
     // SynaptiX AI mirror
     if (params.synaptiXActive > 0.5) {
         let aiVal = sampleAIActivation(worldPosition, dim);
@@ -2068,6 +2139,9 @@ struct Uniforms {
     edgeDetection: f32,
     pulseSaturation: f32,
     trailLength: f32,
+    lesionCenter: vec3<f32>,
+    lesionActive: f32,
+    lesionRadius: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var tDiffuse: texture_2d<f32>;
@@ -2223,6 +2297,9 @@ struct Uniforms {
     edgeDetection: f32,
     pulseSaturation: f32,
     trailLength: f32,
+    lesionCenter: vec3<f32>,
+    lesionActive: f32,
+    lesionRadius: f32,
 }
 
 struct VertexInput {
@@ -2430,6 +2507,9 @@ struct Uniforms {
     edgeDetection: f32,
     pulseSaturation: f32,
     trailLength: f32,
+    lesionCenter: vec3<f32>,
+    lesionActive: f32,
+    lesionRadius: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 

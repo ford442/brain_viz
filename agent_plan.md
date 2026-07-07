@@ -159,6 +159,7 @@
 - [x] **Binding Kinetics:** Implemented a visual effect simulating neurotransmitter binding kinetics using particle physics parameters on the synapses.
 
 ### Phase 2.5 Extension: New Visualizations
+- [x] **Stroke Lesion Simulation:** Visualized localized brain damage by suppressing connectome pulses and structural decay in specific coordinates.
 - [x] **Flow State Synchronization:** Visualized neural synchronization during flow states as glowing harmonic waves using `flow_state` event.
 - [x] **Dynamic Weather Systems:** Mapped weather simulation to global illumination and fog density using `dynamic_weather` event.
 
@@ -174,6 +175,7 @@
 - [x] **HRV Glitch Sync:** Implement `hrv_sync` event mapping heart rate variability to visual distortions (aberration, grain, shake).
 
 ## 🧪 "Dream" Log (Future Concepts)
+* *Idea:* "What if we visualize immune cell migration as particle streams during an inflammatory response?"
 *Idea:* "What if we mapped real-time galvanic skin response to mesh structural noise?"
 
 * *Idea:* "What if we allowed users to configure a custom neuromodulator in the UI?"

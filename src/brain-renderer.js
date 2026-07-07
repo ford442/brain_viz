@@ -10,7 +10,7 @@ const UNIFORM_BUFFER_ALIGNMENT = 256;
 const RENDER_UNIFORM_BUFFER_SIZE = Math.ceil(
     (80 * Float32Array.BYTES_PER_ELEMENT) / UNIFORM_BUFFER_ALIGNMENT
 ) * UNIFORM_BUFFER_ALIGNMENT;
-const COMPUTE_UNIFORM_BUFFER_SIZE = 144;
+const COMPUTE_UNIFORM_BUFFER_SIZE = 176;
 
 export class BrainRenderer {
     constructor(canvas) {
@@ -83,6 +83,11 @@ export class BrainRenderer {
             dirIntensity: 0.8, // [Phase 2] Directional Light Intensity
             stress: 0.0, // [Phase 2] Cognitive Stress Distortion
             cortisol: 0.0, // [Phase 5] Cortisol Structural Decay
+            lesionActive: 0.0,
+            lesionCenterX: 0.0,
+            lesionCenterY: 0.0,
+            lesionCenterZ: 0.0,
+            lesionRadius: 0.0,
             myelin_degradation: 0.0, // [V3.1] Connectome myelin loss visualization
             fluidActive: 0.0, // [Phase 6] Procedural Volumetric Fluid Dynamics
             edgeDetection: 0.0, // Visual Cortex Edge Detection
@@ -709,6 +714,14 @@ export class BrainRenderer {
     // [V2.3] Stimulus Injection Logic: Triggers a volumetric pulse at the target coordinate
     // [Neuro-Weaver V2.8] Updated signature for clarity
 
+
+    triggerLesion(center, radius) {
+        this.params.lesionCenterX = center[0];
+        this.params.lesionCenterY = center[1];
+        this.params.lesionCenterZ = center[2];
+        this.params.lesionRadius = radius;
+    }
+
     triggerTMS(center, strength = 1.2, radius = 0.28, durationMs = 650) {
         this.tms = {
             center: center,
@@ -916,8 +929,11 @@ export class BrainRenderer {
         const OFFSET_EDGE_DETECTION = 77;
         const OFFSET_PULSE_SATURATION = 78;
         const OFFSET_TRAIL_LENGTH = 79;
+        const OFFSET_LESION_CENTER = 80;
+        const OFFSET_LESION_ACTIVE = 83;
+        const OFFSET_LESION_RADIUS = 84;
 
-        const RENDER_UNIFORM_FLOAT_COUNT = 80;
+        const RENDER_UNIFORM_FLOAT_COUNT = 88;
         const uData = new Float32Array(RENDER_UNIFORM_FLOAT_COUNT);
         uData.set(mvp, OFFSET_MVP);
         uData.set(model, OFFSET_MODEL);
@@ -970,6 +986,11 @@ export class BrainRenderer {
         uData[OFFSET_EDGE_DETECTION] = this.params.edgeDetection || 0.0;
         uData[OFFSET_PULSE_SATURATION] = this.params.pulseSaturation !== undefined ? this.params.pulseSaturation : 1.0;
         uData[OFFSET_TRAIL_LENGTH] = this.params.trailLength !== undefined ? this.params.trailLength : 1.0;
+        uData[OFFSET_LESION_CENTER] = this.params.lesionCenterX;
+        uData[OFFSET_LESION_CENTER + 1] = this.params.lesionCenterY;
+        uData[OFFSET_LESION_CENTER + 2] = this.params.lesionCenterZ;
+        uData[OFFSET_LESION_ACTIVE] = this.params.lesionActive;
+        uData[OFFSET_LESION_RADIUS] = this.params.lesionRadius;
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         
@@ -1030,6 +1051,12 @@ export class BrainRenderer {
         dv.setFloat32(132, this.params.retentionBiasY !== undefined ? this.params.retentionBiasY : 0.0, true); // occipital
         dv.setFloat32(136, this.params.retentionBiasZ !== undefined ? this.params.retentionBiasZ : 0.2, true); // temporal
         dv.setFloat32(140, this.params.retentionBiasW !== undefined ? this.params.retentionBiasW : 0.2, true); // parietal
+
+        dv.setFloat32(144, this.params.lesionCenterX, true);
+        dv.setFloat32(148, this.params.lesionCenterY, true);
+        dv.setFloat32(152, this.params.lesionCenterZ, true);
+        dv.setFloat32(156, this.params.lesionActive, true);
+        dv.setFloat32(160, this.params.lesionRadius, true);
 
         // Upload to GPU
         this.device.queue.writeBuffer(this.computeUniformBuffer, 0, cBuf);

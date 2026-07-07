@@ -1,5 +1,15 @@
 export const MINI_ROUTINES = {
 
+    '~': [ // Stroke / Localized Brain Damage
+        { time: 0.0, type: 'text', message: 'Simulating Localized Brain Damage (Stroke)', duration: 3.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'camera', target: 'frontal-lobe', duration: 2.0 },
+        { time: 0.0, type: 'stroke_lesion', target: 'frontal', intensity: 1.0, radius: 0.8, duration: 5.0 },
+        { time: 5.0, type: 'text', message: 'Tissue necrosis stabilized.', duration: 2.0 },
+        { time: 7.0, type: 'calm' }
+    ],
+
+
     'W': [ // Dynamic Weather Simulation
         { time: 0.0, type: 'text', message: 'Storm Approaching: Modulating Weather', duration: 4.0 },
         { time: 0.0, type: 'style', value: 0 },
