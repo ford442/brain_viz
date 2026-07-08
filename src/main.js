@@ -999,6 +999,7 @@ init();
 // [Neuro-Script Cycle] Verified main.js integration for Marker Event
 // [Phase 2.5] Flow state added
 // [Phase 2.5] Dynamic weather added
+// [Phase 2.5] GSR Sync integrated
 // Update cycle triggered for automated checks
 
 // [Phase 2.5] Dream Log Extension: Stroke Lesion

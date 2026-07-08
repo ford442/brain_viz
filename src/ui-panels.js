@@ -106,7 +106,8 @@ export function setupLegendPanel() {
                 <div class="legend-item"><span class="legend-key">p</span><span>Spline</span></div>
                 <div class="legend-item"><span class="legend-key">w</span><span>Math / Variables</span></div>
                 <div class="legend-item"><span class="legend-key">q</span><span>Choice</span></div>
-                <div class="legend-item"><span class="legend-key">G</span><span>Glitch</span></div>
+                <div class="legend-item"><span class="legend-key">!</span><span>Glitch</span></div>
+                <div class="legend-item"><span class="legend-key">G</span><span>GSR Sync</span></div>
                 <div class="legend-item"><span class="legend-key">S</span><span>Signal</span></div>
                 <div class="legend-item"><span class="legend-key">m</span><span>Memory</span></div>
                 <div class="legend-item"><span class="legend-key">b</span><span>Branch</span></div>

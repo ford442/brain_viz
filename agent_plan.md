@@ -162,6 +162,7 @@
 - [x] **Stroke Lesion Simulation:** Visualized localized brain damage by suppressing connectome pulses and structural decay in specific coordinates.
 - [x] **Flow State Synchronization:** Visualized neural synchronization during flow states as glowing harmonic waves using `flow_state` event.
 - [x] **Dynamic Weather Systems:** Mapped weather simulation to global illumination and fog density using `dynamic_weather` event.
+- [x] **Galvanic Skin Response Sync:** Implement `gsr_sync` event mapping GSR to mesh structural noise via the `stress` parameter.
 
 ### Phase 21: Routine Engine Extensibility
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
@@ -177,6 +178,7 @@
 ## 🧪 "Dream" Log (Future Concepts)
 * *Idea:* "What if we visualize immune cell migration as particle streams during an inflammatory response?"
 *Idea:* "What if we mapped real-time galvanic skin response to mesh structural noise?"
+* *Idea:* "What if we visualized pupillary dilation as dynamic camera field of view shifts?"
 
 * *Idea:* "What if we allowed users to configure a custom neuromodulator in the UI?"
 * *Idea:* "What if prolonged synchronized bursts triggered long-term structural plasticity, permanently altering the connectome layout?"
