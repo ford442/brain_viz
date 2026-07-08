@@ -50,6 +50,7 @@ export class BrainRenderer {
 
         this.params = {
             cognitiveLoad: 0.0, // [Phase 9] Visual Cortex Fatigue (Dynamic LoD)
+            cognitiveDissonance: 0.0, // [Phase 2.5] Cognitive Dissonance
             frequency: 2.0,
             amplitude: 0.5,
             spikeThreshold: 0.8,
@@ -1040,6 +1041,7 @@ export class BrainRenderer {
 
         // [V3.2] Fiber-volume coupling strength (offset 100)
         dv.setFloat32(100, this.params.fiberCoupling ?? 0.5, true);
+        dv.setFloat32(104, this.params.cognitiveDissonance ?? 0.0, true);
 
         // [Phase 21] Neuromodulator physics (offset 112 & 128)
         dv.setFloat32(112, this.params.decayRate !== undefined ? this.params.decayRate : 0.96, true);

@@ -1796,7 +1796,8 @@ struct TensorParams {
     synaptiXActive: f32,
     // [V3.2] Fiber-volume coupling (offset 100)
     fiberCoupling: f32,
-    pad3: vec2<f32>,         // offset 104 -> padding to 112 (vec2 has 8-byte alignment)
+    cognitiveDissonance: f32, // offset 104
+    pad3: f32,                // offset 108 -> padding to 112
     // [Phase 21] Neuromodulator physics (offset 112)
     neuroPhysics: vec4<f32>, // x=decayRate, y=diffusionRate, z=pulseSaturation, w=trailLength
     neuroRetention: vec4<f32>, // x=frontal, y=occipital, z=temporal, w=parietal (offset 128)
@@ -1980,6 +1981,27 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
         travelingWave = sin(dot(normalizedPosition, vec3<f32>(0.0, 1.0, 0.0)) * waveFreq - params.time * phaseSpeed) * 0.5 + 0.5;
     }
     val = val + val * (travelingWave - 0.5) * 0.08;
+
+    // [Phase 2.5] Cognitive Dissonance
+    if (params.cognitiveDissonance > 0.0) {
+        let turbulence = sin(worldPosition.x * 12.0 + params.time * 4.0) * cos(worldPosition.y * 12.0 - params.time * 4.0) * sin(worldPosition.z * 12.0 + params.time * 3.0);
+        let conflictingFlow = vec3<f32>(
+            cos(worldPosition.z * 10.0 - params.time * 5.0),
+            sin(worldPosition.x * 10.0 + params.time * 5.0),
+            cos(worldPosition.y * 10.0 - params.time * 5.0)
+        ) * turbulence * params.cognitiveDissonance;
+
+        let samplePos = worldPosition + conflictingFlow;
+        let normalizedSamplePos = (samplePos / BRAIN_RANGE) * 0.5 + 0.5;
+        let sx = u32(clamp(normalizedSamplePos.x * f32(dim), 0.0, f32(dim - 1u)));
+        let sy = u32(clamp(normalizedSamplePos.y * f32(dim), 0.0, f32(dim - 1u)));
+        let sz = u32(clamp(normalizedSamplePos.z * f32(dim), 0.0, f32(dim - 1u)));
+        let upstreamIndex = getIndex(sx, sy, sz);
+        let upstreamVal = activityTensor[upstreamIndex];
+        val = mix(val, upstreamVal, min(1.0, params.cognitiveDissonance * 0.8));
+
+        diffusion *= (1.0 - params.cognitiveDissonance * 0.4);
+    }
 
     // Directional Flow Logic
     if (flowBias < -0.1) {
