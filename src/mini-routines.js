@@ -754,4 +754,13 @@ export const MINI_ROUTINES = {
         { time: 0.0, type: 'sync_burst', duration: 5.0, intensity: 2.0, rate: 0.5 },
         { time: 6.0, type: 'calm' }
     ],
+    '?': [ // Cognitive Dissonance Simulation
+        { time: 0.0, type: 'text', message: 'Inducing Cognitive Dissonance...', duration: 4.0 },
+        { time: 0.0, type: 'style', value: 3 }, // Heatmap
+        { time: 0.0, type: 'camera', target: 'global', duration: 2.0 },
+        { time: 1.0, type: 'cognitive_dissonance', intensity: 2.5, duration: 6.0 },
+        { time: 7.0, type: 'text', message: 'Resolving conflict...', duration: 2.0 },
+        { time: 7.0, type: 'cognitive_dissonance', intensity: 0.0, duration: 3.0 },
+        { time: 10.0, type: 'calm' }
+    ],
 };

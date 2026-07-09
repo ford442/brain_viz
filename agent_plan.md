@@ -280,7 +280,10 @@
 * *Idea:* "Region Injection API - Enable scripted or click-based localized energy injection at specific anatomical coordinates within the tensor volume."
 * *Idea:* "What if we allowed users to 'paint' energy directly onto the tensor volume using a continuous drag gesture?"
 * *Idea:* "What if we visualized marker events as floating text particles within the tensor volume?"
-* *Idea:* "What if we visualized cognitive dissonance as conflicting directional flows in the tensor volume, causing localized turbulence?"
+
+### Phase 2.5 Extension: New Visualizations 2
+- [x] **Cognitive Dissonance Simulation:** Visualized cognitive dissonance as conflicting directional flows in the tensor volume causing localized turbulence, controlled via `cognitive_dissonance` event.
+
 ## 📜 Changelog
 * [2026-07-05] - Completed Phase 2.5 Extension (Flow State Synchronization). Visualized neural synchronization during flow states as glowing harmonic waves using `flow_state` event.
 * [2026-06-22] - Completed Phase 17 (Advanced Routine Control). Verified `clearLerps()` functionality and implemented Transcranial Magnetic Stimulation (TMS) spatial distortions via `tmsActive` uniform and `tms_distortion` events.
