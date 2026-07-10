@@ -1362,6 +1362,21 @@ export function createDefaultHandlers(player) {
         }
     });
 
+
+    handlers.set('neurotransmitter_depletion', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const duration = evt.duration || 5.0;
+
+        player.startLerp({ key: 'decimation', value: intensity, duration: duration, ease: 'quadIn' });
+
+        // Dim the global brightness to match the depletion
+        player.startLerp({ key: 'ambientLight', value: Math.max(0.05, 0.2 - (0.1 * intensity)), duration: duration, ease: 'quadIn' });
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
+
     // Cognitive Dissonance Simulation
     handlers.set('cognitive_dissonance', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;

@@ -231,6 +231,7 @@ struct Uniforms {
     lesionCenter: vec3<f32>,
     lesionActive: f32,
     lesionRadius: f32,
+    decimation: f32,
 }
 
 struct VertexInput {
@@ -496,6 +497,7 @@ struct Uniforms {
     lesionCenter: vec3<f32>,
     lesionActive: f32,
     lesionRadius: f32,
+    decimation: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var<storage, read> activityTensor: array<f32>;
@@ -581,6 +583,12 @@ struct FragmentInput {
 fn main(input: FragmentInput) -> @location(0) vec4<f32> {
     // V2.2 Clipping: Discard pixels behind plane
     if (input.clipDist < 0.0) { discard; }
+    if (uniforms.decimation > 0.0) {
+        let noise = fract(sin(dot(input.worldPos, vec3<f32>(12.9898, 78.233, 45.164))) * 43758.5453);
+        if (noise < uniforms.decimation) { discard; }
+    }
+
+
 
     // [Phase 6] Dendritic Growth: Discard outside growth radius
     if (input.distToCenter > uniforms.growth * 1.8) { discard; }
@@ -859,6 +867,7 @@ struct Uniforms {
     lesionCenter: vec3<f32>,
     lesionActive: f32,
     lesionRadius: f32,
+    decimation: f32,
 }
 
 struct FiberVertexInput {
@@ -1112,6 +1121,7 @@ struct Uniforms {
     lesionCenter: vec3<f32>,
     lesionActive: f32,
     lesionRadius: f32,
+    decimation: f32,
 }
 
 struct FiberFragmentInput {
@@ -1134,6 +1144,12 @@ struct FiberFragmentInput {
 @fragment
 fn main(input: FiberFragmentInput) -> @location(0) vec4<f32> {
     if (input.clipDist < 0.0) { discard; }
+    if (uniforms.decimation > 0.0) {
+        let noise = fract(sin(dot(input.worldPos, vec3<f32>(12.9898, 78.233, 45.164))) * 43758.5453);
+        if (noise < uniforms.decimation) { discard; }
+    }
+
+
     if (input.distToCenter > uniforms.growth * 1.8) { discard; }
 
     let isAIFiber = input.fiberFlags.x > 0.5;
@@ -1244,6 +1260,7 @@ struct Uniforms {
     lesionCenter: vec3<f32>,
     lesionActive: f32,
     lesionRadius: f32,
+    decimation: f32,
 }
 
 struct VertexInput {
@@ -1472,6 +1489,7 @@ struct Uniforms {
     lesionCenter: vec3<f32>,
     lesionActive: f32,
     lesionRadius: f32,
+    decimation: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
@@ -1486,6 +1504,8 @@ struct FragmentInput {
 @fragment
 fn main(input: FragmentInput) -> @location(0) vec4<f32> {
     if (input.clipDist < 0.0) { discard; }
+
+
 
     let N = normalize(input.normal);
     let V = normalize(vec3<f32>(0.0, 0.0, uniforms.zoom) - input.worldPos);
@@ -1560,6 +1580,7 @@ struct Uniforms {
     lesionCenter: vec3<f32>,
     lesionActive: f32,
     lesionRadius: f32,
+    decimation: f32,
 }
 
 struct SparkInput {
@@ -1738,6 +1759,7 @@ struct Uniforms {
     lesionCenter: vec3<f32>,
     lesionActive: f32,
     lesionRadius: f32,
+    decimation: f32,
 }
 
 struct SparkInput {
@@ -1752,6 +1774,8 @@ struct SparkInput {
 @fragment
 fn main(input: SparkInput) -> @location(0) vec4<f32> {
     if (input.clipDist < 0.0) { discard; }
+
+
 
     let falloff = exp(-dot(input.uv, input.uv) * 3.8);
     let core = pow(max(0.0, 1.0 - length(input.uv)), 2.2);
@@ -1804,6 +1828,7 @@ struct TensorParams {
     lesionCenter: vec3<f32>,
     lesionActive: f32,
     lesionRadius: f32,
+    decimation: f32,
 }
 
 @group(0) @binding(0) var<storage, read_write> activityTensor: array<f32>;
@@ -2164,6 +2189,7 @@ struct Uniforms {
     lesionCenter: vec3<f32>,
     lesionActive: f32,
     lesionRadius: f32,
+    decimation: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var tDiffuse: texture_2d<f32>;
@@ -2322,6 +2348,7 @@ struct Uniforms {
     lesionCenter: vec3<f32>,
     lesionActive: f32,
     lesionRadius: f32,
+    decimation: f32,
 }
 
 struct VertexInput {
@@ -2430,6 +2457,11 @@ fn main(input: VertexInput) -> VertexOutput {
     if (length(pos) > uniforms.growth * 1.8) {
         scale = 0.0;
     }
+    if (uniforms.decimation > 0.0) {
+        let noise = fract(sin(dot(pos, vec3<f32>(12.9898, 78.233, 45.164))) * 43758.5453);
+        if (noise < uniforms.decimation) { scale = 0.0; }
+    }
+
 
     let cameraPos = vec3<f32>(0.0, 0.0, uniforms.zoom);
     let viewDir = normalize(cameraPos - pos);
@@ -2532,6 +2564,7 @@ struct Uniforms {
     lesionCenter: vec3<f32>,
     lesionActive: f32,
     lesionRadius: f32,
+    decimation: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
@@ -2546,6 +2579,8 @@ struct FragmentInput {
 @fragment
 fn main(input: FragmentInput) -> @location(0) vec4<f32> {
     if (input.clipDist < 0.0) { discard; }
+
+
     let d = length(input.uv);
     let typeId = input.pointData.x;
     let isAI = input.pointData.y;

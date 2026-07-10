@@ -281,10 +281,16 @@
 * *Idea:* "What if we allowed users to 'paint' energy directly onto the tensor volume using a continuous drag gesture?"
 * *Idea:* "What if we visualized marker events as floating text particles within the tensor volume?"
 
+* *Idea:* "What if we visualized ATP energy depletion as a cascading shutdown of regional activity, culminating in a global slow-motion effect?"
+
+### Phase 2.5 Extension: Neurotransmitter Depletion
+- [x] **Gradual Mesh Decimation:** Visualized neurotransmitter depletion as gradual mesh decimation in the tensor volume using a noise function, controlled via `neurotransmitter_depletion` event.
+
 ### Phase 2.5 Extension: New Visualizations 2
 - [x] **Cognitive Dissonance Simulation:** Visualized cognitive dissonance as conflicting directional flows in the tensor volume causing localized turbulence, controlled via `cognitive_dissonance` event.
 
 ## 📜 Changelog
+* [2026-07-10] - Completed Phase 2.5 Extension (Neurotransmitter Depletion). Visualized neurotransmitter depletion as gradual mesh decimation, controlled via `neurotransmitter_depletion` event.
 * [2026-07-05] - Completed Phase 2.5 Extension (Flow State Synchronization). Visualized neural synchronization during flow states as glowing harmonic waves using `flow_state` event.
 * [2026-06-22] - Completed Phase 17 (Advanced Routine Control). Verified `clearLerps()` functionality and implemented Transcranial Magnetic Stimulation (TMS) spatial distortions via `tmsActive` uniform and `tms_distortion` events.
 * [2026-06-12] - Completed Phase 13 (Region Injection API). Implemented `injectRegion` on visualizer API and wired click-based energy injection in `main.js`. Added 'paint energy drag gesture' idea to Dream Log.
