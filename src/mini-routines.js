@@ -20,6 +20,16 @@ export const MINI_ROUTINES = {
         { time: 16.0, type: 'text', message: 'Weather Normalized', duration: 3.0 }
     ],
 
+
+    'X': [ // Neurotransmitter Depletion
+        { time: 0.0, type: 'text', message: 'Simulating Neurotransmitter Depletion', duration: 4.0 },
+        { time: 0.0, type: 'style', value: 0 },
+        { time: 0.0, type: 'camera', target: 'overview', duration: 2.0, ease: 'sineInOut' },
+        { time: 1.0, type: 'neurotransmitter_depletion', intensity: 0.9, duration: 8.0, message: 'Gradual mesh decimation...' },
+        { time: 12.0, type: 'neurotransmitter_depletion', intensity: 0.0, duration: 4.0, message: 'Recovering...' },
+        { time: 16.0, type: 'text', message: 'Network Restored', duration: 3.0 },
+        { time: 17.0, type: 'calm' }
+    ],
     'F': [ // Flow State Synchronization
         { time: 0.0, type: 'text', message: 'Entering Flow State', duration: 3.0 },
         { time: 0.0, type: 'style', value: 2 }, // Connectome view

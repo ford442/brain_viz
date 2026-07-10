@@ -89,6 +89,7 @@ export class BrainRenderer {
             lesionCenterY: 0.0,
             lesionCenterZ: 0.0,
             lesionRadius: 0.0,
+            decimation: 0.0,
             myelin_degradation: 0.0, // [V3.1] Connectome myelin loss visualization
             fluidActive: 0.0, // [Phase 6] Procedural Volumetric Fluid Dynamics
             edgeDetection: 0.0, // Visual Cortex Edge Detection
@@ -933,6 +934,7 @@ export class BrainRenderer {
         const OFFSET_LESION_CENTER = 80;
         const OFFSET_LESION_ACTIVE = 83;
         const OFFSET_LESION_RADIUS = 84;
+        const OFFSET_DECIMATION = 85;
 
         const RENDER_UNIFORM_FLOAT_COUNT = 88;
         const uData = new Float32Array(RENDER_UNIFORM_FLOAT_COUNT);
@@ -992,6 +994,7 @@ export class BrainRenderer {
         uData[OFFSET_LESION_CENTER + 2] = this.params.lesionCenterZ;
         uData[OFFSET_LESION_ACTIVE] = this.params.lesionActive;
         uData[OFFSET_LESION_RADIUS] = this.params.lesionRadius;
+        uData[OFFSET_DECIMATION] = this.params.decimation;
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         
@@ -1059,6 +1062,7 @@ export class BrainRenderer {
         dv.setFloat32(152, this.params.lesionCenterZ, true);
         dv.setFloat32(156, this.params.lesionActive, true);
         dv.setFloat32(160, this.params.lesionRadius, true);
+        dv.setFloat32(164, this.params.decimation, true);
 
         // Upload to GPU
         this.device.queue.writeBuffer(this.computeUniformBuffer, 0, cBuf);
