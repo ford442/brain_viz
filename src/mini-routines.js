@@ -1,5 +1,15 @@
 export const MINI_ROUTINES = {
 
+    ',': [ // Pupillary Dilation Simulation
+        { time: 0.0, type: 'text', message: 'Simulating Pupillary Dilation', duration: 4.0 },
+        { time: 0.0, type: 'style', value: 0 },
+        { time: 0.0, type: 'camera', target: 'frontal', duration: 2.0, ease: 'sineInOut' },
+        { time: 1.0, type: 'pupillary_dilation', intensity: 1.5, duration: 4.0, message: 'Dilation and Light Rush...' },
+        { time: 5.0, type: 'pupillary_dilation', intensity: 0.0, duration: 3.0, message: 'Constricting...' },
+        { time: 8.0, type: 'text', message: 'Vision Normalized', duration: 3.0 },
+        { time: 8.0, type: 'calm' }
+    ],
+
     '~': [ // Stroke / Localized Brain Damage
         { time: 0.0, type: 'text', message: 'Simulating Localized Brain Damage (Stroke)', duration: 3.0 },
         { time: 0.0, type: 'style', value: 2 }, // Connectome

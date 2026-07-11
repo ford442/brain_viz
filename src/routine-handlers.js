@@ -1347,6 +1347,30 @@ export function createDefaultHandlers(player) {
         }
     });
 
+    // Pupillary Dilation Simulation (dynamic camera FOV shifts)
+    handlers.set('pupillary_dilation', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const duration = evt.duration || 3.0;
+        const ease = evt.ease || 'sineInOut';
+
+        // Modulate camera FOV and light intensity based on pupillary dilation
+        const defaultFov = Math.PI / 4;
+        const targetFov = defaultFov + (intensity * 0.5); // Increase FOV
+
+        player.executeEvent({
+            type: 'camera',
+            fov: targetFov,
+            duration: duration,
+            ease: ease
+        });
+
+        player.startLerp({ key: 'dirIntensity', value: 0.8 + (intensity * 1.5), duration: duration, ease: ease });
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
+
     // Galvanic Skin Response (GSR) Sync (maps GSR to mesh structural noise)
     handlers.set('gsr_sync', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
