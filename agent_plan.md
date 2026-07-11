@@ -177,9 +177,8 @@
 
 ## 🧪 "Dream" Log (Future Concepts)
 * *Idea:* "What if we visualize immune cell migration as particle streams during an inflammatory response?"
+* *Idea:* "What if we visualize psychedelic experiences as morphing geometric structures in the tensor volume?"
 *Idea:* "What if we mapped real-time galvanic skin response to mesh structural noise?"
-* *Idea:* "What if we visualized pupillary dilation as dynamic camera field of view shifts?"
-
 * *Idea:* "What if we allowed users to configure a custom neuromodulator in the UI?"
 * *Idea:* "What if prolonged synchronized bursts triggered long-term structural plasticity, permanently altering the connectome layout?"
 * *Idea:* "What if we visualized neurotransmitter binding kinetics using particle physics on the synapses?"
@@ -289,7 +288,11 @@
 ### Phase 2.5 Extension: New Visualizations 2
 - [x] **Cognitive Dissonance Simulation:** Visualized cognitive dissonance as conflicting directional flows in the tensor volume causing localized turbulence, controlled via `cognitive_dissonance` event.
 
+### Phase 2.5 Extension: New Visualizations 3
+- [x] **Pupillary Dilation Simulation:** Visualized pupillary dilation as dynamic camera field of view shifts, controlled via `pupillary_dilation` event.
+
 ## 📜 Changelog
+* [2026-07-15] - Completed Phase 2.5 Extension (Pupillary Dilation Simulation). Visualized pupillary dilation as dynamic camera field of view shifts, controlled via `pupillary_dilation` event. Added 'Psychedelic Visuals' idea to Dream Log.
 * [2026-07-10] - Completed Phase 2.5 Extension (Neurotransmitter Depletion). Visualized neurotransmitter depletion as gradual mesh decimation, controlled via `neurotransmitter_depletion` event.
 * [2026-07-05] - Completed Phase 2.5 Extension (Flow State Synchronization). Visualized neural synchronization during flow states as glowing harmonic waves using `flow_state` event.
 * [2026-06-22] - Completed Phase 17 (Advanced Routine Control). Verified `clearLerps()` functionality and implemented Transcranial Magnetic Stimulation (TMS) spatial distortions via `tmsActive` uniform and `tms_distortion` events.

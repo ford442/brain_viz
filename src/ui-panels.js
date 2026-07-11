@@ -62,6 +62,7 @@ export function setupLegendPanel() {
         <div class="legend-section">
             <div class="legend-section-title">Systems</div>
             <div class="legend-row">
+                <div class="legend-item"><span class="legend-key">,</span><span>Pupillary Dilation</span></div>
                 <div class="legend-item"><span class="legend-key">H</span><span>Heartbeat</span></div>
                 <div class="legend-item"><span class="legend-key">R</span><span>Respiration</span></div>
                 <div class="legend-item"><span class="legend-key">E</span><span>Electrical</span></div>
