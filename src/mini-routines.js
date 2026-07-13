@@ -774,6 +774,16 @@ export const MINI_ROUTINES = {
         { time: 0.0, type: 'sync_burst', duration: 5.0, intensity: 2.0, rate: 0.5 },
         { time: 6.0, type: 'calm' }
     ],
+    '#': [ // Psychedelic Visuals
+        { time: 0.0, type: 'text', message: 'Initiating Psychedelic Visuals', duration: 3.0 },
+        { time: 0.0, type: 'style', value: 0 },
+        { time: 0.0, type: 'camera', target: 'overview', duration: 2.0 },
+        { time: 1.0, type: 'psychedelic_trip', intensity: 1.0, duration: 5.0, message: 'Morphing Geometry...' },
+        { time: 7.0, type: 'psychedelic_trip', intensity: 0.0, duration: 4.0, message: 'Fading...' },
+        { time: 11.0, type: 'text', message: 'Visuals Normalized', duration: 2.0 },
+        { time: 11.0, type: 'calm' }
+    ],
+
     '?': [ // Cognitive Dissonance Simulation
         { time: 0.0, type: 'text', message: 'Inducing Cognitive Dissonance...', duration: 4.0 },
         { time: 0.0, type: 'style', value: 3 }, // Heatmap

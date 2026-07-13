@@ -348,4 +348,43 @@ export function registerNarrativeFlowHandlers(handlers, player) {
         }
     });
 
+    handlers.set('psychedelic_trip', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const duration = evt.duration !== undefined ? evt.duration : 1.0;
+
+        player.startLerp({
+            key: 'psychedelic',
+            value: intensity,
+            duration: duration,
+            ease: 'sineInOut'
+        });
+
+        if (intensity > 0) {
+            player.startLerp({
+                key: 'aberration',
+                value: intensity * 2.0,
+                duration: duration,
+                ease: 'sineInOut'
+            });
+            player.startLerp({
+                key: 'flowSpeed',
+                value: 4.0 + (intensity * 2.0), // base flow speed + intensity
+                duration: duration,
+                ease: 'sineInOut'
+            });
+        } else {
+             player.startLerp({
+                key: 'aberration',
+                value: 0.0,
+                duration: duration,
+                ease: 'sineInOut'
+            });
+             player.startLerp({
+                key: 'flowSpeed',
+                value: 4.0, // default
+                duration: duration,
+                ease: 'sineInOut'
+            });
+        }
+    });
 }
