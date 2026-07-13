@@ -50,6 +50,7 @@ struct Uniforms {
     lesionActive: f32,
     lesionRadius: f32,
     decimation: f32,
+    psychedelic: f32,
 }
 
 struct SparkInput {
@@ -229,6 +230,7 @@ struct Uniforms {
     lesionActive: f32,
     lesionRadius: f32,
     decimation: f32,
+    psychedelic: f32,
 }
 
 struct SparkInput {
@@ -298,6 +300,7 @@ struct TensorParams {
     lesionActive: f32,
     lesionRadius: f32,
     decimation: f32,
+    psychedelic: f32,
 }
 
 @group(0) @binding(0) var<storage, read_write> activityTensor: array<f32>;

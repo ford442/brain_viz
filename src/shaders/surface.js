@@ -51,6 +51,7 @@ struct Uniforms {
     lesionActive: f32,
     lesionRadius: f32,
     decimation: f32,
+    psychedelic: f32,
 }
 
 struct VertexInput {
@@ -175,8 +176,22 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
         signalStrength = aiActivity;
         finalColor = vec3<f32>(0.0);
     }
+    // Apply psychedelic morphing to vertex positions
+    if (uniforms.psychedelic > 0.0) {
+        let psychFreq = 8.0;
+        let psychTime = uniforms.time * 2.0;
+
+        let noiseOffset = vec3<f32>(
+            sin(finalPos.y * psychFreq + psychTime) * cos(finalPos.z * psychFreq),
+            sin(finalPos.z * psychFreq + psychTime) * cos(finalPos.x * psychFreq),
+            sin(finalPos.x * psychFreq + psychTime) * cos(finalPos.y * psychFreq)
+        );
+
+        finalPos += normalize(input.position) * noiseOffset * uniforms.psychedelic * 0.15;
+    }
+
     // --- HEATMAP MODE ---
-    else if (uniforms.style >= 3.0) {
+    if (uniforms.style >= 3.0 && uniforms.style < 4.0) {
         finalPos = input.position;
         finalColor = getHeatmapColor(activity);
 
@@ -186,7 +201,7 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
         }
     }
     // --- GHOST MODE ---
-    else {
+    else if (uniforms.style < 3.0) {
             let displacement = normalize(input.position) * activity * 0.05;
             finalPos = input.position + displacement;
 
@@ -232,6 +247,19 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
                     finalColor += vec3<f32>(0.6, 1.0, 0.8) * activity * 2.0;
                 }
             }
+    }
+
+    // Apply psychedelic color shift
+    if (uniforms.psychedelic > 0.0) {
+        let hsvShift = fract(uniforms.time * 0.5 + finalPos.y * 2.0);
+
+        // Simple hue shift approximation via RGB mixing
+        let r = sin(hsvShift * 6.28318) * 0.5 + 0.5;
+        let g = sin((hsvShift + 0.333) * 6.28318) * 0.5 + 0.5;
+        let b = sin((hsvShift + 0.666) * 6.28318) * 0.5 + 0.5;
+
+        let psychColor = vec3<f32>(r, g, b);
+        finalColor = mix(finalColor, psychColor, uniforms.psychedelic * 0.8);
     }
 
     // Apply cyanosis color shift from hypoxia (oxygen deprivation)
@@ -317,6 +345,7 @@ struct Uniforms {
     lesionActive: f32,
     lesionRadius: f32,
     decimation: f32,
+    psychedelic: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var<storage, read> activityTensor: array<f32>;

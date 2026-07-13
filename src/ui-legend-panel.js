@@ -114,6 +114,7 @@ export function setupLegendPanel() {
                 <div class="legend-item"><span class="legend-key">z</span><span>Default Mode</span></div>
                 <div class="legend-item"><span class="legend-key">Y</span><span>Smooth Easing</span></div>
                 <div class="legend-item"><span class="legend-key">~</span><span>Stroke Lesion</span></div>
+                <div class="legend-item"><span class="legend-key">#</span><span>Psychedelic Trip</span></div>
             </div>
         </div>
     `;
