@@ -793,4 +793,13 @@ export const MINI_ROUTINES = {
         { time: 7.0, type: 'cognitive_dissonance', intensity: 0.0, duration: 3.0 },
         { time: 10.0, type: 'calm' }
     ],
+
+    '^': [ // Signal Trails
+        { time: 0.0, type: 'text', message: 'Simulating Long Signal Trails', duration: 3.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome mode to see trails well
+        { time: 0.0, type: 'camera', target: 'overview', duration: 2.0 },
+        { time: 1.0, type: 'signal_trails', intensity: 3.0, duration: 4.0, message: 'Increasing pulse decay tail length...' },
+        { time: 7.0, type: 'signal_trails', intensity: 1.0, duration: 3.0, message: 'Restoring normal signal speed...' },
+        { time: 10.0, type: 'calm' }
+    ]
 };
