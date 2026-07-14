@@ -225,7 +225,8 @@
 * *Idea:* "Procedural Cellular Advection" - Expand fluid dynamics to push and advect individual soma particles or fibers based on the fluid velocity field.
 * *Idea:* "What if we visualized environmental noise as background ambient lighting shifts?"
 * *Idea:* "What if we visualize immune cell migration as particle streams during an inflammatory response?"
-* *Idea:* "Neuron Pulse Trail Length: Add a parameter to control the decay tail length of connectome pulses to simulate different signal speeds."
+* [2026-07-21] - Completed Phase 2.5 Extension (Signal Trails). Added `trailLength` uniform to shaders, `signal_trails` event handler to `narrative-flow.js`, and `^` mini-routine.
+* *Idea:* "Neuron Pulse Trail Length: Add a parameter to control the decay tail length of connectome pulses to simulate different signal speeds." (Implemented as Phase 2.5 Extension - Signal Trails)
 * *Idea:* "Procedural Binaural Generation" - Automatically generate binaural beat frequencies based on desired brain wave targets.
 * *Idea:* "What if we visualized Cortisol levels as structural decay?"
 * *Idea:* "Wait/Signal Events" - Allow the routine to pause execution until an external signal is received. (Useful for Interactive Neuro-Storytelling).

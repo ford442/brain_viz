@@ -387,4 +387,16 @@ export function registerNarrativeFlowHandlers(handlers, player) {
             });
         }
     });
+
+    handlers.set('signal_trails', (evt) => {
+        const duration = evt.duration || 3.0;
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const ease = evt.ease || 'sineInOut';
+
+        player.startLerp({ key: 'trailLength', value: intensity, duration: duration, ease: ease });
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
 }

@@ -113,12 +113,13 @@ fn calculateSignalFlow(startPos: vec3<f32>, endPos: vec3<f32>, time: f32, speed:
 
     let regionSpeed = mix(0.78, 1.2, region.x);
     let segmentSpan = mix(0.10, 0.22, 1.0 - myelin) * mix(1.2, 0.75, diffusionNorm) + radius * 0.12;
+    let trail = max(1.0, uniforms.trailLength);
     let centerT = fract(travel * regionSpeed);
-    let t0 = clamp(centerT - segmentSpan * 1.8, 0.0, 1.0);
-    let t1 = clamp(centerT - segmentSpan * 0.9, 0.0, 1.0);
+    let t0 = clamp(centerT - segmentSpan * 1.8 * trail, 0.0, 1.0);
+    let t1 = clamp(centerT - segmentSpan * 0.9 * trail, 0.0, 1.0);
     let t2 = centerT;
-    let t3 = clamp(centerT + segmentSpan * 0.9, 0.0, 1.0);
-    let t4 = clamp(centerT + segmentSpan * 1.8, 0.0, 1.0);
+    let t3 = clamp(centerT + segmentSpan * 0.9 * trail, 0.0, 1.0);
+    let t4 = clamp(centerT + segmentSpan * 1.8 * trail, 0.0, 1.0);
 
     let s0 = sampleSmoothedVoxelValue(mix(startPos, endPos, t0));
     let s1 = sampleSmoothedVoxelValue(mix(startPos, endPos, t1));
