@@ -177,7 +177,7 @@
 - [x] **HRV Glitch Sync:** Implement `hrv_sync` event mapping heart rate variability to visual distortions (aberration, grain, shake).
 
 ## 🧪 "Dream" Log (Future Concepts)
-* *Idea:* "What if we visualize immune cell migration as particle streams during an inflammatory response?"
+* [x] "What if we visualize immune cell migration as particle streams during an inflammatory response?"
 * *Idea:* "What if we visualize psychedelic experiences as morphing geometric structures in the tensor volume?" (Implemented as Phase 2.5 Extension - Psychedelic Visuals)"
 *Idea:* "What if we mapped real-time galvanic skin response to mesh structural noise?"
 * *Idea:* "What if we allowed users to configure a custom neuromodulator in the UI?"
@@ -224,7 +224,7 @@
 * *Idea:* "Hormonal Flow Physics" - What if we visualize hormonal flows like Oxytocin as a slow, warm wave using procedural volumetric fluid dynamics rather than just parameter shifts?
 * *Idea:* "Procedural Cellular Advection" - Expand fluid dynamics to push and advect individual soma particles or fibers based on the fluid velocity field.
 * *Idea:* "What if we visualized environmental noise as background ambient lighting shifts?"
-* *Idea:* "What if we visualize immune cell migration as particle streams during an inflammatory response?"
+* [x] "What if we visualize immune cell migration as particle streams during an inflammatory response?"
 * [2026-07-21] - Completed Phase 2.5 Extension (Signal Trails). Added `trailLength` uniform to shaders, `signal_trails` event handler to `narrative-flow.js`, and `^` mini-routine.
 * *Idea:* "Neuron Pulse Trail Length: Add a parameter to control the decay tail length of connectome pulses to simulate different signal speeds." (Implemented as Phase 2.5 Extension - Signal Trails)
 * *Idea:* "Procedural Binaural Generation" - Automatically generate binaural beat frequencies based on desired brain wave targets.
@@ -293,7 +293,11 @@
 ### Phase 2.5 Extension: New Visualizations 3
 - [x] **Pupillary Dilation Simulation:** Visualized pupillary dilation as dynamic camera field of view shifts, controlled via `pupillary_dilation` event.
 
+### Phase 2.5 Extension: Immune Cell Migration
+- [x] **Immune Cell Migration:** Visualized immune cell migration as particle streams during an inflammatory response, controlled via `immune_migration` event.
+
 ## 📜 Changelog
+* [2026-07-22] - Completed Phase 2.5 Extension (Immune Cell Migration). Visualized immune cell migration as particle streams during an inflammatory response, controlled via `immune_migration` event.
 * [2026-07-20] - Completed Phase 2.5 Extension (Psychedelic Visuals). Visualized psychedelic experiences as morphing geometric structures and hue shifts, controlled via `psychedelic_trip` event.
 * [2026-07-15] - Completed Phase 2.5 Extension (Pupillary Dilation Simulation). Visualized pupillary dilation as dynamic camera field of view shifts, controlled via `pupillary_dilation` event. Added 'Psychedelic Visuals' idea to Dream Log.
 * [2026-07-10] - Completed Phase 2.5 Extension (Neurotransmitter Depletion). Visualized neurotransmitter depletion as gradual mesh decimation, controlled via `neurotransmitter_depletion` event.

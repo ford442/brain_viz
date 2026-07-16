@@ -60,7 +60,7 @@ export function setupLegendPanel() {
                 <div class="legend-item"><span class="legend-key">E</span><span>Electrical</span></div>
                 <div class="legend-item"><span class="legend-key">M</span><span>Mercury Vapor</span></div>
                 <div class="legend-item"><span class="legend-key">T</span><span>TMS Pulse</span></div>
-                <div class="legend-item"><span class="legend-key">I</span><span>Inflammation</span></div>
+                <div class="legend-item"><span class="legend-key">I</span><span>Inflammation & Immune</span></div>
                 <div class="legend-item"><span class="legend-key">C</span><span>Glial Cleanup</span></div>
                 <div class="legend-item"><span class="legend-key">F</span><span>Fluid Dynamics</span></div>
                 <div class="legend-item"><span class="legend-key">W</span><span>Sensory Overload</span></div>

@@ -151,6 +151,7 @@ export function applyInstancesMethods(Target) {
     this.addSparkSource(end, endTangent, 0.7, 0.0, BUNDLE_ID_AI, 0.08, 3.0);
         }
         this.generateHumanVesicleSparks();
+        this.generateImmuneCellSparks();
         this.generateFusionHotspotSparks();
     };
 
@@ -179,6 +180,20 @@ export function applyInstancesMethods(Target) {
             }
         }
     }
+        }
+    };
+
+    Target.prototype.generateImmuneCellSparks = function() {
+        for (let i = 0; i < 80; i++) {
+            const pt = this.randomPointInBrain();
+            const theta = this.random() * Math.PI * 2;
+            const phi = this.random() * Math.PI;
+            const tangent = [
+                Math.sin(phi) * Math.cos(theta),
+                Math.sin(phi) * Math.sin(theta),
+                Math.cos(phi)
+            ];
+            this.addSparkSource(pt, tangent, 0.9, this.random(), 300 + i, 0.2, 5.0);
         }
     };
 
