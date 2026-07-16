@@ -95,6 +95,7 @@ function createDefaultParams() {
         heavyMetal: 0.0,
         myelin_degradation: 0.0,
         fluidActive: 0.0,
+        immuneActivity: 0.0,
         altitude: 0.0,
         oxygenLevel: 1.0,
         hypoxiaStress: 0.0,
@@ -520,6 +521,7 @@ export class BrainRendererWebGL {
         this.params.heavyMetal = 0.0;
         this.params.cognitiveLoad = 0.0;
         this.params.fluidActive = 0.0;
+        this.params.immuneActivity = 0.0;
         this.params.fogDensity = 0.0;
         this.params.aberration = 0.0;
         this.params.grain = 0.0;

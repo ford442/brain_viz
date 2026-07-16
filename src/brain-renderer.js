@@ -87,7 +87,8 @@ export class BrainRenderer {
             lesionRadius: 0.0,
             decimation: 0.0,
             myelin_degradation: 0.0, // [V3.1] Connectome myelin loss visualization
-            fluidActive: 0.0, // [Phase 6] Procedural Volumetric Fluid Dynamics
+            fluidActive: 0.0,
+            immuneActivity: 0.0, // [Phase 6] Procedural Volumetric Fluid Dynamics
             edgeDetection: 0.0, // Visual Cortex Edge Detection
             // Altitude/Hypoxia Simulation Parameters
             altitude: 0.0, // Altitude in meters (0-8000)

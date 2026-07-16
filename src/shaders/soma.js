@@ -46,6 +46,7 @@ struct Uniforms {
     lesionRadius: f32,
     decimation: f32,
     psychedelic: f32,
+    immuneActivity: f32,
 }
 
 struct VertexInput {
@@ -276,6 +277,7 @@ struct Uniforms {
     lesionRadius: f32,
     decimation: f32,
     psychedelic: f32,
+    immuneActivity: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 

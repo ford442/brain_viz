@@ -121,6 +121,7 @@ export function applyStimulusMethods(Target) {
         this.params.aperture = 0.0;
         this.params.stress = 0.0;
         this.params.cortisol = 0.0;
+        this.params.immuneActivity = 0.0;
 
         this.tms = null;
         this.params.cognitiveLoad = 0.0;

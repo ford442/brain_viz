@@ -51,6 +51,7 @@ struct Uniforms {
     lesionRadius: f32,
     decimation: f32,
     psychedelic: f32,
+    immuneActivity: f32,
 }
 
 struct FiberVertexInput {
@@ -307,6 +308,7 @@ struct Uniforms {
     lesionRadius: f32,
     decimation: f32,
     psychedelic: f32,
+    immuneActivity: f32,
 }
 
 struct FiberFragmentInput {

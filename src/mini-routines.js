@@ -705,6 +705,7 @@ export const MINI_ROUTINES = {
         { time: 0.0, type: 'text', message: 'Histamine Release: Inflammatory Response', duration: 3.0 },
         { time: 0.0, type: 'style', value: 2 }, // Connectome
         { time: 0.0, type: 'histamine', target: 'frontal', intensity: 1.5, duration: 4.0 },
+        { time: 0.5, type: 'immune_migration', intensity: 1.2, duration: 3.5 },
         { time: 4.0, type: 'text', message: 'Inflammation subsiding.', duration: 2.0 },
         { time: 5.0, type: 'calm' }
     ],
@@ -713,6 +714,7 @@ export const MINI_ROUTINES = {
         { time: 0.0, type: 'style', value: 2 }, // Connectome
         { time: 0.0, type: 'histamine', target: 'frontal', intensity: 1.0, duration: 0.0 }, // Pre-existing inflammation
         { time: 1.0, type: 'glial_cleanup', intensity: 1.5, duration: 5.0 },
+        { time: 1.5, type: 'immune_migration', intensity: 1.8, duration: 4.5 },
         { time: 6.0, type: 'text', message: 'Tissue repaired.', duration: 2.0 },
         { time: 7.0, type: 'calm' }
     ],

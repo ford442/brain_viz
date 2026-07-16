@@ -51,6 +51,7 @@ struct Uniforms {
     lesionRadius: f32,
     decimation: f32,
     psychedelic: f32,
+    immuneActivity: f32,
 }
 
 struct SparkInput {
@@ -112,10 +113,15 @@ fn main(input: SparkInput) -> SparkOutput {
     //   kind 2.0 = human vesicle (deep blue-cyan, slow)
     //   kind 3.0 = AI quanta (bright magenta-orange, fast)
     //   kind 4.0 = fusion burst (white-gold, intense)
+    //   kind 5.0 = immune cell (bright green-white, slow, large)
     var sparkTint: vec3<f32>;
     var speedMul: f32 = 1.0;
     var sizeMul: f32 = 1.0;
-    if (kind > 3.5) {
+    if (kind > 4.5) {
+        sparkTint = vec3<f32>(0.2, 1.0, 0.4);
+        speedMul = 0.3;
+        sizeMul = 2.5;
+    } else if (kind > 3.5) {
         sparkTint = vec3<f32>(1.0, 0.95, 0.7);
         speedMul = 0.6;
         sizeMul = 1.6;
@@ -157,7 +163,10 @@ fn main(input: SparkInput) -> SparkOutput {
         let aiRaw = sampleSmoothedAIVoxelValue(anchor);
         let diff = abs(localActivity - aiRaw);
         let resonance = 1.0 - smoothstep(0.0, uniforms.resonanceThreshold, diff);
-        if (kind > 3.5) {
+        if (kind > 4.5) {
+            output.color = sparkTint * localActivity * 1.5;
+            finalAlpha = finalAlpha * 1.5;
+        } else if (kind > 3.5) {
             // Fusion burst: only ignites at resonant voxels and pulses brighter than baseline sparks.
             let pulse = 0.45 + 0.55 * sin(uniforms.time * 7.5 + bundleId * 1.37 + input.anchorPhase.w * 6.28318);
             let burst = resonance * pulse;
@@ -173,7 +182,11 @@ fn main(input: SparkInput) -> SparkOutput {
             output.color = mixedColor;
         }
     } else {
-        output.color = thermal * sparkTint;
+        if (kind > 4.5) {
+            output.color = sparkTint * localActivity * 1.5;
+        } else {
+            output.color = thermal * sparkTint;
+        }
     }
     output.uv = input.corner;
     output.alpha = finalAlpha;
@@ -231,6 +244,7 @@ struct Uniforms {
     lesionRadius: f32,
     decimation: f32,
     psychedelic: f32,
+    immuneActivity: f32,
 }
 
 struct SparkInput {
@@ -301,6 +315,7 @@ struct TensorParams {
     lesionRadius: f32,
     decimation: f32,
     psychedelic: f32,
+    immuneActivity: f32,
 }
 
 @group(0) @binding(0) var<storage, read_write> activityTensor: array<f32>;
@@ -565,6 +580,14 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
             val *= (1.0 - (params.lesionActive * lesionFalloff));
             decay = min(decay, 1.0 - (0.5 * params.lesionActive * lesionFalloff));
         }
+    }
+
+    // Immune Cell Migration (Particle Generation)
+    if (params.immuneActivity > 0.0) {
+        // Just modulate the tensor value to ensure particles spawn in inflamed areas
+        let inflammationPhase = hashNoise3(worldPosition * 4.0 + vec3<f32>(params.time));
+        let immuneBoost = smoothstep(0.7, 1.0, inflammationPhase) * params.immuneActivity;
+        val = val + immuneBoost * 0.5;
     }
 
     // SynaptiX AI mirror

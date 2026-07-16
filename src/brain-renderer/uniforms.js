@@ -91,6 +91,7 @@ export function applyUniformsMethods(Target) {
         const OFFSET_LESION_RADIUS = 84;
         const OFFSET_DECIMATION = 85;
         const OFFSET_PSYCHEDELIC = 86;
+        const OFFSET_IMMUNE_ACTIVITY = 87;
 
         const RENDER_UNIFORM_FLOAT_COUNT = 88;
         const uData = new Float32Array(RENDER_UNIFORM_FLOAT_COUNT);
@@ -152,6 +153,7 @@ export function applyUniformsMethods(Target) {
         uData[OFFSET_LESION_RADIUS] = this.params.lesionRadius;
         uData[OFFSET_DECIMATION] = this.params.decimation;
         uData[OFFSET_PSYCHEDELIC] = this.params.psychedelic || 0.0;
+        uData[OFFSET_IMMUNE_ACTIVITY] = this.params.immuneActivity || 0.0;
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         

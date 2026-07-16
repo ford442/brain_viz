@@ -136,6 +136,7 @@ export function registerNeuromodulatorsHandlers(handlers, player) {
             colorShift: -0.6 * intensity, // Shift towards cool/blue
             sparkle: 0.5 * intensity
         });
+        player.executeEvent({ type: 'immune_migration', intensity: intensity * 1.2, duration: duration });
 
         // Gradually reduce swelling (growth) and agitations
         if (duration > 0) {
@@ -265,6 +266,21 @@ export function registerNeuromodulatorsHandlers(handlers, player) {
     });
 
     // [Phase 2] Histamine Inflammatory Response
+    // [Phase 6] Immune Cell Migration
+    handlers.set('immune_migration', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const duration = evt.duration || 4.0;
+        const ease = evt.ease || 'quadOut';
+
+        player.renderer.setParams({
+            immuneActivity: intensity
+        });
+
+        if (duration > 0) {
+            player.startLerp({ key: 'immuneActivity', value: 0.0, duration: duration, ease: ease });
+        }
+    });
+
     handlers.set('histamine', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
         const duration = evt.duration || 3.0;
@@ -272,6 +288,7 @@ export function registerNeuromodulatorsHandlers(handlers, player) {
         if (evt.target) {
             player.executeEvent({ type: 'stimulus', target: evt.target, intensity: intensity * 2.0 });
         }
+        player.executeEvent({ type: 'immune_migration', intensity: intensity * 0.6, duration: duration });
 
         // Inflammatory response: warm/red color shift, slight swelling (growth), and agitation (flowSpeed)
         player.renderer.setParams({
