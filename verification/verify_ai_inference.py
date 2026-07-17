@@ -8,7 +8,7 @@ from playwright.sync_api import sync_playwright
 
 
 ROOT = Path(__file__).resolve().parents[1]
-APP_URL = "http://127.0.0.1:5180/?renderer=webgl"
+APP_URL = "http://127.0.0.1:5187/?renderer=webgl"
 
 
 def wait_for_server(url: str, timeout: float = 25.0) -> None:
@@ -25,7 +25,7 @@ def wait_for_server(url: str, timeout: float = 25.0) -> None:
 
 def launch_dev_server() -> subprocess.Popen:
     return subprocess.Popen(
-        ["npm", "run", "dev", "--", "--host", "127.0.0.1", "--port", "5180", "--strictPort"],
+        ["npm", "run", "dev", "--", "--host", "127.0.0.1", "--port", "5187", "--strictPort"],
         cwd=ROOT,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
@@ -42,10 +42,7 @@ def verify() -> None:
         with sync_playwright() as p:
             browser = p.chromium.launch(
                 headless=True,
-                args=[
-                    "--no-sandbox",
-                    "--disable-gpu",
-                ],
+                args=["--no-sandbox", "--disable-gpu"],
             )
             page = browser.new_page(viewport={"width": 1440, "height": 960})
             errors = []
@@ -54,7 +51,8 @@ def verify() -> None:
 
             page.goto(APP_URL, wait_until="domcontentloaded")
             page.wait_for_selector("#canvas", state="attached", timeout=10000)
-            page.wait_for_timeout(2500)
+            # ONNX Runtime init (or its synthetic fallback) takes a moment.
+            page.wait_for_timeout(3000)
 
             overlay_visible = page.locator("#error.visible").count() > 0
             if overlay_visible:
@@ -62,36 +60,26 @@ def verify() -> None:
 
             page.click('[data-tab="tab-synaptix"]')
             page.wait_for_timeout(300)
-            page.select_option("#ai-pattern", "aligned-prefrontal")
-            page.evaluate("() => document.querySelector('#btn-generate-ai')?.click()")
-            page.wait_for_timeout(700)
-            page.screenshot(path=str(output_dir / "synaptix_pure_ai.png"))
 
-            page.evaluate("() => document.querySelector('#stim-frontal')?.click()")
-            page.wait_for_timeout(400)
-            page.screenshot(path=str(output_dir / "synaptix_pure_human.png"))
+            status_text = page.locator("#live-source-status").text_content() or ""
+            assert status_text.startswith("status:"), f"Unexpected initial status: {status_text}"
+            page.screenshot(path=str(output_dir / "ai_inference_initial.png"))
 
-            page.evaluate("() => window.__synaptixDebug.runShowcase()")
+            # No window.setSynaptiXLiveSource callback is defined in this smoke test,
+            # so enabling the toggle must fail closed: uncheck itself and report the reason.
+            page.evaluate(
+                "() => { const el = document.getElementById('live-source-enable'); "
+                "el.checked = true; el.dispatchEvent(new Event('change', { bubbles: true })); }"
+            )
+            page.wait_for_timeout(300)
 
-            # The showcase routine ramps aiInfluence via a lerp starting at t=2.0s and
-            # only reaches the resonant pattern (aiInfluence 0.82) around t=4.7s of
-            # *routine* time. Headless/software rendering can stretch that wall-clock
-            # window unpredictably (GPU readback stalls delay the routine's own
-            # timeline compensation), so poll instead of trusting a fixed sleep.
-            state = None
-            deadline = time.time() + 20.0
-            while time.time() < deadline:
-                state = page.evaluate("() => window.__synaptixDebug.getState()")
-                if state["aiInfluence"] >= 0.6 and state["resonanceThreshold"] <= 0.2:
-                    break
-                page.wait_for_timeout(500)
-
-            assert state["style"] >= 4, state
-            assert state["frameCount"] >= 4, state
-            assert state["aiInfluence"] >= 0.6, state
-            assert state["resonanceThreshold"] <= 0.2, state
-
-            page.screenshot(path=str(output_dir / "synaptix_resonant_blend.png"))
+            status_after = page.locator("#live-source-status").text_content() or ""
+            assert "no callback defined" in status_after, (
+                f"Expected live source to fail closed without a callback, got: {status_after}"
+            )
+            checked = page.evaluate("() => document.getElementById('live-source-enable').checked")
+            assert checked is False, "Live source checkbox should auto-uncheck without a callback"
+            page.screenshot(path=str(output_dir / "ai_inference_no_callback.png"))
 
             if errors:
                 hard_errors = [
@@ -102,8 +90,7 @@ def verify() -> None:
                     raise AssertionError("Console/page errors detected:\n" + "\n".join(hard_errors[:8]))
 
             browser.close()
-            print("SynaptiX verification passed.")
-            print(f"State: {state}")
+            print(f"AI inference verification passed. Initial status: {status_text}")
     finally:
         server.terminate()
         try:
@@ -116,5 +103,5 @@ if __name__ == "__main__":
     try:
         verify()
     except Exception as exc:
-        print(f"verify_synaptix failed: {exc}")
+        print(f"verify_ai_inference failed: {exc}")
         sys.exit(1)

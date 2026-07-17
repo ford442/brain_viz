@@ -8,7 +8,7 @@ from playwright.sync_api import sync_playwright
 
 
 ROOT = Path(__file__).resolve().parents[1]
-APP_URL = "http://127.0.0.1:5180/?renderer=webgl"
+APP_URL = "http://127.0.0.1:5188/?renderer=webgl"
 
 
 def wait_for_server(url: str, timeout: float = 25.0) -> None:
@@ -25,10 +25,21 @@ def wait_for_server(url: str, timeout: float = 25.0) -> None:
 
 def launch_dev_server() -> subprocess.Popen:
     return subprocess.Popen(
-        ["npm", "run", "dev", "--", "--host", "127.0.0.1", "--port", "5180", "--strictPort"],
+        ["npm", "run", "dev", "--", "--host", "127.0.0.1", "--port", "5188", "--strictPort"],
         cwd=ROOT,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
+    )
+
+
+def set_slider(page, slider_id: str, value: str) -> None:
+    page.evaluate(
+        """([id, val]) => {
+            const el = document.getElementById(id);
+            el.value = val;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+        }""",
+        [slider_id, value],
     )
 
 
@@ -42,10 +53,7 @@ def verify() -> None:
         with sync_playwright() as p:
             browser = p.chromium.launch(
                 headless=True,
-                args=[
-                    "--no-sandbox",
-                    "--disable-gpu",
-                ],
+                args=["--no-sandbox", "--disable-gpu"],
             )
             page = browser.new_page(viewport={"width": 1440, "height": 960})
             errors = []
@@ -54,44 +62,36 @@ def verify() -> None:
 
             page.goto(APP_URL, wait_until="domcontentloaded")
             page.wait_for_selector("#canvas", state="attached", timeout=10000)
-            page.wait_for_timeout(2500)
+            page.wait_for_timeout(2000)
 
             overlay_visible = page.locator("#error.visible").count() > 0
             if overlay_visible:
                 raise AssertionError("Error overlay became visible")
 
-            page.click('[data-tab="tab-synaptix"]')
+            page.click('[data-tab="tab-cinematic"]')
             page.wait_for_timeout(300)
-            page.select_option("#ai-pattern", "aligned-prefrontal")
-            page.evaluate("() => document.querySelector('#btn-generate-ai')?.click()")
-            page.wait_for_timeout(700)
-            page.screenshot(path=str(output_dir / "synaptix_pure_ai.png"))
 
-            page.evaluate("() => document.querySelector('#stim-frontal')?.click()")
-            page.wait_for_timeout(400)
-            page.screenshot(path=str(output_dir / "synaptix_pure_human.png"))
+            set_slider(page, "shake", "0.3")
+            set_slider(page, "aberration", "1.5")
+            set_slider(page, "grain", "0.8")
+            page.wait_for_timeout(600)
+            page.screenshot(path=str(output_dir / "cinematic_fx_shake_aberration_grain.png"))
 
-            page.evaluate("() => window.__synaptixDebug.runShowcase()")
+            # Reset the lens FX, then push depth-of-field controls instead.
+            set_slider(page, "shake", "0.0")
+            set_slider(page, "aberration", "0.0")
+            set_slider(page, "grain", "0.0")
+            set_slider(page, "focus", "0.9")
+            set_slider(page, "aperture", "0.8")
+            page.wait_for_timeout(600)
+            page.screenshot(path=str(output_dir / "cinematic_fx_dof.png"))
 
-            # The showcase routine ramps aiInfluence via a lerp starting at t=2.0s and
-            # only reaches the resonant pattern (aiInfluence 0.82) around t=4.7s of
-            # *routine* time. Headless/software rendering can stretch that wall-clock
-            # window unpredictably (GPU readback stalls delay the routine's own
-            # timeline compensation), so poll instead of trusting a fixed sleep.
-            state = None
-            deadline = time.time() + 20.0
-            while time.time() < deadline:
-                state = page.evaluate("() => window.__synaptixDebug.getState()")
-                if state["aiInfluence"] >= 0.6 and state["resonanceThreshold"] <= 0.2:
-                    break
-                page.wait_for_timeout(500)
-
-            assert state["style"] >= 4, state
-            assert state["frameCount"] >= 4, state
-            assert state["aiInfluence"] >= 0.6, state
-            assert state["resonanceThreshold"] <= 0.2, state
-
-            page.screenshot(path=str(output_dir / "synaptix_resonant_blend.png"))
+            # Volumetric fog lives in the Activity tab alongside growth/sparkle.
+            page.click('[data-tab="tab-activity"]')
+            page.wait_for_timeout(300)
+            set_slider(page, "fogDensity", "0.4")
+            page.wait_for_timeout(600)
+            page.screenshot(path=str(output_dir / "cinematic_fx_fog.png"))
 
             if errors:
                 hard_errors = [
@@ -102,8 +102,7 @@ def verify() -> None:
                     raise AssertionError("Console/page errors detected:\n" + "\n".join(hard_errors[:8]))
 
             browser.close()
-            print("SynaptiX verification passed.")
-            print(f"State: {state}")
+            print("Cinematic FX verification passed.")
     finally:
         server.terminate()
         try:
@@ -116,5 +115,5 @@ if __name__ == "__main__":
     try:
         verify()
     except Exception as exc:
-        print(f"verify_synaptix failed: {exc}")
+        print(f"verify_cinematic_fx failed: {exc}")
         sys.exit(1)
