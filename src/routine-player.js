@@ -460,9 +460,13 @@ export class RoutinePlayer {
         // Ensure WebGPU context gracefully degrades
         // V2.9 verified: gracefully stop if device is lost
         // Gracefully stop if device is lost fallback
+        // The WebGL2 fallback renderer has no `device` concept (backendType === 'webgl'),
+        // so the device-loss check only applies to the WebGPU backend; WebGL health is
+        // covered by the isRunning check below.
+        const isWebGPUBackend = this.renderer && this.renderer.backendType !== 'webgl';
         const isDeviceLost = this._deviceLost;
-        const isDeviceLostNow = this.renderer && this.renderer.device && this.renderer.device.isLost;
-        const rendererMissing = !this.renderer || !this.renderer.device || isDeviceLostNow;
+        const isDeviceLostNow = isWebGPUBackend && this.renderer.device && this.renderer.device.isLost;
+        const rendererMissing = !this.renderer || (isWebGPUBackend && !this.renderer.device) || isDeviceLostNow;
 
         // Safety: If WebGPU context is lost or invalid, the routine player should degrade gracefully (stop ticking).
         // [Neuro-Script Cycle] Implemented and verified WebGPU fallback to stop execution safely.
