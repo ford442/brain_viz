@@ -314,6 +314,8 @@ struct Uniforms {
     growth: f32, // [Phase 6]
     aberration: f32, // [Phase 7]
     grain: f32, // [Phase 7],
+    focus: f32, // [Phase 7] Focus Distance
+    aperture: f32, // [Phase 7] Aperture Size
     lightDir: vec3<f32>, // [Phase 2]
     ambientLight: f32, // [Phase 2]
     dirIntensity: f32, // [Phase 2]

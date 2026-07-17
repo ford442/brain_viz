@@ -1,3 +1,4 @@
+// @ts-check
 // routine-player.js
 // orchestrates timed sequences of brain activity
 // Refactored for Extensibility (V2.9)
@@ -72,7 +73,7 @@ export class RoutinePlayer {
     initAudio() {
         if (!this.audioContext) {
             try {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                const AudioContext = window.AudioContext || /** @type {*} */ (window).webkitAudioContext;
                 this.audioContext = new AudioContext();
             } catch (e) {
                 console.warn("[Routine] Web Audio API not supported:", e);
@@ -362,8 +363,9 @@ export class RoutinePlayer {
         if (this.respirationActive) {
             // Read target energy directly from AudioReactor if available, otherwise fallback to base logic
             let targetRate = 1.0;
-            if (window.audioReactor && window.audioReactor.isActive) {
-                const features = window.audioReactor.getFeatures();
+            const audioReactor = /** @type {*} */ (window).audioReactor;
+            if (audioReactor && audioReactor.isActive) {
+                const features = audioReactor.getFeatures();
                 targetRate = 1.0 + (features.energy * 2.5); // Higher energy -> faster breathing
             }
 
