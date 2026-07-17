@@ -5,16 +5,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Quick Commands
 
 ```bash
-npm install              # Install dependencies
-npm run dev             # Start dev server (http://localhost:5173)
-npm run build           # Build production bundle to dist/
-npm run preview         # Preview production build locally
-python test_run.py      # Smoke test (checks if server responds)
+npm install                    # Install dependencies
+npm run dev                    # Start dev server (http://localhost:5173)
+npm run build                  # Build production bundle to dist/
+npm run preview                # Preview production build locally
+python3 scripts/test_run.py    # Smoke test (checks if server responds)
+python3 verification/verify_suite.py  # Full visual verification suite (WebGL fallback)
 ```
 
 ## Project Overview
 
-**Neuro-Weaver** is a high-performance 3D volumetric brain visualization engine built with WebGPU and WGSL. It renders stylized brain animations driven by tensor data, supporting multiple visualization styles (Organic surface, Cyber wireframe, Connectome fibers, Heatmap thermal).
+**Neuro-Weaver** is a high-performance 3D volumetric brain visualization engine built with WebGPU and WGSL, with a WebGL2 fallback/debug renderer. It renders stylized brain animations driven by tensor data, supporting five visualization styles (Organic surface, Cyber wireframe, Connectome fibers, Heatmap thermal, and SynaptiX comparative human/AI mode).
 
 **Key tech:** Vanilla JavaScript (ES Modules, no TypeScript), WebGPU graphics API, WGSL compute/rendering shaders, Vite build tool.
 
@@ -24,7 +25,8 @@ python test_run.py      # Smoke test (checks if server responds)
 - **`main.js`** — Application bootstrap. Initializes BrainRenderer, wires DOM controls, keyboard shortcuts, and runs the main update loop.
 - **`brain-renderer.js`** — Core rendering engine. Manages WebGPU device/context, pipelines (render and compute), camera controls, uniforms, and the render loop. Methods: `setParams()`, `injectStimulus()`, `calmState()`, `resetActivity()`, `setVoxelData()`.
 - **`brain-geometry.js`** — Procedurally generates a deformed UV sphere (mimics gyri/sulci) and a Manhattan-style internal circuit grid. Outputs vertex, index, fiber, and soma buffers.
-- **`shaders.js`** — All WGSL code (vertex, fragment, compute, post-processing) as template strings for four visualization styles.
+- **`shaders.js`** — All WGSL code (vertex, fragment, compute, post-processing) as template strings for all five visualization styles.
+- **`brain-renderer-webgl.js`** / **`brain-renderer-factory.js`** — WebGL2 fallback/debug renderer and backend-selection bootstrap (`?renderer=webgpu` vs `?renderer=webgl`). See `docs/webgl-fallback.md`.
 - **`routine-player.js`** — Orchestrates timed events (stimulus, camera movement, animations, audio, text, branching).
 - **`tensor-player.js`** — Synthesizes BCI patterns and loads pre-recorded tensor series (.bin, .npy, .csv).
 - **`inference-engine.js`** — ONNX Runtime integration for SqueezeNet inference (AI dreaming mode).
@@ -110,7 +112,7 @@ Routine files can drive SynaptiX through the custom `synaptix` event type. First
 
 ## Browser & Environment
 
-- **WebGPU only.** Chrome 113+, Edge 113+. No WebGL fallback.
+- **WebGPU is the primary/authoritative renderer.** Chrome 113+, Edge 113+. A WebGL2 fallback renderer (`?renderer=webgl`) exists for debugging, automation, and headless CI/verification — it is a simplified debug/reference path, not a full-fidelity alternative. See `docs/webgl-fallback.md`.
 - **No TypeScript.** Rely on JSDoc comments for type hints where useful.
 - **No node_modules in git.** Run `npm install` after cloning.
 
@@ -141,17 +143,20 @@ npm run dev
 
 ## Known Limitations
 
-- **No automated unit tests.** All testing is manual/visual.
-- **WebGPU only.** Strict browser requirement.
+- **No automated unit tests.** All testing is manual/visual, plus a Playwright-based `verification/` suite that runs against the WebGL2 fallback.
+- **WebGPU-primary, strict browser requirement for full fidelity.** The WebGL2 fallback trades visual/simulation fidelity for portability and automation.
 - **Memory fixed at startup.** Window resize recreates depth texture but not geometry buffers.
 - **Routine branching pauses.** `choice` and `wait` events pause the routine player.
 - **Large repo.** Historical node_modules and large binaries (WASM, ONNX models) increase clone size. Use `git clone --depth 1` for faster clones.
 
 ## Documentation Reference
 
-For deeper technical details, see:
-- **DEVELOPER_CONTEXT.md** — Complexity hotspots, dependency flows, inherent limitations
+`AGENTS.md` is the source of truth for architecture and conventions; this file, `.github/copilot-instructions.md`, and `docs/grok-agent-guide.md` are kept in sync with it. For deeper technical details, see:
+- **AGENTS.md** — Comprehensive project overview and agent responsibilities (source of truth)
+- **docs/ROADMAP.md** — Phase history, open items, and dream backlog
+- **CONTRIBUTING.md** — "Where to look" map across all docs
+- **docs/DEVELOPER_CONTEXT.md** — Complexity hotspots, dependency flows, inherent limitations
+- **docs/ARCHITECTURE.md** — Detailed module breakdown
+- **docs/SCIENTIFIC_ACCURACY_REPORT.md** — Physiological models verification
+- **docs/webgl-fallback.md** / **docs/wasm-engine.md** — WebGL2 fallback and WASM hybrid engine details
 - **.github/copilot-instructions.md** — Comprehensive guide for AI agents
-- **AGENTS.md** — Project overview and agent responsibilities
-- **SCIENTIFIC_ACCURACY_REPORT.md** — Physiological models verification
-- **ARCHITECTURE.md** — Detailed module breakdown

@@ -1,3 +1,5 @@
+> **Archived.** A one-off sprint plan; the described work (electrical/mercury exposure effects) is complete and folded into the compute shader. See [`docs/ROADMAP.md`](../ROADMAP.md) for current status.
+
 # Weekly Plan - Brain Visualization Enhancements
 
 ## Current Sprint: Environmental Stimulus Effects

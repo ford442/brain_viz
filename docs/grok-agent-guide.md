@@ -1,18 +1,18 @@
-# grok.md — Grok AI Assistant Guide for brain_viz
+# Grok AI Assistant Guide for brain_viz
 
-> Read this first.
+> Supplementary guide for Grok. For the canonical, kept-in-sync project reference, see [`AGENTS.md`](../AGENTS.md) at the repo root.
 
 ## Project Overview
-**brain_viz** is an animated 3D brain data visualization that uses real-time EEG/tensor data to drive beautiful WebGPU animations. It bridges neuroscience, data, and art.
+**brain_viz** (Neuro-Weaver) is an animated 3D brain data visualization that uses real-time EEG/tensor data to drive beautiful WebGPU animations. It bridges neuroscience, data, and art.
 
 - **Live Demo**: https://go.1ink.us/brain-viz
 - **Core Idea**: Make brain activity visible and mesmerizing through 3D animation and WebGPU.
 
 ## Technology Stack
-- JavaScript / TypeScript
-- WebGPU + WGSL
+- Vanilla JavaScript (ES Modules) — **no TypeScript**
+- WebGPU + WGSL, with a WebGL2 fallback/debug renderer (`?renderer=webgl`)
 - Tensor / EEG data handling
-- 3D animation (likely Three.js or native WebGPU)
+- Native WebGPU volumetric rendering (no Three.js)
 
 ## Grok Guidelines
 - **Data → Visual Mapping**: The core magic is how EEG/tensor values translate into motion, color, particles, or shape changes.
