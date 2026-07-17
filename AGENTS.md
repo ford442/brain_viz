@@ -331,6 +331,18 @@ python verification/verify_synaptix.py   # SynaptiX AI↔Human resonance
 - `verification/test_flashback.py` — Memory flashback routine test
 - `verification/test_glitch.py` — Glitch storm routine test
 
+### 7.1 CI Contract
+
+`.github/workflows/ci.yml` runs on every push/PR to `main` and gates on:
+
+1. `npm ci`
+2. `npx vite build` — frontend-only build (never `npm run build`, which shells out to `scripts/build_wasm.sh` and requires an Emscripten SDK that CI does not provision)
+3. `python3 scripts/test_run.py` — dev server smoke test
+4. `pip install playwright && playwright install chromium`
+5. `python3 verification/verify_suite.py` — the WebGL-fallback (`?renderer=webgl`) Playwright suite described above
+
+`node_modules` and the Playwright browser cache are cached across runs. Verification screenshots are uploaded as a build artifact when the job fails. The WASM build (`npm run build:wasm`) stays a local/manual step and is **not** a CI gate unless an Emscripten toolchain is added to the workflow later.
+
 ---
 
 ## 8. Deployment Process
