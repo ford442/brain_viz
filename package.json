@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run build:wasm && vite build",
+    "prebuild": "bash scripts/check_wasm.sh",
+    "build": "npm run build:web",
+    "build:web": "vite build",
+    "build:full": "npm run build:wasm && vite build",
     "build_colab": "npm run build:wasm_colab && vite build",
     "preview": "vite preview",
     "build:wasm": "bash scripts/build_wasm.sh",

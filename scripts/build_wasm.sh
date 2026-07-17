@@ -14,10 +14,34 @@
 # Output: public/wasm/brain_tensor_engine.{js,wasm}
 
 set -euo pipefail
-source /root/emsdk/emsdk_env.sh
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+# ─── Locate and activate the Emscripten SDK ──────────────────────────────────
+# Resolution order:
+#   1. em++ already on PATH — nothing to do.
+#   2. $EMSDK env var pointing at an emsdk checkout.
+#   3. emsdk cloned by .jules/setup.sh (git clone .../emsdk in the repo root
+#      or the user's home directory).
+if command -v em++ >/dev/null 2>&1; then
+    : # already activated in this shell
+elif [[ -n "${EMSDK:-}" && -f "${EMSDK}/emsdk_env.sh" ]]; then
+    # shellcheck disable=SC1091
+    source "${EMSDK}/emsdk_env.sh"
+elif [[ -f "${REPO_ROOT}/emsdk/emsdk_env.sh" ]]; then
+    # shellcheck disable=SC1091
+    source "${REPO_ROOT}/emsdk/emsdk_env.sh"
+elif [[ -f "${HOME}/emsdk/emsdk_env.sh" ]]; then
+    # shellcheck disable=SC1091
+    source "${HOME}/emsdk/emsdk_env.sh"
+else
+    echo "[build_wasm] ERROR: Emscripten SDK (em++) not found." >&2
+    echo "[build_wasm] Install it via .jules/setup.sh, or set \$EMSDK to an" >&2
+    echo "[build_wasm] emsdk checkout, or add em++ to PATH. See:" >&2
+    echo "[build_wasm]   https://emscripten.org/docs/getting_started/downloads.html" >&2
+    exit 1
+fi
 SRC="${REPO_ROOT}/wasm/brain_tensor_engine.cpp"
 OUT_DIR="${REPO_ROOT}/public/wasm"
 OUT_NAME="brain_tensor_engine"

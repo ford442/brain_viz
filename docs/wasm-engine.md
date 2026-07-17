@@ -51,19 +51,30 @@ cd emsdk
 source ./emsdk_env.sh   # (or emsdk_env.bat on Windows)
 ```
 
-The CI environment uses `.jules/setup.sh` which automates these steps.
+`.jules/setup.sh` automates these steps for agent/sandbox environments that opt into the WASM tier.
+
+`scripts/build_wasm.sh` locates `em++` in this order, so no hardcoded path is required:
+
+1. `em++` already on `PATH` (SDK activated in the current shell).
+2. `$EMSDK` env var pointing at an emsdk checkout (`$EMSDK/emsdk_env.sh`).
+3. An `emsdk/` checkout in the repo root or `$HOME` (matches `.jules/setup.sh`'s clone location).
+
+If none of these resolve, the script exits with an error explaining how to install Emscripten — it never silently no-ops.
 
 ### Compile
 
 ```bash
-# Release build (O2)
+# Release build (O2) — WASM engine only
 npm run build:wasm
 
 # Debug build (O0, assertions, safe-heap)
 npm run build:wasm:debug
+
+# Full production build: Vite bundle + WASM engine
+npm run build:full
 ```
 
-Output is placed in `public/wasm/` and served as static assets by Vite.
+Output is placed in `public/wasm/` and served as static assets by Vite. Plain `npm run build` (used by CI) is web-only and skips this entirely; see the README's "Build tiers" section for the full breakdown.
 
 ### Vite Configuration
 
