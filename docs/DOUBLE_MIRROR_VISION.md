@@ -1,3 +1,5 @@
+> **Speculative future vision, not a roadmap.** This document explores a much larger, separate idea — fusing EEG with other personal data streams (video, audio, text) — distinct in scope from the shipped Neuro-Weaver engine. For the actual phase-by-phase roadmap and dream backlog, see [`docs/ROADMAP.md`](ROADMAP.md).
+
 # Brain Data Integration Plan: Toward a "Double Mirror" of the Person
 
 ## Overview

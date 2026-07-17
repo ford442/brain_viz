@@ -1,3 +1,5 @@
+> **Archived.** This is the raw, historical planning log (with duplicated entries from repeated agent runs) preserved for reference. The current, deduplicated roadmap lives in [`docs/ROADMAP.md`](../ROADMAP.md).
+
 # Brain Viz: Cognitive Routine Engine Plan
 **Goal:** Transform `brain_viz` from a static WebGPU demo into a scriptable "Neuro-Cinematic" engine capable of playing back complex cognitive sequences (e.g., "Deep Focus", "Panic Attack", "Flow State").
 **Status:** Active Development

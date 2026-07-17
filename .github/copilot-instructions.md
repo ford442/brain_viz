@@ -1,6 +1,8 @@
 # Copilot Instructions for Neuro-Weaver Brain Visualization
 
-This repository contains a high-performance WebGPU-based 3D volumetric brain visualization engine. The codebase is **pure JavaScript (ES Modules, no TypeScript)** and uses **Vite** as the build tool.
+This repository contains a high-performance WebGPU-based 3D volumetric brain visualization engine (with a WebGL2 fallback/debug renderer). The codebase is **pure JavaScript (ES Modules, no TypeScript)** and uses **Vite** as the build tool.
+
+> This file is kept in sync with `AGENTS.md` (the source of truth) and `CLAUDE.md`. See `CONTRIBUTING.md` for the full "where to look" map and `docs/ROADMAP.md` for phase history and open items.
 
 ## Build, Test & Development Commands
 
@@ -18,10 +20,13 @@ npm run build
 npm run preview
 
 # Smoke test (starts dev server, checks if localhost:5173 responds)
-python test_run.py
+python3 scripts/test_run.py
+
+# Full visual verification suite (WebGL fallback, Playwright-based)
+python3 verification/verify_suite.py
 ```
 
-**Note:** There is no automated unit test suite. Testing is manual and visual. Verify the brain renders, animates smoothly (~60 FPS), and UI controls function correctly.
+**Note:** There is no automated unit test suite. Testing is manual and visual, plus the Playwright-based `verification/` suite described above. Verify the brain renders, animates smoothly (~60 FPS), and UI controls function correctly.
 
 ## Key Architecture & Design Patterns
 
@@ -86,9 +91,9 @@ Uniform structs require strict memory alignment (16-byte for `vec4`/`mat4`). The
 
 ## Browser & Deployment
 
-- **WebGPU only.** Chrome 113+, Edge 113+. No WebGL fallback.
+- **WebGPU is the primary/authoritative renderer.** Chrome 113+, Edge 113+. A WebGL2 fallback renderer (`?renderer=webgl`) exists for debugging, automation, and headless CI — see `docs/webgl-fallback.md`.
 - **COOP/COEP headers:** Configured in `vite.config.js` for `crossOriginIsolated` (required for multi-threaded WASM).
-- **Deployment:** Manual SFTP via `deploy.py` (credentials hardcoded; do not commit with real secrets).
+- **Deployment:** Manual SFTP via `scripts/deploy.py` (credentials hardcoded; do not commit with real secrets).
 - **Repository size:** Large binaries (WASM, ONNX models) stored directly. Use `git clone --depth 1` for faster clones.
 
 ## Common Tasks
@@ -150,6 +155,8 @@ The project includes Playwright for browser automation and testing. To enhance C
 ## References
 
 For deeper technical context:
-- **AGENTS.md** — Comprehensive AI agent guide (project overview, module responsibilities, architecture details).
-- **DEVELOPER_CONTEXT.md** — Complexity hotspots and dependency flows.
-- **SCIENTIFIC_ACCURACY_REPORT.md** — Physiological models verification (barometric formulas, hypoxia, cortisol effects).
+- **AGENTS.md** — Comprehensive AI agent guide (project overview, module responsibilities, architecture details); the source of truth this file syncs with.
+- **CONTRIBUTING.md** — "Where to look" map across all docs.
+- **docs/ROADMAP.md** — Phase history, open items, and dream backlog.
+- **docs/DEVELOPER_CONTEXT.md** — Complexity hotspots and dependency flows.
+- **docs/SCIENTIFIC_ACCURACY_REPORT.md** — Physiological models verification (barometric formulas, hypoxia, cortisol effects).

@@ -33,7 +33,7 @@ Key capabilities:
 | **ML Runtime** | ONNX Runtime Web (`onnxruntime-web`) |
 | **[Phase 1] WASM** | Emscripten (C++ → WASM); `BrainTensorEngine` in `wasm/`; JS bridge in `src/wasm-engine.js` |
 | **Test/Verify** | Playwright (in deps), Python scripts for smoke tests and visual verification |
-| **Deployment** | Manual SFTP via `deploy.py` |
+| **Deployment** | Manual SFTP via `scripts/deploy.py` |
 
 **Dependencies (`package.json`):**
 - `marked` — Markdown rendering (used in narrative overlays)
@@ -50,35 +50,43 @@ Key capabilities:
 
 ## 3. Project Structure
 
+> The application modules below (`main.js`, `brain-renderer.js`, `shaders.js`, etc.) live under `src/`, which has grown considerably beyond this list as features shipped (additional `src/ui-*.js`, `src/routine-*.js`, `src/main-*.js` modules, and `src/brain-renderer/`, `src/geometry/`, `src/mini-routines/`, `src/routine-handlers/`, `src/shaders/`, `src/ui/` subdirectories). Treat this as a map of the core/original modules, not an exhaustive `src/` listing — use `Glob`/`Grep` or the Explore agent for a live view of everything under `src/`.
+
 ```
 brain_viz/
 ├── index.html              # Main HTML with control panel UI
-├── main.js                 # Application bootstrap, UI wiring, keyboard shortcuts, mini-routines
-├── brain-renderer.js       # Core WebGPU engine: device, pipelines, render loop
-├── brain-renderer-webgl.js # WebGL2 fallback/debug renderer
-├── brain-renderer-factory.js # Backend selection + fallback bootstrap
-├── brain-geometry.js       # Procedural brain mesh + circuit grid + soma positions
-├── shaders.js              # WGSL shader strings (vertex, fragment, compute, post-process)
-├── math-utils.js           # Mat4 operations + easing/spline utilities
-├── routine-player.js       # Timed sequence engine (extensible event system)
-├── tensor-player.js        # BCI tensor frame playback + synthetic pattern generators
-├── tensor-utils.js         # Lightweight `Tensor` helper class (data + shape ops)
-├── wasm-engine.js          # [Phase 1] JS loader + bridge for C++ BrainTensorEngine WASM module
-├── inference-engine.js     # ONNX SqueezeNet wrapper for AI mode
-├── audio-reactor.js        # Web Audio microphone reactivity
-├── icosahedron.js          # Icosahedron vertex/index constants (used for instanced somas)
+├── src/
+│   ├── main.js                 # Application bootstrap, UI wiring, keyboard shortcuts, mini-routines
+│   ├── brain-renderer.js       # Core WebGPU engine: device, pipelines, render loop
+│   ├── brain-renderer-webgl.js # WebGL2 fallback/debug renderer
+│   ├── brain-renderer-factory.js # Backend selection + fallback bootstrap
+│   ├── brain-geometry.js       # Procedural brain mesh + circuit grid + soma positions
+│   ├── shaders.js              # WGSL shader strings (vertex, fragment, compute, post-process)
+│   ├── math-utils.js           # Mat4 operations + easing/spline utilities
+│   ├── routine-player.js       # Timed sequence engine (extensible event system)
+│   ├── tensor-player.js        # BCI tensor frame playback + synthetic pattern generators
+│   ├── tensor-utils.js         # Lightweight `Tensor` helper class (data + shape ops)
+│   ├── wasm-engine.js          # [Phase 1] JS loader + bridge for C++ BrainTensorEngine WASM module
+│   ├── inference-engine.js     # ONNX SqueezeNet wrapper for AI mode
+│   ├── audio-reactor.js        # Web Audio microphone reactivity
+│   └── icosahedron.js          # Icosahedron vertex/index constants (used for instanced somas)
 ├── vite.config.js          # Vite config (COOP/COEP headers, ONNX exclude, WASM assets)
 ├── package.json            # npm manifest (includes build:wasm script)
-├── deploy.py               # SFTP deployment script
-├── test_compile.py         # Stub for build verification
-├── test_shader.js          # Shader-related test stub
-├── patch_render_test.js    # Render pipeline patch/test stub
-├── fix_main.py             # Script for main.js fixes
+├── CONTRIBUTING.md         # "Where to look" map across all docs
 ├── wasm/                   # [Phase 1] C++ BrainTensorEngine source
 │   ├── brain_tensor_engine.h    # C API declarations
 │   └── brain_tensor_engine.cpp  # Full simulation implementation
-├── scripts/                # Build helper scripts
-│   └── build_wasm.sh       # [Phase 1] Emscripten build script (npm run build:wasm)
+├── scripts/                # Build/deploy/test helper scripts
+│   ├── build_wasm.sh       # [Phase 1] Emscripten build script (npm run build:wasm)
+│   ├── build_wasm_colab.sh # Colab-flavored WASM build variant
+│   ├── check_wasm.sh       # Advisory prebuild check (npm run prebuild)
+│   ├── deploy.py           # SFTP deployment script (canonical — see §8)
+│   ├── fix_main.py         # One-off main.js repair script
+│   ├── test_compile.py     # Stub for build verification
+│   └── test_run.py         # Dev-server smoke test (see §4, §7)
+├── tests/                  # Ad hoc test stubs (no automated suite — see §7)
+│   ├── patch_render_test.js    # Render pipeline patch/test stub
+│   └── test_shader.js          # Shader-related test stub
 ├── routines/               # JSON/CSV routine data
 │   ├── deep_thought.json
 │   ├── altitude_simulation.json
@@ -105,6 +113,7 @@ brain_viz/
 │   ├── verify_branching.py        # Choice/branching routine logic
 │   ├── verify_glitch.py           # Glitch storm corruption simulation
 │   └── *.png                      # Screenshots generated on each run (gitignored)
+├── docs/                   # Architecture, roadmap, and mode-specific docs (see docs/ROADMAP.md, docs/archive/)
 ├── .github/
 │   └── copilot-instructions.md  # GitHub Copilot context instructions
 └── .jules/
@@ -310,9 +319,9 @@ python verification/verify_glitch.py            # Glitch storm corruption simula
    ```
 2. Run the deployment script:
    ```bash
-   python deploy.py
+   python scripts/deploy.py
    ```
-   This recursively uploads the `dist/` directory via SFTP to a remote server. The server credentials are hardcoded in `deploy.py` (username, host, remote path).
+   This recursively uploads the `dist/` directory via SFTP to a remote server. The server credentials are hardcoded in `scripts/deploy.py` (username, host, remote path). An unused, alternate Contabo-storage-based deploy template is preserved for reference in `docs/archive/deploy-contabo-template.py` — it is not the active deploy path.
 
 **Do not edit files in `dist/` directly.** Always edit source files and re-run `npm run build`.
 
@@ -320,7 +329,7 @@ python verification/verify_glitch.py            # Glitch storm corruption simula
 
 ## 9. Security Considerations
 
-- **Hardcoded credentials:** `deploy.py` contains a plaintext password. Do not commit modified versions with real secrets if the repo is public.
+- **Hardcoded credentials:** `scripts/deploy.py` contains a plaintext password. Do not commit modified versions with real secrets if the repo is public.
 - **Cross-Origin Isolation:** `vite.config.js` sets `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp`. This is required for `SharedArrayBuffer` and multi-threaded ONNX WASM, but it blocks certain cross-origin resources (e.g., external images/audio) unless they send appropriate CORS headers.
 - **Microphone access:** `audio-reactor.js` requests `getUserMedia({ audio: true })`. This triggers a browser permission prompt.
 - **External audio URLs:** Some routines fetch audio from external URLs (`cdn.freesound.org`). Ensure these URLs are HTTPS and CORS-enabled.
@@ -340,13 +349,13 @@ python verification/verify_glitch.py            # Glitch storm corruption simula
 
 ## 11. Scientific Accuracy Notes
 
-The project includes a `SCIENTIFIC_ACCURACY_REPORT.md` that evaluates the physiological models (barometric formulas, brain anatomy mapping, hypoxia vulnerability, cortisol effects, etc.). Key verified facts:
+The project includes a `docs/SCIENTIFIC_ACCURACY_REPORT.md` that evaluates the physiological models (barometric formulas, brain anatomy mapping, hypoxia vulnerability, cortisol effects, etc.). Key verified facts:
 - Barometric formula and oxygen saturation calculations are correct.
 - Anatomical region mappings (frontal, occipital, temporal, parietal) are spatially accurate.
 - The serotonin color shift is **metaphorical**, not literal color perception.
 - Cortisol-induced structural decay is grounded in research on dendritic atrophy.
 
-When adding new physiological simulations, consult or update `SCIENTIFIC_ACCURACY_REPORT.md`.
+When adding new physiological simulations, consult or update `docs/SCIENTIFIC_ACCURACY_REPORT.md`.
 
 ---
 
@@ -357,6 +366,12 @@ When adding new physiological simulations, consult or update `SCIENTIFIC_ACCURAC
 3. **New BCI pattern?** Add a generator method to `tensor-player.js` and register it in `BUILTIN_PATTERNS`.
 4. **New UI control?** Add the HTML input to `index.html`, map it in `main.js` `initUIControls()`, and ensure `routine-player.js` can lerp it if needed.
 5. **New post-processing effect?** Modify `postFragmentShader` in `shaders.js` and add the corresponding parameter to `renderer.params`.
+
+---
+
+## 13. Related Documentation
+
+This file is the source of truth other agent-guardrail files sync from — `CLAUDE.md`, `.github/copilot-instructions.md`, and `docs/grok-agent-guide.md` should not contradict it. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full "where to look" map, and [`docs/ROADMAP.md`](docs/ROADMAP.md) for phase history, open items, and the dream backlog. Superseded planning documents live in [`docs/archive/`](docs/archive/) and should not be treated as current.
 
 ---
 

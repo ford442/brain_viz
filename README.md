@@ -127,3 +127,7 @@ These parameters directly map to WebGPU compute uniforms and affect:
 
 See [docs/synaptix.md](docs/synaptix.md) for the mapping table, routine vocabulary, and instructions for recording your own activations.
 See [docs/webgl-fallback.md](docs/webgl-fallback.md) for backend selection, debug controls, and WebGL-to-WebGPU porting notes.
+
+## More Documentation
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for a full map of where to look, and [docs/ROADMAP.md](docs/ROADMAP.md) for phase history, open items, and the future-ideas backlog.

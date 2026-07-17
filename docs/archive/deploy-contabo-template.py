@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 """
+ARCHIVED — This is a generic, unused deploy template (Contabo storage-manager
+based) that was previously checked in as the repo's `deploy.py`. It does not
+match the actual deploy flow described in AGENTS.md, which uses direct SFTP
+via `paramiko` — see `scripts/deploy.py` for the real, canonical deploy
+script. Kept here only in case the Contabo-based approach is useful later.
+
 project_deploy_template.py
 
 Copy this file into your project as `deploy.py` (or deploy_contabo.py).
