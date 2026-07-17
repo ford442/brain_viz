@@ -78,7 +78,7 @@ export const MINI_ROUTINES = {
         { type: 'text', message: 'Dynamic FOV Shift', duration: 3.0 }
     ],
 
-    'K': [
+    'k_dup': [
         { time: 0.0, type: 'text', message: 'Memory Formation Sequence', duration: 4.0 },
         { time: 0.0, type: 'camera', target: 'temporal-lobe', duration: 3.0, ease: 'sineInOut' },
         { time: 1.0, type: 'memory_formation', intensity: 2.5, duration: 4.0 },
@@ -161,8 +161,18 @@ export const MINI_ROUTINES = {
 
 
     'K': [ // ATP Energy Depletion
-        { time: 0.0, type: 'text', message: 'ATP Energy Depletion', duration: 3.0 },
-        { time: 0.0, type: 'atp_depletion', intensity: 1.0, duration: 6.0 }
+        { time: 0.0, type: 'text', message: 'Warning: Regional ATP Depletion', duration: 3.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome style to clearly see pulses
+        { time: 0.0, type: 'camera', target: 'frontal-lobe', duration: 2.0, ease: 'sineInOut' },
+        { time: 0.0, type: 'atp_depletion', intensity: 1.5, duration: 8.0 },
+
+        { time: 3.5, type: 'text', message: 'Cascading shutdown...', duration: 2.0 },
+        { time: 3.5, type: 'camera', target: 'overview', duration: 3.0, ease: 'quadOut' },
+
+        { time: 6.0, type: 'text', message: 'Global Energy Crash', duration: 3.0 },
+
+        { time: 9.0, type: 'text', message: 'Energy levels restoring...', duration: 2.0 },
+        { time: 10.0, type: 'calm' }
     ],
     'W': [ // Sensory Overload
         { time: 0.0, type: 'text', message: 'Sensory Overload Detected...', duration: 2.0 },
@@ -425,7 +435,7 @@ export const MINI_ROUTINES = {
         { time: 3.0, type: 'speed', value: 1.0, duration: 1.0, ease: 'linear' }, // Back to normal
         { time: 4.0, type: 'calm' }
     ],
-    'K': [
+    'k_dup': [
         { time: 0.0, type: 'text', message: 'Memory Formation Sequence', duration: 4.0 },
         { time: 0.0, type: 'camera', target: 'temporal-lobe', duration: 3.0, ease: 'sineInOut' },
         { time: 1.0, type: 'memory_formation', intensity: 2.5, duration: 4.0 },

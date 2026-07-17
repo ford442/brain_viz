@@ -282,7 +282,10 @@
 * *Idea:* "What if we allowed users to 'paint' energy directly onto the tensor volume using a continuous drag gesture?"
 * *Idea:* "What if we visualized marker events as floating text particles within the tensor volume?"
 
-* *Idea:* "What if we visualized ATP energy depletion as a cascading shutdown of regional activity, culminating in a global slow-motion effect?"
+* *Idea:* "What if we visualize targeted drug delivery as micro-capsules bursting and diffusing color through localized regions?"
+
+### Phase 2.5 Extension: ATP Energy Depletion Cascade
+- [x] **ATP Energy Depletion Cascade:** Visualized ATP energy depletion as a cascading shutdown of regional activity, culminating in a global slow-motion effect, controlled via `atp_depletion` event.
 
 ### Phase 2.5 Extension: Neurotransmitter Depletion
 - [x] **Gradual Mesh Decimation:** Visualized neurotransmitter depletion as gradual mesh decimation in the tensor volume using a noise function, controlled via `neurotransmitter_depletion` event.
@@ -297,6 +300,7 @@
 - [x] **Immune Cell Migration:** Visualized immune cell migration as particle streams during an inflammatory response, controlled via `immune_migration` event.
 
 ## 📜 Changelog
+* [2026-07-25] - Completed Phase 2.5 Extension (ATP Energy Depletion Cascade). Visualized ATP energy depletion as a cascading shutdown of regional activity, culminating in a global slow-motion effect, controlled via `atp_depletion` event. Added 'Targeted drug delivery' idea to Dream Log.
 * [2026-07-22] - Completed Phase 2.5 Extension (Immune Cell Migration). Visualized immune cell migration as particle streams during an inflammatory response, controlled via `immune_migration` event.
 * [2026-07-20] - Completed Phase 2.5 Extension (Psychedelic Visuals). Visualized psychedelic experiences as morphing geometric structures and hue shifts, controlled via `psychedelic_trip` event.
 * [2026-07-15] - Completed Phase 2.5 Extension (Pupillary Dilation Simulation). Visualized pupillary dilation as dynamic camera field of view shifts, controlled via `pupillary_dilation` event. Added 'Psychedelic Visuals' idea to Dream Log.
