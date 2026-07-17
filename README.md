@@ -67,11 +67,26 @@ All three keep the existing real-time signal pulsing, soma scaling, and spark pi
 ## Common Commands
 
 ```bash
-npm run build
+npm install
+npm run dev              # dev server, http://localhost:5173
+npm run build            # web-only production build (default, no toolchain needed)
+npm run build:full       # web + optional C++ WASM hybrid engine (requires Emscripten)
 npm run preview
 python3 scripts/test_run.py
 python3 verification/verify_synaptix.py
 ```
+
+### Build tiers
+
+Neuro-Weaver's WASM engine is an optional runtime feature (`src/wasm-engine.js` falls back to the WebGPU/WebGL compute path when the module is absent), so it is never required to produce a working build:
+
+| Tier | Command | Requires Emscripten? | Produces |
+|------|---------|----------------------|----------|
+| Dev | `npm run dev` | No | Vite dev server with hot reload |
+| Web-only production | `npm run build` (alias: `npm run build:web`) | No | `dist/` — Vite bundle only |
+| Full hybrid | `npm run build:full` | Yes | `dist/` + `public/wasm/brain_tensor_engine.{js,wasm}` |
+
+`npm run build` runs a `prebuild` check (`scripts/check_wasm.sh`) that prints an advisory notice — never a failure — when `public/wasm/` hasn't been built. To build the WASM engine on its own (e.g. after installing Emscripten via `.jules/setup.sh`), run `npm run build:wasm`; it locates `em++` via `$EMSDK`, an `emsdk` checkout in the repo root or `$HOME`, or an already-activated shell, instead of a hardcoded path. See [docs/wasm-engine.md](docs/wasm-engine.md) for details.
 
 ## WebGL2 Fallback
 
@@ -88,7 +103,7 @@ The WebGL2 path shares the same geometry generator, tensor buffers, camera state
 `.github/workflows/ci.yml` runs on every push and pull request to `main`:
 
 1. `npm ci`
-2. `npx vite build` — frontend-only production build. This intentionally skips `npm run build`'s `build:wasm` step, since CI does not provision an Emscripten SDK; the WASM engine is optional at runtime (see [docs/wasm-engine.md](docs/wasm-engine.md)).
+2. `npm run build` (equivalent to `npx vite build`) — frontend-only production build. CI does not provision an Emscripten SDK, so it never runs `build:full`/`build:wasm`; the WASM engine is optional at runtime (see [docs/wasm-engine.md](docs/wasm-engine.md)).
 3. `python3 scripts/test_run.py` — dev server smoke test.
 4. `pip install playwright` + `playwright install chromium` — sets up the Python Playwright runtime used by the verification scripts.
 5. `python3 verification/verify_suite.py` — runs the Playwright-based visual verification suite against the `?renderer=webgl` fallback (WebGPU/SwiftShader is too unreliable for headless CI).
