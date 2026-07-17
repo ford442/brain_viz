@@ -2,7 +2,7 @@
 // Neuro-Weaver V2.8 Implementation - With Routine Engine
 import { InferenceEngine } from './inference-engine.js';
 import { FilterUIOverlay, initUIControls, initDirectorTools, initTooltips, initRangeTooltips } from './ui-utils.js';
-import { setupLegendPanel, setupOverlays, setupRoutineTransport, setupBciPanel, setupNeuromodulatorPanel } from './ui-panels.js';
+import { mountControlsShell, initTabSwitching, setupLegendPanel, setupOverlays, setupRoutineTransport, setupBciPanel, setupNeuromodulatorPanel } from './ui-panels.js';
 import { setupModeSelector } from './ui-mode-selector.js';
 import { collectInputsAndLabels } from './main-dom.js';
 import { setupRendererBackend } from './main-renderer-setup.js';
@@ -11,6 +11,9 @@ import { setupSynaptiXIntegration } from './main-synaptix-integration.js';
 import { startMainUpdateLoop } from './main-update-loop.js';
 
 async function init() {
+    mountControlsShell();
+    initTabSwitching();
+
     const canvas = document.getElementById('canvas');
     const filterOverlay = new FilterUIOverlay(canvas);
     const errorDiv = document.getElementById('error');

@@ -1,0 +1,34 @@
+/* [Neuro-Weaver] Design tokens: shared colors, fonts, and glow/blur primitives. */
+:root {
+    --font-sans: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    --color-cyan: #00e5e5;
+    --color-cyan-glow-soft: rgba(0, 229, 229, 0.15);
+    --color-cyan-glow-mid: rgba(0, 229, 229, 0.25);
+    --color-cyan-glow-strong: rgba(0, 229, 229, 0.5);
+
+    --color-border-soft: rgba(100, 150, 200, 0.15);
+    --color-border-mid: #445566;
+
+    --color-text-secondary: #99aabb;
+    --color-text-accent: #aaccff;
+
+    --panel-bg: rgba(10, 15, 25, 0.85);
+    --blur-panel: 12px;
+
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 12px;
+}
+
+body {
+    margin: 0;
+    overflow: hidden;
+    background: #000;
+    color: #fff;
+    font-family: var(--font-sans);
+    width: 100vw;
+    height: 100vh;
+}
+canvas { display: block; width: 100vw; height: 100vh; }
