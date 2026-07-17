@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      # Frontend-only build. Do NOT use `npm run build` here — it shells out to
+      # scripts/build_wasm.sh, which requires an Emscripten SDK that CI does not
+      # provision. The WASM engine is an optional runtime feature (wasm-engine.js
+      # falls back gracefully when the module is absent), so it is not a build gate.
+      - name: Build frontend (vite, no WASM)
+        run: npx vite build
+
+      - name: Python smoke test
+        run: python3 scripts/test_run.py
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Playwright (Python)
+        run: pip install playwright
+
+      - name: Resolve Playwright version
+        id: playwright-version
+        run: echo "version=$(python3 -m playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+
+      - name: Install Playwright OS dependencies
+        run: python3 -m playwright install-deps chromium
+
+      - name: Install Chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: python3 -m playwright install chromium
+
+      # Every script in verification/ forces ?renderer=webgl and launches its
+      # own dev server (see AGENTS.md #7) — WebGPU + SwiftShader is too flaky
+      # for headless CI, so the WebGL2 fallback path is the CI-supported one.
+      - name: Run verification suite (WebGL fallback)
+        run: python3 verification/verify_suite.py
+
+      - name: Upload verification screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification-screenshots
+          path: verification/*.png
+          retention-days: 7
+          if-no-files-found: ignore

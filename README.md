@@ -83,6 +83,18 @@ Use the WebGL2 path when you need a visually inspectable reference renderer:
 
 The WebGL2 path shares the same geometry generator, tensor buffers, camera state, style controls, and SynaptiX inputs. It is intentionally simpler than the WebGPU renderer: it approximates compute-driven volumetrics on the CPU so the scene remains debuggable in environments where WebGPU is hard to inspect automatically.
 
+## Continuous Integration
+
+`.github/workflows/ci.yml` runs on every push and pull request to `main`:
+
+1. `npm ci`
+2. `npx vite build` — frontend-only production build. This intentionally skips `npm run build`'s `build:wasm` step, since CI does not provision an Emscripten SDK; the WASM engine is optional at runtime (see [docs/wasm-engine.md](docs/wasm-engine.md)).
+3. `python3 scripts/test_run.py` — dev server smoke test.
+4. `pip install playwright` + `playwright install chromium` — sets up the Python Playwright runtime used by the verification scripts.
+5. `python3 verification/verify_suite.py` — runs the Playwright-based visual verification suite against the `?renderer=webgl` fallback (WebGPU/SwiftShader is too unreliable for headless CI).
+
+`node_modules` and the Playwright browser cache are cached between runs. On failure, any screenshots written to `verification/` are uploaded as a build artifact for debugging. The WASM build is never a CI gate — it stays a local/manual step until an Emscripten toolchain is added to the workflow.
+
 ## Custom Neuromodulator UI
 In Phase 21, we introduced a live-editable neuromodulator interface. Located in the right-side control panel, you can now toggle between predefined chemical profiles (Dopamine, Serotonin, Acetylcholine, GABA) or create your own custom profile.
 These parameters directly map to WebGPU compute uniforms and affect:
