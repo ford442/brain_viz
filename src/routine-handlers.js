@@ -4,6 +4,7 @@ import { registerEffectsAudioHandlers } from './routine-handlers/effects-audio.j
 import { registerNarrativeFlowHandlers } from './routine-handlers/narrative-flow.js';
 import { registerSynaptixHandlers } from './routine-handlers/synaptix.js';
 import { registerBiosyncHandlers } from './routine-handlers/biosync.js';
+import { registerTrainingHandlers } from './routine-handlers/training.js';
 
 export function createDefaultHandlers(player) {
     const handlers = new Map();
@@ -13,5 +14,6 @@ export function createDefaultHandlers(player) {
     registerNarrativeFlowHandlers(handlers, player);
     registerSynaptixHandlers(handlers, player);
     registerBiosyncHandlers(handlers, player);
+    registerTrainingHandlers(handlers, player);
     return handlers;
 }

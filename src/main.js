@@ -8,6 +8,7 @@ import { collectInputsAndLabels } from './main-dom.js';
 import { setupRendererBackend } from './main-renderer-setup.js';
 import { setupRoutineEngine } from './main-routine-engine.js';
 import { setupSynaptiXIntegration } from './main-synaptix-integration.js';
+import { setupTrainingIntegration } from './main-training-integration.js';
 import { startMainUpdateLoop } from './main-update-loop.js';
 
 async function init() {
@@ -28,7 +29,7 @@ async function init() {
         const legendPanel = document.getElementById('legend-panel');
         if (legendPanel) {
             const newEntry = document.createElement('div');
-            newEntry.innerHTML = '<b>1-5</b> : Switch Mode (Organic/Cyber/Connectome/Heatmap/SynaptiX)<br><b>M</b> : Memory Fragmentation<br><b>S</b> : Frontal Tour (Spline)<br><b>D</b> : Dynamic Topology Shift<br><b>X</b> : SynaptiX Mode';
+            newEntry.innerHTML = '<b>1-5</b> : Switch Mode (Organic/Cyber/Connectome/Heatmap/SynaptiX)<br><b>M</b> : Memory Fragmentation<br><b>S</b> : Frontal Tour (Spline)<br><b>D</b> : Dynamic Topology Shift<br><b>X</b> : SynaptiX Mode<br><b>6/7/8</b> : Training Demo (Calm Focus/Panic Recovery/Flow Sustain)';
             legendPanel.appendChild(newEntry);
         }
 
@@ -45,6 +46,7 @@ async function init() {
 
         setupBciPanel(renderer, controls, tensorPlayer);
         setupNeuromodulatorPanel(renderer, controls);
+        const trainingEngine = setupTrainingIntegration(renderer, player, audioReactor, synaptixEngine);
 
         initUIControls(renderer, inputs, labels);
 
@@ -68,7 +70,7 @@ async function init() {
         const directorLabels = initDirectorTools(renderer, player);
 
         startMainUpdateLoop(renderer, player, inputs, labels, tensorPlayer, synaptixEngine,
-            inferenceEngine, audioReactor, transport, directorLabels, modeSelector, aiPromptRef);
+            inferenceEngine, audioReactor, transport, directorLabels, modeSelector, aiPromptRef, trainingEngine);
 
         await inferenceEngine.initialize();
         const liveSourceStatus = document.getElementById('live-source-status');

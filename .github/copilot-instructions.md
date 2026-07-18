@@ -46,6 +46,8 @@ python3 verification/verify_suite.py
 
 - **`audio-reactor.js`** — Web Audio API microphone input for real-time audio reactivity.
 
+- **`training-engine.js`** — Neurofeedback Training Mode: `TrainingEngine`, simulated metric samplers, built-in courses (Calm Focus / Panic Recovery / Flow Sustain), streak/drift/star scoring, and `localStorage` session history. See `docs/training-mode.md`.
+
 - **`main.js`** — Application bootstrap. Wires DOM controls, sets up keyboard shortcuts, initializes components, and runs the main update loop.
 
 ### Critical Design Principles
