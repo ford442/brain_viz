@@ -330,6 +330,7 @@ export class RoutinePlayer {
         }
 
         if (typeof this.renderer.isRunning !== 'undefined' && !this.renderer.isRunning) {
+             // [Neuro-Script Cycle] Enhanced tick with explicit safety guard
              console.warn("[Routine Engine] WebGPU Renderer is not running. Pausing tick loop safely.");
              this.stop();
              return;
@@ -531,6 +532,7 @@ export class RoutinePlayer {
         if (this.handlers.has(resolvedEvt.type)) {
             const eventHandler = this.handlers.get(resolvedEvt.type);
             try {
+                // [Neuro-Script Cycle] Explicit handler execution path
                 eventHandler(resolvedEvt);
             } catch (handlerError) {
                 console.error(`[Routine Engine] Error executing extensible handler '${resolvedEvt.type}':`, handlerError);
