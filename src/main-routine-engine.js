@@ -117,6 +117,7 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
     }
 
     // Integration verified: RoutinePlayer instantiated safely without breaking init flow
+    // [Neuro-Script Cycle] Routine engine integration explicit validation
     console.log("[Neuro-Script Initialization Cycle] Routine Engine Instantiated.");
 
     window.playerState = player.state;

@@ -1,5 +1,18 @@
+// @ts-check
 import { Mat4 } from '../math-utils.js';
 import { COMPUTE_UNIFORM_BUFFER_SIZE } from './constants.js';
+import { assertUniformLayout, assertShaderUniformsMatch } from '../shaders/uniform-layout.js';
+import {
+    vertexShader, fragmentShader,
+    fiberVertexShader, fiberFragmentShader,
+    somaVertexShader, somaFragmentShader,
+    sparkVertexShader, sparkFragmentShader,
+    postFragmentShader,
+    pointCloudVertexShader, pointCloudFragmentShader,
+} from '../shaders.js';
+
+// Dev-only: the layout assertions below only need to run once, not every frame.
+let uniformLayoutChecked = false;
 
 export function applyUniformsMethods(Target) {
     Target.prototype.updateUniforms = function() {
@@ -25,25 +38,11 @@ export function applyUniformsMethods(Target) {
         const pv = Mat4.multiply(view, projection);
         const mvp = Mat4.multiply(model, pv);
         
-        // Uniform Buffer Layout (Verified)
-        // [0-15]: MVP (64 bytes)
-        // [16-31]: Model (64 bytes)
-        // [32]: Time
-        // [33]: Style
-        // [34]: FlowSpeed
-        // [35]: ColorShift
-        // [36-39]: SlicePlane (Vec4, 16 bytes)
-        // [40]: Sparkle (4 bytes)
-        // [41]: Growth (4 bytes)
-        // [42]: Aberration (4 bytes)
-        // [43]: Grain (4 bytes)
-        // [44]: Focus (4 bytes)
-        // [45]: Aperture (4 bytes)
-        // [48-50]: LightDir (12 bytes)
-        // [51]: AmbientLight (4 bytes)
-        // [52]: DirIntensity (4 bytes)
-        // [53]: Stress (4 bytes)
-        // [54]: Cortisol (4 bytes)
+        // Uniform Buffer Layout
+        // The canonical field-by-field layout (and the WGSL alignment rules that
+        // derive it) lives in src/shaders/uniform-layout.js — RENDER_UNIFORM_LAYOUT.
+        // The OFFSET_* constants below must match it exactly; assertUniformLayout()
+        // at the bottom of this function verifies that in dev builds.
 
         const OFFSET_MVP = 0;
         const OFFSET_MODEL = 16;
@@ -154,6 +153,34 @@ export function applyUniformsMethods(Target) {
         uData[OFFSET_DECIMATION] = this.params.decimation;
         uData[OFFSET_PSYCHEDELIC] = this.params.psychedelic || 0.0;
         uData[OFFSET_IMMUNE_ACTIVITY] = this.params.immuneActivity || 0.0;
+
+        if (!uniformLayoutChecked) {
+            uniformLayoutChecked = true;
+            assertUniformLayout({
+                mvpMatrix: OFFSET_MVP, modelMatrix: OFFSET_MODEL, time: OFFSET_TIME, style: OFFSET_STYLE,
+                flowSpeed: OFFSET_FLOW, colorShift: OFFSET_COLOR, slicePlane: OFFSET_SLICE, sparkle: OFFSET_SPARKLE,
+                growth: OFFSET_GROWTH, aberration: OFFSET_ABERRATION, grain: OFFSET_GRAIN, focus: OFFSET_FOCUS,
+                aperture: OFFSET_APERTURE, lightDir: OFFSET_LIGHT_DIR, ambientLight: OFFSET_AMBIENT,
+                dirIntensity: OFFSET_DIR_INTENSITY, stress: OFFSET_STRESS, cortisol: OFFSET_CORTISOL,
+                altitude: OFFSET_ALTITUDE, oxygenLevel: OFFSET_OXYGEN, hypoxiaStress: OFFSET_HYPOXIA_STRESS,
+                metabolicRate: OFFSET_METABOLIC_RATE, mitochondrialFunction: OFFSET_MITOCHONDRIAL,
+                fogDensity: OFFSET_FOG_DENSITY, zoom: OFFSET_ZOOM, heavyMetal: OFFSET_HEAVY_METAL,
+                fluidActive: OFFSET_FLUID_ACTIVE, aiInfluence: OFFSET_AI_INFLUENCE,
+                resonanceThreshold: OFFSET_RESONANCE_THRESHOLD, synaptiXActive: OFFSET_SYNAPTIX_ACTIVE,
+                aiLayer: OFFSET_AI_LAYER, pointCloudDensity: OFFSET_POINT_CLOUD_DENSITY,
+                fiberCoupling: OFFSET_FIBER_COUPLING, connectomeVariant: OFFSET_CONNECTOME_VARIANT,
+                tmsActive: OFFSET_TMS_ACTIVE, tmsCenter: OFFSET_TMS_CENTER, tmsPulse: OFFSET_TMS_PULSE,
+                tmsRadius: OFFSET_PAD3, edgeDetection: OFFSET_EDGE_DETECTION, pulseSaturation: OFFSET_PULSE_SATURATION,
+                trailLength: OFFSET_TRAIL_LENGTH, lesionCenter: OFFSET_LESION_CENTER, lesionActive: OFFSET_LESION_ACTIVE,
+                lesionRadius: OFFSET_LESION_RADIUS, decimation: OFFSET_DECIMATION, psychedelic: OFFSET_PSYCHEDELIC,
+                immuneActivity: OFFSET_IMMUNE_ACTIVITY,
+            }, RENDER_UNIFORM_FLOAT_COUNT);
+            assertShaderUniformsMatch({
+                vertexShader, fragmentShader, fiberVertexShader, fiberFragmentShader,
+                somaVertexShader, somaFragmentShader, sparkVertexShader, sparkFragmentShader,
+                postFragmentShader, pointCloudVertexShader, pointCloudFragmentShader,
+            });
+        }
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         

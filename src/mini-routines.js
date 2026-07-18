@@ -1,4 +1,6 @@
-export const MINI_ROUTINES = {
+// mini-routines.js — barrel re-export for backward compatibility
+import { MINI_ROUTINES_PART1 } from './mini-routines/part1.js';
+import { MINI_ROUTINES_PART2 } from './mini-routines/part2.js';
 
     ',': [ // Pupillary Dilation Simulation
         { time: 0.0, type: 'text', message: 'Simulating Pupillary Dilation', duration: 4.0 },
@@ -815,3 +817,4 @@ export const MINI_ROUTINES = {
         { time: 10.0, type: 'calm' }
     ]
 };
+export const MINI_ROUTINES = { ...MINI_ROUTINES_PART1, ...MINI_ROUTINES_PART2 };
