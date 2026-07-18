@@ -1,3 +1,4 @@
+// @ts-check
 // brain-renderer.js
 // Verified Neuro-Weaver V2.6 Implementation
 import { WasmTensorEngine } from './wasm-engine.js';
@@ -9,6 +10,9 @@ import { applyRenderLoopMethods } from './brain-renderer/render-loop.js';
 import { applyCoreMethods } from './brain-renderer/core-methods.js';
 
 export class BrainRenderer {
+    /**
+     * @param {HTMLCanvasElement} canvas
+     */
     constructor(canvas) {
         this.canvas = canvas;
         this.device = null;
@@ -142,6 +146,8 @@ export class BrainRenderer {
         this.sampler = null;
         this.postBindGroup = null;
 
+        // @ts-expect-error setupInputHandlers is attached to the prototype by
+        // applyCoreMethods() below, after this class body — not visible to TS.
         this.setupInputHandlers();
     }
     
