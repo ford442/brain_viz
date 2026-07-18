@@ -160,27 +160,52 @@ export function registerNeuromodulatorsHandlers(handlers, player) {
         player.startLerp({ key: 'colorShift', value: -0.2 * intensity, duration: duration, ease: 'quadOut' });
     });
 
-    // [Phase 5] ATP Energy Depletion
+    // [Phase 5 / Phase 2.5 Extension] ATP Energy Depletion Cascade
     handlers.set('atp_depletion', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
-        const duration = evt.duration || 5.0;
+        const duration = evt.duration || 8.0;
 
-        // Slow down playback speed and desaturate
-        player.startLerp({ key: 'playbackSpeed', value: 0.2 * (2.0 - intensity), duration: duration * 0.5, ease: 'quadOut' });
-        player.startLerp({ key: 'colorShift', value: -0.8 * intensity, duration: duration * 0.5, ease: 'quadOut' });
+        const easeIn = 'quadIn';
+        const easeOut = 'quadOut';
 
-        // Fade back
+        // Stage 1: Regional shutdown (Frontal & Temporal) - reduce sparkle and signal saturation
+        player.startLerp({ key: 'sparkle', value: 0.1, duration: duration * 0.3, ease: easeIn });
+        player.startLerp({ key: 'pulseSaturation', value: 0.2, duration: duration * 0.4, ease: easeIn });
+        player.startLerp({ key: 'decimation', value: intensity * 0.15, duration: duration * 0.5, ease: easeIn }); // Slight mesh decay
+
+        // Stage 2: Global Slow-Motion & Dimming
+        // Instead of setTimeout, insert delayed lerp events into the routine
+        const slowMoTime = player.elapsedTime + duration * 0.4;
+        const slowMoEvents = [
+            { time: slowMoTime, type: 'lerp', key: 'playbackSpeed', value: Math.max(0.05, 0.2 * (2.0 - intensity)), duration: duration * 0.6, ease: easeOut },
+            { time: slowMoTime, type: 'lerp', key: 'ambientLight', value: 0.1, duration: duration * 0.6, ease: easeOut },
+            { time: slowMoTime, type: 'lerp', key: 'dirIntensity', value: 0.2, duration: duration * 0.6, ease: easeOut },
+            { time: slowMoTime, type: 'lerp', key: 'colorShift', value: -0.9 * intensity, duration: duration * 0.6, ease: easeOut },
+            { time: slowMoTime, type: 'lerp', key: 'fogDensity', value: 0.08 * intensity, duration: duration * 0.6, ease: easeOut }
+        ];
+
+        // Stage 3: Fade back / Recovery
         if (duration > 0) {
              const revertTime = player.elapsedTime + duration;
-             const revertEvents = [
+             const newEvents = [
+                 ...slowMoEvents,
+                { time: revertTime, type: 'lerp', key: 'sparkle', value: 0.0, duration: duration * 0.5, ease: 'quadIn' },
+                { time: revertTime, type: 'lerp', key: 'pulseSaturation', value: 1.0, duration: duration * 0.5, ease: 'quadIn' },
+                { time: revertTime, type: 'lerp', key: 'decimation', value: 0.0, duration: duration * 0.5, ease: 'quadIn' },
                 { time: revertTime, type: 'lerp', key: 'playbackSpeed', value: 1.0, duration: duration * 0.5, ease: 'quadIn' },
-                { time: revertTime, type: 'lerp', key: 'colorShift', value: 0.0, duration: duration * 0.5, ease: 'quadIn' }
+                { time: revertTime, type: 'lerp', key: 'ambientLight', value: 1.2, duration: duration * 0.5, ease: 'quadIn' }, // default ambient
+                { time: revertTime, type: 'lerp', key: 'dirIntensity', value: 1.0, duration: duration * 0.5, ease: 'quadIn' }, // default dir
+                { time: revertTime, type: 'lerp', key: 'colorShift', value: 0.0, duration: duration * 0.5, ease: 'quadIn' },
+                { time: revertTime, type: 'lerp', key: 'fogDensity', value: 0.0, duration: duration * 0.5, ease: 'quadIn' }
              ];
              let insertIdx = player.currentEventIndex ?? player.cursor;
-             while (insertIdx < player.routine.length && player.routine[insertIdx].time < revertTime) {
+             while (insertIdx < player.routine.length && player.routine[insertIdx].time <= slowMoTime) {
                  insertIdx++;
              }
-             player.routine.splice(insertIdx, 0, ...revertEvents);
+             player.routine.splice(insertIdx, 0, ...newEvents);
+
+             // Sort to ensure chronological order after insertion
+             player.routine.sort((a, b) => a.time - b.time);
         }
     });
 
