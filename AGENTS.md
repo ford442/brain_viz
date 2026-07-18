@@ -112,6 +112,7 @@ brain_viz/
 │   ├── verify_neurochemical_fx.py # Stress/cortisol/heavy-metal, dendritic growth, sparkle
 │   ├── verify_branching.py        # Choice/branching routine logic
 │   ├── verify_glitch.py           # Glitch storm corruption simulation
+│   ├── verify_training.py         # Neurofeedback Training Mode courses + keyboard demo baseline
 │   └── *.png                      # Screenshots generated on each run (gitignored)
 ├── docs/                   # Architecture, roadmap, and mode-specific docs (see docs/ROADMAP.md, docs/archive/)
 ├── .github/
@@ -134,6 +135,7 @@ brain_viz/
 - **`wasm-engine.js`** — [Phase 1] JavaScript loader and bridge for the C++ `BrainTensorEngine` WASM module. Provides `WasmTensorEngine` class with `init()`, `update()`, `injectStimulus()`, `getTensorData()`, `benchmark()`, and `dispose()`. Gracefully falls back when WASM build is absent.
 - **`main.js`** — Wires the DOM UI to the renderer, sets up keyboard shortcuts, initializes `RoutinePlayer`, `AudioReactor`, `TensorPlayer`, and `InferenceEngine`, and runs the main update loop. Also wires the WASM engine toggle UI.
 - **`icosahedron.js`** — Static icosahedron vertex and index arrays exported as constants. Used by `brain-renderer.js` for instanced soma geometry.
+- **`training-engine.js`** — Neurofeedback Training Mode: `TrainingEngine` class, simulated 0..1 metric samplers (`calm`, `occipitalAlpha`, `flowResonance`), the `BUILTIN_COURSES` catalog (Calm Focus / Panic Recovery / Flow Sustain), streak/drift-penalty/star scoring, and `localStorage` session history. See `docs/training-mode.md`.
 
 ---
 

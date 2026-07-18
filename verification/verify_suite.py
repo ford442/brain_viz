@@ -19,6 +19,7 @@ SCRIPTS = [
     "verify_neurochemical_fx.py",
     "verify_branching.py",
     "verify_glitch.py",
+    "verify_training.py",
 ]
 
 

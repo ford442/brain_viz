@@ -1,10 +1,17 @@
 // main-update-loop.js — RAF loop syncing UI, SynaptiX, audio reactivity, and routine transport
-export function startMainUpdateLoop(renderer, player, inputs, labels, tensorPlayer, synaptixEngine, inferenceEngine, audioReactor, transport, directorLabels, modeSelector, aiPromptRef) {
+export function startMainUpdateLoop(renderer, player, inputs, labels, tensorPlayer, synaptixEngine, inferenceEngine, audioReactor, transport, directorLabels, modeSelector, aiPromptRef, trainingEngine) {
     let lastAIStep = 0;
+    let lastTrainingTime = 0;
     const liveSourceStatus = document.getElementById('live-source-status');
 
     const updateLoop = (timestamp) => {
         tensorPlayer.update(timestamp);
+
+        if (trainingEngine) {
+            const dt = lastTrainingTime > 0 ? Math.min(0.1, (timestamp - lastTrainingTime) / 1000) : 0;
+            lastTrainingTime = timestamp;
+            trainingEngine.update(dt);
+        }
 
         if (synaptixEngine) synaptixEngine.update(timestamp);
 

@@ -36,6 +36,7 @@ For the current architecture and module responsibilities, see [`AGENTS.md`](../A
 | 21 | Custom Neuromodulator UI | `src/neuromodulators.js` profiles (Dopamine/Serotonin/Acetylcholine/GABA/Custom), UI panel, compute-shader integration, routine/marker hooks, `localStorage` persistence |
 | 22 | Advanced Interpolation & Extensibility | Cubic/sine easing curves, runtime-added camera regions |
 | 23 | Biofeedback Synchronization | HRV-driven glitch sync (`hrv_sync`) |
+| 24 | Neurofeedback Training Mode | `TrainingEngine`, simulated metric sampling, gamified hold-in-band objectives with streak/drift scoring and stars, `training_start`/`training_checkpoint`/`training_end` routine events with auto-branching, Training tab UI with session history, keyboard demo-baseline courses |
 
 ## Open Items
 
@@ -63,6 +64,7 @@ Deduplicated from the historical "Dream Log" entries across the archived plans �
 
 ## Related Specs & Vision Docs
 
+- [`docs/training-mode.md`](training-mode.md) — Neurofeedback Training Mode (courses, metrics, scoring, routine events)
 - [`docs/synaptix.md`](synaptix.md) / [`SYNAPTIX_SPEC.md`](SYNAPTIX_SPEC.md) — SynaptiX comparative mode
 - [`docs/webgl-fallback.md`](webgl-fallback.md) — WebGL2 fallback/debug renderer
 - [`docs/wasm-engine.md`](wasm-engine.md) — C++/WASM hybrid simulation engine
