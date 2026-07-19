@@ -13,7 +13,8 @@
     "preview": "vite preview",
     "build:wasm": "bash scripts/build_wasm.sh",
     "build:wasm_colab": "bash scripts/build_wasm_colab.sh",
-    "build:wasm:debug": "bash scripts/build_wasm.sh --debug"
+    "build:wasm:debug": "bash scripts/build_wasm.sh --debug",
+    "deploy": "python deploy.py"
   },
   "devDependencies": {
     "vite": "^5.4.21"
