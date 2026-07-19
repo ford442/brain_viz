@@ -386,7 +386,10 @@
 - [x] Camera Camera Coordinates Map
 
 ## Phase 2.5 Extension: Neuroplasticity Decay
-- [ ] Implement `neuroplasticity_decay` event to visualize reduced neuroplasticity in simulated aging brains.
+- [ ] Implement detailed neuroplasticity decay shader variables.
+- [x] Implement `neuroplasticity_decay` event to visualize reduced neuroplasticity in simulated aging brains.
 
 ## Dream Log
 - What if we visualized auditory hallucinations as rapid localized cortex flashes?
+
+* Idea: "What if we visualized visual cortex fatigue as progressive blur in the render pipeline?"

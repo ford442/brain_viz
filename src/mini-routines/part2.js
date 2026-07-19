@@ -503,6 +503,13 @@ export const MINI_ROUTINES_PART2 = {
         { time: 3.0, type: 'synapse_kinetics', intensity: 0.0, duration: 2.0, ease: 'sineInOut' }
     ],
 
+    '}': [ // Neuroplasticity Decay
+        { time: 0.0, type: 'text', message: 'Neuroplasticity: Synaptic Pruning / Decay', duration: 3.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'neuroplasticity_decay', duration: 5.0 },
+        { time: 5.0, type: 'text', message: 'Network pruned.', duration: 2.0 },
+        { time: 6.0, type: 'calm' }
+    ],
     'Q': [ // Neuroplasticity Sprouting
         { time: 0.0, type: 'text', message: 'Neuroplasticity: Forming New Connections', duration: 3.0 },
         { time: 0.0, type: 'style', value: 2 }, // Connectome
