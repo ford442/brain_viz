@@ -260,6 +260,20 @@ export function registerNarrativeFlowHandlers(handlers, player) {
         player.startLerp({ key: 'flowSpeed', value: 8.0, duration: duration, ease: ease });
     });
 
+    // [Phase 10] Neuroplasticity Decay
+    handlers.set('neuroplasticity_decay', (evt) => {
+        const duration = evt.duration || 5.0;
+        const ease = evt.ease || 'sineInOut';
+
+        player.startLerp({ key: 'growth', value: 0.5, duration: duration, ease: ease });
+        player.startLerp({ key: 'flowSpeed', value: 2.0, duration: duration, ease: ease });
+        player.startLerp({ key: 'amplitude', value: 0.1, duration: duration, ease: ease });
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
+
     // [Phase 15] Dendritic Growth Animation
     handlers.set('dendritic_growth', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.5;
