@@ -85,6 +85,8 @@ export const RENDER_UNIFORM_LAYOUT = [
     { name: 'decimation', type: 'f32' },
     { name: 'psychedelic', type: 'f32' },
     { name: 'immuneActivity', type: 'f32' },
+    { name: 'plasticityDecay', type: 'f32' },
+    { name: 'visualFatigue', type: 'f32' },
 ];
 
 /**

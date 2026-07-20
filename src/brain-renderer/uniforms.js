@@ -91,8 +91,10 @@ export function applyUniformsMethods(Target) {
         const OFFSET_DECIMATION = 85;
         const OFFSET_PSYCHEDELIC = 86;
         const OFFSET_IMMUNE_ACTIVITY = 87;
+        const OFFSET_PLASTICITY_DECAY = 88;
+        const OFFSET_VISUAL_FATIGUE = 89;
 
-        const RENDER_UNIFORM_FLOAT_COUNT = 88;
+        const RENDER_UNIFORM_FLOAT_COUNT = 92;
         const uData = new Float32Array(RENDER_UNIFORM_FLOAT_COUNT);
         uData.set(mvp, OFFSET_MVP);
         uData.set(model, OFFSET_MODEL);
@@ -153,6 +155,8 @@ export function applyUniformsMethods(Target) {
         uData[OFFSET_DECIMATION] = this.params.decimation;
         uData[OFFSET_PSYCHEDELIC] = this.params.psychedelic || 0.0;
         uData[OFFSET_IMMUNE_ACTIVITY] = this.params.immuneActivity || 0.0;
+        uData[OFFSET_PLASTICITY_DECAY] = this.params.plasticityDecay || 0.0;
+        uData[OFFSET_VISUAL_FATIGUE] = this.params.visualFatigue || 0.0;
 
         if (!uniformLayoutChecked) {
             uniformLayoutChecked = true;
@@ -173,7 +177,8 @@ export function applyUniformsMethods(Target) {
                 tmsRadius: OFFSET_PAD3, edgeDetection: OFFSET_EDGE_DETECTION, pulseSaturation: OFFSET_PULSE_SATURATION,
                 trailLength: OFFSET_TRAIL_LENGTH, lesionCenter: OFFSET_LESION_CENTER, lesionActive: OFFSET_LESION_ACTIVE,
                 lesionRadius: OFFSET_LESION_RADIUS, decimation: OFFSET_DECIMATION, psychedelic: OFFSET_PSYCHEDELIC,
-                immuneActivity: OFFSET_IMMUNE_ACTIVITY,
+                immuneActivity: OFFSET_IMMUNE_ACTIVITY, plasticityDecay: OFFSET_PLASTICITY_DECAY,
+                visualFatigue: OFFSET_VISUAL_FATIGUE,
             }, RENDER_UNIFORM_FLOAT_COUNT);
             assertShaderUniformsMatch({
                 vertexShader, fragmentShader, fiberVertexShader, fiberFragmentShader,

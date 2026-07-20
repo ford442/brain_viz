@@ -216,6 +216,17 @@ export function registerNarrativeFlowHandlers(handlers, player) {
 
 
 
+    // [Phase 2.5] Visual Cortex Fatigue
+    handlers.set('visual_cortex_fatigue', (evt) => {
+        const duration = evt.duration || 5.0;
+        const ease = evt.ease || 'sineInOut';
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        player.startLerp({ key: 'visualFatigue', value: intensity, duration: duration, ease: ease });
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
+
     // [Phase 10] Auditory Hallucinations
     handlers.set('auditory_hallucination', (evt) => {
         const flashes = evt.flashes || 10;
@@ -268,6 +279,7 @@ export function registerNarrativeFlowHandlers(handlers, player) {
         player.startLerp({ key: 'growth', value: 0.5, duration: duration, ease: ease });
         player.startLerp({ key: 'flowSpeed', value: 2.0, duration: duration, ease: ease });
         player.startLerp({ key: 'amplitude', value: 0.1, duration: duration, ease: ease });
+        player.startLerp({ key: 'plasticityDecay', value: 1.0, duration: duration, ease: ease });
 
         if (evt.message) {
             player.executeEvent({ type: 'text', message: evt.message, duration: duration });

@@ -61,6 +61,8 @@ struct Uniforms {
     decimation: f32,
     psychedelic: f32,
     immuneActivity: f32,
+    plasticityDecay: f32,
+    visualFatigue: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var tDiffuse: texture_2d<f32>;
@@ -77,7 +79,7 @@ fn main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
 
     // Calculate Circle of Confusion
     let coc = abs(depth - uniforms.focus);
-    let blurAmount = coc * uniforms.aperture * 10.0;
+    let blurAmount = coc * uniforms.aperture * 10.0 + uniforms.visualFatigue * 15.0;
 
     // Chromatic Aberration
     var offset = uniforms.aberration * 0.01;
@@ -227,6 +229,8 @@ struct Uniforms {
     decimation: f32,
     psychedelic: f32,
     immuneActivity: f32,
+    plasticityDecay: f32,
+    visualFatigue: f32,
 }
 
 struct VertexInput {
@@ -450,6 +454,8 @@ struct Uniforms {
     decimation: f32,
     psychedelic: f32,
     immuneActivity: f32,
+    plasticityDecay: f32,
+    visualFatigue: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 

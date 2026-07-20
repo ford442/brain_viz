@@ -68,6 +68,7 @@ export function setupLegendPanel() {
                 <div class="legend-item"><span class="legend-key">[</span><span>Binding Kinetics</span></div>
                 <div class="legend-item"><span class="legend-key">Q</span><span>Neuroplasticity</span></div>
                 <div class="legend-item"><span class="legend-key">}</span><span>Neuroplasticity Decay</span></div>
+                <div class="legend-item"><span class="legend-key">_</span><span>Visual Fatigue</span></div>
 
                 <div class="legend-item"><span class="legend-key">K</span><span>Memory Formation</span></div>
                 <div class="legend-item"><span class="legend-key">N</span><span>Myelin Degradation</span></div>

@@ -52,6 +52,8 @@ struct Uniforms {
     decimation: f32,
     psychedelic: f32,
     immuneActivity: f32,
+    plasticityDecay: f32,
+    visualFatigue: f32,
 }
 
 struct FiberVertexInput {
@@ -196,7 +198,7 @@ fn main(input: FiberVertexInput) -> FiberVertexOutput {
     let myelin = clamp(input.fiberMeta.z, 0.0, 1.0);
     let segmentPhase = input.fiberMeta.w;
     let isAI = bundleId >= 100.0;
-    let degradation = clamp(uniforms.cortisol, 0.0, 1.0);
+    let degradation = clamp(uniforms.cortisol + uniforms.plasticityDecay, 0.0, 1.0);
     let effectiveMyelin = myelin * (1.0 - degradation * (1.0 - myelin));
     let hierarchy = clamp(radius * select(18.0, 48.0, isAI), 0.0, 1.0);
     let taper = clamp(1.0 - hierarchy * 0.45, 0.35, 1.0);
@@ -309,6 +311,8 @@ struct Uniforms {
     decimation: f32,
     psychedelic: f32,
     immuneActivity: f32,
+    plasticityDecay: f32,
+    visualFatigue: f32,
 }
 
 struct FiberFragmentInput {

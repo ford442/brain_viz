@@ -510,6 +510,11 @@ export const MINI_ROUTINES_PART2 = {
         { time: 5.0, type: 'text', message: 'Network pruned.', duration: 2.0 },
         { time: 6.0, type: 'calm' }
     ],
+    '_': [ // Visual Cortex Fatigue Demo
+        { time: 0.0, type: 'text', message: 'Visual Cortex Fatigue Demo', duration: 2.0 },
+        { time: 0.0, type: 'visual_cortex_fatigue', intensity: 1.0, duration: 4.0 },
+        { time: 5.0, type: 'visual_cortex_fatigue', intensity: 0.0, duration: 4.0 }
+    ],
     'Q': [ // Neuroplasticity Sprouting
         { time: 0.0, type: 'text', message: 'Neuroplasticity: Forming New Connections', duration: 3.0 },
         { time: 0.0, type: 'style', value: 2 }, // Connectome
