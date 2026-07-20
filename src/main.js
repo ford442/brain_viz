@@ -12,6 +12,7 @@ import { setupTrainingIntegration } from './main-training-integration.js';
 import { startMainUpdateLoop } from './main-update-loop.js';
 
 async function init() {
+    // [Neuro-Weaver] Initializing UI and backend connections
     mountControlsShell();
     initTabSwitching();
 

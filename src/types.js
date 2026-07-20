@@ -54,6 +54,8 @@
  * @property {number} myelin_degradation - [V3.1] Connectome myelin loss (0-1).
  * @property {number} fluidActive - Procedural volumetric fluid dynamics blend (0-1).
  * @property {number} immuneActivity - [Phase 6] Immune cell migration activity (0-1).
+ * @property {number} plasticityDecay - [Phase 2.5] Neuroplasticity decay shader variable
+ * @property {number} visualFatigue - [Phase 2.5] Visual cortex fatigue / progressive blur
  * @property {number} edgeDetection - Visual cortex edge-detection filter blend (0-1).
  * @property {number} altitude - Simulated altitude in meters (0-8000).
  * @property {number} oxygenLevel - Oxygen saturation (1.0-0.3).

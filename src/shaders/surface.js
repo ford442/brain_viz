@@ -53,6 +53,8 @@ struct Uniforms {
     decimation: f32,
     psychedelic: f32,
     immuneActivity: f32,
+    plasticityDecay: f32,
+    visualFatigue: f32,
 }
 
 struct VertexInput {
@@ -213,6 +215,11 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
                 finalPos *= max(0.0, decayFactor);
             }
 
+            if (uniforms.plasticityDecay > 0.0) {
+                let erosion = uniforms.plasticityDecay * 0.15;
+                finalPos -= normalize(input.position) * erosion;
+            }
+
             // [Phase 2] Cognitive Stress Distortion
             if (uniforms.stress > 0.0) {
                 let noiseFreq = 15.0;
@@ -225,6 +232,11 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
                 // Decay structural integrity based on cortisol level (shrinks vertices inward, especially higher activity areas)
                 let decayErosion = uniforms.cortisol * 0.2 * (1.0 - activity);
                 finalPos -= normalize(input.position) * decayErosion;
+            }
+
+            if (uniforms.plasticityDecay > 0.0) {
+                let erosion = uniforms.plasticityDecay * 0.15;
+                finalPos -= normalize(input.position) * erosion;
             }
 
             // [Phase 6] Heavy Metal Structural Alteration
@@ -351,6 +363,8 @@ struct Uniforms {
     decimation: f32,
     psychedelic: f32,
     immuneActivity: f32,
+    plasticityDecay: f32,
+    visualFatigue: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var<storage, read> activityTensor: array<f32>;

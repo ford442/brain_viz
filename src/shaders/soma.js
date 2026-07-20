@@ -52,6 +52,8 @@ struct Uniforms {
     decimation: f32,
     psychedelic: f32,
     immuneActivity: f32,
+    plasticityDecay: f32,
+    visualFatigue: f32,
 }
 
 struct VertexInput {
@@ -179,6 +181,11 @@ fn main_soma(input: VertexInput) -> VertexOutput {
         scale *= max(0.0, decayFactor);
     }
 
+    if (uniforms.plasticityDecay > 0.0) {
+        let decayFactor = 1.0 - (uniforms.plasticityDecay * 0.5);
+        scale *= max(0.0, decayFactor);
+    }
+
     // Elongation for pyramidal / interneuron shape variation
     let theta = shapeSeed * 6.28318;
     let phi = shapeSeed * 12.566;
@@ -285,6 +292,8 @@ struct Uniforms {
     decimation: f32,
     psychedelic: f32,
     immuneActivity: f32,
+    plasticityDecay: f32,
+    visualFatigue: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 

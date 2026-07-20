@@ -52,6 +52,8 @@ struct Uniforms {
     decimation: f32,
     psychedelic: f32,
     immuneActivity: f32,
+    plasticityDecay: f32,
+    visualFatigue: f32,
 }
 
 struct SparkInput {
@@ -245,6 +247,8 @@ struct Uniforms {
     decimation: f32,
     psychedelic: f32,
     immuneActivity: f32,
+    plasticityDecay: f32,
+    visualFatigue: f32,
 }
 
 struct SparkInput {
@@ -316,6 +320,8 @@ struct TensorParams {
     decimation: f32,
     psychedelic: f32,
     immuneActivity: f32,
+    plasticityDecay: f32,
+    visualFatigue: f32,
 }
 
 @group(0) @binding(0) var<storage, read_write> activityTensor: array<f32>;
