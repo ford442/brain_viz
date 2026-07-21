@@ -8,7 +8,6 @@ import { registerTrainingHandlers } from './routine-handlers/training.js';
 
 export function createDefaultHandlers(player) {
     const handlers = new Map();
-<<<<<<< HEAD
 
     // Stimulus Injection
     handlers.set('stimulus', (evt) => {
@@ -1252,14 +1251,5 @@ export function createDefaultHandlers(player) {
         }
     });
 
-=======
-    registerCoreHandlers(handlers, player);
-    registerNeuromodulatorsHandlers(handlers, player);
-    registerEffectsAudioHandlers(handlers, player);
-    registerNarrativeFlowHandlers(handlers, player);
-    registerSynaptixHandlers(handlers, player);
-    registerBiosyncHandlers(handlers, player);
-    registerTrainingHandlers(handlers, player);
->>>>>>> origin/main
     return handlers;
 }

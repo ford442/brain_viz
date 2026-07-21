@@ -154,7 +154,6 @@ export class BrainRenderer {
     }
     
 
-<<<<<<< HEAD
     // [Neuro-Weaver] Camera Control API
     setCameraParams({ rotation, zoom, fov }) {
         if (rotation) {
@@ -1219,8 +1218,6 @@ export class BrainRenderer {
 
     start() { this.isRunning = true; this.render(); }
     stop() { this.isRunning = false; }
-=======
->>>>>>> origin/main
 }
 
 applyPipelineMethods(BrainRenderer);

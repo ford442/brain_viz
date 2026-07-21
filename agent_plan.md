@@ -135,8 +135,6 @@
 - [x] **Routine Logic & Extensibility Refactor:** Ensure `tick()` loop uses `performance.now()`, `executeEvent` is extensible, and WebGPU context gracefully degrades.
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
 - [x] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
-<<<<<<< HEAD
-=======
 - [x] **Procedural Serotonin Fluid Sim:** Enhance Serotonin visualizing not just with color shift but with volumetric fluid dynamics.
 
 ### Phase 19: Cognitive Phenomena Animation
@@ -178,7 +176,6 @@
 ### Phase 23: Biofeedback Synchronization
 - [x] **HRV Glitch Sync:** Implement `hrv_sync` event mapping heart rate variability to visual distortions (aberration, grain, shake).
 
->>>>>>> origin/main
 ## 🧪 "Dream" Log (Future Concepts)
 * [x] "What if we visualize immune cell migration as particle streams during an inflammatory response?"
 * *Idea:* "What if we visualize psychedelic experiences as morphing geometric structures in the tensor volume?" (Implemented as Phase 2.5 Extension - Psychedelic Visuals)"
@@ -306,16 +303,7 @@
 - [x] **Hypothermia Simulation:** Visualized hypothermia as reduced metabolic rate and frosty hues, controlled via `hypothermia` event.
 
 ## 📜 Changelog
-<<<<<<< HEAD
 * [2026-06-25] - Completed Phase 19 (Dopamine Pathways Overlay). Implemented `dopamineTrails` parameter and shader support for glowing dopamine pathways, integrated with the routine engine and 'dopamine' event handler.
-=======
-* [2026-07-25] - Completed Phase 2.5 Extension (ATP Energy Depletion Cascade). Visualized ATP energy depletion as a cascading shutdown of regional activity, culminating in a global slow-motion effect, controlled via `atp_depletion` event. Added 'Targeted drug delivery' idea to Dream Log.
-* [2026-07-22] - Completed Phase 2.5 Extension (Immune Cell Migration). Visualized immune cell migration as particle streams during an inflammatory response, controlled via `immune_migration` event.
-* [2026-07-20] - Completed Phase 2.5 Extension (Psychedelic Visuals). Visualized psychedelic experiences as morphing geometric structures and hue shifts, controlled via `psychedelic_trip` event.
-* [2026-07-15] - Completed Phase 2.5 Extension (Pupillary Dilation Simulation). Visualized pupillary dilation as dynamic camera field of view shifts, controlled via `pupillary_dilation` event. Added 'Psychedelic Visuals' idea to Dream Log.
-* [2026-07-10] - Completed Phase 2.5 Extension (Neurotransmitter Depletion). Visualized neurotransmitter depletion as gradual mesh decimation, controlled via `neurotransmitter_depletion` event.
-* [2026-07-05] - Completed Phase 2.5 Extension (Flow State Synchronization). Visualized neural synchronization during flow states as glowing harmonic waves using `flow_state` event.
->>>>>>> origin/main
 * [2026-06-22] - Completed Phase 17 (Advanced Routine Control). Verified `clearLerps()` functionality and implemented Transcranial Magnetic Stimulation (TMS) spatial distortions via `tmsActive` uniform and `tms_distortion` events.
 * [2026-06-12] - Completed Phase 13 (Region Injection API). Implemented `injectRegion` on visualizer API and wired click-based energy injection in `main.js`. Added 'paint energy drag gesture' idea to Dream Log.
 * [2026-06-10] - Completed Phase 12 (Clip Plane + Internal Reveal). Implemented `clip` event handler in `routine-handlers.js` and added routine 'Z'. Added Region Injection API idea to Dream Log.
@@ -384,32 +372,8 @@
 *Idea:* "What if prolonged synchronized bursts triggered long-term structural plasticity, permanently altering the connectome layout?"
 *Idea:* "What if we visualize memory formation as glowing paths forming across multiple cortical regions simultaneously?"
 *Idea:* "What if we visualized Serotonin levels as color shifts?"
-<<<<<<< HEAD
 
 *Idea:* "What if we could simulate the interaction between Dopamine and Serotonin directly as color blending pathways?"
 
 ### Phase 19: Dopamine Pathways Overlay
 - [x] **Dopamine Pathways:** Implement a task to visualize Dopamine pathways as glowing trails.
-=======
-# Neuro-Script Implementation Cycle
-## Phase 1: The Sequencing Core (Routine Engine)
-- [x] Routine Player Module
-- [x] Main Integration
-- [x] "Deep Thought" Script
-- [x] Playback UI
-
-## Phase 2: Advanced Choreography
-- [x] Parameter Interpolation/Easing
-- [x] Camera Camera Coordinates Map
-
-## Phase 2.5 Extension: Neuroplasticity Decay
-- [x] Implement detailed neuroplasticity decay shader variables.
-- [x] Implement `neuroplasticity_decay` event to visualize reduced neuroplasticity in simulated aging brains.
-- [x] Visual cortex fatigue (progressive blur in render pipeline).
-
-## Dream Log
-- What if we visualized auditory hallucinations as rapid localized cortex flashes?
-
-* [x] Idea: "What if we simulated hypothermia as reduced metabolic rate and frosty hues?"
-* Idea: "What if we visualized sensory deprivation as an expanding void in the tensor volume?"
->>>>>>> origin/main
