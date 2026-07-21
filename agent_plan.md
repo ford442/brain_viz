@@ -299,6 +299,9 @@
 ### Phase 2.5 Extension: Immune Cell Migration
 - [x] **Immune Cell Migration:** Visualized immune cell migration as particle streams during an inflammatory response, controlled via `immune_migration` event.
 
+### Phase 2.5 Extension: Hypothermia Simulation
+- [x] **Hypothermia Simulation:** Visualized hypothermia as reduced metabolic rate and frosty hues, controlled via `hypothermia` event.
+
 ## 📜 Changelog
 * [2026-07-25] - Completed Phase 2.5 Extension (ATP Energy Depletion Cascade). Visualized ATP energy depletion as a cascading shutdown of regional activity, culminating in a global slow-motion effect, controlled via `atp_depletion` event. Added 'Targeted drug delivery' idea to Dream Log.
 * [2026-07-22] - Completed Phase 2.5 Extension (Immune Cell Migration). Visualized immune cell migration as particle streams during an inflammatory response, controlled via `immune_migration` event.
@@ -393,4 +396,5 @@
 ## Dream Log
 - What if we visualized auditory hallucinations as rapid localized cortex flashes?
 
-* Idea: "What if we simulated hypothermia as reduced metabolic rate and frosty hues?"
+* [x] Idea: "What if we simulated hypothermia as reduced metabolic rate and frosty hues?"
+* Idea: "What if we visualized sensory deprivation as an expanding void in the tensor volume?"
