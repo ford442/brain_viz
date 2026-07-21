@@ -1,20 +1,14 @@
 #!/usr/bin/env python3
 """
-project_deploy_template.py
+deploy.py — brain_viz
 
-Copy this file into your project as `deploy.py` (or deploy_contabo.py).
-Customize the constants at the top for your project.
+Deploy the Vite build to test.1ink.us/brain-viz via storage.noahcohn.com.
+No SFTP credentials are stored in this repo.
 
 Usage:
-  1. Build your project:  npm run build   (or python build, etc.)
+  1. npm run build
   2. python deploy.py
-
-This script contacts https://storage.noahcohn.com (your Contabo storage manager)
-to upload your entire build as a single zip archive.  The server extracts it and
-pushes all files over one persistent SFTP connection — much faster than uploading
-files individually.
-
-Actual FTP/SFTP credentials never leave the VPS.
+     # or: DEPLOY_TOKEN=... python deploy.py
 
 Requirements:
   pip install requests
@@ -23,6 +17,7 @@ Requirements:
 import io
 import os
 import sys
+import time
 import zipfile
 from pathlib import Path
 from typing import Optional
@@ -30,16 +25,23 @@ from typing import Optional
 import requests
 
 # ============================================================
-# PER-PROJECT CONFIGURATION - EDIT THESE
+# PER-PROJECT CONFIGURATION
 # ============================================================
-PROJECT_NAME: str = 'brain-viz'
-BUILD_DIR: str = 'dist'
+PROJECT_NAME: str = "brain-viz"
+BUILD_DIR: str = "dist"
 CONTABO_BASE_URL: str = "https://storage.noahcohn.com"
-DEPLOY_FOLDER: str = ""  # override remote target folder; empty = use PROJECT_NAME
 
-# Optional deploy token (recommended for security).
+# Legacy SFTP path was test.1ink.us/brain-viz
+TARGET_FOLDER: str = os.getenv("TARGET_FOLDER", "brain-viz")
+
 # Set via environment: export DEPLOY_TOKEN="your_long_token_from_vps_env"
-DEPLOY_TOKEN: Optional[str] = "6de44dca5425348f2e2ef9456fc820bfe56a5ace68bddeb6da4a1c2a9d9cadc0"
+DEPLOY_TOKEN: Optional[str] = os.getenv("DEPLOY_TOKEN")
+
+# Default test site; set DEPLOY_TARGET=go to deploy under go.1ink.us instead.
+DEPLOY_TARGET: str = os.getenv("DEPLOY_TARGET", "test")
+
+DEPLOY_MAX_RETRIES: int = int(os.getenv("DEPLOY_MAX_RETRIES", "3"))
+DEPLOY_TIMEOUT: int = int(os.getenv("DEPLOY_TIMEOUT", "600"))
 # ============================================================
 
 
@@ -51,7 +53,6 @@ def build_zip(build_path: Path) -> bytes:
             if file.is_dir():
                 continue
             rel = file.relative_to(build_path)
-            # Skip common junk
             parts = rel.parts
             if any(p in (".git", "node_modules", "__pycache__") for p in parts):
                 continue
@@ -60,46 +61,86 @@ def build_zip(build_path: Path) -> bytes:
     return buf.getvalue()
 
 
+def _print_partial_failures(data: dict) -> None:
+    print(f"  ✓ {data.get('uploaded', 0)} files uploaded")
+    if data.get("failed"):
+        print("  Failures:")
+        for f in data["failed"]:
+            print(f"    ✗ {f['path']}: {f['error']}")
+
+
 def deploy_bundle(build_path: Path) -> bool:
-    """Zip the build and upload it as a single bundle."""
-    target_folder = DEPLOY_FOLDER or PROJECT_NAME
-    url = f"{CONTABO_BASE_URL}/api/deploy/{PROJECT_NAME}/bundle"
+    """Zip the build and upload it as a single archive."""
+    url = f"{CONTABO_BASE_URL}/api/deploy/{PROJECT_NAME}/zip"
     headers = {}
     if DEPLOY_TOKEN:
         headers["X-Deploy-Token"] = DEPLOY_TOKEN
+
+    form_data = {"target_site": DEPLOY_TARGET}
+    target_folder = TARGET_FOLDER.strip()
+    if target_folder:
+        form_data["target_folder"] = target_folder
 
     print("Building zip archive...")
     zip_bytes = build_zip(build_path)
     print(f"Archive size: {len(zip_bytes) / 1024:.1f} KB\n")
 
-    print("Uploading bundle...")
-    try:
-        response = requests.post(
-            url,
-            files={"bundle": ("build.zip", zip_bytes, "application/zip")},
-            data={"target_folder": target_folder},
-            headers=headers,
-            timeout=300,
-        )
-    except Exception as exc:
-        print(f"  \u2717 Upload exception: {exc}")
+    for attempt in range(1, DEPLOY_MAX_RETRIES + 1):
+        if attempt > 1:
+            wait = min(2 ** (attempt - 2), 8)
+            print(f"Retry {attempt}/{DEPLOY_MAX_RETRIES} (waiting {wait}s)...")
+            time.sleep(wait)
+
+        print(f"Uploading to target '{DEPLOY_TARGET}' ...")
+        try:
+            response = requests.post(
+                url,
+                files={"archive": ("build.zip", zip_bytes, "application/zip")},
+                data=form_data,
+                headers=headers,
+                timeout=DEPLOY_TIMEOUT,
+            )
+        except Exception as exc:
+            print(f"  ✗ Upload exception: {exc}")
+            if attempt == DEPLOY_MAX_RETRIES:
+                return False
+            continue
+
+        if response.status_code == 403:
+            print("  ✗ 403 Forbidden: invalid or missing DEPLOY_TOKEN.")
+            print('    Set: export DEPLOY_TOKEN="<value from VPS DEPLOY_AUTH_TOKEN>"')
+            return False
+
+        if response.status_code == 200:
+            data = response.json()
+            if not data.get("failed"):
+                _print_partial_failures(data)
+                return True
+            _print_partial_failures(data)
+            if attempt < DEPLOY_MAX_RETRIES:
+                print(f"  Partial upload — will retry ({len(data['failed'])} file(s) failed).")
+                continue
+            return False
+
+        if response.status_code >= 500:
+            print(f"  ✗ Server error {response.status_code}: {response.text[:400]}")
+            if attempt < DEPLOY_MAX_RETRIES:
+                continue
+            return False
+
+        print(f"  ✗ {response.status_code}: {response.text[:400]}")
         return False
 
-    if response.status_code == 200:
-        data = response.json()
-        print(f"  \u2713 {data.get('uploaded', 0)} files uploaded")
-        if data.get("failed"):
-            print("  Failures:")
-            for f in data["failed"]:
-                print(f"    \u2717 {f['path']}: {f['error']}")
-        return not data.get("failed")
-    else:
-        print(f"  \u2717 {response.status_code}: {response.text[:400]}")
-        return False
+    return False
 
 
 def main():
-    print(f"\n=== Deploying '{PROJECT_NAME}' via Contabo -> storage.1ink.us ===\n")
+    target_host = "go.1ink.us" if DEPLOY_TARGET == "go" else "test.1ink.us"
+    remote_folder = TARGET_FOLDER or PROJECT_NAME
+    print(
+        f"\n=== Deploying '{PROJECT_NAME}' via Contabo -> {target_host}/{remote_folder} "
+        f"(target={DEPLOY_TARGET}) ===\n"
+    )
 
     build_path = Path(BUILD_DIR)
     if not build_path.exists() or not build_path.is_dir():
@@ -110,9 +151,18 @@ def main():
     try:
         health = requests.get(f"{CONTABO_BASE_URL}/api/deploy/health", timeout=10)
         if health.status_code == 200:
-            print(f"Contabo deploy service: {health.json().get('status', 'unknown')}")
-    except Exception:
-        print("Warning: Could not contact storage.noahcohn.com (continuing anyway).")
+            data = health.json()
+            status = data.get("status", "unknown")
+            print(f"Contabo deploy service: {status}")
+            if status != "ok":
+                print("ERROR: Deploy service is not configured on the VPS.")
+                sys.exit(1)
+            if data.get("has_token") and not DEPLOY_TOKEN:
+                print("ERROR: VPS requires DEPLOY_TOKEN but it is not set.")
+                print('  export DEPLOY_TOKEN="<value from VPS DEPLOY_AUTH_TOKEN>"')
+                sys.exit(1)
+    except Exception as exc:
+        print(f"Warning: Could not contact deploy health endpoint ({exc}); continuing anyway.")
 
     print()
     success = deploy_bundle(build_path)

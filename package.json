@@ -5,15 +5,19 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run build:wasm && vite build",
+    "prebuild": "bash scripts/check_wasm.sh",
+    "build": "npm run build:web",
+    "build:web": "vite build",
+    "build:full": "npm run build:wasm && vite build",
     "build_colab": "npm run build:wasm_colab && vite build",
     "preview": "vite preview",
     "build:wasm": "bash scripts/build_wasm.sh",
     "build:wasm_colab": "bash scripts/build_wasm_colab.sh",
-    "build:wasm:debug": "bash scripts/build_wasm.sh --debug"
+    "build:wasm:debug": "bash scripts/build_wasm.sh --debug",
+    "deploy": "python deploy.py"
   },
   "devDependencies": {
-    "vite": "^5.0.0"
+    "vite": "^5.4.21"
   },
   "dependencies": {
     "marked": "^17.0.4",

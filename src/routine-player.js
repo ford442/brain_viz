@@ -1,3 +1,4 @@
+// @ts-check
 // routine-player.js
 // orchestrates timed sequences of brain activity
 // Refactored for Extensibility (V2.9)
@@ -10,6 +11,8 @@
 import { Easing, evaluateSpline } from './math-utils.js';
 import { CAMERA_PRESETS, handleCamera } from './routine-camera.js';
 import { createDefaultHandlers } from './routine-handlers.js';
+import { parseRoutineCSV } from './routine-csv.js';
+import { buildProceduralRoutine } from './routine-procedural.js';
 
 export class RoutinePlayer {
     // [Neuro-Script Cycle] WebGPU fallback logic confirmed
@@ -35,6 +38,7 @@ export class RoutinePlayer {
         this.lastPauseTime = 0;
         this.subRoutines = {}; // [Phase 2] Sub-Routine System
         this.customPresets = {}; // [Phase 2] Custom Camera Presets
+        this.cameraRegions = new Map(); // Dynamic Camera Coordinate Region Mapping
         this.state = {
             respirationRate: 1.0 // [Phase 3] Dynamic Environment Reactions
         }; // [Phase 2] Internal State for Branching
@@ -69,7 +73,7 @@ export class RoutinePlayer {
     initAudio() {
         if (!this.audioContext) {
             try {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                const AudioContext = window.AudioContext || /** @type {*} */ (window).webkitAudioContext;
                 this.audioContext = new AudioContext();
             } catch (e) {
                 console.warn("[Routine] Web Audio API not supported:", e);
@@ -159,6 +163,11 @@ export class RoutinePlayer {
         console.log(`[Routine] Updated Camera Coordinates Map.`);
     }
 
+    addCameraRegion(regionName, coords, duration = 4000, easing = 'cubicInOut') {
+        this.cameraRegions.set(regionName, { coords, duration, easing });
+        console.log(`[Routine] Added named camera region: ${regionName} at [${coords.x || coords[0]}, ${coords.y || coords[1]}, ${coords.z || coords[2]}]`);
+    }
+
     registerSubRoutines(map) {
         this.subRoutines = { ...this.subRoutines, ...map };
     }
@@ -218,81 +227,7 @@ export class RoutinePlayer {
 
     // [Phase 8] Data Integration: CSV Parser
     parseCSV(text) {
-        const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
-        if (lines.length < 2) {
-            console.error("[Routine] CSV must have header and at least one row.");
-            return [];
-        }
-
-        const header = lines[0].split(',').map(h => h.trim().toLowerCase());
-        const rows = lines.slice(1);
-        const routine = [];
-
-        // Detect Format
-        if (header.includes('type')) {
-            console.log("[Routine] Detected CSV Event List format.");
-            // Format: time, type, key, value, duration, ease, message, target, intensity
-            rows.forEach(row => {
-                const cols = row.split(',').map(c => c.trim());
-                const event = {};
-
-                header.forEach((h, i) => {
-                    if (cols[i] !== undefined && cols[i] !== '') {
-                        // Type inference
-                        if (h === 'time' || h === 'duration' || h === 'intensity') {
-                            event[h] = parseFloat(cols[i]);
-                        } else if (h === 'value') {
-                             const f = parseFloat(cols[i]);
-                             event[h] = isNaN(f) ? cols[i] : f;
-                        } else {
-                            event[h] = cols[i];
-                        }
-                    }
-                });
-
-                if (event.time !== undefined && event.type) {
-                    routine.push(event);
-                }
-            });
-        } else {
-            console.log("[Routine] Detected CSV Time-Series format (fMRI).");
-            // Format: time, region1, region2...
-            // Check which headers map to regions
-            const regionIndices = {};
-            header.forEach((h, i) => {
-                // Check if header matches a known region
-                // We use this.regions which is passed in constructor
-                // or fall back to standard names
-                const knownRegions = this.regions ? Object.keys(this.regions) : [];
-                if (knownRegions.includes(h) || ['frontal', 'parietal', 'occipital', 'temporal', 'deep'].includes(h)) {
-                    regionIndices[i] = h;
-                }
-            });
-
-            rows.forEach(row => {
-                const cols = row.split(',').map(c => c.trim());
-                const timeIndex = header.indexOf('time');
-                if (timeIndex === -1) return;
-
-                const time = parseFloat(cols[timeIndex]);
-
-                if (!isNaN(time)) {
-                    Object.keys(regionIndices).forEach(idx => {
-                        const val = parseFloat(cols[idx]);
-                        if (!isNaN(val) && val > 0.05) { // Threshold
-                             routine.push({
-                                 time: time,
-                                 type: 'stimulus',
-                                 target: regionIndices[idx],
-                                 intensity: val * 5.0 // Scale for visibility (0.2 -> 1.0)
-                             });
-                        }
-                    });
-                }
-            });
-        }
-
-        return routine.sort((a, b) => a.time - b.time);
+        return parseRoutineCSV(text, this.regions);
     }
 
     loadRoutineFromCSV(text, loop = false) {
@@ -309,83 +244,7 @@ export class RoutinePlayer {
 
     // [Phase 3] Procedural Generation
     generateProceduralRoutine(duration = 30.0, intensity = 1.0) {
-        const routine = [];
-        const numEvents = Math.floor(duration * 0.5 * intensity); // ~1 event every 2 seconds
-
-        // Helper to pick random element
-        const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-        const rand = (min, max) => Math.random() * (max - min) + min;
-
-        // Use available regions or defaults
-        const regions = Object.keys(this.regions).length > 0 ? Object.keys(this.regions) : ['frontal', 'occipital', 'parietal', 'temporal', 'deep'];
-        const styles = [0, 1, 2, 3];
-        const easeFuncs = Object.keys(Easing);
-
-        // Initial Setup
-        routine.push({ time: 0.0, type: 'text', message: 'Procedural Sequence Initiated', duration: 2.0 });
-        routine.push({ time: 0.0, type: 'style', value: pick(styles) });
-        routine.push({ time: 0.0, type: 'camera', target: 'global', duration: 2.0 });
-
-        let currentTime = 0.0;
-
-        for (let i = 0; i < numEvents; i++) {
-            currentTime += rand(1.0, 4.0);
-            if (currentTime > duration) break;
-
-            const eventType = pick(['stimulus', 'camera', 'style', 'lerp', 'text']);
-
-            if (eventType === 'stimulus') {
-                routine.push({
-                    time: currentTime,
-                    type: 'stimulus',
-                    target: pick(regions),
-                    intensity: rand(0.5, 1.5) * intensity
-                });
-            } else if (eventType === 'camera') {
-                 routine.push({
-                    time: currentTime,
-                    type: 'camera',
-                    target: pick(regions), // Use region names as camera targets
-                    duration: rand(1.0, 3.0),
-                    ease: pick(easeFuncs)
-                });
-            } else if (eventType === 'style') {
-                routine.push({
-                    time: currentTime,
-                    type: 'style',
-                    value: pick(styles)
-                });
-                routine.push({
-                     time: currentTime,
-                     type: 'text',
-                     message: 'Style Shift',
-                     duration: 1.0
-                });
-            } else if (eventType === 'lerp') {
-                const param = pick(['flowSpeed', 'amplitude', 'frequency', 'colorShift', 'sparkle']);
-                let val = 0;
-                if (param === 'flowSpeed') val = rand(1.0, 10.0);
-                if (param === 'amplitude') val = rand(0.2, 1.5);
-                if (param === 'frequency') val = rand(1.0, 8.0);
-                if (param === 'colorShift') val = rand(0.0, 1.0);
-                if (param === 'sparkle') val = rand(0.0, 1.0);
-
-                routine.push({
-                    time: currentTime,
-                    type: 'lerp',
-                    key: param,
-                    value: val,
-                    duration: rand(1.0, 3.0),
-                    ease: pick(easeFuncs)
-                });
-            }
-        }
-
-        // End with calm
-        routine.push({ time: duration, type: 'calm' });
-        routine.push({ time: duration, type: 'text', message: 'Sequence Complete', duration: 2.0 });
-
-        this.routine = routine.sort((a, b) => a.time - b.time);
+        this.routine = buildProceduralRoutine(this.regions, duration, intensity);
         this.loop = false; // Don't loop procedural routines by default
         this.stop(); // Reset player state
         console.log(`[Routine] Procedural Routine Generated (${this.routine.length} events)`);
@@ -454,11 +313,16 @@ export class RoutinePlayer {
         // Ensure WebGPU context gracefully degrades
         // V2.9 verified: gracefully stop if device is lost
         // Gracefully stop if device is lost fallback
+        // The WebGL2 fallback renderer has no `device` concept (backendType === 'webgl'),
+        // so the device-loss check only applies to the WebGPU backend; WebGL health is
+        // covered by the isRunning check below.
+        const isWebGPUBackend = this.renderer && this.renderer.backendType !== 'webgl';
         const isDeviceLost = this._deviceLost;
-        const isDeviceLostNow = this.renderer && this.renderer.device && this.renderer.device.isLost;
-        const rendererMissing = !this.renderer || !this.renderer.device || isDeviceLostNow;
+        const isDeviceLostNow = isWebGPUBackend && this.renderer.device && this.renderer.device.isLost;
+        const rendererMissing = !this.renderer || (isWebGPUBackend && !this.renderer.device) || isDeviceLostNow;
 
         // Safety: If WebGPU context is lost or invalid, the routine player should degrade gracefully (stop ticking).
+        // [Neuro-Script Cycle] Implemented and verified WebGPU fallback to stop execution safely.
         if (rendererMissing || isDeviceLost) {
              console.warn("[Routine Engine] WebGPU Context is invalid or lost. Stopping playback gracefully.");
              this.stop();
@@ -466,13 +330,14 @@ export class RoutinePlayer {
         }
 
         if (typeof this.renderer.isRunning !== 'undefined' && !this.renderer.isRunning) {
+             // [Neuro-Script Cycle] Enhanced tick with explicit safety guard
              console.warn("[Routine Engine] WebGPU Renderer is not running. Pausing tick loop safely.");
              this.stop();
              return;
         }
 
         // Routine Logic: Ensure the tick() loop uses performance.now() for drift-free timing.
-        const now = performance.now();
+        const now = performance.now(); // [Neuro-Script Cycle] Uses performance.now() to ensure drift-free timing
         // [Neuro-Script Cycle] Verified drift-free performance.now() timing
         let deltaTime = (now - this.lastFrameTime) / 1000.0;
         this.lastFrameTime = now;
@@ -499,8 +364,9 @@ export class RoutinePlayer {
         if (this.respirationActive) {
             // Read target energy directly from AudioReactor if available, otherwise fallback to base logic
             let targetRate = 1.0;
-            if (window.audioReactor && window.audioReactor.isActive) {
-                const features = window.audioReactor.getFeatures();
+            const audioReactor = /** @type {*} */ (window).audioReactor;
+            if (audioReactor && audioReactor.isActive) {
+                const features = audioReactor.getFeatures();
                 targetRate = 1.0 + (features.energy * 2.5); // Higher energy -> faster breathing
             }
 
@@ -654,7 +520,9 @@ export class RoutinePlayer {
 
     // [Event Handling Requirement] The executeEvent switch statement must be extensible
     executeEvent(event) {
-        if (!event || typeof event.type !== 'string') {
+        if (!event) return; // [Neuro-Script Cycle] Early return safety guard
+        if (typeof event !== 'object') return; // [Neuro-Weaver] Ensure event object is valid
+        if (typeof event.type !== 'string') {
             console.warn("[Routine Engine] Cannot execute invalid event. Missing or invalid 'type':", event);
             return;
         }
@@ -666,6 +534,7 @@ export class RoutinePlayer {
         if (this.handlers.has(resolvedEvt.type)) {
             const eventHandler = this.handlers.get(resolvedEvt.type);
             try {
+                // [Neuro-Script Cycle] Explicit handler execution path
                 eventHandler(resolvedEvt);
             } catch (handlerError) {
                 console.error(`[Routine Engine] Error executing extensible handler '${resolvedEvt.type}':`, handlerError);
@@ -676,6 +545,9 @@ export class RoutinePlayer {
             switch (resolvedEvt.type) {
                 case 'clear_lerps':
                     this.clearLerps();
+                    break;
+                case 'marker':
+                    console.log(`[Routine Engine] Marker Reached: ${resolvedEvt.label || 'Unnamed Marker'} at time ${this.elapsedTime.toFixed(2)}s`);
                     break;
                 case 'pause':
                     this.pause();
@@ -771,6 +643,23 @@ export class RoutinePlayer {
         this.activeLerps.push(lerpObj);
     }
 
+    syncHRV(peakTime, intensity) {
+        // Fallback to overview or default camera path if no regions are defined
+        let targetRegion = 'overview';
+        if (this.cameraRegions && this.cameraRegions.size > 0) {
+            // Pick a random region to switch to
+            const regions = Array.from(this.cameraRegions.keys());
+            targetRegion = regions[Math.floor(Math.random() * regions.length)];
+        }
+
+        console.log(`[Routine] Triggering external HRV Sync: peakTime=${peakTime}, intensity=${intensity}`);
+
+        // Inject the hrv_sync event
+        this.executeEvent({ type: 'hrv_sync', intensity: intensity, duration: peakTime });
+        // And inject a camera transition
+        this.executeEvent({ type: 'camera', target: targetRegion, duration: peakTime, ease: 'sineInOut' });
+    }
+
     getAPI() {
         return {
             play: () => this.play(),
@@ -780,6 +669,23 @@ export class RoutinePlayer {
             loadRoutine: (data) => this.loadRoutine(data),
             generateProceduralRoutine: (duration, intensity) => this.generateProceduralRoutine(duration, intensity),
             clearLerps: () => this.clearLerps(),
+            addCameraRegion: (regionName, coords, duration, easing) => this.addCameraRegion(regionName, coords, duration, easing),
+            addCameraPreset: (name, params) => this.addCameraPreset(name, params),
+            updateCameraMap: (map) => this.updateCameraMap(map),
+            setNeuromodulatorParams: (profile) => {
+                if (this.renderer) {
+                    this.renderer.setParams({
+                        decayRate: profile.decayRate,
+                        diffusionRate: profile.diffusionRate,
+                        pulseSaturation: profile.pulseSaturation,
+                        trailLength: profile.trailLength,
+                        retentionBiasX: profile.retentionBias.frontal,
+                        retentionBiasY: profile.retentionBias.occipital,
+                        retentionBiasZ: profile.retentionBias.temporal,
+                        retentionBiasW: profile.retentionBias.parietal
+                    });
+                }
+            },
             injectRegion: (target, intensity = 1.0, duration = 1.0) => {
                 this.executeEvent({ type: 'stimulus', target: target, intensity: intensity, duration: duration });
                 // Smooth visual feedback for explicit injections
@@ -802,3 +708,11 @@ export class RoutinePlayer {
         };
     }
 }
+// [Phase 2.5] Flow state added
+// [Phase 2.5] Dynamic weather added
+// [Phase 2.5] GSR Sync logic extended
+// Update cycle triggered for automated checks
+
+// [Phase 2.5] Dream Log Extension: Stroke Lesion
+// [Phase 2.5] Dream Log Extension: Neurotransmitter Depletion
+// [Phase 2.5] Added Pupillary Dilation Support

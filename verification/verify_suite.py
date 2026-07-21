@@ -12,6 +12,14 @@ SCRIPTS = [
     "verify_camera.py",
     "verify_routine.py",
     "verify_synaptix.py",
+    "verify_neuromodulators.py",
+    "verify_timeline_editor.py",
+    "verify_ai_inference.py",
+    "verify_cinematic_fx.py",
+    "verify_neurochemical_fx.py",
+    "verify_branching.py",
+    "verify_glitch.py",
+    "verify_training.py",
 ]
 
 

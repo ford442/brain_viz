@@ -72,9 +72,20 @@ def verify() -> None:
             page.screenshot(path=str(output_dir / "synaptix_pure_human.png"))
 
             page.evaluate("() => window.__synaptixDebug.runShowcase()")
-            page.wait_for_timeout(2200)
 
-            state = page.evaluate("() => window.__synaptixDebug.getState()")
+            # The showcase routine ramps aiInfluence via a lerp starting at t=2.0s and
+            # only reaches the resonant pattern (aiInfluence 0.82) around t=4.7s of
+            # *routine* time. Headless/software rendering can stretch that wall-clock
+            # window unpredictably (GPU readback stalls delay the routine's own
+            # timeline compensation), so poll instead of trusting a fixed sleep.
+            state = None
+            deadline = time.time() + 20.0
+            while time.time() < deadline:
+                state = page.evaluate("() => window.__synaptixDebug.getState()")
+                if state["aiInfluence"] >= 0.6 and state["resonanceThreshold"] <= 0.2:
+                    break
+                page.wait_for_timeout(500)
+
             assert state["style"] >= 4, state
             assert state["frameCount"] >= 4, state
             assert state["aiInfluence"] >= 0.6, state

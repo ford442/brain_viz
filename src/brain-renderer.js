@@ -1,18 +1,18 @@
+// @ts-check
 // brain-renderer.js
 // Verified Neuro-Weaver V2.6 Implementation
-import { BrainGeometry } from './brain-geometry.js';
-import { vertexShader, fragmentShader, fiberVertexShader, fiberFragmentShader, computeShader, somaVertexShader, somaFragmentShader, sparkVertexShader, sparkFragmentShader, postVertexShader, postFragmentShader, pointCloudVertexShader, pointCloudFragmentShader } from './shaders.js';
-import { Mat4 } from './math-utils.js';
-import { WasmTensorEngine } from './wasm-engine.js'; // [Phase 1 WASM]
-
-// RENDER_UNIFORM_FLOAT_COUNT is now 80 (see inside method)
-const UNIFORM_BUFFER_ALIGNMENT = 256;
-const RENDER_UNIFORM_BUFFER_SIZE = Math.ceil(
-    (80 * Float32Array.BYTES_PER_ELEMENT) / UNIFORM_BUFFER_ALIGNMENT
-) * UNIFORM_BUFFER_ALIGNMENT;
-const COMPUTE_UNIFORM_BUFFER_SIZE = 112;
+import { WasmTensorEngine } from './wasm-engine.js';
+import { applyPipelineMethods } from './brain-renderer/pipelines.js';
+import { applyGeometryMethods } from './brain-renderer/geometry.js';
+import { applyStimulusMethods } from './brain-renderer/stimulus.js';
+import { applyUniformsMethods } from './brain-renderer/uniforms.js';
+import { applyRenderLoopMethods } from './brain-renderer/render-loop.js';
+import { applyCoreMethods } from './brain-renderer/core-methods.js';
 
 export class BrainRenderer {
+    /**
+     * @param {HTMLCanvasElement} canvas
+     */
     constructor(canvas) {
         this.canvas = canvas;
         this.device = null;
@@ -50,6 +50,7 @@ export class BrainRenderer {
 
         this.params = {
             cognitiveLoad: 0.0, // [Phase 9] Visual Cortex Fatigue (Dynamic LoD)
+            cognitiveDissonance: 0.0, // [Phase 2.5] Cognitive Dissonance
             frequency: 2.0,
             amplitude: 0.5,
             spikeThreshold: 0.8,
@@ -58,6 +59,17 @@ export class BrainRenderer {
             sliceZ: 2.0,  // Slice plane Z value (Starts outside bounds)
             flowSpeed: 4.0, // V2.3: Signal Speed
             colorShift: 0.0, // [Phase 5] Serotonin Color Shift
+
+            // [Phase 21] Neuromodulator physics defaults
+            decayRate: 0.96,
+            diffusionRate: 0.1,
+            pulseSaturation: 1.0,
+            trailLength: 1.0,
+            retentionBiasX: 0.5,
+            retentionBiasY: 0.0,
+            retentionBiasZ: 0.2,
+            retentionBiasW: 0.2,
+
             sparkle: 0.0, // [Phase 5] Synaptic Sparkles
             growth: 1.0, // [Phase 6] Dendritic Growth (0.0 - 1.0)
             shake: 0.0, // [Phase 2] Camera Shake Intensity (Trauma/Panic)
@@ -72,8 +84,18 @@ export class BrainRenderer {
             dirIntensity: 0.8, // [Phase 2] Directional Light Intensity
             stress: 0.0, // [Phase 2] Cognitive Stress Distortion
             cortisol: 0.0, // [Phase 5] Cortisol Structural Decay
+            lesionActive: 0.0,
+            lesionCenterX: 0.0,
+            lesionCenterY: 0.0,
+            lesionCenterZ: 0.0,
+            lesionRadius: 0.0,
+            decimation: 0.0,
             myelin_degradation: 0.0, // [V3.1] Connectome myelin loss visualization
-            fluidActive: 0.0, // [Phase 6] Procedural Volumetric Fluid Dynamics
+            fluidActive: 0.0,
+            immuneActivity: 0.0, // [Phase 6] Procedural Volumetric Fluid Dynamics
+            plasticityDecay: 0.0,
+            visualFatigue: 0.0,
+            edgeDetection: 0.0, // Visual Cortex Edge Detection
             // Altitude/Hypoxia Simulation Parameters
             altitude: 0.0, // Altitude in meters (0-8000)
             oxygenLevel: 1.0, // Oxygen saturation (1.0-0.3)
@@ -126,29 +148,13 @@ export class BrainRenderer {
         this.sampler = null;
         this.postBindGroup = null;
 
+        // @ts-expect-error setupInputHandlers is attached to the prototype by
+        // applyCoreMethods() below, after this class body — not visible to TS.
         this.setupInputHandlers();
     }
     
-    setupInputHandlers() {
-        let isDragging = false;
-        let lastX = 0;
-        let lastY = 0;
-        this.canvas.addEventListener('mousedown', (e) => { isDragging = true; lastX = e.clientX; lastY = e.clientY; });
-        this.canvas.addEventListener('mousemove', (e) => {
-            if (isDragging) {
-                this.targetRotation.y += (e.clientX - lastX) * 0.01;
-                this.targetRotation.x += (e.clientY - lastY) * 0.01;
-                this.targetRotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.targetRotation.x));
-                lastX = e.clientX; lastY = e.clientY;
-            }
-        });
-        this.canvas.addEventListener('mouseup', () => { isDragging = false; });
-        this.canvas.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            this.targetZoom = Math.max(2, Math.min(10, this.targetZoom + e.deltaY * 0.01));
-        });
-    }
 
+<<<<<<< HEAD
     // [Neuro-Weaver] Camera Control API
     setCameraParams({ rotation, zoom, fov }) {
         if (rotation) {
@@ -1213,4 +1219,13 @@ export class BrainRenderer {
 
     start() { this.isRunning = true; this.render(); }
     stop() { this.isRunning = false; }
+=======
+>>>>>>> origin/main
 }
+
+applyPipelineMethods(BrainRenderer);
+applyGeometryMethods(BrainRenderer);
+applyStimulusMethods(BrainRenderer);
+applyUniformsMethods(BrainRenderer);
+applyRenderLoopMethods(BrainRenderer);
+applyCoreMethods(BrainRenderer);
