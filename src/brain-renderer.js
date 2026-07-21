@@ -869,40 +869,44 @@ export class BrainRenderer {
         const OFFSET_STYLE = 33;
         const OFFSET_FLOW = 34;
         const OFFSET_COLOR = 35;
-        const OFFSET_SLICE = 36;
-        const OFFSET_SPARKLE = 40;
-        const OFFSET_GROWTH = 41;
-        const OFFSET_ABERRATION = 42;
-        const OFFSET_GRAIN = 43;
-        const OFFSET_FOCUS = 44;
-        const OFFSET_APERTURE = 45;
-        const OFFSET_LIGHT_DIR = 48;
-        const OFFSET_AMBIENT = 51;
-        const OFFSET_DIR_INTENSITY = 52;
-        const OFFSET_STRESS = 53;
-        const OFFSET_CORTISOL = 54;
-        const OFFSET_ALTITUDE = 55;
-        const OFFSET_OXYGEN = 56;
-        const OFFSET_HYPOXIA_STRESS = 57;
-        const OFFSET_METABOLIC_RATE = 58;
-        const OFFSET_MITOCHONDRIAL = 59;
-        const OFFSET_FOG_DENSITY = 60;
-        const OFFSET_ZOOM = 61;
-        const OFFSET_HEAVY_METAL = 62;
-        const OFFSET_FLUID_ACTIVE = 63;
-        const OFFSET_AI_INFLUENCE = 64;
-        const OFFSET_RESONANCE_THRESHOLD = 65;
-        const OFFSET_SYNAPTIX_ACTIVE = 66;
-        const OFFSET_AI_LAYER = 67;
-        const OFFSET_POINT_CLOUD_DENSITY = 68;
-        const OFFSET_FIBER_COUPLING = 69;
-        const OFFSET_CONNECTOME_VARIANT = 70; // [V3.3] formerly pad5
-        const OFFSET_TMS_ACTIVE = 71;
-        const OFFSET_TMS_CENTER = 72; // vec3 takes 3
-        const OFFSET_TMS_PULSE = 75;
-        const OFFSET_PAD3 = 76; // vec3 takes 3
+        const OFFSET_DOPAMINE = 36;
+        const OFFSET_PAD1 = 37;
+        const OFFSET_PAD2 = 38;
+        const OFFSET_PAD3 = 39;
+        const OFFSET_SLICE = 40;
+        const OFFSET_SPARKLE = 44;
+        const OFFSET_GROWTH = 45;
+        const OFFSET_ABERRATION = 46;
+        const OFFSET_GRAIN = 47;
+        const OFFSET_FOCUS = 48;
+        const OFFSET_APERTURE = 49;
+        const OFFSET_LIGHT_DIR = 52;
+        const OFFSET_AMBIENT = 55;
+        const OFFSET_DIR_INTENSITY = 56;
+        const OFFSET_STRESS = 57;
+        const OFFSET_CORTISOL = 58;
+        const OFFSET_ALTITUDE = 59;
+        const OFFSET_OXYGEN = 60;
+        const OFFSET_HYPOXIA_STRESS = 61;
+        const OFFSET_METABOLIC_RATE = 62;
+        const OFFSET_MITOCHONDRIAL = 63;
+        const OFFSET_FOG_DENSITY = 64;
+        const OFFSET_ZOOM = 65;
+        const OFFSET_HEAVY_METAL = 66;
+        const OFFSET_FLUID_ACTIVE = 67;
+        const OFFSET_AI_INFLUENCE = 68;
+        const OFFSET_RESONANCE_THRESHOLD = 69;
+        const OFFSET_SYNAPTIX_ACTIVE = 70;
+        const OFFSET_AI_LAYER = 71;
+        const OFFSET_POINT_CLOUD_DENSITY = 72;
+        const OFFSET_FIBER_COUPLING = 73;
+        const OFFSET_CONNECTOME_VARIANT = 74; // [V3.3] formerly pad5
+        const OFFSET_TMS_ACTIVE = 75;
+        const OFFSET_TMS_CENTER = 76; // vec3 takes 3
+        const OFFSET_TMS_PULSE = 79;
+        const OFFSET_TMS_RADIUS = 80; // vec3 takes 3
 
-        const RENDER_UNIFORM_FLOAT_COUNT = 80;
+        const RENDER_UNIFORM_FLOAT_COUNT = 84;
         const uData = new Float32Array(RENDER_UNIFORM_FLOAT_COUNT);
         uData.set(mvp, OFFSET_MVP);
         uData.set(model, OFFSET_MODEL);
@@ -910,6 +914,7 @@ export class BrainRenderer {
         uData[OFFSET_STYLE] = this.params.style;
         uData[OFFSET_FLOW] = this.params.flowSpeed;
         uData[OFFSET_COLOR] = this.params.colorShift;
+        uData[OFFSET_DOPAMINE] = this.params.dopamineTrails;
 
         // Slice Plane Logic
         uData[OFFSET_SLICE] = 0.0;      // Px
@@ -951,7 +956,7 @@ export class BrainRenderer {
         uData[OFFSET_TMS_CENTER + 1] = this.params.tmsCenterY;
         uData[OFFSET_TMS_CENTER + 2] = this.params.tmsCenterZ;
         uData[OFFSET_TMS_PULSE] = this.params.tmsPulse;
-        uData[OFFSET_PAD3] = this.params.tmsRadius; // OFFSET_PAD3 is offset 76
+        uData[OFFSET_TMS_RADIUS] = this.params.tmsRadius;
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         

@@ -131,8 +131,8 @@
 
 ### Phase 18: Routine Logic Refinement
 - [x] **Routine Logic & Extensibility Refactor:** Ensure `tick()` loop uses `performance.now()`, `executeEvent` is extensible, and WebGPU context gracefully degrades.
-- [ ] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
-- [ ] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
+- [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
+- [x] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
 ## 🧪 "Dream" Log (Future Concepts)
 * *Idea:* "What if we visualized visual cortex processing by simulating progressive edge-detection filters directly on the render pipeline?"
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
@@ -236,6 +236,7 @@
 * *Idea:* "What if we allowed users to 'paint' energy directly onto the tensor volume using a continuous drag gesture?"
 * *Idea:* "What if we visualized visual cortex processing by simulating progressive edge-detection filters directly on the render pipeline?"
 ## 📜 Changelog
+* [2026-06-25] - Completed Phase 19 (Dopamine Pathways Overlay). Implemented `dopamineTrails` parameter and shader support for glowing dopamine pathways, integrated with the routine engine and 'dopamine' event handler.
 * [2026-06-22] - Completed Phase 17 (Advanced Routine Control). Verified `clearLerps()` functionality and implemented Transcranial Magnetic Stimulation (TMS) spatial distortions via `tmsActive` uniform and `tms_distortion` events.
 * [2026-06-12] - Completed Phase 13 (Region Injection API). Implemented `injectRegion` on visualizer API and wired click-based energy injection in `main.js`. Added 'paint energy drag gesture' idea to Dream Log.
 * [2026-06-10] - Completed Phase 12 (Clip Plane + Internal Reveal). Implemented `clip` event handler in `routine-handlers.js` and added routine 'Z'. Added Region Injection API idea to Dream Log.
@@ -304,3 +305,8 @@
 *Idea:* "What if prolonged synchronized bursts triggered long-term structural plasticity, permanently altering the connectome layout?"
 *Idea:* "What if we visualize memory formation as glowing paths forming across multiple cortical regions simultaneously?"
 *Idea:* "What if we visualized Serotonin levels as color shifts?"
+
+*Idea:* "What if we could simulate the interaction between Dopamine and Serotonin directly as color blending pathways?"
+
+### Phase 19: Dopamine Pathways Overlay
+- [x] **Dopamine Pathways:** Implement a task to visualize Dopamine pathways as glowing trails.
