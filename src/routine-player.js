@@ -520,8 +520,9 @@ export class RoutinePlayer {
 
     // [Event Handling Requirement] The executeEvent switch statement must be extensible
     executeEvent(event) {
+        if (!event) return; // [Neuro-Script Cycle] Early return safety guard
         if (typeof event !== 'object') return; // [Neuro-Weaver] Ensure event object is valid
-        if (!event || typeof event.type !== 'string') {
+        if (typeof event.type !== 'string') {
             console.warn("[Routine Engine] Cannot execute invalid event. Missing or invalid 'type':", event);
             return;
         }

@@ -95,4 +95,26 @@ export function registerBiosyncHandlers(handlers, player) {
             player.executeEvent({ type: 'text', message: evt.message, duration: duration });
         }
     });
+
+    // Hypothermia Simulation (reduced metabolic rate and frosty hues)
+    handlers.set('hypothermia', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const duration = evt.duration || 5.0;
+        const ease = evt.ease || 'sineInOut';
+
+        // Modulate flowSpeed, amplitude, and frequency for reduced metabolic rate
+        player.startLerp({ key: 'flowSpeed', value: Math.max(0.1, 4.0 - (3.5 * intensity)), duration: duration, ease: ease });
+        player.startLerp({ key: 'amplitude', value: Math.max(0.05, 0.5 - (0.4 * intensity)), duration: duration, ease: ease });
+        player.startLerp({ key: 'frequency', value: Math.max(0.1, 2.0 - (1.5 * intensity)), duration: duration, ease: ease });
+
+        // Apply a frosty hue shift (cool blue tones, typically negative colorShift values around -0.8 to -1.0 depending on shader implementation)
+        player.startLerp({ key: 'colorShift', value: -1.0 * intensity, duration: duration, ease: ease });
+
+        // Slightly dim the global brightness
+        player.startLerp({ key: 'ambientLight', value: Math.max(0.05, 0.2 - (0.1 * intensity)), duration: duration, ease: ease });
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
 }

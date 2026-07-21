@@ -24,6 +24,8 @@ async function init() {
     try {
         const { renderer, rendererInfo } = await setupRendererBackend(canvas);
         const modeSelector = setupModeSelector(renderer);
+
+        // [Neuro-Script Cycle] setupRoutineEngine returns RoutinePlayer and AudioReactor instances.
         const { player, audioReactor } = setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo);
 
         setupLegendPanel();

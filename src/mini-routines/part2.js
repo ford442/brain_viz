@@ -564,5 +564,15 @@ export const MINI_ROUTINES_PART2 = {
         { time: 1.0, type: 'signal_trails', intensity: 3.0, duration: 4.0, message: 'Increasing pulse decay tail length...' },
         { time: 7.0, type: 'signal_trails', intensity: 1.0, duration: 3.0, message: 'Restoring normal signal speed...' },
         { time: 10.0, type: 'calm' }
+    ],
+
+    '<': [ // Hypothermia Simulation
+        { time: 0.0, type: 'text', message: 'Hypothermia: Reduced Metabolic Rate', duration: 4.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'camera', target: 'overview', duration: 2.0 },
+        { time: 1.0, type: 'hypothermia', intensity: 1.0, duration: 6.0, message: 'Cooling... slowing neural flow...' },
+        { time: 8.0, type: 'text', message: 'Rewarming...', duration: 3.0 },
+        { time: 8.0, type: 'hypothermia', intensity: 0.0, duration: 4.0 },
+        { time: 12.0, type: 'calm' }
     ]
 };
