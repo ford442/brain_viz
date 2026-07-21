@@ -93,6 +93,7 @@ export function applyUniformsMethods(Target) {
         const OFFSET_IMMUNE_ACTIVITY = 87;
         const OFFSET_PLASTICITY_DECAY = 88;
         const OFFSET_VISUAL_FATIGUE = 89;
+        const OFFSET_SENSORY_DEPRIVATION = 90;
 
         const RENDER_UNIFORM_FLOAT_COUNT = 92;
         const uData = new Float32Array(RENDER_UNIFORM_FLOAT_COUNT);
@@ -157,6 +158,7 @@ export function applyUniformsMethods(Target) {
         uData[OFFSET_IMMUNE_ACTIVITY] = this.params.immuneActivity || 0.0;
         uData[OFFSET_PLASTICITY_DECAY] = this.params.plasticityDecay || 0.0;
         uData[OFFSET_VISUAL_FATIGUE] = this.params.visualFatigue || 0.0;
+        uData[OFFSET_SENSORY_DEPRIVATION] = this.params.sensoryDeprivation || 0.0;
 
         if (!uniformLayoutChecked) {
             uniformLayoutChecked = true;

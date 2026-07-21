@@ -54,6 +54,7 @@ struct Uniforms {
     immuneActivity: f32,
     plasticityDecay: f32,
     visualFatigue: f32,
+    sensoryDeprivation: f32,
 }
 
 struct VertexInput {
@@ -186,6 +187,14 @@ fn main_soma(input: VertexInput) -> VertexOutput {
         scale *= max(0.0, decayFactor);
     }
 
+    if (uniforms.sensoryDeprivation > 0.0) {
+        let distToOrigin = length(advectedInstancePos);
+        let voidRadius = uniforms.sensoryDeprivation * 1.5;
+        if (distToOrigin < voidRadius) {
+            scale = 0.0;
+        }
+    }
+
     // Elongation for pyramidal / interneuron shape variation
     let theta = shapeSeed * 6.28318;
     let phi = shapeSeed * 12.566;
@@ -294,6 +303,7 @@ struct Uniforms {
     immuneActivity: f32,
     plasticityDecay: f32,
     visualFatigue: f32,
+    sensoryDeprivation: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 

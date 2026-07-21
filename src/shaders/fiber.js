@@ -54,6 +54,7 @@ struct Uniforms {
     immuneActivity: f32,
     plasticityDecay: f32,
     visualFatigue: f32,
+    sensoryDeprivation: f32,
 }
 
 struct FiberVertexInput {
@@ -190,6 +191,15 @@ fn main(input: FiberVertexInput) -> FiberVertexOutput {
         let distortion = (pull * 0.1 + twist * 0.15) * falloff * uniforms.tmsPulse;
         finalPos = finalPos + distortion;
     }
+
+    if (uniforms.sensoryDeprivation > 0.0) {
+        let distToOrigin = length(finalPos.xyz);
+        let voidRadius = uniforms.sensoryDeprivation * 1.5;
+        if (distToOrigin < voidRadius) {
+            let pushFactor = (voidRadius - distToOrigin) / voidRadius;
+            finalPos += normalize(finalPos) * pushFactor * voidRadius;
+        }
+    }
     let worldPos = (uniforms.modelMatrix * vec4<f32>(finalPos, 1.0)).xyz;
 
     let worldNormal = normalize((uniforms.modelMatrix * vec4<f32>(input.normal.xyz, 0.0)).xyz);
@@ -313,6 +323,7 @@ struct Uniforms {
     immuneActivity: f32,
     plasticityDecay: f32,
     visualFatigue: f32,
+    sensoryDeprivation: f32,
 }
 
 struct FiberFragmentInput {
