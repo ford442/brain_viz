@@ -55,6 +55,7 @@ struct Uniforms {
     immuneActivity: f32,
     plasticityDecay: f32,
     visualFatigue: f32,
+    sensoryDeprivation: f32,
 }
 
 struct VertexInput {
@@ -218,6 +219,15 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
             if (uniforms.plasticityDecay > 0.0) {
                 let erosion = uniforms.plasticityDecay * 0.15;
                 finalPos -= normalize(input.position) * erosion;
+            }
+
+            if (uniforms.sensoryDeprivation > 0.0) {
+                let distToOrigin = length(finalPos.xyz);
+                let voidRadius = uniforms.sensoryDeprivation * 1.5;
+                if (distToOrigin < voidRadius) {
+                    let pushFactor = (voidRadius - distToOrigin) / voidRadius;
+                    finalPos += normalize(finalPos) * pushFactor * voidRadius;
+                }
             }
 
             // [Phase 2] Cognitive Stress Distortion
