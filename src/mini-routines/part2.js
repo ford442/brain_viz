@@ -574,5 +574,12 @@ export const MINI_ROUTINES_PART2 = {
         { time: 8.0, type: 'text', message: 'Rewarming...', duration: 3.0 },
         { time: 8.0, type: 'hypothermia', intensity: 0.0, duration: 4.0 },
         { time: 12.0, type: 'calm' }
-    ]
+    ],
+    '|': [ // Environmental Noise Simulation
+        { time: 0.0, type: 'text', message: 'Environmental Noise: Lighting Shifts', duration: 3.0 },
+        { time: 0.0, type: 'camera', target: 'overview', duration: 2.0 },
+        { time: 1.0, type: 'environmental_noise', intensity: 1.5, duration: 4.0, message: 'Simulating Background Noise...' },
+        { time: 7.0, type: 'environmental_noise', intensity: 0.0, duration: 3.0, message: 'Noise clearing...' },
+        { time: 10.0, type: 'calm' }
+    ],
 };

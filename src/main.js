@@ -18,6 +18,7 @@ async function init() {
 
     const canvas = document.getElementById('canvas');
     const filterOverlay = new FilterUIOverlay(canvas);
+    if (!canvas) return; // Safety guard
     const errorDiv = document.getElementById('error');
     const { inputs, labels } = collectInputsAndLabels();
 
