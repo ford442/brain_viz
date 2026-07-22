@@ -309,6 +309,7 @@ export class RoutinePlayer {
     // [Routine Logic Requirement] Ensure the tick() loop uses performance.now() for drift-free timing
     tick() {
         if (!this.isPlaying) return;
+        if (this.routine.length === 0) return; // Safety guard
 
         // Ensure WebGPU context gracefully degrades
         // V2.9 verified: gracefully stop if device is lost
@@ -521,6 +522,7 @@ export class RoutinePlayer {
     // [Event Handling Requirement] The executeEvent switch statement must be extensible
     executeEvent(event) {
         if (!event) return; // [Neuro-Script Cycle] Early return safety guard
+        if (!event.type) return; // Safety guard
         if (typeof event !== 'object') return; // [Neuro-Weaver] Ensure event object is valid
         if (typeof event.type !== 'string') {
             console.warn("[Routine Engine] Cannot execute invalid event. Missing or invalid 'type':", event);

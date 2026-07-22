@@ -223,7 +223,7 @@
 * *Idea:* "Endorphin Rush" - Visualizing temporary immunity to stress/shake events by suppressing distortion parameters.
 * *Idea:* "Hormonal Flow Physics" - What if we visualize hormonal flows like Oxytocin as a slow, warm wave using procedural volumetric fluid dynamics rather than just parameter shifts?
 * *Idea:* "Procedural Cellular Advection" - Expand fluid dynamics to push and advect individual soma particles or fibers based on the fluid velocity field.
-* *Idea:* "What if we visualized environmental noise as background ambient lighting shifts?"
+* [x] "What if we visualized environmental noise as background ambient lighting shifts?"
 * [x] "What if we visualize immune cell migration as particle streams during an inflammatory response?"
 * [2026-07-21] - Completed Phase 2.5 Extension (Signal Trails). Added `trailLength` uniform to shaders, `signal_trails` event handler to `narrative-flow.js`, and `^` mini-routine.
 * *Idea:* "Neuron Pulse Trail Length: Add a parameter to control the decay tail length of connectome pulses to simulate different signal speeds." (Implemented as Phase 2.5 Extension - Signal Trails)
@@ -302,6 +302,9 @@
 ### Phase 2.5 Extension: Hypothermia Simulation
 - [x] **Hypothermia Simulation:** Visualized hypothermia as reduced metabolic rate and frosty hues, controlled via `hypothermia` event.
 
+### Phase 2.5 Extension: Environmental Noise
+- [x] **Environmental Noise:** Visualized environmental noise as background ambient lighting shifts and minor shaking, controlled via `environmental_noise` event.
+
 ## 📜 Changelog
 * [2026-06-25] - Completed Phase 19 (Dopamine Pathways Overlay). Implemented `dopamineTrails` parameter and shader support for glowing dopamine pathways, integrated with the routine engine and 'dopamine' event handler.
 * [2026-06-22] - Completed Phase 17 (Advanced Routine Control). Verified `clearLerps()` functionality and implemented Transcranial Magnetic Stimulation (TMS) spatial distortions via `tmsActive` uniform and `tms_distortion` events.
@@ -374,6 +377,7 @@
 *Idea:* "What if we visualized Serotonin levels as color shifts?"
 
 *Idea:* "What if we could simulate the interaction between Dopamine and Serotonin directly as color blending pathways?"
+*Idea:* "What if we visualized spatial memory retrieval as glowing breadcrumbs traveling backwards along the connectome fibers?"
 
 ### Phase 19: Dopamine Pathways Overlay
 - [x] **Dopamine Pathways:** Implement a task to visualize Dopamine pathways as glowing trails.

@@ -11,6 +11,24 @@ export function registerBiosyncHandlers(handlers, player) {
         }
     });
 
+    // Environmental Noise Simulation (background ambient lighting shifts)
+    handlers.set('environmental_noise', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const duration = evt.duration || 5.0;
+        const ease = evt.ease || 'sineInOut';
+
+        // Modulate ambient light and directional intensity to simulate noise/flicker
+        // as well as minor shaking
+        player.startLerp({ key: 'ambientLight', value: Math.max(0.1, 0.2 + (0.3 * intensity)), duration: duration, ease: ease });
+        player.startLerp({ key: 'dirIntensity', value: Math.max(0.2, 0.8 - (0.4 * intensity)), duration: duration, ease: ease });
+        player.startLerp({ key: 'shake', value: intensity * 0.05, duration: duration, ease: ease });
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
+
+
     // Pupillary Dilation Simulation (dynamic camera FOV shifts)
     handlers.set('pupillary_dilation', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
