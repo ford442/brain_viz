@@ -273,10 +273,7 @@ export class RoutinePlayer {
     pause() {
         if (!this.isPlaying) return;
         this.isPlaying = false;
-        if (this.timerId) {
-            cancelAnimationFrame(this.timerId);
-            this.timerId = null;
-        }
+        this.cancelScheduledTick();
         console.log(`[Routine] Paused at ${this.currentTime.toFixed(2)}s`);
         if (this.onEvent) this.onEvent({ type: 'pause', value: true });
     }
@@ -296,10 +293,7 @@ export class RoutinePlayer {
         this.isPlaying = false;
         this.elapsedTime = 0;
         this.timeDebt = 0;
-        if (this.timerId) {
-            cancelAnimationFrame(this.timerId);
-            this.timerId = null;
-        }
+        this.cancelScheduledTick();
         this.cursor = 0;
         this.activeLerps = [];
         this.waitingForSignal = null;
@@ -330,7 +324,7 @@ export class RoutinePlayer {
              return;
         }
 
-        if (typeof this.renderer.isRunning !== 'undefined' && !this.renderer.isRunning) {
+        if (typeof this.renderer.isRunning !== 'undefined' && !this.renderer.isRunning && !this.renderer.xrPresenting) {
              // [Neuro-Script Cycle] Enhanced tick with explicit safety guard
              console.warn("[Routine Engine] WebGPU Renderer is not running. Pausing tick loop safely.");
              this.stop();
@@ -465,7 +459,26 @@ export class RoutinePlayer {
             }
         }
 
-        this.timerId = requestAnimationFrame(() => this.tick());
+        this.scheduleTick();
+    }
+
+    scheduleTick() {
+        const xrSession = this.renderer?.xrSession;
+        if (this.renderer?.xrPresenting && xrSession?.requestAnimationFrame) {
+            this.timerSource = 'xr';
+            this.timerId = xrSession.requestAnimationFrame(() => this.tick());
+        } else {
+            this.timerSource = 'window';
+            this.timerId = requestAnimationFrame(() => this.tick());
+        }
+    }
+
+    cancelScheduledTick() {
+        if (!this.timerId) return;
+        if (this.timerSource === 'xr') this.renderer?.xrSession?.cancelAnimationFrame?.(this.timerId);
+        else cancelAnimationFrame(this.timerId);
+        this.timerId = null;
+        this.timerSource = null;
     }
 
     processLerps(dt) {

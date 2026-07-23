@@ -12,6 +12,24 @@ Neuro-Weaver is a brain-visualization engine for comparative neural storytelling
 
 Out of the box, SynaptiX ships with built-in "phantom" activations, so first-time users do not need external tensor files.
 
+## Live EEG / BCI
+
+The **BCI** tab connects Muse 2, Muse S Classic/Athena, and OpenBCI Cyton/Cyton+Daisy streams to the human tensor. It includes local band-power processing, calibration, editable anatomical channel mapping, estimated signal quality, raw-plus-processed `.nwbci` recording, and deterministic replay. In SynaptiX mode, the live stream remains the human side while the existing AI source drives the comparison.
+
+OpenBCI GUI uses the bundled localhost bridge:
+
+```bash
+npm run bci:bridge
+```
+
+See [docs/bci-device.md](docs/bci-device.md) for headset setup, bridge options, privacy notes, routine events, and verification.
+
+## WebXR VR / AR
+
+Open the **XR** tab with `?renderer=webgl&openTab=xr` to enter immersive VR or tabletop AR. The XR path renders stereo Organic and Connectome views, follows existing routine camera/spline events, supports controller orbit and lobe viewpoints, and turns trigger/hand-pinch rays into tensor stimuli.
+
+See [docs/webxr.md](docs/webxr.md) for controls, headset requirements, fallback behavior, and verification.
+
 ## Quick Start
 
 ```bash
@@ -74,6 +92,8 @@ npm run build:full       # web + optional C++ WASM hybrid engine (requires Emscr
 npm run preview
 python3 scripts/test_run.py
 python3 verification/verify_synaptix.py
+python3 verification/verify_bci_device.py
+python3 verification/verify_webxr.py
 ```
 
 ### Build tiers

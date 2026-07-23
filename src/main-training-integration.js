@@ -2,8 +2,8 @@
 import { TrainingEngine, BUILTIN_COURSES } from './training-engine.js';
 import { setupTrainingPanel } from './ui-training-panel.js';
 
-export function setupTrainingIntegration(renderer, player, audioReactor, synaptixEngine) {
-    const trainingEngine = new TrainingEngine(renderer, audioReactor, synaptixEngine, player);
+export function setupTrainingIntegration(renderer, player, audioReactor, synaptixEngine, bciSession) {
+    const trainingEngine = new TrainingEngine(renderer, audioReactor, synaptixEngine, player, bciSession);
     player.trainingEngine = trainingEngine;
 
     setupTrainingPanel(trainingEngine);

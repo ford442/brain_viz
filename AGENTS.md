@@ -13,7 +13,8 @@ Key capabilities:
 - **SynaptiX comparative mode**: Dual-buffer human vs AI visualization with built-in phantom activations, resonance highlighting, and anatomical projection of non-32³ activations.
 - **Interactive stimuli**: Click to inject signals into specific lobes (frontal, occipital, parietal, temporal, deep).
 - **Routine engine**: Scripted, timed sequences of parameters, camera moves, audio, and stimuli (`RoutinePlayer`).
-- **BCI tensor playback**: Stream pre-recorded or synthetic 32×32×32 neural activity frames (`TensorPlayer`).
+- **BCI playback and live devices**: Stream pre-recorded/synthetic tensors or calibrated Muse/OpenBCI EEG through the human 32×32×32 field.
+- **WebXR immersive mode**: WebGL2-backed stereo VR walkthrough and tabletop AR with controller/hand tensor stimulation.
 - **AI "dreaming" mode**: ONNX Runtime integration that runs SqueezeNet inference to drive stimulus injection (`InferenceEngine`).
 - **Audio reactivity**: Web Audio API microphone input that modulates amplitude and flow speed (`AudioReactor`).
 - **Altitude/hypoxia simulation**: Physiological modeling of oxygen deprivation effects on neural signaling.
@@ -65,7 +66,9 @@ brain_viz/
 │   ├── math-utils.js           # Mat4 operations + easing/spline utilities
 │   ├── routine-player.js       # Timed sequence engine (extensible event system)
 │   ├── tensor-player.js        # BCI tensor frame playback + synthetic pattern generators
+│   ├── bci/                     # Live EEG adapters, DSP, tensor projection, recording/replay
 │   ├── tensor-utils.js         # Lightweight `Tensor` helper class (data + shape ops)
+│   ├── webxr-manager.js        # XR session, stereo rig, navigation, ray stimuli
 │   ├── wasm-engine.js          # [Phase 1] JS loader + bridge for C++ BrainTensorEngine WASM module
 │   ├── inference-engine.js     # ONNX SqueezeNet wrapper for AI mode
 │   ├── audio-reactor.js        # Web Audio microphone reactivity
@@ -131,7 +134,9 @@ brain_viz/
 - **`shaders.js`** — Contains all WGSL code as exported JavaScript template strings. Includes vertex/fragment shaders for the brain surface, instanced soma shaders, compute shader for tensor physics, and post-processing shaders (chromatic aberration, grain, DoF).
 - **`routine-player.js`** — Orchestrates timed events (stimulus, camera, lerp, audio, text, choice/branching). Supports sub-routines, procedural generation, CSV parsing, and an extensible handler registry.
 - **`tensor-player.js`** — Generates synthetic BCI patterns (alpha waves, working memory, visual burst, seizure spread, meditation) and loads `.bin`, `.npy`, and `.csv` tensor series.
+- **`bci/`** — Normalizes Muse Classic/Athena and OpenBCI samples, derives alpha/beta/gamma features, projects them into the human tensor, and owns local `.nwbci` recording/replay.
 - **`tensor-utils.js`** — Lightweight `Tensor` helper class providing data validation, `reshape()`, and `normalize()` operations for Float32Array-based tensors.
+- **`webxr-manager.js`** — Owns immersive VR/AR session lifecycle, per-eye WebGL matrices, controller/hand input, lobe viewpoints, and routine-driven XR rig state.
 - **`wasm-engine.js`** — [Phase 1] JavaScript loader and bridge for the C++ `BrainTensorEngine` WASM module. Provides `WasmTensorEngine` class with `init()`, `update()`, `injectStimulus()`, `getTensorData()`, `benchmark()`, and `dispose()`. Gracefully falls back when WASM build is absent.
 - **`main.js`** — Wires the DOM UI to the renderer, sets up keyboard shortcuts, initializes `RoutinePlayer`, `AudioReactor`, `TensorPlayer`, and `InferenceEngine`, and runs the main update loop. Also wires the WASM engine toggle UI.
 - **`icosahedron.js`** — Static icosahedron vertex and index arrays exported as constants. Used by `brain-renderer.js` for instanced soma geometry.
@@ -153,6 +158,9 @@ npm run build
 
 # Preview production build locally
 npm run preview
+
+# OpenBCI GUI UDP → browser WebSocket bridge
+npm run bci:bridge
 
 # [Phase 1] Build C++ WASM simulation engine (requires Emscripten)
 npm run build:wasm
@@ -295,6 +303,8 @@ python verification/verify_cinematic_fx.py      # Camera shake, chromatic aberra
 python verification/verify_neurochemical_fx.py  # Stress/cortisol/heavy-metal, dendritic growth, sparkle
 python verification/verify_branching.py         # Choice/branching routine logic
 python verification/verify_glitch.py            # Glitch storm corruption simulation
+python verification/verify_bci_device.py        # Mocked Muse GATT + OpenBCI UDP/WebSocket bridge
+python verification/verify_webxr.py             # Mocked stereo XR + routine rig/raycast/fallback
 ```
 
 `verification/` is the single canonical verification tree (tracked in git; only generated screenshots/`__pycache__` are gitignored). There is no separate `tests/verification/` tree — it was removed as part of consolidating the two parallel suites that used to exist.

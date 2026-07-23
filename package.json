@@ -14,6 +14,7 @@
     "build:wasm": "bash scripts/build_wasm.sh",
     "build:wasm_colab": "bash scripts/build_wasm_colab.sh",
     "build:wasm:debug": "bash scripts/build_wasm.sh --debug",
+    "bci:bridge": "node scripts/openbci_ws_bridge.mjs",
     "deploy": "python deploy.py"
   },
   "devDependencies": {
@@ -22,6 +23,7 @@
   "dependencies": {
     "marked": "^17.0.4",
     "onnxruntime-web": "^1.23.2",
-    "playwright": "^1.58.2"
+    "playwright": "^1.58.2",
+    "ws": "^8.18.3"
   }
 }

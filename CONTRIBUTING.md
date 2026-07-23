@@ -12,6 +12,8 @@ This file is a map of "where to look" — the repo has grown a lot of documentat
 | GitHub Copilot-specific guardrails | [`.github/copilot-instructions.md`](.github/copilot-instructions.md) |
 | Grok-specific guardrails | [`docs/grok-agent-guide.md`](docs/grok-agent-guide.md) |
 | Roadmap, phase history, open items, dream backlog | [`docs/ROADMAP.md`](docs/ROADMAP.md) |
+| Live Muse/OpenBCI devices, bridge, recording, routine events | [`docs/bci-device.md`](docs/bci-device.md) |
+| Immersive VR/AR setup, controls, routine integration | [`docs/webxr.md`](docs/webxr.md) |
 | Module-by-module architecture | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
 | Complexity hotspots, dependency flows, gotchas | [`docs/DEVELOPER_CONTEXT.md`](docs/DEVELOPER_CONTEXT.md) |
 | Scientific accuracy of physiological models | [`docs/SCIENTIFIC_ACCURACY_REPORT.md`](docs/SCIENTIFIC_ACCURACY_REPORT.md) |

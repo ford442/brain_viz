@@ -2,7 +2,7 @@
 // Neuro-Weaver V2.8 Implementation - With Routine Engine
 import { InferenceEngine } from './inference-engine.js';
 import { FilterUIOverlay, initUIControls, initDirectorTools, initTooltips, initRangeTooltips } from './ui-utils.js';
-import { mountControlsShell, initTabSwitching, setupLegendPanel, setupOverlays, setupRoutineTransport, setupBciPanel, setupNeuromodulatorPanel } from './ui-panels.js';
+import { mountControlsShell, initTabSwitching, setupLegendPanel, setupOverlays, setupRoutineTransport, setupBciPanel, setupXrPanel, setupNeuromodulatorPanel } from './ui-panels.js';
 import { setupModeSelector } from './ui-mode-selector.js';
 import { collectInputsAndLabels } from './main-dom.js';
 import { setupRendererBackend } from './main-renderer-setup.js';
@@ -48,9 +48,10 @@ async function init() {
             renderer, player, controls, inputs, labels, inferenceEngine, aiPromptRef, rendererInfo
         );
 
-        setupBciPanel(renderer, controls, tensorPlayer);
+        const bciSession = setupBciPanel(renderer, controls, tensorPlayer, player);
+        setupXrPanel(renderer, player);
         setupNeuromodulatorPanel(renderer, controls);
-        const trainingEngine = setupTrainingIntegration(renderer, player, audioReactor, synaptixEngine);
+        const trainingEngine = setupTrainingIntegration(renderer, player, audioReactor, synaptixEngine, bciSession);
 
         initUIControls(renderer, inputs, labels);
 

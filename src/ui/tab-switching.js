@@ -20,8 +20,12 @@ export function initTabSwitching() {
     tabBtns.forEach(btn => {
         btn.addEventListener('click', () => activateTab(btn.dataset.tab));
     });
+    const requestedTab = new URLSearchParams(window.location.search).get('openTab');
+    const requestedTabId = requestedTab ? `tab-${requestedTab}` : null;
     const savedTab = localStorage.getItem(storageKey);
-    if (savedTab && document.getElementById(savedTab)) {
+    if (requestedTabId && document.getElementById(requestedTabId)) {
+        activateTab(requestedTabId);
+    } else if (savedTab && document.getElementById(savedTab)) {
         activateTab(savedTab);
     }
 

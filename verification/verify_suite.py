@@ -20,6 +20,8 @@ SCRIPTS = [
     "verify_branching.py",
     "verify_glitch.py",
     "verify_training.py",
+    "verify_bci_device.py",
+    "verify_webxr.py",
 ]
 
 

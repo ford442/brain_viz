@@ -37,6 +37,8 @@ For the current architecture and module responsibilities, see [`AGENTS.md`](../A
 | 22 | Advanced Interpolation & Extensibility | Cubic/sine easing curves, runtime-added camera regions |
 | 23 | Biofeedback Synchronization | HRV-driven glitch sync (`hrv_sync`) |
 | 24 | Neurofeedback Training Mode | `TrainingEngine`, simulated metric sampling, gamified hold-in-band objectives with streak/drift scoring and stars, `training_start`/`training_checkpoint`/`training_end` routine events with auto-branching, Training tab UI with session history, keyboard demo-baseline courses |
+| 25 | Live EEG / BCI Devices | Muse Classic/Athena Web Bluetooth, OpenBCI UDP/WebSocket bridge, calibrated band-power projection into the human 32³ tensor, editable channel mapping, `.nwbci` recording/replay, and BCI routine events |
+| 26 | WebXR Immersive Mode | WebGL2 stereo VR, routine-driven XR rig, controller/hand energy painting, lobe viewpoints, and optional tabletop AR |
 
 ## Open Items
 
@@ -48,8 +50,6 @@ Deduplicated from the historical "Dream Log" entries across the archived plans �
 
 - **Neuro-Script Exchange** — a shared platform to publish, fork, and remix visualization routines.
 - **Multi-Brain Mode** — visualize two brains interacting (mirror-neuron storytelling).
-- **VR/XR Mode** — WebXR integration for immersive brain walkthroughs.
-- **EEG Hardware Integration** — connect to Muse/OpenBCI headsets via WebBluetooth to drive visualization with real brainwaves.
 - **AI Narrative Generation** — use an LLM to generate routine scripts from themes (e.g. "Anxiety Spike", "Eureka Moment"); related to the multimodal ideas in [`docs/DOUBLE_MIRROR_VISION.md`](DOUBLE_MIRROR_VISION.md).
 - **Fractal Recursive Zoom** — procedurally generate infinite detail when zooming into a soma or fiber.
 - **Collaborative Brain Storming** — multi-user session injecting stimuli into a shared visualization via WebSockets.
@@ -65,6 +65,8 @@ Deduplicated from the historical "Dream Log" entries across the archived plans �
 ## Related Specs & Vision Docs
 
 - [`docs/training-mode.md`](training-mode.md) — Neurofeedback Training Mode (courses, metrics, scoring, routine events)
+- [`docs/bci-device.md`](bci-device.md) — Muse/OpenBCI setup, live tensor mapping, recording, and routine events
+- [`docs/webxr.md`](webxr.md) — immersive VR/AR setup, controls, routine integration, and verification
 - [`docs/synaptix.md`](synaptix.md) / [`SYNAPTIX_SPEC.md`](SYNAPTIX_SPEC.md) — SynaptiX comparative mode
 - [`docs/webgl-fallback.md`](webgl-fallback.md) — WebGL2 fallback/debug renderer
 - [`docs/wasm-engine.md`](wasm-engine.md) — C++/WASM hybrid simulation engine

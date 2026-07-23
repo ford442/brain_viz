@@ -94,10 +94,11 @@ export function registerNeuromodulatorsHandlers(handlers, player) {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
         const duration = evt.duration || 1.0;
 
-        // Instantly boost flowSpeed and amplitude
+        // Instantly boost flowSpeed and amplitude, and enable dopamine trails
         player.renderer.setParams({
             flowSpeed: 20.0 * intensity,
-            amplitude: 1.5 * intensity
+            amplitude: 1.5 * intensity,
+            dopamineTrails: 1.0 * intensity
         });
 
         // Fade back
@@ -105,6 +106,7 @@ export function registerNeuromodulatorsHandlers(handlers, player) {
             const ease = evt.ease || 'quadOut';
             player.startLerp({ key: 'flowSpeed', value: 4.0, duration: duration, ease: ease });
             player.startLerp({ key: 'amplitude', value: 0.5, duration: duration, ease: ease });
+            player.startLerp({ key: 'dopamineTrails', value: 0.0, duration: duration, ease: ease });
         }
     });
 

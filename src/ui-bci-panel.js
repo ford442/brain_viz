@@ -1,234 +1,191 @@
-// ui-bci-panel.js
 import { BUILTIN_PATTERNS } from './tensor-player.js';
+import { BCISession } from './bci/bci-session.js';
+import { MuseAdapter } from './bci/muse-adapter.js';
+import { OpenBCIAdapter } from './bci/openbci-adapter.js';
+import { REGION_NAMES } from './bci/tensor-resampler.js';
 
-export function setupBciPanel(renderer, controls, tensorPlayer) {
-    // -----------------------------
-    // [BCI] Tensor Data Player Panel
-    // -----------------------------
+const byId = (id) => document.getElementById(id);
 
-    const bciContainer = document.createElement('div');
-    bciContainer.style.marginTop = '10px';
-    bciContainer.style.paddingTop = '10px';
-    bciContainer.style.borderTop = '1px solid #444';
+export function setupBciPanel(renderer, controls, tensorPlayer, player) {
+    const session = new BCISession(renderer, tensorPlayer);
+    const source = byId('bci-device-source');
+    const urlRow = byId('bci-openbci-url-row');
+    const status = byId('bci-device-status');
+    const qualityBar = byId('bar-bci-quality');
+    const qualityValue = byId('val-bci-quality');
+    const bands = byId('bci-band-values');
+    const channelQuality = byId('bci-channel-quality');
+    const mapping = byId('bci-channel-mapping');
+    const calibrationStatus = byId('bci-calibration-status');
+    const download = byId('btn-bci-download');
+    let recordingBlob = null;
+    let calibrationTimer = null;
 
-    const bciTitle = document.createElement('div');
-    bciTitle.textContent = 'BCI Tensor Playback';
-    bciTitle.dataset.tooltip = "Stream pre-recorded 32×32×32 neural tensor frames";
-    bciTitle.style.color = '#00ffaa';
-    bciTitle.style.fontSize = '12px';
-    bciTitle.style.fontWeight = 'bold';
-    bciTitle.style.marginBottom = '6px';
-    bciContainer.appendChild(bciTitle);
-
-    // Built-in pattern selector
-    const bciPatternSelect = document.createElement('select');
-    bciPatternSelect.style.width = '100%';
-    bciPatternSelect.style.marginBottom = '5px';
-    bciPatternSelect.dataset.tooltip = "Select a built-in BCI pattern to simulate";
-    bciPatternSelect.style.background = '#1a2a3a';
-    bciPatternSelect.style.color = '#ddd';
-    bciPatternSelect.style.border = '1px solid #444';
-    bciPatternSelect.style.padding = '3px';
-    const defaultOpt = document.createElement('option');
-    defaultOpt.value = '';
-    defaultOpt.textContent = '— Built-in Patterns —';
-    bciPatternSelect.appendChild(defaultOpt);
-    BUILTIN_PATTERNS.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p.id;
-        opt.textContent = p.label;
-        opt.title = p.description;
-        bciPatternSelect.appendChild(opt);
-    });
-    bciContainer.appendChild(bciPatternSelect);
-
-    // Transport row
-    const bciTransport = document.createElement('div');
-    bciTransport.style.display = 'flex';
-    bciTransport.style.gap = '4px';
-    bciTransport.style.marginBottom = '5px';
-
-    const bciPlay = document.createElement('button');
-    bciPlay.textContent = '▶';
-    bciPlay.title = 'Play BCI data';
-    bciPlay.style.flex = '1';
-    bciPlay.style.background = '#005522';
-    bciPlay.style.color = '#00ffaa';
-
-    const bciPause = document.createElement('button');
-    bciPause.textContent = '⏸';
-    bciPause.title = 'Pause';
-    bciPause.style.flex = '1';
-    bciPause.style.background = '#334';
-
-    const bciStop = document.createElement('button');
-    bciStop.textContent = '⏹';
-    bciStop.title = 'Stop & restore physics';
-    bciStop.style.flex = '1';
-    bciStop.style.background = '#330011';
-    bciStop.style.color = '#ff5566';
-
-    bciTransport.appendChild(bciPlay);
-    bciTransport.appendChild(bciPause);
-    bciTransport.appendChild(bciStop);
-    bciContainer.appendChild(bciTransport);
-
-    // Speed control
-    const bciSpeedRow = document.createElement('div');
-    bciSpeedRow.style.display = 'flex';
-    bciSpeedRow.style.gap = '8px';
-    bciSpeedRow.style.alignItems = 'center';
-    bciSpeedRow.style.fontSize = '11px';
-    bciSpeedRow.style.color = '#aaa';
-    bciSpeedRow.style.marginBottom = '5px';
-
-    const bciSpeedLabel = document.createElement('span');
-    bciSpeedLabel.textContent = '1.0×';
-    bciSpeedLabel.style.minWidth = '32px';
-
-    const bciSpeedSlider = document.createElement('input');
-    bciSpeedSlider.type = 'range';
-    bciSpeedSlider.min = '0.1';
-    bciSpeedSlider.max = '4.0';
-    bciSpeedSlider.step = '0.1';
-    bciSpeedSlider.value = '1.0';
-    bciSpeedSlider.style.flex = '1';
-    bciSpeedSlider.addEventListener('input', (e) => {
-        const v = parseFloat(e.target.value);
-        tensorPlayer.setSpeed(v);
-        bciSpeedLabel.textContent = v.toFixed(1) + '×';
-    });
-
-    bciSpeedRow.appendChild(document.createTextNode('Speed: '));
-    bciSpeedRow.appendChild(bciSpeedSlider);
-    bciSpeedRow.appendChild(bciSpeedLabel);
-    bciContainer.appendChild(bciSpeedRow);
-
-    // Frame scrubber + counter
-    const bciScrubRow = document.createElement('div');
-    bciScrubRow.style.display = 'flex';
-    bciScrubRow.style.gap = '6px';
-    bciScrubRow.style.alignItems = 'center';
-    bciScrubRow.style.marginBottom = '5px';
-
-    const bciScrubber = document.createElement('input');
-    bciScrubber.type = 'range';
-    bciScrubber.min = '0';
-    bciScrubber.max = '1';
-    bciScrubber.value = '0';
-    bciScrubber.style.flex = '1';
-
-    const bciFrameLabel = document.createElement('span');
-    bciFrameLabel.textContent = '0/0';
-    bciFrameLabel.style.fontSize = '10px';
-    bciFrameLabel.style.color = '#888';
-    bciFrameLabel.style.minWidth = '48px';
-
-    bciScrubber.addEventListener('input', (e) => {
-        tensorPlayer.seek(parseInt(e.target.value));
-    });
-
-    bciScrubRow.appendChild(bciScrubber);
-    bciScrubRow.appendChild(bciFrameLabel);
-    bciContainer.appendChild(bciScrubRow);
-
-    // File loader (custom .bin / .npy / .csv)
-    const bciFileLabel = document.createElement('label');
-    bciFileLabel.textContent = 'Load tensor file (.bin / .npy / .csv)';
-    bciFileLabel.style.fontSize = '11px';
-    bciFileLabel.style.color = '#888';
-    bciContainer.appendChild(bciFileLabel);
-
-    const bciFileInput = document.createElement('input');
-    bciFileInput.type = 'file';
-    bciFileInput.accept = '.bin,.npy,.csv';
-    bciFileInput.style.width = '100%';
-    bciFileInput.style.color = '#aaa';
-    bciFileInput.style.fontSize = '11px';
-    bciFileInput.style.marginTop = '3px';
-    bciContainer.appendChild(bciFileInput);
-
-    controls.appendChild(bciContainer);
-
-    // TensorPlayer callbacks
-    tensorPlayer.onFrameChange = (frame, total) => {
-        bciFrameLabel.textContent = `${frame}/${total}`;
-        if (total > 1) {
-            bciScrubber.max = total - 1;
-            bciScrubber.value = frame;
+    const activateTab = () => document.querySelector('.tab-btn[data-tab="tab-bci"]')?.click();
+    const renderMapping = () => {
+        mapping.innerHTML = '';
+        for (const [channel, region] of Object.entries(session.mapping)) {
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex;gap:5px;align-items:center;margin:3px 0;font-size:10px;';
+            const label = document.createElement('span');
+            label.textContent = channel;
+            label.style.width = '48px';
+            const select = document.createElement('select');
+            select.style.flex = '1';
+            for (const name of REGION_NAMES) select.add(new Option(name, name));
+            select.value = region;
+            select.addEventListener('change', () => session.setMapping(channel, select.value));
+            row.append(label, select);
+            mapping.appendChild(row);
         }
     };
-    tensorPlayer.onPlayStateChange = (playing) => {
-        bciPlay.textContent = playing ? '⏸' : '▶';
-        bciPlay.style.background = playing ? '#005588' : '#005522';
-    };
 
-    // BCI transport button handlers
-    let bciGenerating = false;
-    const loadAndPlayPattern = async (patternId) => {
-        const pattern = BUILTIN_PATTERNS.find(p => p.id === patternId);
-        if (!pattern) return;
-        if (bciGenerating) return;
-        bciGenerating = true;
-        bciPlay.textContent = '⏳';
-        bciPlay.disabled = true;
+    const connectSelected = async () => {
+        const selected = source.value;
+        const button = byId('btn-bci-connect');
+        button.disabled = true;
         try {
-            const frames = await Promise.resolve(pattern.generate(tensorPlayer));
-            tensorPlayer.loadFrames(frames);
-            tensorPlayer.play();
+            const adapter = selected === 'muse'
+                ? new MuseAdapter()
+                : new OpenBCIAdapter(byId('bci-openbci-url').value.trim());
+            await session.connect(adapter, { mappingId: selected });
+            renderMapping();
+            player?.triggerSignal('bci_connected');
+        } catch (error) {
+            console.warn('[BCI] Connection failed', error);
+            session._setStatus({ state: 'error', message: error.message });
+            if (player?.waitingForSignal === 'bci_connected') player.waitingForSignal = 'bci_connection_failed';
+            player?.triggerSignal('bci_connection_failed');
         } finally {
-            bciGenerating = false;
-            bciPlay.disabled = false;
+            button.disabled = false;
         }
     };
 
-    bciPlay.onclick = async () => {
-        if (tensorPlayer.isPlaying) {
-            tensorPlayer.pause();
-        } else if (tensorPlayer.totalFrames > 0) {
-            tensorPlayer.play();
-        } else {
-            const patternId = bciPatternSelect.value;
-            if (patternId) {
-                await loadAndPlayPattern(patternId);
-            } else {
-                // Default: alpha waves
-                await loadAndPlayPattern('alpha-waves');
-                bciPatternSelect.value = 'alpha-waves';
+    session.requestConnection = ({ adapter = 'muse', url } = {}) => {
+        source.value = adapter === 'openbci' ? 'cyton' : 'muse';
+        if (url) byId('bci-openbci-url').value = url;
+        source.dispatchEvent(new Event('change'));
+        activateTab();
+        if (adapter === 'openbci') return connectSelected();
+        session._setStatus({ state: 'permission', message: 'Click Scan / Connect to grant Muse access' });
+        return Promise.resolve(false);
+    };
+
+    session.onStatus = (next) => {
+        status.textContent = `${next.message || next.state}${next.protocol ? ` · ${next.protocol}` : ''}${next.battery != null ? ` · ${Math.round(next.battery)}% battery` : ''}`;
+        status.dataset.state = next.state;
+    };
+    session.onFeatures = (features) => {
+        const percent = Math.round(features.quality * 100);
+        qualityValue.textContent = `${percent}%`;
+        qualityBar.style.width = `${percent}%`;
+        qualityBar.style.background = percent >= 70 ? '#00dd88' : percent >= 40 ? '#ffcc44' : '#ff5566';
+        bands.textContent = `α ${features.bands.alpha.toFixed(2)} · β ${features.bands.beta.toFixed(2)} · γ ${features.bands.gamma.toFixed(2)} · ${session.updateRate} Hz`;
+        channelQuality.textContent = Object.entries(features.channels)
+            .map(([name, value]) => `${name} ${Math.round(value.quality * 100)}%`).join(' · ');
+    };
+
+    source.addEventListener('change', () => {
+        urlRow.style.display = source.value === 'muse' ? 'none' : 'block';
+        session.mappingId = source.value;
+        const presets = source.value === 'muse' ? 'muse' : source.value;
+        session.mapping = session._loadMapping(presets,
+            presets === 'muse' ? session.resampler.mapping : {});
+        renderMapping();
+    });
+    byId('btn-bci-connect').addEventListener('click', connectSelected);
+    byId('btn-bci-disconnect').addEventListener('click', () => session.disconnect());
+    byId('btn-bci-reset-mapping').addEventListener('click', () => { session.resetMapping(); renderMapping(); });
+
+    byId('btn-bci-calibrate').addEventListener('click', () => {
+        if (calibrationTimer) return;
+        let elapsed = 0;
+        session.startCalibration('neutral');
+        calibrationStatus.textContent = 'Eyes open · 10s';
+        calibrationTimer = setInterval(() => {
+            elapsed++;
+            if (elapsed === 10) {
+                session.startCalibration('relaxed');
             }
-        }
-    };
-
-    bciPause.onclick = () => tensorPlayer.pause();
-    bciStop.onclick = () => {
-        tensorPlayer.stop();
-        bciScrubber.value = 0;
-    };
-
-    bciPatternSelect.addEventListener('change', async (e) => {
-        if (!e.target.value) return;
-        await loadAndPlayPattern(e.target.value);
+            calibrationStatus.textContent = elapsed < 10
+                ? `Eyes open · ${10 - elapsed}s`
+                : `Eyes closed · ${20 - elapsed}s`;
+            if (elapsed >= 20) {
+                clearInterval(calibrationTimer);
+                calibrationTimer = null;
+                session.finishCalibration();
+                calibrationStatus.textContent = 'Calibration complete';
+            }
+        }, 1000);
     });
 
-    bciFileInput.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
+    byId('btn-bci-record').addEventListener('click', async () => {
+        await session.startRecording();
+        recordingBlob = null;
+        download.disabled = true;
+    });
+    byId('btn-bci-record-stop').addEventListener('click', async () => {
+        recordingBlob = await session.stopRecording();
+        download.disabled = !recordingBlob;
+    });
+    download.addEventListener('click', () => {
+        if (!recordingBlob) return;
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(recordingBlob);
+        link.download = `${session.recordingName || 'neuro-weaver-bci'}-${new Date().toISOString().replace(/[:.]/g, '-')}.nwbci`;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    });
+    byId('bci-replay-file').addEventListener('change', async (event) => {
+        const file = event.target.files[0];
+        if (file) await session.replay(file, { realtime: false });
+    });
+
+    const patternSelect = byId('bci-pattern');
+    const loadPattern = async (id) => {
+        const pattern = BUILTIN_PATTERNS.find((entry) => entry.id === id);
+        if (!pattern) return;
+        await session.disconnect();
+        tensorPlayer.loadFrames(await Promise.resolve(pattern.generate(tensorPlayer)));
+        tensorPlayer.play();
+    };
+    byId('btn-bci-play').addEventListener('click', () => {
+        if (tensorPlayer.isPlaying) tensorPlayer.pause();
+        else if (tensorPlayer.totalFrames) tensorPlayer.play();
+        else loadPattern(patternSelect.value || 'alpha-waves');
+    });
+    byId('btn-bci-pause').addEventListener('click', () => tensorPlayer.pause());
+    byId('btn-bci-stop').addEventListener('click', () => tensorPlayer.stop());
+    patternSelect.addEventListener('change', () => patternSelect.value && loadPattern(patternSelect.value));
+    byId('bci-speed').addEventListener('input', (event) => {
+        tensorPlayer.setSpeed(Number(event.target.value));
+        byId('val-bci-speed').textContent = `${Number(event.target.value).toFixed(1)}×`;
+    });
+    byId('bci-scrubber').addEventListener('input', (event) => tensorPlayer.seek(Number(event.target.value)));
+    tensorPlayer.onFrameChange = (frame, total) => {
+        byId('bci-frame-label').textContent = `${frame}/${total}`;
+        byId('bci-scrubber').max = Math.max(1, total - 1);
+        byId('bci-scrubber').value = frame;
+    };
+    byId('bci-tensor-file').addEventListener('change', async (event) => {
+        const file = event.target.files[0];
         if (!file) return;
-        try {
-            let frames;
-            if (file.name.endsWith('.npy')) {
-                frames = await tensorPlayer.loadNPY(file);
-            } else if (file.name.endsWith('.csv')) {
-                frames = await tensorPlayer.loadCSVSeries(file);
-            } else {
-                frames = await tensorPlayer.loadBinary(file);
-            }
-            tensorPlayer.loadFrames(frames);
-            tensorPlayer.play();
-            bciPatternSelect.value = ''; // deselect built-in
-        } catch (err) {
-            console.error('[TensorPlayer] Failed to load file:', err);
-            alert('Failed to load tensor file: ' + err.message);
-        }
+        const frames = file.name.endsWith('.npy') ? await tensorPlayer.loadNPY(file)
+            : file.name.endsWith('.csv') ? await tensorPlayer.loadCSVSeries(file)
+            : await tensorPlayer.loadBinary(file);
+        tensorPlayer.loadFrames(frames);
+        tensorPlayer.play();
     });
-}
 
+    renderMapping();
+    window.__bciDebug = {
+        getState: () => ({ ...session.status, source: session.source, updateRate: session.updateRate,
+            tensorUpdateCount: session.tensorUpdateCount, features: session.latestFeatures, mapping: session.mapping }),
+        session,
+        connect: connectSelected,
+        disconnect: () => session.disconnect(),
+        replay: (recording) => session.replay(recording),
+    };
+    if (player) player.bciSession = session;
+    return session;
+}

@@ -9,6 +9,8 @@ import { renderCinematicTab } from './tab-cinematic.js';
 import { renderLightingTab } from './tab-lighting.js';
 import { renderSynaptixTab } from './tab-synaptix.js';
 import { renderTrainingTab } from './tab-training.js';
+import { renderBciTab } from './tab-bci.js';
+import { renderXrTab } from './tab-xr.js';
 
 const TABS = [
     { id: 'tab-activity', label: 'Activity', render: renderActivityTab },
@@ -17,6 +19,8 @@ const TABS = [
     { id: 'tab-cinematic', label: 'Cinematic', render: renderCinematicTab },
     { id: 'tab-lighting', label: 'Lighting', render: renderLightingTab },
     { id: 'tab-synaptix', label: 'SynaptiX', render: renderSynaptixTab },
+    { id: 'tab-bci', label: 'BCI', render: renderBciTab },
+    { id: 'tab-xr', label: 'XR', render: renderXrTab },
     { id: 'tab-training', label: 'Training', render: renderTrainingTab },
 ];
 

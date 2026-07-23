@@ -93,7 +93,13 @@ def verify() -> None:
                     break
                 page.wait_for_timeout(1000)
 
-            assert completed, "Panic Recovery course never completed within the timeout"
+            if not completed:
+                metric_text = page.locator("#training-metric-val").inner_text()
+                progress_text = page.locator("#training-ring-label").inner_text()
+                raise AssertionError(
+                    f"Panic Recovery course never completed within the timeout; "
+                    f"metric={metric_text!r}, progress={progress_text!r}"
+                )
             assert completed["success"] is True, f"Panic Recovery did not succeed: {completed}"
             assert completed["stars"] >= 1, f"Expected at least 1 star, got: {completed}"
             page.screenshot(path=str(output_dir / "training_panic_recovery_complete.png"))

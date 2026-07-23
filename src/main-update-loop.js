@@ -8,7 +8,10 @@ export function startMainUpdateLoop(renderer, player, inputs, labels, tensorPlay
         tensorPlayer.update(timestamp);
 
         if (trainingEngine) {
-            const dt = lastTrainingTime > 0 ? Math.min(0.1, (timestamp - lastTrainingTime) / 1000) : 0;
+            // Training objectives represent wall-clock hold durations. Keep a
+            // guard against huge resume jumps without under-counting on slow
+            // software renderers or overloaded mobile devices.
+            const dt = lastTrainingTime > 0 ? Math.min(0.5, (timestamp - lastTrainingTime) / 1000) : 0;
             lastTrainingTime = timestamp;
             trainingEngine.update(dt);
         }

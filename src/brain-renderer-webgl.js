@@ -119,7 +119,7 @@ export class BrainRendererWebGL {
     }
 
     async initialize() {
-        const gl = this.canvas.getContext('webgl2', { antialias: true, alpha: false });
+        const gl = this.canvas.getContext('webgl2', { antialias: true, alpha: true, xrCompatible: true });
         if (!gl) {
             throw new Error('WebGL2 is unavailable in this browser.');
         }
@@ -652,12 +652,16 @@ export class BrainRendererWebGL {
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.tensorPointColorSize);
     }
 
-    updateMatrices() {
+    updateCameraState() {
         this.rotation.x += (this.targetRotation.x - this.rotation.x) * 0.1;
         this.rotation.y += (this.targetRotation.y - this.rotation.y) * 0.1;
         this.zoom += (this.targetZoom - this.zoom) * 0.1;
         this.fov += (this.targetFov - this.fov) * 0.1;
         this.camera.zoom = this.zoom;
+    }
+
+    updateMatrices() {
+        this.updateCameraState();
         const aspect = Math.max(1, this.canvas.width) / Math.max(1, this.canvas.height);
         const projection = Mat4.perspective(this.fov, aspect, 0.1, 100.0);
         const view = Mat4.lookAt([0, 0, this.zoom], [0, 0, 0], [0, 1, 0]);
@@ -704,6 +708,43 @@ export class BrainRendererWebGL {
         gl.drawArrays(gl.POINTS, 0, count);
     }
 
+    drawScene(mvp) {
+        const isolate = this.debugOptions.isolate || 'all';
+        const style = this.params.style || 0;
+        const shouldDrawMesh = isolate === 'all' || isolate === 'mesh';
+        const shouldDrawFibers = isolate === 'all' || isolate === 'fibers';
+        const shouldDrawTensor = isolate === 'all' || isolate === 'tensor';
+
+        if (shouldDrawTensor && (style >= 3.0 || this.debugOptions.tensorField)) {
+            this.drawPoints(mvp, this.tensorVao, this.voxelCount);
+        }
+        if (shouldDrawFibers && (style >= 2.0 || style >= 4.0 || isolate === 'fibers')) {
+            this.drawFibers(mvp);
+            this.drawPoints(mvp, this.somaVao, this.baseSomaInstances.length / 9);
+        }
+        if (shouldDrawMesh && (style < 3.0 || style >= 4.0 || isolate === 'mesh')) {
+            const wireframe = this.debugOptions.wireframe || style === 1.0;
+            this.drawMesh(mvp, wireframe);
+        }
+    }
+
+    beginXRFrame(timestamp) {
+        if (this.geometryDirty && (!this.lastGeometryRebuildTime || timestamp - this.lastGeometryRebuildTime >= this.geometryRebuildIntervalMs)) {
+            this.buildAndUploadGeometry();
+        }
+        this.updateAltitudeState();
+        this.time += 0.016;
+        if (!this.tensorPlaybackMode) this.updateTensorSimulation();
+        this.updateDynamicBuffers();
+        this.updateCameraState();
+    }
+
+    drawXRView(mvp, viewport) {
+        const gl = this.gl;
+        gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height);
+        this.drawScene(mvp);
+    }
+
     render() {
         if (!this.isRunning) return;
         if (this.geometryDirty && (!this.lastGeometryRebuildTime || performance.now() - this.lastGeometryRebuildTime >= this.geometryRebuildIntervalMs)) {
@@ -723,23 +764,7 @@ export class BrainRendererWebGL {
         gl.clearColor(0.01, 0.02, 0.04, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        const isolate = this.debugOptions.isolate || 'all';
-        const style = this.params.style || 0;
-        const shouldDrawMesh = isolate === 'all' || isolate === 'mesh';
-        const shouldDrawFibers = isolate === 'all' || isolate === 'fibers';
-        const shouldDrawTensor = isolate === 'all' || isolate === 'tensor';
-
-        if (shouldDrawTensor && (style >= 3.0 || this.debugOptions.tensorField)) {
-            this.drawPoints(mvp, this.tensorVao, this.voxelCount);
-        }
-        if (shouldDrawFibers && (style >= 2.0 || style >= 4.0 || isolate === 'fibers')) {
-            this.drawFibers(mvp);
-            this.drawPoints(mvp, this.somaVao, this.baseSomaInstances.length / 9);
-        }
-        if (shouldDrawMesh && (style < 3.0 || style >= 4.0 || isolate === 'mesh')) {
-            const wireframe = this.debugOptions.wireframe || style === 1.0;
-            this.drawMesh(mvp, wireframe);
-        }
+        this.drawScene(mvp);
 
         this.frameHandle = requestAnimationFrame(() => this.render());
     }

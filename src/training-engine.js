@@ -24,6 +24,8 @@ export const METRICS = {
     calm: {
         label: 'Calm (inverse cognitive stress)',
         sample: (ctx) => {
+            const live = ctx.bciSession?.latestFeatures?.bands;
+            if (live) return clamp01(live.alpha / Math.max(0.05, live.alpha + live.beta));
             const stress = ctx.renderer?.params?.stress ?? 0;
             return clamp01(1.0 - stress / 2.0);
         }
@@ -31,6 +33,8 @@ export const METRICS = {
     occipitalAlpha: {
         label: 'Occipital Alpha Power',
         sample: (ctx) => {
+            const live = ctx.bciSession?.latestFeatures?.bands?.alpha;
+            if (Number.isFinite(live)) return clamp01(live);
             const p = ctx.renderer?.params || {};
             // Relaxed, eyes-closed-like states (low amplitude, high smoothing)
             // produce a stronger simulated posterior alpha rhythm.
@@ -119,11 +123,12 @@ function writeHistory(entries) {
 }
 
 export class TrainingEngine {
-    constructor(renderer, audioReactor, synaptixEngine, player) {
+    constructor(renderer, audioReactor, synaptixEngine, player, bciSession = null) {
         this.renderer = renderer;
         this.audioReactor = audioReactor;
         this.synaptixEngine = synaptixEngine;
         this.player = player;
+        this.bciSession = bciSession;
 
         this.courses = [...BUILTIN_COURSES];
         this.activeCourse = null;
@@ -196,7 +201,7 @@ export class TrainingEngine {
             return;
         }
 
-        const ctx = { renderer: this.renderer, audioReactor: this.audioReactor, synaptixEngine: this.synaptixEngine };
+        const ctx = { renderer: this.renderer, audioReactor: this.audioReactor, synaptixEngine: this.synaptixEngine, bciSession: this.bciSession };
         const value = metric.sample(ctx);
         const low = objective.target - objective.tolerance;
         const high = objective.target + objective.tolerance;

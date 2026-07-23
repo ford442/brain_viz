@@ -176,6 +176,12 @@ this.params.oxygenLevel = Math.max(0.3, 1.0 - (altFraction * 0.7));
 
 ## Summary of Recommendations - STATUS: ✅ COMPLETED
 
+## 9. Consumer EEG Projection ⚠️ VISUALIZATION HEURISTIC
+
+Muse and OpenBCI provide scalp EEG measurements rather than a volumetric map of neural sources. Neuro-Weaver derives conventional alpha (8–12 Hz), beta (13–30 Hz), and gamma (30–45 Hz) band powers from raw channels, then projects them into lobe-weighted Gaussian masks for artistic visualization.
+
+The channel positions and posterior/frontal/temporal biases are anatomically motivated, but this is not EEG source localization. The estimated signal-quality score detects clipping, flatlines, variance, and motion artifacts; it is not electrode impedance and is not suitable for diagnosis. UI and recording documentation label both limitations explicitly.
+
 | Issue | Severity | Recommendation | Status |
 |-------|----------|----------------|--------|
 | Occipital hypoxia resistance | Minor | Change sensitivity from 0.9 to ~1.0 | ✅ FIXED in shaders.js |
