@@ -32,6 +32,14 @@ export function applyPipelineMethods(Target) {
     size: RENDER_UNIFORM_BUFFER_SIZE,
     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
         });
+        this.avatarAUniformBuffer = this.device.createBuffer({
+    size: RENDER_UNIFORM_BUFFER_SIZE,
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+        });
+        this.partnerUniformBuffer = this.device.createBuffer({
+    size: RENDER_UNIFORM_BUFFER_SIZE,
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+        });
 
         // Compute uniforms: TensorParams is 64 bytes after alignment.
         this.computeUniformBuffer = this.device.createBuffer({

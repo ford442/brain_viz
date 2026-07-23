@@ -34,7 +34,9 @@ export function collectInputsAndLabels() {
     oxygen: document.getElementById('oxygen'), // Altitude/Hypoxia (read-only)
     metabolicRate: document.getElementById('metabolic'), // Altitude/Hypoxia
     style: document.getElementById('style-mode'),
-    aiInfluence: document.getElementById('aiInfluence'),
+    partnerInfluence: document.getElementById('partnerInfluence'),
+    couplingStrength: document.getElementById('couplingStrength'),
+    couplingWindowSeconds: document.getElementById('couplingWindowSeconds'),
     resonanceThreshold: document.getElementById('resonanceThreshold'),
     aiLayer: document.getElementById('aiLayer'),
     fusionParticles: document.getElementById('fusion-particles'),
@@ -76,7 +78,9 @@ export function collectInputsAndLabels() {
     altitude: document.getElementById('val-altitude'), // Altitude/Hypoxia
     oxygen: document.getElementById('val-oxygen'), // Altitude/Hypoxia (read-only)
     metabolicRate: document.getElementById('val-metabolic'), // Altitude/Hypoxia
-    aiInfluence: document.getElementById('val-aiInfluence'),
+    partnerInfluence: document.getElementById('val-partnerInfluence'),
+    couplingStrength: document.getElementById('val-couplingStrength'),
+    couplingWindowSeconds: document.getElementById('val-couplingWindowSeconds'),
     resonanceThreshold: document.getElementById('val-resonanceThreshold'),
     aiLayer: document.getElementById('val-aiLayer'),
     frameIndex: document.getElementById('val-frame-index'),

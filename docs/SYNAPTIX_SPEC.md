@@ -1,4 +1,6 @@
 # SynaptiX Mode Implementation Spec
+
+> Historical single-avatar implementation specification. The current dual-avatar behavior, partner naming, temporal coupling model, and normalized partner-source contract are documented in [`synaptix.md`](synaptix.md).
 ## For Agent Swarm — Neuro-Weaver V2.7
 
 ---

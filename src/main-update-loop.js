@@ -20,7 +20,7 @@ export function startMainUpdateLoop(renderer, player, inputs, labels, tensorPlay
 
         if (timestamp - lastAIStep >= (1000 / Math.max(1, inferenceEngine.liveFrameRate))) {
             lastAIStep = timestamp;
-            if (renderer.params.style >= 4.0 || inputs.liveSourceEnable?.checked) {
+            if (inputs.liveSourceEnable?.checked) {
                 inferenceEngine.stepSynaptiX(synaptixEngine, renderer, {
                     prompt: aiPromptRef.value,
                     tokenIndex: inferenceEngine.tokenCounter
@@ -75,8 +75,8 @@ export function startMainUpdateLoop(renderer, player, inputs, labels, tensorPlay
         if (labels.pointCloudDensity) labels.pointCloudDensity.textContent = renderer.params.pointCloudDensity.toFixed(2);
         if (inputs.fiberCoupling) inputs.fiberCoupling.value = renderer.params.fiberCoupling;
         if (labels.fiberCoupling) labels.fiberCoupling.textContent = renderer.params.fiberCoupling.toFixed(2);
-        if (inputs.aiInfluence) inputs.aiInfluence.value = renderer.params.aiInfluence;
-        if (labels.aiInfluence) labels.aiInfluence.textContent = renderer.params.aiInfluence.toFixed(2);
+        if (inputs.partnerInfluence) inputs.partnerInfluence.value = renderer.params.partnerInfluence;
+        if (labels.partnerInfluence) labels.partnerInfluence.textContent = renderer.params.partnerInfluence.toFixed(2);
         if (inputs.resonanceThreshold) inputs.resonanceThreshold.value = renderer.params.resonanceThreshold;
         if (labels.resonanceThreshold) labels.resonanceThreshold.textContent = renderer.params.resonanceThreshold.toFixed(2);
         if (inputs.aiLayer) {

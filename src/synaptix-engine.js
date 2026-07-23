@@ -1,3 +1,5 @@
+import { SynaptiXCouplingModel, SYNAPTIX_REGIONS } from './synaptix-coupling.js';
+
 const VOXEL_DIM = 32;
 const VOXEL_COUNT = VOXEL_DIM ** 3;
 const BRAIN_RANGE = 1.6;
@@ -108,27 +110,43 @@ export class SynaptiXEngine {
         this.currentPattern = null;
         this.projector = new AITensorProjector();
         this.fusionParticlesEnabled = true;
-        this.frameSequence = [];       // Array of Float32Array frames
+        this.frameSequence = [];       // Partner Float32Array frames
+        this.avatarFrameSequence = []; // Optional paired avatar-A phantom frames
         this.frameIndex = 0;
         this.isPlayingFrames = false;
         this.framePlaybackRate = 4;    // frames per second
         this.lastFrameTime = 0;
         this.liveCallback = null;      // External live source callback
         this.layerCount = 1;
-        this.lastSourceInfo = 'No AI tensor loaded';
+        this.lastSourceInfo = 'No partner tensor loaded';
+        this.partnerSourceType = 'none';
+        this.partnerSocket = null;
+        this.couplingModel = new SynaptiXCouplingModel({ windowSeconds: 2, sampleRate: 10 });
+        this.effects = { empathyPulse: null, divergenceStorm: null };
         this.resonanceStats = {        // Computed each update
             resonance: 0.0,
             humanEnergy: 0.0,
-            aiEnergy: 0.0
+            aiEnergy: 0.0,
+            avatarAEnergy: 0.0,
+            partnerEnergy: 0.0,
+            globalCoupling: 0.0,
+            regions: Object.fromEntries(SYNAPTIX_REGIONS.map((name) => [name, 0]))
         };
     }
 
-    setTensorData(data) {
+    setPartnerTensorData(data, sourceType = this.partnerSourceType || 'external') {
         if (data.length !== VOXEL_COUNT) {
             console.warn(`[SynaptiX] Tensor size mismatch: expected ${VOXEL_COUNT}, got ${data.length}`);
-            return;
+            return false;
         }
-        this.renderer.setAITensorData(data);
+        this.renderer.setPartnerTensorData(data);
+        this.partnerSourceType = sourceType;
+        return true;
+    }
+
+    // Deprecated compatibility alias.
+    setTensorData(data) {
+        return this.setPartnerTensorData(data, 'legacy-ai');
     }
 
     async loadTensorFile(file) {
@@ -153,12 +171,12 @@ export class SynaptiXEngine {
             console.log(`[SynaptiX] Loaded frame sequence from file (${this.frameSequence.length} frames)`);
             return;
         }
-        this.setTensorData(payload.tensor);
+        this.setPartnerTensorData(payload.tensor, 'file');
         this.layerCount = payload.layerCount || 1;
         this.lastSourceInfo = payload.projected
             ? `Projected activations: ${file.name} (${payload.sourceLength} values → 32^3)`
             : `Tensor loaded: ${file.name}`;
-        console.log('[SynaptiX] AI tensor loaded from file');
+        console.log('[SynaptiX] Partner tensor loaded from file');
     }
 
     async loadBinary(file) {
@@ -192,7 +210,7 @@ export class SynaptiXEngine {
         const projected = this.projector.project(activation, layerIndex, totalLayers);
         this.layerCount = Math.max(1, totalLayers);
         this.lastSourceInfo = `Projected external activation (${layerIndex + 1}/${this.layerCount})`;
-        this.setTensorData(projected);
+        this.setPartnerTensorData(projected, 'ai-projection');
     }
 
     setProjector(fn) {
@@ -208,6 +226,7 @@ export class SynaptiXEngine {
             return new Float32Array(f);
         }).filter(f => f.length === VOXEL_COUNT);
         this.frameIndex = 0;
+        this.avatarFrameSequence = [];
         this.isPlayingFrames = false;
         this.layerCount = this.frameSequence.length > 0 ? this.frameSequence.length : 1;
         console.log(`[SynaptiX] Loaded ${this.frameSequence.length} frames`);
@@ -226,7 +245,11 @@ export class SynaptiXEngine {
     scrubToFrame(index) {
         if (this.frameSequence.length === 0) return;
         this.frameIndex = Math.max(0, Math.min(this.frameSequence.length - 1, Math.floor(index)));
-        this.setTensorData(this.frameSequence[this.frameIndex]);
+        this.setPartnerTensorData(this.frameSequence[this.frameIndex], this.avatarFrameSequence.length ? 'paired-phantom' : 'sequence');
+        if (this.avatarFrameSequence[this.frameIndex]) {
+            this.renderer.tensorPlaybackMode = true;
+            this.renderer.setVoxelData(this.avatarFrameSequence[this.frameIndex]);
+        }
     }
 
     update(timestamp) {
@@ -236,7 +259,7 @@ export class SynaptiXEngine {
             const frameDelta = dt * this.framePlaybackRate;
             if (frameDelta >= 1.0) {
                 this.frameIndex = (this.frameIndex + Math.floor(frameDelta)) % this.frameSequence.length;
-                this.setTensorData(this.frameSequence[this.frameIndex]);
+                this.scrubToFrame(this.frameIndex);
                 this.lastFrameTime = timestamp;
             }
         }
@@ -245,8 +268,25 @@ export class SynaptiXEngine {
         if (this.liveCallback) {
             const liveData = this.liveCallback();
             if (liveData) {
-                this.setTensorData(liveData);
+                this.setPartnerTensorData(liveData, 'callback');
             }
+        }
+
+        if ((this.renderer?.params?.style || 0) >= 4.0) {
+            const stats = this.couplingModel.update(
+                timestamp,
+                this.renderer?._lastHumanTensor,
+                this.renderer?._lastAITensor
+            );
+            this._syncResonanceStats(stats);
+            this._updateEffects(timestamp);
+            this.renderer?.setSynaptiXCoupling?.({
+                ...stats,
+                enabled: this.couplingModel.enabled,
+                strength: this.couplingModel.strength,
+                empathyPulse: this.effects.empathyPulse,
+                divergenceStorm: this.effects.divergenceStorm,
+            });
         }
     }
 
@@ -255,9 +295,87 @@ export class SynaptiXEngine {
         this.lastSourceInfo = callback ? 'Live callback source connected' : 'Live callback source disconnected';
     }
 
+    setCouplingConfig(options = {}) {
+        this.couplingModel.configure(options);
+        if (options.windowSeconds !== undefined) {
+            this.renderer.setParams({ couplingWindowSeconds: this.couplingModel.windowSeconds });
+        }
+        if (options.strength !== undefined) {
+            this.renderer.setParams({ couplingStrength: this.couplingModel.strength });
+        }
+        return this.getCouplingState();
+    }
+
+    triggerEmpathyPulse({ region = 'frontal', intensity = 1, duration = 1.5 } = {}) {
+        const safeRegion = SYNAPTIX_REGIONS.includes(region) ? region : 'frontal';
+        const now = performance.now();
+        this.effects.empathyPulse = {
+            region: safeRegion,
+            intensity: Math.max(0, Math.min(1, Number(intensity) || 0)),
+            startedAt: now,
+            endsAt: now + Math.max(0.1, Number(duration) || 1.5) * 1000,
+        };
+    }
+
+    triggerDivergenceStorm({ intensity = 1, duration = 2 } = {}) {
+        const now = performance.now();
+        this.effects.divergenceStorm = {
+            intensity: Math.max(0, Math.min(1, Number(intensity) || 0)),
+            startedAt: now,
+            endsAt: now + Math.max(0.1, Number(duration) || 2) * 1000,
+        };
+    }
+
+    connectPartnerWebSocket(url, { WebSocketImpl = globalThis.WebSocket } = {}) {
+        this.disconnectPartnerWebSocket();
+        if (!WebSocketImpl) throw new Error('WebSocket is unavailable');
+        const socket = new WebSocketImpl(url);
+        this.partnerSocket = socket;
+        socket.binaryType = 'arraybuffer';
+        socket.onopen = () => {
+            this.partnerSourceType = 'websocket';
+            this.lastSourceInfo = `Partner WebSocket connected: ${url}`;
+        };
+        socket.onmessage = (event) => {
+            if (!(event.data instanceof ArrayBuffer) || event.data.byteLength !== VOXEL_COUNT * 4) {
+                console.warn(`[SynaptiX] Ignored partner WebSocket frame: expected ${VOXEL_COUNT * 4} bytes`);
+                return;
+            }
+            this.setPartnerTensorData(new Float32Array(event.data), 'websocket');
+        };
+        socket.onerror = () => {
+            this.lastSourceInfo = `Partner WebSocket error: ${url}`;
+        };
+        socket.onclose = () => {
+            if (this.partnerSocket === socket) this.partnerSocket = null;
+            this.lastSourceInfo = 'Partner WebSocket disconnected; showing last frame';
+        };
+        return socket;
+    }
+
+    disconnectPartnerWebSocket() {
+        const socket = this.partnerSocket;
+        this.partnerSocket = null;
+        if (socket && socket.readyState < 2) socket.close();
+    }
+
+    getCouplingState() {
+        return {
+            enabled: this.couplingModel.enabled,
+            strength: this.couplingModel.strength,
+            windowSeconds: this.couplingModel.windowSeconds,
+            ...this.couplingModel.stats,
+        };
+    }
+
     // ── Resonance Stats ──
 
     computeResonanceStats(humanTensor) {
+        if ((this.renderer?.params?.style || 0) < 4.0) return this.resonanceStats;
+        if (humanTensor && this.renderer?._lastAITensor) {
+            const stats = this.couplingModel.update(performance.now(), humanTensor, this.renderer._lastAITensor);
+            return this._syncResonanceStats(stats);
+        }
         // humanTensor: Float32Array of VOXEL_COUNT (optional, samples from renderer if omitted)
         if (!humanTensor && this.renderer?._lastHumanTensor?.length === VOXEL_COUNT) {
             humanTensor = this.renderer._lastHumanTensor;
@@ -313,12 +431,32 @@ export class SynaptiXEngine {
         return this.resonanceStats;
     }
 
+    _syncResonanceStats(stats) {
+        this.resonanceStats = {
+            resonance: stats.globalCoupling * 100,
+            humanEnergy: stats.avatarAEnergy,
+            aiEnergy: stats.partnerEnergy,
+            avatarAEnergy: stats.avatarAEnergy,
+            partnerEnergy: stats.partnerEnergy,
+            globalCoupling: stats.globalCoupling,
+            regions: { ...stats.regions },
+        };
+        return this.resonanceStats;
+    }
+
+    _updateEffects(timestamp) {
+        for (const key of ['empathyPulse', 'divergenceStorm']) {
+            const effect = this.effects[key];
+            if (effect && timestamp >= effect.endsAt) this.effects[key] = null;
+        }
+    }
+
     // ── Preset Patterns ──
 
     generatePattern(patternId) {
         const data = this.createPatternData(patternId);
         if (!data) return;
-        this.setTensorData(data);
+        this.setPartnerTensorData(data, 'phantom');
         this.currentPattern = patternId;
         console.log(`[SynaptiX] Generated pattern: ${patternId}`);
     }
@@ -384,6 +522,36 @@ export class SynaptiXEngine {
         }
         this.lastSourceInfo = `Built-in phantom sequence: ${sequenceId} (${frames.length} frames)`;
         return frames.length;
+    }
+
+    generatePairedPhantomFrames(sequenceId = 'social-coupling') {
+        const avatarPatterns = sequenceId === 'social-coupling'
+            ? ['attention-occipital', 'attention-temporal', 'aligned-prefrontal', 'visual-mismatch', 'full-resonance', 'aligned-prefrontal']
+            : ['attention-frontal', 'attention-occipital', 'visual-mismatch', 'full-resonance'];
+        const avatarFrames = avatarPatterns.map((id) => this.createPatternData(id)).filter(Boolean);
+        const partnerFrames = avatarFrames.map((frame, frameIndex) => {
+            const partner = new Float32Array(frame.length);
+            const divergent = frameIndex === Math.max(1, avatarFrames.length - 3);
+            for (let i = 0; i < frame.length; i++) {
+                const noise = ((i * 1103515245 + frameIndex * 12345) >>> 16 & 255) / 255;
+                partner[i] = divergent
+                    ? Math.max(0, Math.min(1, (1 - frame[i]) * 0.55 + noise * 0.25))
+                    : Math.max(0, Math.min(1, frame[i] * 0.9 + noise * 0.04));
+            }
+            return partner;
+        });
+        this.loadFrameSequence(partnerFrames);
+        this.avatarFrameSequence = avatarFrames;
+        this.couplingModel.reset();
+        for (let i = 0; i < partnerFrames.length; i++) {
+            this.couplingModel.update(i * (1000 / this.couplingModel.sampleRate), avatarFrames[i], partnerFrames[i]);
+        }
+        this._syncResonanceStats(this.couplingModel.stats);
+        this.scrubToFrame(0);
+        this.partnerSourceType = 'paired-phantom';
+        this.currentPattern = `paired:${sequenceId}`;
+        this.lastSourceInfo = `Paired phantom sequence: ${sequenceId} (${partnerFrames.length} frames)`;
+        return partnerFrames.length;
     }
 
     _parseTensorPayload(floatArray) {

@@ -83,7 +83,7 @@ export function renderActivityTab() {
                             <option value="1">1. Cyber (Wireframe)</option>
                             <option value="2">2. Connectome (Fibers)</option>
                             <option value="3">3. Heatmap (Volumetric) [V2.3]</option>
-                            <option value="4">4. SynaptiX (AI ↔ Human Mirror)</option>
+                            <option value="4">4. SynaptiX (Multi-Brain Mirror)</option>
                         </select>
                     </div>
                     <div class="control-group">

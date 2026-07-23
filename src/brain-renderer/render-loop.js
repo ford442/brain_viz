@@ -46,6 +46,7 @@ export function applyRenderLoopMethods(Target) {
         this.time += 0.016;
         this.updateAltitudeState(); // Update altitude/hypoxia parameters before uniforms
         this.updateUniforms();
+        if (this.params.style >= 4.0) this.updateSynaptiXBridges();
         
         const commandEncoder = this.device.createCommandEncoder();
 
@@ -92,7 +93,7 @@ export function applyRenderLoopMethods(Target) {
         const pointCloudDrawCount = Math.floor(this.pointCloudInstanceCount * Math.min(1.0, pointDensity));
         const somaDrawCount = Math.floor(this.somaInstanceCount * Math.min(1.0, 0.35 + pointDensity * 0.65));
 
-        if (isConnectome || isSynaptiX) {
+        if (isConnectome) {
     // --- CONNECTOME / SYNAPTIX MODE ---
 
     // 1. Draw Fibers
@@ -129,7 +130,29 @@ export function applyRenderLoopMethods(Target) {
     }
         }
 
-        if (!isConnectome || isSynaptiX) {
+        if (isSynaptiX && (this.params.dualAvatarEnabled ?? true)) {
+    renderPass.setPipeline(this.pipeline);
+    renderPass.setVertexBuffer(0, this.vertexBuffer);
+    renderPass.setVertexBuffer(1, this.normalBuffer);
+    renderPass.setIndexBuffer(this.indexBuffer, 'uint32');
+    renderPass.setBindGroup(0, this.avatarABindGroup);
+    renderPass.drawIndexed(this.indexCount);
+    renderPass.setBindGroup(0, this.partnerBindGroup);
+    renderPass.drawIndexed(this.indexCount);
+
+    renderPass.setPipeline(this.synaptixBridgePipeline);
+    renderPass.setBindGroup(0, this.synaptixBridgeBindGroup);
+    renderPass.setVertexBuffer(0, this.synaptixBridgeBuffer);
+    renderPass.draw(this.synaptixBridgeVertexCount);
+
+    const singleWorkUnits = this.indexCount + this.fiberVertexCount + this.somaIndexCount * somaDrawCount + pointCloudDrawCount * 6 + this.sparkInstanceCount * 6;
+    const dualWorkUnits = this.indexCount * 2 + this.synaptixBridgeVertexCount;
+    this.synaptixPerformance = {
+        singleWorkUnits,
+        dualWorkUnits,
+        workRatio: dualWorkUnits / Math.max(1, singleWorkUnits)
+    };
+        } else if (!isConnectome) {
     // --- SOLID MESH MODE (Organic / Cyber / Heatmap / SynaptiX overlay) ---
     renderPass.setPipeline(this.pipeline);
     renderPass.setVertexBuffer(0, this.vertexBuffer);
@@ -156,6 +179,10 @@ export function applyRenderLoopMethods(Target) {
 
         this.device.queue.submit([commandEncoder.finish()]);
         requestAnimationFrame(() => this.render());
+    };
+
+    Target.prototype.getSynaptiXPerformanceStats = function() {
+        return { ...(this.synaptixPerformance || { singleWorkUnits: 0, dualWorkUnits: 0, workRatio: 1 }) };
     };
 
 }

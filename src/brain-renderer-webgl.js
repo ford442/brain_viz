@@ -38,6 +38,7 @@ export class BrainRendererWebGL {
         this.voxelCount = this.voxelDim * this.voxelDim * this.voxelDim;
         this._lastHumanTensor = new Float32Array(this.voxelCount);
         this._lastAITensor = new Float32Array(this.voxelCount);
+        this.synaptixCouplingState = null;
         this._nextHumanTensor = new Float32Array(this.voxelCount);
         this._altitudeInternal = {
             activationTime: 0,
@@ -68,18 +69,26 @@ export class BrainRendererWebGL {
         this.tensorPointColorSize = null;
         this.meshPositions = null;
         this.meshColors = null;
+        this.partnerMeshPositions = null;
+        this.partnerMeshColors = null;
         this.fiberColors = null;
         this.somaColorSize = null;
 
         this.meshProgram = null;
         this.pointProgram = null;
         this.meshVao = null;
+        this.partnerMeshVao = null;
         this.wireVao = null;
         this.fiberVao = null;
         this.tensorVao = null;
         this.somaVao = null;
         this.meshBuffers = {};
         this.frameHandle = null;
+        this.bridgeVao = null;
+        this.bridgeVertexCount = 0;
+        this.bridgePositions = new Float32Array(5 * 16 * 2 * 3);
+        this.bridgeColors = new Float32Array(5 * 16 * 2 * 3);
+        this.synaptixPerformance = { singleWorkUnits: 0, dualWorkUnits: 0, workRatio: 1, frameTimes: [] };
 
         this.setupInputHandlers();
     }
@@ -175,6 +184,8 @@ export class BrainRendererWebGL {
 
         this.meshPositions = new Float32Array(this.baseVertices);
         this.meshColors = new Float32Array(this.baseVertices.length);
+        this.partnerMeshPositions = new Float32Array(this.baseVertices);
+        this.partnerMeshColors = new Float32Array(this.baseVertices.length);
         this.fiberColors = new Float32Array(this.baseFiberVertices.length);
         this.somaColorSize = new Float32Array((this.baseSomaInstances.length / 9) * 4);
 
@@ -190,6 +201,8 @@ export class BrainRendererWebGL {
 
         this.meshBuffers.position = gl.createBuffer();
         this.meshBuffers.color = gl.createBuffer();
+        this.meshBuffers.partnerPosition = gl.createBuffer();
+        this.meshBuffers.partnerColor = gl.createBuffer();
         this.meshBuffers.index = gl.createBuffer();
         this.meshBuffers.wireIndex = gl.createBuffer();
         this.meshBuffers.fiberPosition = gl.createBuffer();
@@ -209,6 +222,18 @@ export class BrainRendererWebGL {
         gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.meshBuffers.index);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.baseIndices, gl.STATIC_DRAW);
+
+        this.partnerMeshVao = gl.createVertexArray();
+        gl.bindVertexArray(this.partnerMeshVao);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.meshBuffers.partnerPosition);
+        gl.bufferData(gl.ARRAY_BUFFER, this.partnerMeshPositions, gl.DYNAMIC_DRAW);
+        gl.enableVertexAttribArray(0);
+        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.meshBuffers.partnerColor);
+        gl.bufferData(gl.ARRAY_BUFFER, this.partnerMeshColors, gl.DYNAMIC_DRAW);
+        gl.enableVertexAttribArray(1);
+        gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.meshBuffers.index);
 
         this.wireVao = gl.createVertexArray();
         gl.bindVertexArray(this.wireVao);
@@ -253,9 +278,28 @@ export class BrainRendererWebGL {
 
         gl.bindVertexArray(null);
 
+        this.buildBridgeResources();
+
         this.geometryDirty = false;
         this.lastGeometryRebuildTime = typeof performance !== 'undefined' ? performance.now() : 0;
         this.lastGeometryGenerationMs = startedAt ? this.lastGeometryRebuildTime - startedAt : 0;
+    }
+
+    buildBridgeResources() {
+        const gl = this.gl;
+        if (!this.meshBuffers.bridgePosition) this.meshBuffers.bridgePosition = gl.createBuffer();
+        if (!this.meshBuffers.bridgeColor) this.meshBuffers.bridgeColor = gl.createBuffer();
+        if (!this.bridgeVao) this.bridgeVao = gl.createVertexArray();
+        gl.bindVertexArray(this.bridgeVao);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.meshBuffers.bridgePosition);
+        gl.bufferData(gl.ARRAY_BUFFER, this.bridgePositions.byteLength, gl.DYNAMIC_DRAW);
+        gl.enableVertexAttribArray(0);
+        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.meshBuffers.bridgeColor);
+        gl.bufferData(gl.ARRAY_BUFFER, this.bridgeColors.byteLength, gl.DYNAMIC_DRAW);
+        gl.enableVertexAttribArray(1);
+        gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
+        gl.bindVertexArray(null);
     }
 
     buildTensorDebugGrid() {
@@ -305,6 +349,12 @@ export class BrainRendererWebGL {
     }
 
     setParams(newParams) {
+        if (newParams.aiInfluence !== undefined && newParams.partnerInfluence === undefined) {
+            newParams = { ...newParams, partnerInfluence: newParams.aiInfluence };
+        }
+        if (newParams.partnerInfluence !== undefined) {
+            newParams = { ...newParams, aiInfluence: newParams.partnerInfluence };
+        }
         const geometryKeys = ['foldScale', 'foldStrength', 'fissureDepth', 'lobeFoldBias', 'corticalThickness', 'growth', 'fiberSymmetry', 'bundleCoherence'];
         const geometryChanged = geometryKeys.some((key) => newParams[key] !== undefined && newParams[key] !== this.params[key]);
         this.params = { ...this.params, ...newParams };
@@ -554,11 +604,6 @@ export class BrainRendererWebGL {
                     if (this.stimulus.mercuryActive > 0.0) {
                         nextVal *= Math.max(0.0, 1.0 - this.stimulus.mercuryActive * 0.03);
                     }
-                    if (style >= 4.0) {
-                        const aiVal = this._lastAITensor[idx];
-                        nextVal += aiVal * this.params.aiInfluence * coupling * 0.04;
-                    }
-
                     next[idx] = clamp01(nextVal);
                 }
             }
@@ -580,14 +625,25 @@ export class BrainRendererWebGL {
             const humanVal = this.sampleField(pos, false);
             const aiVal = this.sampleField(pos, true);
             const resonance = this.computeResonance(humanVal, aiVal);
-            const displacement = humanVal * (0.018 + this.params.amplitude * 0.05) + resonance * (style >= 4.0 ? 0.015 : 0.0);
+            const displacement = humanVal * (0.018 + this.params.amplitude * 0.05);
             this.meshPositions[i + 0] = pos[0] + normal[0] * displacement;
             this.meshPositions[i + 1] = pos[1] + normal[1] * displacement;
             this.meshPositions[i + 2] = pos[2] + normal[2] * displacement;
-            const color = this.getFieldColor(humanVal, aiVal, pos, style);
+            const color = style >= 4.0 ? [0.02 + humanVal * 0.15, 0.28 + humanVal * 0.72, 0.38 + humanVal * 0.62] : this.getFieldColor(humanVal, aiVal, pos, style);
             this.meshColors[i + 0] = color[0];
             this.meshColors[i + 1] = color[1];
             this.meshColors[i + 2] = color[2];
+            if (style >= 4.0) {
+                const partnerDisplacement = aiVal * (0.018 + this.params.amplitude * 0.05);
+                const partnerGain = 0.18 + (this.params.partnerInfluence ?? 0.5) * 0.82;
+                const partnerColor = [0.22 + aiVal * 0.78, 0.02 + aiVal * 0.18, 0.3 + aiVal * 0.7];
+                this.partnerMeshPositions[i + 0] = pos[0] + normal[0] * partnerDisplacement;
+                this.partnerMeshPositions[i + 1] = pos[1] + normal[1] * partnerDisplacement;
+                this.partnerMeshPositions[i + 2] = pos[2] + normal[2] * partnerDisplacement;
+                this.partnerMeshColors[i + 0] = partnerColor[0] * partnerGain;
+                this.partnerMeshColors[i + 1] = partnerColor[1] * partnerGain;
+                this.partnerMeshColors[i + 2] = partnerColor[2] * partnerGain;
+            }
         }
 
         for (let i = 0; i < this.baseFiberVertices.length; i += 3) {
@@ -644,12 +700,73 @@ export class BrainRendererWebGL {
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.meshPositions);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.meshBuffers.color);
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.meshColors);
+        if (style >= 4.0) {
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.meshBuffers.partnerPosition);
+            gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.partnerMeshPositions);
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.meshBuffers.partnerColor);
+            gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.partnerMeshColors);
+        }
         gl.bindBuffer(gl.ARRAY_BUFFER, this.meshBuffers.fiberColor);
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.fiberColors);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.meshBuffers.somaColorSize);
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.somaColorSize);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.meshBuffers.tensorColorSize);
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.tensorPointColorSize);
+        if (style >= 4.0) this.updateBridgeBuffers();
+    }
+
+    updateBridgeBuffers() {
+        const gl = this.gl;
+        if (!gl || !this.bridgeVao) return;
+        const regionAnchors = {
+            frontal: [0.55, 0.2, 0.72],
+            occipital: [0.55, 0.0, -0.72],
+            parietal: [0.52, 0.68, 0.0],
+            temporal: [0.66, -0.22, 0.05],
+            deep: [0.42, 0.0, 0.0],
+        };
+        const state = this.synaptixCouplingState || {};
+        const regions = state.regions || {};
+        const empathy = state.empathyPulse;
+        const divergence = state.divergenceStorm;
+        const now = performance.now();
+        let vertex = 0;
+        for (const [name, anchor] of Object.entries(regionAnchors)) {
+            let coupling = Math.max(0, Math.min(1, regions[name] || 0));
+            if (empathy?.region === name) {
+                const phase = Math.max(0, Math.min(1, (now - empathy.startedAt) / (empathy.endsAt - empathy.startedAt)));
+                coupling = Math.max(coupling, Math.sin(phase * Math.PI) * empathy.intensity);
+            }
+            const storm = divergence ? divergence.intensity : 0;
+            const alpha = Math.max(0.05, coupling * (1 - storm * 0.65));
+            const start = [-1.05 + anchor[0] * 0.62, anchor[1] * 0.62, anchor[2] * 0.62];
+            const end = [1.05 - anchor[0] * 0.62, anchor[1] * 0.62, anchor[2] * 0.62];
+            let previous = start;
+            for (let segment = 1; segment <= 16; segment++) {
+                const t = segment / 16;
+                const lift = Math.sin(t * Math.PI) * (0.18 + coupling * 0.28);
+                const jitter = storm * 0.08 * Math.sin(segment * 4.7 + now * 0.012 + vertex);
+                const point = [
+                    start[0] + (end[0] - start[0]) * t,
+                    start[1] + lift + jitter,
+                    start[2] + (end[2] - start[2]) * t + jitter * 0.5,
+                ];
+                for (const p of [previous, point]) {
+                    const offset = vertex * 3;
+                    this.bridgePositions.set(p, offset);
+                    this.bridgeColors[offset] = (1.0 * alpha) + storm * 0.35;
+                    this.bridgeColors[offset + 1] = (0.82 * alpha) + storm * 0.05;
+                    this.bridgeColors[offset + 2] = (0.35 * alpha) + storm * 0.65;
+                    vertex++;
+                }
+                previous = point;
+            }
+        }
+        this.bridgeVertexCount = vertex;
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.meshBuffers.bridgePosition);
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.bridgePositions.subarray(0, vertex * 3));
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.meshBuffers.bridgeColor);
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.bridgeColors.subarray(0, vertex * 3));
     }
 
     updateCameraState() {
@@ -676,15 +793,25 @@ export class BrainRendererWebGL {
         return Mat4.multiply(model, pv);
     }
 
-    drawMesh(mvp, wireframe = false) {
+    drawMesh(mvp, wireframe = false, vao = null) {
         const gl = this.gl;
         gl.useProgram(this.meshProgram);
         const uMvp = gl.getUniformLocation(this.meshProgram, 'uMvp');
         const uPointSize = gl.getUniformLocation(this.meshProgram, 'uPointSize');
         gl.uniformMatrix4fv(uMvp, false, mvp);
         gl.uniform1f(uPointSize, 1.0);
-        gl.bindVertexArray(wireframe ? this.wireVao : this.meshVao);
+        gl.bindVertexArray(vao || (wireframe ? this.wireVao : this.meshVao));
         gl.drawElements(wireframe ? gl.LINES : gl.TRIANGLES, wireframe ? this.wireIndexCount : this.baseIndices.length, gl.UNSIGNED_INT, 0);
+    }
+
+    drawBridges(mvp) {
+        if (!this.bridgeVertexCount) return;
+        const gl = this.gl;
+        gl.useProgram(this.meshProgram);
+        gl.uniformMatrix4fv(gl.getUniformLocation(this.meshProgram, 'uMvp'), false, mvp);
+        gl.uniform1f(gl.getUniformLocation(this.meshProgram, 'uPointSize'), 1.0);
+        gl.bindVertexArray(this.bridgeVao);
+        gl.drawArrays(gl.LINES, 0, this.bridgeVertexCount);
     }
 
     drawFibers(mvp) {
@@ -715,6 +842,26 @@ export class BrainRendererWebGL {
         const shouldDrawFibers = isolate === 'all' || isolate === 'fibers';
         const shouldDrawTensor = isolate === 'all' || isolate === 'tensor';
 
+        if (style >= 4.0 && (this.params.dualAvatarEnabled ?? true)) {
+            const avatarA = Mat4.multiply(Mat4.composeTranslationScale(-1.05, 0, 0, 0.62), mvp);
+            const partner = Mat4.multiply(Mat4.composeTranslationScale(1.05, 0, 0, 0.62), mvp);
+            const interiorCount = Math.floor((this.baseSomaInstances.length / 9) * 0.45);
+            if (shouldDrawFibers) {
+                this.drawFibers(avatarA);
+                this.drawFibers(partner);
+                this.drawPoints(avatarA, this.somaVao, interiorCount);
+                this.drawPoints(partner, this.somaVao, interiorCount);
+            }
+            if (shouldDrawMesh) {
+                this.drawMesh(avatarA, false, this.meshVao);
+                this.drawMesh(partner, false, this.partnerMeshVao);
+            }
+            this.drawBridges(mvp);
+            const single = this.baseIndices.length + this.baseFiberVertices.length / 3 + this.baseSomaInstances.length / 9;
+            const dual = this.baseIndices.length * 2 + (this.baseFiberVertices.length / 3) * 2 + interiorCount * 2 + this.bridgeVertexCount;
+            this.synaptixPerformance = { ...this.synaptixPerformance, singleWorkUnits: single, dualWorkUnits: dual, workRatio: dual / Math.max(1, single) };
+            return;
+        }
         if (shouldDrawTensor && (style >= 3.0 || this.debugOptions.tensorField)) {
             this.drawPoints(mvp, this.tensorVao, this.voxelCount);
         }
@@ -726,6 +873,32 @@ export class BrainRendererWebGL {
             const wireframe = this.debugOptions.wireframe || style === 1.0;
             this.drawMesh(mvp, wireframe);
         }
+    }
+
+    getSynaptiXPerformanceStats() {
+        return { ...this.synaptixPerformance };
+    }
+
+    async benchmarkSynaptiX({ warmupFrames = 20, sampleFrames = 60 } = {}) {
+        const measure = async (dual) => {
+            this.setParams({ dualAvatarEnabled: dual, style: 4.0 });
+            for (let i = 0; i < warmupFrames; i++) await new Promise(requestAnimationFrame);
+            const samples = [];
+            let previous = performance.now();
+            for (let i = 0; i < sampleFrames; i++) {
+                await new Promise(requestAnimationFrame);
+                const now = performance.now();
+                samples.push(now - previous);
+                previous = now;
+            }
+            samples.sort((a, b) => a - b);
+            return samples[Math.floor(samples.length / 2)] || 0;
+        };
+        const singleMedianMs = await measure(false);
+        const dualMedianMs = await measure(true);
+        const result = { singleMedianMs, dualMedianMs, frameTimeRatio: dualMedianMs / Math.max(0.001, singleMedianMs) };
+        this.synaptixPerformance = { ...this.synaptixPerformance, ...result };
+        return result;
     }
 
     beginXRFrame(timestamp) {
@@ -776,11 +949,20 @@ export class BrainRendererWebGL {
         this._lastHumanTensor.set(float32Array);
     }
 
-    setAITensorData(float32Array) {
+    setPartnerTensorData(float32Array) {
         if (!float32Array || float32Array.length !== this.voxelCount) {
             return;
         }
         this._lastAITensor.set(float32Array);
+        return true;
+    }
+
+    setAITensorData(float32Array) {
+        return this.setPartnerTensorData(float32Array);
+    }
+
+    setSynaptiXCoupling(state) {
+        this.synaptixCouplingState = state;
     }
 
     start() {

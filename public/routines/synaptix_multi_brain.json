@@ -1,0 +1,19 @@
+[
+  { "time": 0.0, "type": "reset" },
+  { "time": 0.0, "type": "text", "message": "SynaptiX Multi-Brain: two minds enter a shared space", "duration": 2.4 },
+  { "time": 0.0, "type": "camera", "target": "overview", "duration": 1.0 },
+  { "time": 0.0, "type": "style", "value": 4 },
+  { "time": 0.0, "type": "synaptix", "action": "paired-phantom-sequence", "sequence": "social-coupling", "partnerInfluence": 0.72 },
+  { "time": 0.1, "type": "synaptix", "action": "play-frames", "rate": 3 },
+  { "time": 0.2, "type": "mirror_coupling", "enabled": true, "strength": 0.35, "windowSeconds": 2.0 },
+  { "time": 1.5, "type": "text", "message": "Shared attention begins to align regional rhythms.", "duration": 2.2 },
+  { "time": 1.6, "type": "mirror_coupling", "enabled": true, "strength": 0.9, "windowSeconds": 2.0 },
+  { "time": 2.2, "type": "empathy_pulse", "region": "frontal", "intensity": 1.0, "duration": 1.6 },
+  { "time": 3.2, "type": "empathy_pulse", "region": "temporal", "intensity": 0.85, "duration": 1.4 },
+  { "time": 4.4, "type": "text", "message": "Divergence interrupts the mirror-neuron bridge.", "duration": 2.0 },
+  { "time": 4.5, "type": "divergence_storm", "intensity": 1.0, "duration": 2.0 },
+  { "time": 6.6, "type": "text", "message": "The pair re-couples without altering either source signal.", "duration": 2.4 },
+  { "time": 6.7, "type": "mirror_coupling", "enabled": true, "strength": 1.0, "windowSeconds": 1.5 },
+  { "time": 7.0, "type": "empathy_pulse", "region": "deep", "intensity": 1.0, "duration": 1.8 },
+  { "time": 9.0, "type": "synaptix", "action": "pause-frames" }
+]

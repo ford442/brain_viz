@@ -8,6 +8,7 @@ import { applyStimulusMethods } from './brain-renderer/stimulus.js';
 import { applyUniformsMethods } from './brain-renderer/uniforms.js';
 import { applyRenderLoopMethods } from './brain-renderer/render-loop.js';
 import { applyCoreMethods } from './brain-renderer/core-methods.js';
+import { applySynaptiXBridgeMethods } from './brain-renderer/synaptix-bridges.js';
 
 export class BrainRenderer {
     /**
@@ -104,8 +105,12 @@ export class BrainRenderer {
             metabolicRate: 1.0, // ATP consumption multiplier (0.5-2.0)
             mitochondrialFunction: 1.0, // ATP synthesis efficiency (0.0-1.0)
             fogDensity: 0.0, // Volumetric Fog
-            aiInfluence: 0.5,
+            partnerInfluence: 0.5,
+            aiInfluence: 0.5, // Deprecated alias, synchronized by setParams().
             resonanceThreshold: 0.2,
+            couplingStrength: 1.0,
+            couplingWindowSeconds: 2.0,
+            dualAvatarEnabled: true,
             aiLayer: 0.0,
             pointCloudDensity: 1.0,
             fiberCoupling: 0.5,
@@ -126,6 +131,7 @@ export class BrainRenderer {
         this.voxelCount = this.voxelDim * this.voxelDim * this.voxelDim;
         this._lastHumanTensor = new Float32Array(this.voxelCount);
         this._lastAITensor = new Float32Array(this.voxelCount);
+        this.synaptixCouplingState = null;
 
         // Stimulus State (V2.2 Initialized)
         // Stores position and intensity for compute shader injection
@@ -1227,3 +1233,4 @@ applyStimulusMethods(BrainRenderer);
 applyUniformsMethods(BrainRenderer);
 applyRenderLoopMethods(BrainRenderer);
 applyCoreMethods(BrainRenderer);
+applySynaptiXBridgeMethods(BrainRenderer);

@@ -19,8 +19,8 @@ export function setupSynaptiXIntegration(renderer, player, controls, inputs, lab
     };
 
     const syncSynaptiXUiFromRenderer = () => {
-        if (inputs.aiInfluence) inputs.aiInfluence.value = renderer.params.aiInfluence;
-        if (labels.aiInfluence) labels.aiInfluence.textContent = renderer.params.aiInfluence.toFixed(2);
+        if (inputs.partnerInfluence) inputs.partnerInfluence.value = renderer.params.partnerInfluence;
+        if (labels.partnerInfluence) labels.partnerInfluence.textContent = renderer.params.partnerInfluence.toFixed(2);
         if (inputs.resonanceThreshold) inputs.resonanceThreshold.value = renderer.params.resonanceThreshold;
         if (labels.resonanceThreshold) labels.resonanceThreshold.textContent = renderer.params.resonanceThreshold.toFixed(2);
         if (inputs.fusionParticles) inputs.fusionParticles.checked = synaptixEngine.fusionParticlesEnabled;
@@ -30,6 +30,7 @@ export function setupSynaptiXIntegration(renderer, player, controls, inputs, lab
     const applySynaptiXScene = ({
         pattern,
         phantomSequence,
+        partnerInfluence,
         aiInfluence,
         resonanceThreshold,
         style = 4.0,
@@ -44,7 +45,7 @@ export function setupSynaptiXIntegration(renderer, player, controls, inputs, lab
         synaptixEngine.pauseFrames();
         renderer.setSynaptiXParams({
             style,
-            aiInfluence: aiInfluence ?? renderer.params.aiInfluence,
+            partnerInfluence: partnerInfluence ?? aiInfluence ?? renderer.params.partnerInfluence,
             resonanceThreshold: resonanceThreshold ?? renderer.params.resonanceThreshold
         });
         if (sourceInfo) {
@@ -53,13 +54,14 @@ export function setupSynaptiXIntegration(renderer, player, controls, inputs, lab
         syncSynaptiXUiFromRenderer();
     };
 
-    const runSynaptiXShowcase = async (routinePath = '/routines/synaptix_resonance.json') => {
+    const runSynaptiXShowcase = async (routinePath = '/routines/synaptix_multi_brain.json') => {
         applySynaptiXScene({
-            phantomSequence: 'resonance',
-            aiInfluence: 0.68,
+            partnerInfluence: 0.72,
             resonanceThreshold: 0.16,
-            sourceInfo: 'Built-in SynaptiX showcase phantoms'
+            sourceInfo: 'Built-in Multi-Brain paired phantoms'
         });
+        synaptixEngine.generatePairedPhantomFrames('social-coupling');
+        synaptixEngine.playFrames(3);
         await player.loadRoutineFromFile(routinePath, false);
         player.play();
         return true;
@@ -70,6 +72,7 @@ export function setupSynaptiXIntegration(renderer, player, controls, inputs, lab
         if (action === 'pattern' && evt.pattern) {
             applySynaptiXScene({
                 pattern: evt.pattern,
+                partnerInfluence: evt.partnerInfluence,
                 aiInfluence: evt.aiInfluence,
                 resonanceThreshold: evt.resonanceThreshold,
                 style: evt.style ?? 4.0,
@@ -80,6 +83,7 @@ export function setupSynaptiXIntegration(renderer, player, controls, inputs, lab
         if (action === 'phantom-sequence') {
             applySynaptiXScene({
                 phantomSequence: evt.sequence || 'resonance',
+                partnerInfluence: evt.partnerInfluence,
                 aiInfluence: evt.aiInfluence,
                 resonanceThreshold: evt.resonanceThreshold,
                 style: evt.style ?? 4.0,
@@ -91,6 +95,11 @@ export function setupSynaptiXIntegration(renderer, player, controls, inputs, lab
             synaptixEngine.playFrames(evt.rate || 4);
             return;
         }
+        if (action === 'paired-phantom-sequence') {
+            synaptixEngine.generatePairedPhantomFrames(evt.sequence || 'social-coupling');
+            renderer.setSynaptiXParams({ style: 4, partnerInfluence: evt.partnerInfluence ?? 0.72 });
+            return;
+        }
         if (action === 'pause-frames') {
             synaptixEngine.pauseFrames();
             return;
@@ -100,6 +109,16 @@ export function setupSynaptiXIntegration(renderer, player, controls, inputs, lab
             syncSynaptiXUiFromRenderer();
         }
     });
+
+    player.registerHandler('mirror_coupling', (evt) => {
+        synaptixEngine.setCouplingConfig({
+            enabled: evt.enabled ?? true,
+            strength: evt.strength ?? renderer.params.couplingStrength,
+            windowSeconds: evt.windowSeconds ?? renderer.params.couplingWindowSeconds,
+        });
+    });
+    player.registerHandler('empathy_pulse', (evt) => synaptixEngine.triggerEmpathyPulse(evt));
+    player.registerHandler('divergence_storm', (evt) => synaptixEngine.triggerDivergenceStorm(evt));
 
     // AI Toggle (preserved)
     let aiMode = false;
@@ -296,6 +315,32 @@ export function setupSynaptiXIntegration(renderer, player, controls, inputs, lab
         });
     }
 
+    for (const input of [inputs.couplingStrength, inputs.couplingWindowSeconds]) {
+        input?.addEventListener('input', () => synaptixEngine.setCouplingConfig({
+            strength: Number(inputs.couplingStrength?.value ?? 1),
+            windowSeconds: Number(inputs.couplingWindowSeconds?.value ?? 2),
+        }));
+    }
+
+    const partnerWsUrl = document.getElementById('partner-websocket-url');
+    const partnerWsStatus = document.getElementById('partner-websocket-status');
+    document.getElementById('btn-partner-websocket')?.addEventListener('click', () => {
+        const url = partnerWsUrl?.value?.trim();
+        if (!url) return;
+        try {
+            const socket = synaptixEngine.connectPartnerWebSocket(url);
+            if (partnerWsStatus) partnerWsStatus.textContent = 'status: connecting';
+            socket.addEventListener?.('open', () => { if (partnerWsStatus) partnerWsStatus.textContent = 'status: connected'; });
+            socket.addEventListener?.('close', () => { if (partnerWsStatus) partnerWsStatus.textContent = 'status: disconnected; showing last frame'; });
+        } catch (error) {
+            if (partnerWsStatus) partnerWsStatus.textContent = `status: ${error.message}`;
+        }
+    });
+    document.getElementById('btn-partner-websocket-disconnect')?.addEventListener('click', () => {
+        synaptixEngine.disconnectPartnerWebSocket();
+        if (partnerWsStatus) partnerWsStatus.textContent = 'status: disconnected; showing last frame';
+    });
+
     // [SynaptiX] Wire Live Source toggle skeleton
     const liveSourceStatus = document.getElementById('live-source-status');
     if (inputs.liveSourceEnable) {
@@ -317,11 +362,11 @@ export function setupSynaptiXIntegration(renderer, player, controls, inputs, lab
         });
     }
 
-    window.setLiveAIFrame = (data) => {
+    window.setPartnerFrame = (data) => {
         if (!data) return false;
         if (data instanceof Float32Array) {
-            synaptixEngine.setTensorData(data);
-            synaptixEngine.lastSourceInfo = 'Live AI frame pushed';
+            synaptixEngine.setPartnerTensorData(data, 'callback');
+            synaptixEngine.lastSourceInfo = 'Live partner frame pushed';
             return true;
         }
         if (Array.isArray(data) || typeof data.length === 'number') {
@@ -332,6 +377,7 @@ export function setupSynaptiXIntegration(renderer, player, controls, inputs, lab
         }
         return false;
     };
+    window.setLiveAIFrame = window.setPartnerFrame;
 
     window.setSynaptiXPrompt = (prompt) => {
         aiPromptRef.value = String(prompt || 'visual cortex resonance prompt');
@@ -346,7 +392,7 @@ export function setupSynaptiXIntegration(renderer, player, controls, inputs, lab
         if (result) {
             renderer.setSynaptiXParams({
                 style: 4.0,
-                aiInfluence: 0.82,
+                partnerInfluence: 0.82,
                 resonanceThreshold: 0.12
             });
         }
@@ -356,15 +402,25 @@ export function setupSynaptiXIntegration(renderer, player, controls, inputs, lab
     window.runSynaptiXShowcase = runSynaptiXShowcase;
     window.__synaptixDebug = {
         runShowcase: runSynaptiXShowcase,
+        triggerEmpathy: (options) => synaptixEngine.triggerEmpathyPulse(options),
+        triggerDivergence: (options) => synaptixEngine.triggerDivergenceStorm(options),
+        setCoupling: (options) => synaptixEngine.setCouplingConfig(options),
+        setLegacyInfluence: (value) => renderer.setParams({ aiInfluence: value }),
+        benchmark: (options) => renderer.benchmarkSynaptiX(options),
         getState: () => ({
             style: renderer.params.style,
+            partnerInfluence: renderer.params.partnerInfluence,
             aiInfluence: renderer.params.aiInfluence,
             resonanceThreshold: renderer.params.resonanceThreshold,
             currentPattern: synaptixEngine.currentPattern,
             frameCount: synaptixEngine.frameSequence.length,
             frameIndex: synaptixEngine.frameIndex,
             sourceInfo: synaptixEngine.lastSourceInfo,
-            isRoutinePlaying: player.isPlaying
+            isRoutinePlaying: player.isPlaying,
+            coupling: synaptixEngine.getCouplingState(),
+            effects: { ...synaptixEngine.effects },
+            performance: renderer.getSynaptiXPerformanceStats?.() || null,
+            dualAvatarEnabled: renderer.params.dualAvatarEnabled ?? true,
         })
     };
 

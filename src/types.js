@@ -63,7 +63,10 @@
  * @property {number} metabolicRate - ATP consumption multiplier (0.5-2.0).
  * @property {number} mitochondrialFunction - ATP synthesis efficiency (0-1).
  * @property {number} fogDensity - Volumetric fog density.
- * @property {number} aiInfluence - [SynaptiX] AI tensor mirror influence (0-1).
+ * @property {number} partnerInfluence - [SynaptiX] Partner avatar signal influence (0-1).
+ * @property {number} aiInfluence - Deprecated alias for partnerInfluence.
+ * @property {number} couplingStrength - Visual regional correlation strength (0-1).
+ * @property {number} couplingWindowSeconds - Temporal correlation window in seconds.
  * @property {number} resonanceThreshold - [SynaptiX] Human/AI resonance detection threshold.
  * @property {number} aiLayer - [SynaptiX] Active inference-engine layer index.
  * @property {number} pointCloudDensity - Point-cloud render density multiplier.

@@ -60,7 +60,10 @@ def verify() -> None:
             # 'q' starts the interactive neuro-storytelling mini-routine, which
             # pauses on a 'choice' event and renders #choice-btn-N buttons.
             page.keyboard.press("q")
-            page.wait_for_timeout(4500)
+            page.wait_for_function(
+                "() => document.getElementById('visual-overlay')?.style.display === 'block'",
+                timeout=20000,
+            )
 
             visible = page.evaluate(
                 "() => document.getElementById('visual-overlay')?.style.display"

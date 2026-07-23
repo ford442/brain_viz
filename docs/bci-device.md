@@ -1,6 +1,6 @@
 # Live EEG / BCI Devices
 
-Neuro-Weaver can use live Muse or OpenBCI EEG as the human 32×32×32 field. Live BCI takes ownership of the human tensor while connected; the AI tensor remains independent, so SynaptiX compares the live field against any phantom, file, or ONNX source. Disconnecting restores the normal simulation.
+Neuro-Weaver can use live Muse or OpenBCI EEG as the avatar-A 32×32×32 field. Live BCI takes ownership of that tensor while connected; the SynaptiX partner tensor remains independent and can come from another normalized human feed, a phantom, a file, or ONNX. Disconnecting restores the normal simulation.
 
 ## Muse 2 and Muse S
 

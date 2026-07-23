@@ -132,7 +132,7 @@ export function applyUniformsMethods(Target) {
         uData[OFFSET_ZOOM] = this.zoom;
         uData[OFFSET_HEAVY_METAL] = this.params.heavyMetal;
         uData[OFFSET_FLUID_ACTIVE] = this.params.fluidActive;
-        uData[OFFSET_AI_INFLUENCE] = this.params.aiInfluence;
+        uData[OFFSET_AI_INFLUENCE] = this.params.partnerInfluence;
         uData[OFFSET_RESONANCE_THRESHOLD] = this.params.resonanceThreshold;
         uData[OFFSET_SYNAPTIX_ACTIVE] = this.params.style >= 4.0 ? 1.0 : 0.0;
         uData[OFFSET_AI_LAYER] = this.params.aiLayer;
@@ -159,6 +159,23 @@ export function applyUniformsMethods(Target) {
         uData[OFFSET_PLASTICITY_DECAY] = this.params.plasticityDecay || 0.0;
         uData[OFFSET_VISUAL_FATIGUE] = this.params.visualFatigue || 0.0;
         uData[OFFSET_SENSORY_DEPRIVATION] = this.params.sensoryDeprivation || 0.0;
+
+        // [SynaptiX Multi-Brain] Each avatar gets the same camera rotation but a
+        // distinct local transform and tensor-only bind group.
+        const avatarALocal = Mat4.composeTranslationScale(-1.05, 0, 0, 0.62);
+        const partnerLocal = Mat4.composeTranslationScale(1.05, 0, 0, 0.62);
+        const avatarAModel = Mat4.multiply(avatarALocal, model);
+        const partnerModel = Mat4.multiply(partnerLocal, model);
+        const avatarAData = new Float32Array(uData);
+        const partnerData = new Float32Array(uData);
+        avatarAData.set(Mat4.multiply(avatarAModel, pv), OFFSET_MVP);
+        avatarAData.set(avatarAModel, OFFSET_MODEL);
+        avatarAData[OFFSET_AI_INFLUENCE] = 0.0; // palette selector: cyan
+        avatarAData[OFFSET_AI_LAYER] = 1.0;
+        partnerData.set(Mat4.multiply(partnerModel, pv), OFFSET_MVP);
+        partnerData.set(partnerModel, OFFSET_MODEL);
+        partnerData[OFFSET_AI_INFLUENCE] = 1.0; // palette selector: magenta
+        partnerData[OFFSET_AI_LAYER] = this.params.partnerInfluence ?? 0.5;
 
         if (!uniformLayoutChecked) {
             uniformLayoutChecked = true;
@@ -190,6 +207,8 @@ export function applyUniformsMethods(Target) {
         }
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
+        this.device.queue.writeBuffer(this.avatarAUniformBuffer, 0, avatarAData);
+        this.device.queue.writeBuffer(this.partnerUniformBuffer, 0, partnerData);
         
         // Compute Uniforms layout (112 bytes total):
         // 32 bytes scalar block + 16 bytes stimulus block + 12 bytes hypoxia block
@@ -231,9 +250,10 @@ export function applyUniformsMethods(Target) {
         dv.setFloat32(76, this.params.stress, true);
 
         // [SynaptiX] AI Tensor Mirror params (offset 88)
-        dv.setFloat32(88, this.params.aiInfluence, true);
+        // Multi-Brain coupling is visual-only. Never feed partner data back into tensor physics.
+        dv.setFloat32(88, 0.0, true);
         dv.setFloat32(92, this.params.resonanceThreshold, true);
-        dv.setFloat32(96, this.params.style >= 4.0 ? 1.0 : 0.0, true);
+        dv.setFloat32(96, 0.0, true);
 
         // [V3.2] Fiber-volume coupling strength (offset 100)
         dv.setFloat32(100, this.params.fiberCoupling ?? 0.5, true);

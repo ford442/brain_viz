@@ -27,13 +27,13 @@ Both renderers consume the same high-level app contract from `main.js`:
 - `setCameraParams()`
 - `injectStimulus()`
 - `setVoxelData()`
-- `setAITensorData()`
+- `setPartnerTensorData()` (`setAITensorData()` remains an alias)
 - `start()` / `stop()`
 
 Both renderers also share:
 
 - `BrainGeometry` output
-- 32x32x32 human and AI tensor buffers
+- two independent 32x32x32 avatar/partner tensor buffers
 - camera orbit / zoom state
 - style selection and SynaptiX controls
 

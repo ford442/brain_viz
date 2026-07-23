@@ -73,25 +73,42 @@ def verify() -> None:
 
             page.evaluate("() => window.__synaptixDebug.runShowcase()")
 
-            # The showcase routine ramps aiInfluence via a lerp starting at t=2.0s and
-            # only reaches the resonant pattern (aiInfluence 0.82) around t=4.7s of
-            # *routine* time. Headless/software rendering can stretch that wall-clock
-            # window unpredictably (GPU readback stalls delay the routine's own
-            # timeline compensation), so poll instead of trusting a fixed sleep.
+            # Paired phantoms need several fixed-rate samples before the regional
+            # Pearson window can report coupling. Poll instead of trusting wall time.
             state = None
             deadline = time.time() + 20.0
             while time.time() < deadline:
                 state = page.evaluate("() => window.__synaptixDebug.getState()")
-                if state["aiInfluence"] >= 0.6 and state["resonanceThreshold"] <= 0.2:
+                if state["frameCount"] >= 6 and state["frameIndex"] > 0 and state["coupling"]["globalCoupling"] > 0:
                     break
                 page.wait_for_timeout(500)
 
             assert state["style"] >= 4, state
-            assert state["frameCount"] >= 4, state
-            assert state["aiInfluence"] >= 0.6, state
+            assert state["dualAvatarEnabled"] is True, state
+            assert state["frameCount"] >= 6, state
+            assert state["partnerInfluence"] >= 0.6, state
             assert state["resonanceThreshold"] <= 0.2, state
+            assert state["coupling"]["globalCoupling"] > 0, state
+            assert len(state["coupling"]["regions"]) == 5, state
+            assert state["performance"]["workRatio"] <= 2.0, state
 
-            page.screenshot(path=str(output_dir / "synaptix_resonant_blend.png"))
+            # The compatibility alias must update the canonical parameter.
+            page.evaluate("() => window.__synaptixDebug.setLegacyInfluence(0.61)")
+            alias_state = page.evaluate("() => window.__synaptixDebug.getState()")
+            assert abs(alias_state["partnerInfluence"] - 0.61) < 1e-6, alias_state
+
+            # Routine effects are visual overlays and expose bounded lifetimes.
+            page.evaluate("() => window.__synaptixDebug.triggerEmpathy({ region: 'frontal', intensity: 0.9, duration: 300 })")
+            page.evaluate("() => window.__synaptixDebug.triggerDivergence({ intensity: 0.8, duration: 300 })")
+            effect_state = page.evaluate("() => window.__synaptixDebug.getState()")
+            assert effect_state["effects"]["empathyPulse"]["region"] == "frontal", effect_state
+            assert effect_state["effects"]["divergenceStorm"]["intensity"] == 0.8, effect_state
+
+            # Normalized callback frames use the same 32^3 partner contract as WebSocket frames.
+            callback_ok = page.evaluate("() => window.setPartnerFrame(new Float32Array(32 ** 3).fill(0.25))")
+            assert callback_ok is True
+
+            page.screenshot(path=str(output_dir / "synaptix_multi_brain.png"))
 
             if errors:
                 hard_errors = [

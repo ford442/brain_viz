@@ -649,13 +649,17 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
                     let aiVal = clamp(getAIVoxelValue(samplePos) * jitter, 0.0, 1.0);
                     let density = max(humanVal, aiVal);
                     if (density > 0.0005) {
-                        // Bichromatic: cyan for human, magenta for AI
-                        var sampleColor = vec3<f32>(0.0, 0.85, 1.0) * humanVal;
-                        sampleColor = mix(sampleColor, vec3<f32>(1.0, 0.0, 0.85) * aiVal, aiVal * 0.7);
+                        // Multi-Brain: avatar bind groups select a stable cyan/magenta identity.
+                        var sampleColor = mix(
+                            vec3<f32>(0.0, 0.85, 1.0) * humanVal,
+                            vec3<f32>(1.0, 0.0, 0.85) * aiVal,
+                            uniforms.aiInfluence
+                        );
                         // White-gold resonance at overlap
                         let diff = abs(humanVal - aiVal);
                         let resonance = 1.0 - smoothstep(0.0, uniforms.resonanceThreshold, diff);
-                        sampleColor += vec3<f32>(1.0, 0.92, 0.55) * resonance * max(humanVal, aiVal) * 1.8;
+                        let overlayBlend = 4.0 * uniforms.aiInfluence * (1.0 - uniforms.aiInfluence);
+                        sampleColor += vec3<f32>(1.0, 0.92, 0.55) * resonance * max(humanVal, aiVal) * 1.8 * overlayBlend;
                         let depthT = clamp((t + stepSize * 0.5 - startT) / span, 0.0, 1.0);
                         let depthTint = mix(vec3<f32>(0.55, 0.75, 1.0), vec3<f32>(1.0, 0.58, 0.12), depthT);
                         let emission = sampleColor * depthTint;
@@ -675,13 +679,17 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
         let aiRaw = input.signal;     // Raw AI from aiTensor
 
         // Bichromatic shell: cyan base, magenta where AI dominates
-        var mixedColor = vec3<f32>(0.0, 0.85, 1.0) * blended;
-        mixedColor = mix(mixedColor, vec3<f32>(1.0, 0.0, 0.85) * blended, aiRaw * 0.7);
+        var mixedColor = mix(
+            vec3<f32>(0.0, 0.85, 1.0) * blended,
+            vec3<f32>(1.0, 0.0, 0.85) * aiRaw,
+            uniforms.aiInfluence
+        );
 
         // Resonance burst: white-gold where human and AI align
         let diff = abs(blended - aiRaw);
         let resonance = 1.0 - smoothstep(0.0, uniforms.resonanceThreshold, diff);
-        mixedColor += vec3<f32>(1.0, 0.92, 0.55) * resonance * blended * 2.5;
+        let overlayBlend = 4.0 * uniforms.aiInfluence * (1.0 - uniforms.aiInfluence);
+        mixedColor += vec3<f32>(1.0, 0.92, 0.55) * resonance * blended * 2.5 * overlayBlend;
 
         // Divergence noise: violet chaos where they differ
         let divergence = smoothstep(uniforms.resonanceThreshold * 2.0, uniforms.resonanceThreshold * 5.0, diff);
@@ -694,7 +702,8 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
         let glassAlpha = 0.04 + rimAlpha * 0.22;
         let finalAlpha = clamp(glassAlpha + blended * 0.18 + volumeAlpha * 0.25, 0.0, 0.55);
 
-        return vec4<f32>(mixedColor, finalAlpha);
+        let avatarGain = select(1.0, 0.18 + uniforms.aiLayer * 0.82, uniforms.aiInfluence > 0.5);
+        return vec4<f32>(mixedColor * avatarGain, finalAlpha * avatarGain);
     }
 
     // [Neuro-Weaver] Style 3.0: Translucent Heatmap Shell

@@ -1,7 +1,7 @@
 // [Neuro-Weaver] SynaptiX tab: AI/human mirror controls, presets, tensor source, token playback.
 export function renderSynaptixTab() {
     return `<div id="tab-synaptix" class="tab-pane">
-                <div class="section-header expanded" data-section="synaptix-core">AI ↔ Human Mirror</div>
+                <div class="section-header expanded" data-section="synaptix-core">Multi-Brain Mirror Space</div>
                 <div class="section-content">
                     <div class="control-group">
                         <label>Visualization Style</label>
@@ -10,12 +10,20 @@ export function renderSynaptixTab() {
                             <option value="1">1. Cyber (Wireframe)</option>
                             <option value="2">2. Connectome (Fibers)</option>
                             <option value="3">3. Heatmap (Volumetric)</option>
-                            <option value="4">4. SynaptiX (AI ↔ Human Mirror)</option>
+                            <option value="4">4. SynaptiX (Multi-Brain Mirror)</option>
                         </select>
                     </div>
                     <div class="control-group">
-                        <label>AI Influence <span id="val-aiInfluence" class="value">0.50</span></label>
-                        <input type="range" id="aiInfluence" min="0.0" max="1.0" step="0.01" value="0.5">
+                        <label>Partner Influence <span id="val-partnerInfluence" class="value">0.50</span></label>
+                        <input type="range" id="partnerInfluence" min="0.0" max="1.0" step="0.01" value="0.5">
+                    </div>
+                    <div class="control-group">
+                        <label>Coupling Strength <span id="val-couplingStrength" class="value">1.00</span></label>
+                        <input type="range" id="couplingStrength" min="0.0" max="1.0" step="0.01" value="1.0">
+                    </div>
+                    <div class="control-group">
+                        <label>Correlation Window <span id="val-couplingWindowSeconds" class="value">2.0</span>s</label>
+                        <input type="range" id="couplingWindowSeconds" min="0.5" max="10" step="0.5" value="2">
                     </div>
                     <div class="control-group">
                         <label>Resonance Threshold <span id="val-resonanceThreshold" class="value">0.20</span></label>
@@ -40,7 +48,7 @@ export function renderSynaptixTab() {
                             <span id="val-human-energy" class="value" style="width:36px;text-align:right;font-size:10px;">0%</span>
                         </div>
                         <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-                            <span style="font-size:10px;color:#ff00cc;width:50px;">AI</span>
+                            <span style="font-size:10px;color:#ff00cc;width:50px;">Partner</span>
                             <div style="flex:1;height:6px;background:#0a1a2a;border-radius:3px;overflow:hidden;">
                                 <div id="bar-ai-energy" style="width:0%;height:100%;background:#ff00cc;transition:width 0.3s;"></div>
                             </div>
@@ -78,15 +86,24 @@ export function renderSynaptixTab() {
                     </div>
                 </div>
 
-                <div class="section-header" data-section="synaptix-tensor">AI Tensor Source</div>
+                <div class="section-header" data-section="synaptix-tensor">Partner Tensor Source</div>
                 <div class="section-content">
                     <div class="control-group">
-                        <label>Load AI Tensor (.npy / .bin / .csv)</label>
+                        <label>Load Partner Tensor (.npy / .bin / .csv)</label>
                         <input type="file" id="ai-tensor-file" accept=".npy,.bin,.csv">
-                        <div id="synaptix-source-status" style="margin-top:4px;font-size:10px;color:#667788;font-family:'JetBrains Mono',monospace;">No AI tensor loaded</div>
+                        <div id="synaptix-source-status" style="margin-top:4px;font-size:10px;color:#667788;font-family:'JetBrains Mono',monospace;">No partner tensor loaded</div>
                         <div style="margin-top:4px;font-size:10px;color:#8899aa;line-height:1.35;">
                             Default projector: early layers map to occipital, mid layers to temporal/parietal, deep layers to frontal volume.
                         </div>
+                    </div>
+                    <div class="control-group">
+                        <label>Partner Tensor WebSocket</label>
+                        <input id="partner-websocket-url" type="text" value="ws://127.0.0.1:8770" spellcheck="false">
+                        <div style="display:flex;gap:6px;margin-top:6px;">
+                            <button id="btn-partner-websocket" type="button" style="flex:1;">Connect</button>
+                            <button id="btn-partner-websocket-disconnect" type="button" style="flex:1;">Disconnect</button>
+                        </div>
+                        <div id="partner-websocket-status" style="margin-top:4px;font-size:10px;color:#667788;font-family:'JetBrains Mono',monospace;">status: disconnected</div>
                     </div>
                     <div class="control-group">
                         <label>AI Pattern</label>
@@ -114,7 +131,7 @@ export function renderSynaptixTab() {
                         <button id="btn-synaptix-showcase" type="button"
                             style="width:100%;padding:8px;background:#101d33;border:1px solid rgba(255,221,85,0.35);
                                    border-radius:6px;color:#ffeeaa;font-size:12px;cursor:pointer;">
-                            ▶ Run SynaptiX Showcase (X)
+                            ▶ Run Multi-Brain Showcase (X)
                         </button>
                     </div>
                 </div>

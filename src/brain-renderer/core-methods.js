@@ -91,6 +91,17 @@ export function applyCoreMethods(Target) {
         { binding: 3, resource: { buffer: this.fiberDirectionBuffer } }
     ]
         });
+        const makeAvatarBindGroup = (uniformBuffer, tensorBuffer) => this.device.createBindGroup({
+    layout: renderBindGroupLayout,
+    entries: [
+        { binding: 0, resource: { buffer: uniformBuffer } },
+        { binding: 1, resource: { buffer: tensorBuffer } },
+        { binding: 2, resource: { buffer: tensorBuffer } },
+        { binding: 3, resource: { buffer: this.fiberDirectionBuffer } }
+    ]
+        });
+        this.avatarABindGroup = makeAvatarBindGroup(this.avatarAUniformBuffer, this.tensorBuffer);
+        this.partnerBindGroup = makeAvatarBindGroup(this.partnerUniformBuffer, this.aiTensorBuffer);
         
         // --- PIPELINE 1: SOLID MESH ---
         this.pipeline = this.device.createRenderPipeline({
@@ -143,6 +154,7 @@ export function applyCoreMethods(Target) {
         this.initSomaPipeline(renderBindGroupLayout, format);
         this.initSparkPipeline(renderBindGroupLayout, format);
         this.initPointCloudPipeline(renderBindGroupLayout, format);
+        this.initSynaptiXBridges(format);
         this.initComputePipeline();
 
         // [Phase 7] Post-Processing Init
@@ -158,6 +170,12 @@ export function applyCoreMethods(Target) {
     };
 
     Target.prototype.setParams = function(newParams) {
+        if (newParams.aiInfluence !== undefined && newParams.partnerInfluence === undefined) {
+    newParams = { ...newParams, partnerInfluence: newParams.aiInfluence };
+        }
+        if (newParams.partnerInfluence !== undefined) {
+    newParams = { ...newParams, aiInfluence: newParams.partnerInfluence };
+        }
         const geometryKeys = ['foldScale', 'foldStrength', 'fissureDepth', 'lobeFoldBias', 'corticalThickness', 'growth', 'networkTopology', 'fiberSymmetry', 'bundleCoherence'];
         const geometryChanged = geometryKeys.some((key) => newParams[key] !== undefined && newParams[key] !== this.params[key]);
         this.params = { ...this.params, ...newParams };
@@ -179,13 +197,45 @@ export function applyCoreMethods(Target) {
         this.device.queue.writeBuffer(this.tensorBuffer, 0, float32Array);
     };
 
-    Target.prototype.setAITensorData = function(float32Array) {
+    Target.prototype.setPartnerTensorData = function(float32Array) {
         if (!float32Array || float32Array.length !== this.voxelCount) {
-    console.warn(`[BrainRenderer] Ignored AI tensor update with invalid size: ${float32Array?.length ?? 'null'}`);
+    console.warn(`[BrainRenderer] Ignored partner tensor update with invalid size: ${float32Array?.length ?? 'null'}`);
     return;
         }
         this._lastAITensor.set(float32Array);
         this.device.queue.writeBuffer(this.aiTensorBuffer, 0, float32Array);
+        return true;
+    };
+
+    // Deprecated compatibility alias.
+    Target.prototype.setAITensorData = function(float32Array) {
+        return this.setPartnerTensorData(float32Array);
+    };
+
+    Target.prototype.setSynaptiXCoupling = function(state) {
+        this.synaptixCouplingState = state;
+    };
+
+    Target.prototype.benchmarkSynaptiX = async function({ warmupFrames = 20, sampleFrames = 60 } = {}) {
+        const measure = async (dual) => {
+    this.setParams({ dualAvatarEnabled: dual, style: 4.0 });
+    for (let i = 0; i < warmupFrames; i++) await new Promise(requestAnimationFrame);
+    const samples = [];
+    let previous = performance.now();
+    for (let i = 0; i < sampleFrames; i++) {
+        await new Promise(requestAnimationFrame);
+        const now = performance.now();
+        samples.push(now - previous);
+        previous = now;
+    }
+    samples.sort((a, b) => a - b);
+    return samples[Math.floor(samples.length / 2)] || 0;
+        };
+        const singleMedianMs = await measure(false);
+        const dualMedianMs = await measure(true);
+        const result = { singleMedianMs, dualMedianMs, frameTimeRatio: dualMedianMs / Math.max(0.001, singleMedianMs) };
+        this.synaptixPerformance = { ...(this.synaptixPerformance || {}), ...result };
+        return result;
     };
 
     Target.prototype.start = function() {

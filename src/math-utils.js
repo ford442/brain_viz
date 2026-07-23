@@ -115,6 +115,29 @@ export class Mat4 {
             0, 0, 0, 1
         ]);
     }
+
+    static scale(x, y = x, z = x) {
+        return new Float32Array([
+            x, 0, 0, 0,
+            0, y, 0, 0,
+            0, 0, z, 0,
+            0, 0, 0, 1
+        ]);
+    }
+
+    static translate(x, y, z) {
+        return new Float32Array([
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            x, y, z, 1
+        ]);
+    }
+
+    // Mat4.multiply(a, b) returns b * a in this library.
+    static composeTranslationScale(x, y, z, scale) {
+        return Mat4.multiply(Mat4.scale(scale), Mat4.translate(x, y, z));
+    }
 }
 
 function normalize(v) {

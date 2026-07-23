@@ -30,7 +30,7 @@ A segmented pill selector at the top of the control panel switches the active re
 | `2` | Cyber | Glowing wireframe circuit lattice. |
 | `3` | Connectome | Symmetrical glowing DTI fibre tracts. |
 | `4` | Heatmap | Volumetric thermal activity field. |
-| `5` | SynaptiX | AI ↔ Human mirror comparison (`X` runs the full showcase). |
+| `5` | SynaptiX | Multi-brain mirror space (`X` runs the paired showcase). |
 
 Connectome mode defaults to anatomical, bilaterally symmetric DTI tracts. Tune it with the **Connectome Variant** (Anatomical ↔ Reasoning Pathways), **Fiber Symmetry**, and **Bundle Coherence** sliders on the Activity tab.
 

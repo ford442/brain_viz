@@ -10,7 +10,7 @@ export const MODE_DEFS = [
     { style: 1, name: 'Cyber',      key: '2', desc: 'Cyber wireframe — glowing circuit lattice.' },
     { style: 2, name: 'Connectome', key: '3', desc: 'Connectome — symmetrical glowing DTI fibre tracts.' },
     { style: 3, name: 'Heatmap',    key: '4', desc: 'Heatmap — volumetric thermal activity field.' },
-    { style: 4, name: 'SynaptiX',   key: '5', desc: 'SynaptiX — AI ↔ Human mirror comparison.' },
+    { style: 4, name: 'SynaptiX',   key: '5', desc: 'SynaptiX — multi-brain mirror space.' },
 ];
 
 export function setupModeSelector(renderer) {
