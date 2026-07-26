@@ -436,4 +436,17 @@ export function registerNarrativeFlowHandlers(handlers, player) {
             player.executeEvent({ type: 'text', message: evt.message, duration: duration });
         }
     });
+
+    handlers.set('spatial_memory', (evt) => {
+        const duration = evt.duration || 4.0;
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+
+        // Reverse flow speed and trigger spatial memory breadcrumbs
+        player.startLerp({ key: 'spatialMemory', value: intensity, duration: duration, ease: 'sineInOut' });
+        if (intensity > 0) { player.startLerp({ key: 'flowSpeed', value: -1.5 * intensity, duration: duration, ease: 'sineInOut' }); } else { player.startLerp({ key: 'flowSpeed', value: 1.0, duration: duration, ease: 'sineInOut' }); }
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
 }

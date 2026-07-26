@@ -92,6 +92,7 @@ export const RENDER_UNIFORM_LAYOUT = [
     { name: 'plasticityDecay', type: 'f32' },
     { name: 'visualFatigue', type: 'f32' },
     { name: 'sensoryDeprivation', type: 'f32' },
+    { name: 'spatialMemory', type: 'f32' },
 ];
 
 /**

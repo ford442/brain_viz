@@ -220,6 +220,7 @@ struct Uniforms {
     style: f32,
     flowSpeed: f32, // V2.3: Controls pulse speed
     colorShift: f32, // [Phase 5] Serotonin Color Shift
+    dopamineTrails: f32,
     slicePlane: vec4<f32>, // [Neuro-Weaver] V2.6: Renamed from clipPlane
     sparkle: f32, // [Phase 5] Synaptic Sparkles
     growth: f32, // [Phase 6] Dendritic Growth
@@ -482,6 +483,7 @@ struct Uniforms {
     style: f32,
     flowSpeed: f32,
     colorShift: f32, // [Phase 5]
+    dopamineTrails: f32,
     slicePlane: vec4<f32>, // [Neuro-Weaver] V2.6: Renamed from clipPlane
     sparkle: f32, // [Phase 5] Synaptic Sparkles
     growth: f32, // [Phase 6]
@@ -821,7 +823,6 @@ struct Uniforms {
     flowSpeed: f32,
     colorShift: f32,
     dopamineTrails: f32,
-    padDopamine: vec3<f32>,
     slicePlane: vec4<f32>,
     sparkle: f32,
     growth: f32,
@@ -1031,7 +1032,6 @@ struct Uniforms {
     flowSpeed: f32,
     colorShift: f32,
     dopamineTrails: f32,
-    padDopamine: vec3<f32>,
     slicePlane: vec4<f32>,
     sparkle: f32,
     growth: f32,
@@ -1144,9 +1144,14 @@ fn main(input: FiberFragmentInput) -> @location(0) vec4<f32> {
     let glowPulse = 0.6 + 0.4 * sin(uniforms.time * 3.0 + input.distToCenter * 6.0 + input.signal * 4.0);
     let emissive = input.color * (0.35 + input.signal * 0.9) * glowPulse * mix(1.0, 1.25, myelin);
     let reasoningWarm = vec3<f32>(1.0, 0.55, 0.15) * clamp(uniforms.connectomeVariant, 0.0, 1.0) * input.signal * 0.4;
+
+    // [Phase 2.5] Spatial Memory Retrieval - backwards traveling glowing breadcrumbs
+    let breadcrumbPhase = fract(input.distToCenter * 8.0 - uniforms.time * 2.5);
+    let breadcrumbGlow = smoothstep(0.8, 1.0, breadcrumbPhase) * uniforms.spatialMemory;
+    let breadcrumbColor = vec3<f32>(1.0, 0.9, 0.4) * breadcrumbGlow * 3.0;
     let glowLuma = max(emissive.r, max(emissive.g, emissive.b));
 
-    let finalRgb = diffuse * twistShade + highlight + activityGlow + avalancheColor + emissive + reasoningWarm + vec3<f32>(1.0, 0.95, 0.65) * resonance * 0.35;
+    let finalRgb = diffuse * twistShade + highlight + activityGlow + avalancheColor + emissive + reasoningWarm + breadcrumbColor + vec3<f32>(1.0, 0.95, 0.65) * resonance * 0.35;
     let alpha = clamp(0.18 + input.signal * 0.4 + ndotl * 0.16 + rim * 0.18 + anisotropic * 0.12 + glowLuma * 0.12, 0.12, 0.96) * ambientOcclusion * mix(0.82, 1.0, taper);
 
 
@@ -1176,7 +1181,6 @@ struct Uniforms {
     flowSpeed: f32,
     colorShift: f32,
     dopamineTrails: f32,
-    padDopamine: vec3<f32>,
     slicePlane: vec4<f32>,
     sparkle: f32,
     growth: f32,
@@ -1398,7 +1402,6 @@ struct Uniforms {
     flowSpeed: f32,
     colorShift: f32,
     dopamineTrails: f32,
-    padDopamine: vec3<f32>,
     slicePlane: vec4<f32>,
     sparkle: f32,
     growth: f32,
@@ -1474,7 +1477,6 @@ struct Uniforms {
     flowSpeed: f32,
     colorShift: f32,
     dopamineTrails: f32,
-    padDopamine: vec3<f32>,
     slicePlane: vec4<f32>,
     sparkle: f32,
     growth: f32,
@@ -1649,7 +1651,6 @@ struct Uniforms {
     flowSpeed: f32,
     colorShift: f32,
     dopamineTrails: f32,
-    padDopamine: vec3<f32>,
     slicePlane: vec4<f32>,
     sparkle: f32,
     growth: f32,
@@ -2033,7 +2034,6 @@ struct Uniforms {
     flowSpeed: f32,
     colorShift: f32,
     dopamineTrails: f32,
-    padDopamine: vec3<f32>,
     slicePlane: vec4<f32>,
     sparkle: f32,
     growth: f32,
@@ -2170,7 +2170,6 @@ struct Uniforms {
     flowSpeed: f32,
     colorShift: f32,
     dopamineTrails: f32,
-    padDopamine: vec3<f32>,
     slicePlane: vec4<f32>,
     sparkle: f32,
     growth: f32,
@@ -2377,7 +2376,6 @@ struct Uniforms {
     flowSpeed: f32,
     colorShift: f32,
     dopamineTrails: f32,
-    padDopamine: vec3<f32>,
     slicePlane: vec4<f32>,
     sparkle: f32,
     growth: f32,

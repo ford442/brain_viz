@@ -11,6 +11,7 @@ struct Uniforms {
     style: f32,
     flowSpeed: f32,
     colorShift: f32,
+    dopamineTrails: f32,
     slicePlane: vec4<f32>,
     sparkle: f32,
     growth: f32,
@@ -55,6 +56,7 @@ struct Uniforms {
     plasticityDecay: f32,
     visualFatigue: f32,
     sensoryDeprivation: f32,
+    spatialMemory: f32,
 }
 
 struct VertexInput {
@@ -260,6 +262,7 @@ struct Uniforms {
     style: f32,
     flowSpeed: f32,
     colorShift: f32,
+    dopamineTrails: f32,
     slicePlane: vec4<f32>,
     sparkle: f32,
     growth: f32,
@@ -304,6 +307,7 @@ struct Uniforms {
     plasticityDecay: f32,
     visualFatigue: f32,
     sensoryDeprivation: f32,
+    spatialMemory: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
