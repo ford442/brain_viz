@@ -55,6 +55,7 @@ struct Uniforms {
     plasticityDecay: f32,
     visualFatigue: f32,
     sensoryDeprivation: f32,
+    spatialMemory: f32,
 }
 
 struct SparkInput {
@@ -251,6 +252,7 @@ struct Uniforms {
     plasticityDecay: f32,
     visualFatigue: f32,
     sensoryDeprivation: f32,
+    spatialMemory: f32,
 }
 
 struct SparkInput {
@@ -325,6 +327,7 @@ struct TensorParams {
     plasticityDecay: f32,
     visualFatigue: f32,
     sensoryDeprivation: f32,
+    spatialMemory: f32,
 }
 
 @group(0) @binding(0) var<storage, read_write> activityTensor: array<f32>;
