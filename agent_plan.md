@@ -377,7 +377,12 @@
 *Idea:* "What if we visualized Serotonin levels as color shifts?"
 
 *Idea:* "What if we could simulate the interaction between Dopamine and Serotonin directly as color blending pathways?"
-*Idea:* "What if we visualized spatial memory retrieval as glowing breadcrumbs traveling backwards along the connectome fibers?"
+[x] "What if we visualized spatial memory retrieval as glowing breadcrumbs traveling backwards along the connectome fibers?"
 
 ### Phase 19: Dopamine Pathways Overlay
 - [x] **Dopamine Pathways:** Implement a task to visualize Dopamine pathways as glowing trails.
+
+### Phase 2.5 Extension: Spatial Memory Retrieval
+- [x] **Spatial Memory Retrieval:** Visualized spatial memory retrieval as glowing breadcrumbs traveling backwards along the connectome fibers, controlled via `spatial_memory` event.
+
+*Idea:* "What if we visualized the brain's default mode network transitioning into task-positive networks during problem-solving tasks?"

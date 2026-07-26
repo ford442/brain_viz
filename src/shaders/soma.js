@@ -55,6 +55,7 @@ struct Uniforms {
     plasticityDecay: f32,
     visualFatigue: f32,
     sensoryDeprivation: f32,
+    spatialMemory: f32,
 }
 
 struct VertexInput {
@@ -304,6 +305,7 @@ struct Uniforms {
     plasticityDecay: f32,
     visualFatigue: f32,
     sensoryDeprivation: f32,
+    spatialMemory: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 

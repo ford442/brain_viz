@@ -583,3 +583,10 @@ export const MINI_ROUTINES_PART2 = {
         { time: 10.0, type: 'calm' }
     ],
 };
+
+MINI_ROUTINES_PART2['"'] = [ // [Phase 2.5] Spatial Memory Retrieval
+    { time: 0.0, type: 'text', message: 'Retrieving Spatial Memory...', duration: 4.0 },
+    { time: 0.0, type: 'spatial_memory', intensity: 1.0, duration: 4.0 },
+    { time: 4.0, type: 'spatial_memory', intensity: 0.0, duration: 2.0 },
+    { time: 4.0, type: 'text', message: 'Memory Consolidated', duration: 2.0 }
+];

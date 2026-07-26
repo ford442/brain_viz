@@ -97,6 +97,7 @@ export class BrainRenderer {
             plasticityDecay: 0.0,
             visualFatigue: 0.0,
             sensoryDeprivation: 0.0,
+            spatialMemory: 0.0,
             edgeDetection: 0.0, // Visual Cortex Edge Detection
             // Altitude/Hypoxia Simulation Parameters
             altitude: 0.0, // Altitude in meters (0-8000)
