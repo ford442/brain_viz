@@ -60,6 +60,7 @@ export class BrainRenderer {
             sliceZ: 2.0,  // Slice plane Z value (Starts outside bounds)
             flowSpeed: 4.0, // V2.3: Signal Speed
             colorShift: 0.0, // [Phase 5] Serotonin Color Shift
+            dopamineTrails: 0.0,
 
             // [Phase 21] Neuromodulator physics defaults
             decayRate: 0.96,
@@ -98,6 +99,15 @@ export class BrainRenderer {
             visualFatigue: 0.0,
             sensoryDeprivation: 0.0,
             edgeDetection: 0.0, // Visual Cortex Edge Detection
+            pulseSaturation: 1.0,
+            trailLength: 1.0,
+            lesionCenterX: 0.0,
+            lesionCenterY: 0.0,
+            lesionCenterZ: 0.0,
+            lesionActive: 0.0,
+            lesionRadius: 0.0,
+            decimation: 0.0,
+            psychedelic: 0.0,
             // Altitude/Hypoxia Simulation Parameters
             altitude: 0.0, // Altitude in meters (0-8000)
             oxygenLevel: 1.0, // Oxygen saturation (1.0-0.3)
@@ -916,9 +926,21 @@ export class BrainRenderer {
         const OFFSET_TMS_ACTIVE = 75;
         const OFFSET_TMS_CENTER = 76; // vec3 takes 3
         const OFFSET_TMS_PULSE = 79;
-        const OFFSET_TMS_RADIUS = 80; // vec3 takes 3
+        const OFFSET_TMS_RADIUS = 80;
+        const OFFSET_EDGEDETECTION = 81;
+        const OFFSET_PULSESATURATION = 82;
+        const OFFSET_TRAILLENGTH = 83;
+        const OFFSET_LESIONCENTER = 84; // vec3 takes 3
+        const OFFSET_LESIONACTIVE = 87;
+        const OFFSET_LESIONRADIUS = 88;
+        const OFFSET_DECIMATION = 89;
+        const OFFSET_PSYCHEDELIC = 90;
+        const OFFSET_IMMUNEACTIVITY = 91;
+        const OFFSET_PLASTICITYDECAY = 92;
+        const OFFSET_VISUALFATIGUE = 93;
+        const OFFSET_SENSORYDEPRIVATION = 94;
 
-        const RENDER_UNIFORM_FLOAT_COUNT = 84;
+        const RENDER_UNIFORM_FLOAT_COUNT = 96;
         const uData = new Float32Array(RENDER_UNIFORM_FLOAT_COUNT);
         uData.set(mvp, OFFSET_MVP);
         uData.set(model, OFFSET_MODEL);
@@ -926,7 +948,7 @@ export class BrainRenderer {
         uData[OFFSET_STYLE] = this.params.style;
         uData[OFFSET_FLOW] = this.params.flowSpeed;
         uData[OFFSET_COLOR] = this.params.colorShift;
-        uData[OFFSET_DOPAMINE] = this.params.dopamineTrails;
+        uData[OFFSET_DOPAMINE] = this.params.dopamineTrails ?? 0.0;
 
         // Slice Plane Logic
         uData[OFFSET_SLICE] = 0.0;      // Px
@@ -969,6 +991,20 @@ export class BrainRenderer {
         uData[OFFSET_TMS_CENTER + 2] = this.params.tmsCenterZ;
         uData[OFFSET_TMS_PULSE] = this.params.tmsPulse;
         uData[OFFSET_TMS_RADIUS] = this.params.tmsRadius;
+        uData[OFFSET_EDGEDETECTION] = this.params.edgeDetection;
+        uData[OFFSET_PULSESATURATION] = this.params.pulseSaturation;
+        uData[OFFSET_TRAILLENGTH] = this.params.trailLength;
+        uData[OFFSET_LESIONCENTER] = this.params.lesionCenterX;
+        uData[OFFSET_LESIONCENTER + 1] = this.params.lesionCenterY;
+        uData[OFFSET_LESIONCENTER + 2] = this.params.lesionCenterZ;
+        uData[OFFSET_LESIONACTIVE] = this.params.lesionActive;
+        uData[OFFSET_LESIONRADIUS] = this.params.lesionRadius;
+        uData[OFFSET_DECIMATION] = this.params.decimation;
+        uData[OFFSET_PSYCHEDELIC] = this.params.psychedelic;
+        uData[OFFSET_IMMUNEACTIVITY] = this.params.immuneActivity;
+        uData[OFFSET_PLASTICITYDECAY] = this.params.plasticityDecay;
+        uData[OFFSET_VISUALFATIGUE] = this.params.visualFatigue;
+        uData[OFFSET_SENSORYDEPRIVATION] = this.params.sensoryDeprivation;
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         

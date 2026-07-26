@@ -44,6 +44,7 @@ export const RENDER_UNIFORM_LAYOUT = [
     { name: 'style', type: 'f32' },
     { name: 'flowSpeed', type: 'f32' },
     { name: 'colorShift', type: 'f32' },
+    { name: 'dopamineTrails', type: 'f32' },
     { name: 'slicePlane', type: 'vec4' },
     { name: 'sparkle', type: 'f32' },
     { name: 'growth', type: 'f32' },
