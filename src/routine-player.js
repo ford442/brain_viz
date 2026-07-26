@@ -52,7 +52,8 @@ export class RoutinePlayer {
         this.waitingForSignal = null; // String name of the signal we are waiting for
 
         // [Phase 2] Easing Support
-        this.activeLerps = []; // { key, startVal, endVal, elapsed, duration }
+        this.activeLerps = [];
+        this.activeTasks = []; // { key, startVal, endVal, elapsed, duration }
 
         // [Phase 2] Neuro-Sonification (AudioContext)
         this.audioContext = null;
@@ -265,6 +266,7 @@ export class RoutinePlayer {
         this.lastFrameTime = performance.now();
         this.cursor = 0;
         this.activeLerps = [];
+        this.activeTasks = [];
         this.waitingForSignal = null;
         this.tick();
         console.log("[Routine] Playback started");
@@ -296,6 +298,7 @@ export class RoutinePlayer {
         this.cancelScheduledTick();
         this.cursor = 0;
         this.activeLerps = [];
+        this.activeTasks = [];
         this.waitingForSignal = null;
         if (this.onEvent) this.onEvent({ type: 'stop' });
     }
@@ -444,14 +447,16 @@ export class RoutinePlayer {
         }
 
         this.processLerps(deltaTime);
+        this.processTasks(deltaTime);
 
         // Check for routine completion
-        if (this.cursor >= this.routine.length && this.activeLerps.length === 0) {
+        if (this.cursor >= this.routine.length && this.activeLerps.length === 0 && (!this.activeTasks || this.activeTasks.length === 0)) {
             if (this.loop) {
                 console.log("[Routine Engine] Loop triggered.");
                 this.elapsedTime = 0;
                 this.cursor = 0;
                 this.activeLerps = [];
+                this.activeTasks = [];
             } else {
                 console.log("[Routine Engine] Routine execution completed.");
                 this.stop();
@@ -479,6 +484,18 @@ export class RoutinePlayer {
         else cancelAnimationFrame(this.timerId);
         this.timerId = null;
         this.timerSource = null;
+    }
+
+    processTasks(dt) {
+        if (!this.activeTasks || this.activeTasks.length === 0) return;
+        this.activeTasks = this.activeTasks.filter(task => {
+            task.delay -= dt * this.playbackSpeed;
+            if (task.delay <= 0) {
+                task.execute();
+                return false;
+            }
+            return true;
+        });
     }
 
     processLerps(dt) {
@@ -609,6 +626,7 @@ export class RoutinePlayer {
 
     clearLerps() {
         this.activeLerps = [];
+        this.activeTasks = [];
         console.log("[Routine Engine] All active lerps cancelled.");
     }
 
@@ -655,7 +673,15 @@ export class RoutinePlayer {
             console.log(`[Routine] Lerp started: ${event.key} -> ${event.value} (${lerpObj.duration}s)`);
         }
 
-        this.activeLerps.push(lerpObj);
+        if (event.delay) {
+            this.activeTasks.push({
+                delay: event.delay,
+                execute: () => this.activeLerps.push(lerpObj)
+            });
+            console.log(`[Routine] Delayed Lerp registered: ${event.key} in ${event.delay}s`);
+        } else {
+            this.activeLerps.push(lerpObj);
+        }
     }
 
     syncHRV(peakTime, intensity) {
