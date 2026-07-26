@@ -11,6 +11,7 @@ struct Uniforms {
     style: f32,
     flowSpeed: f32, // V2.3: Controls pulse speed
     colorShift: f32, // [Phase 5] Serotonin Color Shift
+    dopamineTrails: f32,
     slicePlane: vec4<f32>, // [Neuro-Weaver] V2.6: Renamed from clipPlane
     sparkle: f32, // [Phase 5] Synaptic Sparkles
     growth: f32, // [Phase 6] Dendritic Growth
@@ -332,6 +333,7 @@ struct Uniforms {
     style: f32,
     flowSpeed: f32,
     colorShift: f32, // [Phase 5]
+    dopamineTrails: f32,
     slicePlane: vec4<f32>, // [Neuro-Weaver] V2.6: Renamed from clipPlane
     sparkle: f32, // [Phase 5] Synaptic Sparkles
     growth: f32, // [Phase 6]

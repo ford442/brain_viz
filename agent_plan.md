@@ -176,7 +176,12 @@
 ### Phase 23: Biofeedback Synchronization
 - [x] **HRV Glitch Sync:** Implement `hrv_sync` event mapping heart rate variability to visual distortions (aberration, grain, shake).
 
+
+### Phase 2.5 Extension: Psychedelic Visuals Offset Fix
+- [x] **Psychedelic Visuals Offset Fix:** Corrected uniform offset issues in `src/brain-renderer.js` to include missing uniforms like `psychedelic` and restored `dopamineTrails` struct alignment as demanded by the updated WGSL structural layout, restoring the `psychedelic_trip` functionality.
+
 ## 🧪 "Dream" Log (Future Concepts)
+* *Idea:* "What if we mapped real-time geographic data (like population density or traffic) to localized structural density and glow intensity in the tensor volume?"
 * [x] "What if we visualize immune cell migration as particle streams during an inflammatory response?"
 * *Idea:* "What if we visualize psychedelic experiences as morphing geometric structures in the tensor volume?" (Implemented as Phase 2.5 Extension - Psychedelic Visuals)"
 *Idea:* "What if we mapped real-time galvanic skin response to mesh structural noise?"
