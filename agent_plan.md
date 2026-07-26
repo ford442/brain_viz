@@ -176,6 +176,8 @@
 ### Phase 23: Biofeedback Synchronization
 - [x] **HRV Glitch Sync:** Implement `hrv_sync` event mapping heart rate variability to visual distortions (aberration, grain, shake).
 
+### Phase 24: Cellular Processes
+- [ ] **Cellular Apoptosis:** Implement a visualization for programmed cell death.
 
 ### Phase 2.5 Extension: Psychedelic Visuals Offset Fix
 - [x] **Psychedelic Visuals Offset Fix:** Corrected uniform offset issues in `src/brain-renderer.js` to include missing uniforms like `psychedelic` and restored `dopamineTrails` struct alignment as demanded by the updated WGSL structural layout, restoring the `psychedelic_trip` functionality.
@@ -287,7 +289,10 @@
 * *Idea:* "What if we allowed users to 'paint' energy directly onto the tensor volume using a continuous drag gesture?"
 * *Idea:* "What if we visualized marker events as floating text particles within the tensor volume?"
 
-* *Idea:* "What if we visualize targeted drug delivery as micro-capsules bursting and diffusing color through localized regions?"
+* [x] "What if we visualize targeted drug delivery as micro-capsules bursting and diffusing color through localized regions?"
+
+### Phase 2.5 Extension: Targeted Drug Delivery
+- [x] **Targeted Drug Delivery:** Visualized targeted drug delivery as micro-capsules bursting and diffusing color through localized regions, controlled via `drug_delivery` event.
 
 ### Phase 2.5 Extension: ATP Energy Depletion Cascade
 - [x] **ATP Energy Depletion Cascade:** Visualized ATP energy depletion as a cascading shutdown of regional activity, culminating in a global slow-motion effect, controlled via `atp_depletion` event.
@@ -352,6 +357,7 @@
 * *Idea:* "What if we allowed users to map their own custom audio features to arbitrary parameters via a GUI matrix?"
 * *Idea:* "What if we visualized neurotransmitter depletion as gradual mesh decimation?"
 * *Idea:* "What if we visualize targeted neuro-stimulation (like TMS) as persistent magnetic field distortions?"
+* *Idea:* "What if we visualized cellular apoptosis (programmed cell death) as a slow fading and shrinking of individual soma instances?"
 
 ### Phase 12: Interactive Volumetric Polish
 - [x] **Clip Plane + Internal Reveal:** Dynamic Z-axis slicing integration into the routine system.

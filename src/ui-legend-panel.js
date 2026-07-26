@@ -80,6 +80,7 @@ export function setupLegendPanel() {
                 <div class="legend-item"><span class="legend-key">^</span><span>Signal Trails</span></div>
                 <div class="legend-item"><span class="legend-key">&lt;</span><span>Hypothermia</span></div>
                 <div class="legend-item"><span class="legend-key">|</span><span>Env. Noise</span></div>
+                <div class="legend-item"><span class="legend-key">&amp;</span><span>Drug Delivery</span></div>
 
             </div>
         </div>
