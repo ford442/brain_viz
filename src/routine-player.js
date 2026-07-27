@@ -320,6 +320,8 @@ export class RoutinePlayer {
         // [Neuro-Script Cycle] Implemented and verified WebGPU fallback to stop execution safely.
         if (rendererMissing || isDeviceLost) {
              console.warn("[Routine Engine] WebGPU Context is invalid or lost. Stopping playback gracefully.");
+             // [WebGPU Safety] Ensure the internal flag is strictly synced when context is detected as missing.
+             if (rendererMissing) this._deviceLost = true;
              this.stop();
              return;
         }
@@ -582,6 +584,11 @@ export class RoutinePlayer {
         // Dispatch to UI listener if configured
         if (typeof this.onEvent === 'function') {
             this.onEvent(resolvedEvt);
+        }
+
+        // [Safety Guard] Ensure player state is valid after event execution
+        if (this.state.respirationRate < 1.0) {
+            this.state.respirationRate = 1.0;
         }
     }
 

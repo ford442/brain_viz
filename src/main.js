@@ -77,9 +77,12 @@ async function init() {
         startMainUpdateLoop(renderer, player, inputs, labels, tensorPlayer, synaptixEngine,
             inferenceEngine, audioReactor, transport, directorLabels, modeSelector, aiPromptRef, trainingEngine);
 
-        await inferenceEngine.initialize();
-        const liveSourceStatus = document.getElementById('live-source-status');
-        if (liveSourceStatus) liveSourceStatus.textContent = `status: ${inferenceEngine.status}`;
+        // Ensure InferenceEngine is valid before initialization
+        if (inferenceEngine) {
+            await inferenceEngine.initialize();
+            const liveSourceStatus = document.getElementById('live-source-status');
+            if (liveSourceStatus) liveSourceStatus.textContent = `status: ${inferenceEngine.status}`;
+        }
 
         renderer.start();
         console.log('Renderer started');

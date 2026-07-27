@@ -582,6 +582,14 @@ export const MINI_ROUTINES_PART2 = {
         { time: 7.0, type: 'environmental_noise', intensity: 0.0, duration: 3.0, message: 'Noise clearing...' },
         { time: 10.0, type: 'calm' }
     ],
+    '&': [ // Targeted Drug Delivery
+        { time: 0.0, type: 'text', message: 'Targeted Drug Delivery: Micro-capsule Burst', duration: 4.0 },
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'camera', target: 'overview', duration: 2.0 },
+        { time: 1.0, type: 'drug_delivery', target: 'frontal', intensity: 1.5, duration: 5.0, message: 'Capsules bursting, diffusing color...' },
+        { time: 7.0, type: 'text', message: 'Diffusion Complete', duration: 2.0 },
+        { time: 9.0, type: 'calm' }
+    ],
 };
 
 MINI_ROUTINES_PART2['"'] = [ // [Phase 2.5] Spatial Memory Retrieval

@@ -539,6 +539,35 @@ export function registerNeuromodulatorsHandlers(handlers, player) {
         }
     });
 
+    // [Phase 2.5] Targeted Drug Delivery (Micro-capsules)
+    handlers.set('drug_delivery', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const duration = evt.duration || 4.0;
+        const target = evt.target || 'frontal';
+        const ease = evt.ease || 'quadOut';
+
+        // Trigger stimulus at the target region
+        player.executeEvent({ type: 'stimulus', target: target, intensity: intensity * 2.0 });
+
+        // Spike sparkle and instantly adjust colorShift/flowSpeed to simulate bursting capsules
+        player.renderer.setParams({
+            sparkle: 1.5 * intensity,
+            colorShift: 0.7 * intensity,
+            flowSpeed: 6.0 * intensity
+        });
+
+        // Fade back over duration
+        if (duration > 0) {
+            player.startLerp({ key: 'sparkle', value: 0.0, duration: duration, ease: ease });
+            player.startLerp({ key: 'colorShift', value: 0.0, duration: duration, ease: ease });
+            player.startLerp({ key: 'flowSpeed', value: 4.0, duration: duration, ease: ease });
+        }
+
+        if (evt.message) {
+             player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
+
     // [Phase 2] Adrenaline Surge
     handlers.set('adrenaline', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
