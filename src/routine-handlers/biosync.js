@@ -135,4 +135,21 @@ export function registerBiosyncHandlers(handlers, player) {
             player.executeEvent({ type: 'text', message: evt.message, duration: duration });
         }
     });
+
+    // Cellular Apoptosis Simulation
+    handlers.set('cellular_apoptosis', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const duration = evt.duration || 6.0;
+        const ease = evt.ease || 'quadIn';
+
+        // Drive the new apoptosis uniforms / parameters
+        player.startLerp({ key: 'apoptosis', value: intensity, duration: duration, ease: ease });
+        player.startLerp({ key: 'decimation', value: intensity * 0.8, duration: duration, ease: ease });
+        player.startLerp({ key: 'flowSpeed', value: Math.max(0.2, 4.0 - (3.0 * intensity)), duration: duration, ease: ease });
+        player.startLerp({ key: 'ambientLight', value: Math.max(0.04, 0.2 - (0.12 * intensity)), duration: duration, ease: ease });
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
 }

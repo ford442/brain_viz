@@ -57,6 +57,7 @@ struct Uniforms {
     visualFatigue: f32,
     sensoryDeprivation: f32,
     spatialMemory: f32,
+    apoptosis: f32,
 }
 
 struct FiberVertexInput {
@@ -328,6 +329,7 @@ struct Uniforms {
     visualFatigue: f32,
     sensoryDeprivation: f32,
     spatialMemory: f32,
+    apoptosis: f32,
 }
 
 struct FiberFragmentInput {

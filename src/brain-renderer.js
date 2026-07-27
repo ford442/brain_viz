@@ -99,6 +99,7 @@ export class BrainRenderer {
             visualFatigue: 0.0,
             sensoryDeprivation: 0.0,
             spatialMemory: 0.0,
+            apoptosis: 0.0,
             edgeDetection: 0.0, // Visual Cortex Edge Detection
             pulseSaturation: 1.0,
             trailLength: 1.0,
@@ -940,8 +941,10 @@ export class BrainRenderer {
         const OFFSET_PLASTICITYDECAY = 92;
         const OFFSET_VISUALFATIGUE = 93;
         const OFFSET_SENSORYDEPRIVATION = 94;
+        const OFFSET_SPATIALMEMORY = 95;
+        const OFFSET_APOPTOSIS = 96;
 
-        const RENDER_UNIFORM_FLOAT_COUNT = 96;
+        const RENDER_UNIFORM_FLOAT_COUNT = 100;
         const uData = new Float32Array(RENDER_UNIFORM_FLOAT_COUNT);
         uData.set(mvp, OFFSET_MVP);
         uData.set(model, OFFSET_MODEL);
@@ -1006,6 +1009,8 @@ export class BrainRenderer {
         uData[OFFSET_PLASTICITYDECAY] = this.params.plasticityDecay;
         uData[OFFSET_VISUALFATIGUE] = this.params.visualFatigue;
         uData[OFFSET_SENSORYDEPRIVATION] = this.params.sensoryDeprivation;
+        uData[OFFSET_SPATIALMEMORY] = this.params.spatialMemory;
+        uData[OFFSET_APOPTOSIS] = this.params.apoptosis;
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         
