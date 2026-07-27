@@ -598,3 +598,11 @@ MINI_ROUTINES_PART2['"'] = [ // [Phase 2.5] Spatial Memory Retrieval
     { time: 4.0, type: 'spatial_memory', intensity: 0.0, duration: 2.0 },
     { time: 4.0, type: 'text', message: 'Memory Consolidated', duration: 2.0 }
 ];
+
+MINI_ROUTINES_PART2[']'] = [ // Cellular Apoptosis Simulation
+    { time: 0.0, type: 'text', message: 'Cellular Apoptosis Initiated...', duration: 4.0 },
+    { time: 0.0, type: 'camera', target: 'overview', duration: 3.0 },
+    { time: 1.0, type: 'cellular_apoptosis', intensity: 1.0, duration: 8.0, message: 'Programmed Cell Death Progressing' },
+    { time: 10.0, type: 'cellular_apoptosis', intensity: 0.0, duration: 4.0, message: 'Recovery and Regeneration' },
+    { time: 14.0, type: 'calm' }
+];

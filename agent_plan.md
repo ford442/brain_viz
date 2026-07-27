@@ -177,7 +177,7 @@
 - [x] **HRV Glitch Sync:** Implement `hrv_sync` event mapping heart rate variability to visual distortions (aberration, grain, shake).
 
 ### Phase 24: Cellular Processes
-- [ ] **Cellular Apoptosis:** Implement a visualization for programmed cell death.
+- [x] **Cellular Apoptosis:** Implement a visualization for programmed cell death.
 
 ### Phase 2.5 Extension: Psychedelic Visuals Offset Fix
 - [x] **Psychedelic Visuals Offset Fix:** Corrected uniform offset issues in `src/brain-renderer.js` to include missing uniforms like `psychedelic` and restored `dopamineTrails` struct alignment as demanded by the updated WGSL structural layout, restoring the `psychedelic_trip` functionality.
@@ -189,6 +189,7 @@
 *Idea:* "What if we mapped real-time galvanic skin response to mesh structural noise?"
 * *Idea:* "What if we allowed users to configure a custom neuromodulator in the UI?"
 * *Idea:* "What if prolonged synchronized bursts triggered long-term structural plasticity, permanently altering the connectome layout?"
+* *Idea:* "What if we visualized glial scarring around lesion sites as dense, bright clusters of non-conductive tissue?"
 * *Idea:* "What if we visualized neurotransmitter binding kinetics using particle physics on the synapses?"
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "What if we visualized visual cortex processing by simulating progressive edge-detection filters directly on the render pipeline?

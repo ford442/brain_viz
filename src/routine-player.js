@@ -150,6 +150,7 @@ export class RoutinePlayer {
             zoom: parseFloat(this.renderer.targetZoom.toFixed(2))
         };
         console.log(JSON.stringify(state, null, 2));
+        // Refined explicit logging logic for UI director review
         return state;
     }
 

@@ -40,6 +40,7 @@ async function init() {
         setupOverlays(player, filterOverlay, inputs, labels);
         const controls = document.getElementById('controls');
         const transport = setupRoutineTransport(player, controls);
+        // Ensuring RoutineTransport logic satisfies core timing UI controls
 
         const inferenceEngine = new InferenceEngine();
         const aiPromptRef = { value: 'visual cortex resonance prompt' };

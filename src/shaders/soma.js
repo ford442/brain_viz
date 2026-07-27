@@ -57,6 +57,7 @@ struct Uniforms {
     visualFatigue: f32,
     sensoryDeprivation: f32,
     spatialMemory: f32,
+    apoptosis: f32,
 }
 
 struct VertexInput {
@@ -189,6 +190,15 @@ fn main_soma(input: VertexInput) -> VertexOutput {
         scale *= max(0.0, decayFactor);
     }
 
+    if (uniforms.apoptosis > 0.0) {
+        let cellHash = fract(sin(dot(advectedInstancePos, vec3<f32>(12.9898, 78.233, 45.164))) * 43758.5453);
+        let apoptosisThreshold = uniforms.apoptosis;
+        if (cellHash < apoptosisThreshold) {
+            let scaleFactor = max(0.0, 1.0 - (apoptosisThreshold - cellHash) * 5.0);
+            scale *= scaleFactor;
+        }
+    }
+
     if (uniforms.sensoryDeprivation > 0.0) {
         let distToOrigin = length(advectedInstancePos);
         let voidRadius = uniforms.sensoryDeprivation * 1.5;
@@ -308,6 +318,7 @@ struct Uniforms {
     visualFatigue: f32,
     sensoryDeprivation: f32,
     spatialMemory: f32,
+    apoptosis: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
