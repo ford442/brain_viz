@@ -1,6 +1,52 @@
 import { handleCamera } from '../routine-camera.js';
 
 export function registerNarrativeFlowHandlers(handlers, player) {
+
+    // [Phase 2.5] Circadian Rhythm Simulation
+    handlers.set('circadian_rhythm', (evt) => {
+        const duration = evt.duration || 10.0;
+        const cycles = evt.cycles || 1.0;
+
+        const segment = duration / 4;
+
+        player.startLerp({ key: 'ambientLight', path: [0.1, 0.4], duration: segment, ease: 'sineInOut' });
+        player.startLerp({ key: 'dirIntensity', path: [0.2, 1.0], duration: segment, ease: 'sineInOut' });
+        player.startLerp({ key: 'colorShift', path: [-0.5, 0.2], duration: segment, ease: 'sineInOut' });
+        player.startLerp({ key: 'flowSpeed', path: [1.0, 4.0], duration: segment, ease: 'sineInOut' });
+
+        if (player.routine) {
+            const middayTime = player.elapsedTime + segment;
+            const eveningTime = middayTime + segment;
+            const nightTime = eveningTime + segment;
+
+            const scheduleEvents = [
+                { time: middayTime, type: 'lerp', key: 'ambientLight', value: 0.2, duration: segment, ease: 'sineInOut' },
+                { time: middayTime, type: 'lerp', key: 'dirIntensity', value: 0.5, duration: segment, ease: 'sineInOut' },
+                { time: middayTime, type: 'lerp', key: 'colorShift', value: 0.8, duration: segment, ease: 'sineInOut' },
+                { time: middayTime, type: 'lerp', key: 'flowSpeed', value: 2.0, duration: segment, ease: 'sineInOut' },
+
+                { time: eveningTime, type: 'lerp', key: 'ambientLight', value: 0.05, duration: segment, ease: 'sineInOut' },
+                { time: eveningTime, type: 'lerp', key: 'dirIntensity', value: 0.1, duration: segment, ease: 'sineInOut' },
+                { time: eveningTime, type: 'lerp', key: 'colorShift', value: -0.8, duration: segment, ease: 'sineInOut' },
+                { time: eveningTime, type: 'lerp', key: 'flowSpeed', value: 0.5, duration: segment, ease: 'sineInOut' },
+
+                { time: nightTime, type: 'lerp', key: 'ambientLight', value: 0.2, duration: segment, ease: 'sineInOut' },
+                { time: nightTime, type: 'lerp', key: 'dirIntensity', value: 0.5, duration: segment, ease: 'sineInOut' },
+                { time: nightTime, type: 'lerp', key: 'colorShift', value: 0.0, duration: segment, ease: 'sineInOut' },
+                { time: nightTime, type: 'lerp', key: 'flowSpeed', value: 2.0, duration: segment, ease: 'sineInOut' }
+            ];
+
+            // Insert events keeping chronological order
+            scheduleEvents.forEach(e => {
+                let insertIdx = player.currentEventIndex ?? player.cursor;
+                while (insertIdx < player.routine.length && player.routine[insertIdx].time < e.time) {
+                    insertIdx++;
+                }
+                player.routine.splice(insertIdx, 0, e);
+            });
+        }
+    });
+
     handlers.set('flashback', (evt) => {
         const intensity = evt.intensity || 1.0;
         const message = evt.message || 'MEMORY FLASHBACK';

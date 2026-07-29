@@ -398,3 +398,11 @@
 - [x] **Spatial Memory Retrieval:** Visualized spatial memory retrieval as glowing breadcrumbs traveling backwards along the connectome fibers, controlled via `spatial_memory` event.
 
 *Idea:* "What if we visualized the brain's default mode network transitioning into task-positive networks during problem-solving tasks?"
+
+### Phase 2.5 Extension: Circadian Rhythm Simulation
+- [x] **Circadian Rhythm:** Visualized circadian rhythm synchronization by cycling global illumination and activity levels over a simulated 24-hour period.
+
+### Phase 2.5 Extension: Dynamic Seasonal Lighting Simulation
+- [ ] **Dynamic Seasonal Lighting:** Visualized dynamic seasonal lighting.
+
+*Idea:* "What if we visualized age-related cognitive decline as a gradual decrease in neural plasticity and global flow speed over long playback sessions?"
