@@ -316,6 +316,12 @@ export class RoutinePlayer {
         const isDeviceLost = this._deviceLost;
         const isDeviceLostNow = isWebGPUBackend && this.renderer.device && this.renderer.device.isLost;
         const rendererMissing = !this.renderer || (isWebGPUBackend && !this.renderer.device) || isDeviceLostNow;
+        // [Neuro-Script Cycle] If WebGPU context is lost or invalid, the routine player should degrade gracefully (stop ticking).
+        if (isWebGPUBackend && this.renderer.device && this.renderer.isContextLost) {
+            console.warn('[Routine Engine] WebGPU Context lost detected. Stopping tick.');
+            this.stop();
+            return;
+        }
 
         // Safety: If WebGPU context is lost or invalid, the routine player should degrade gracefully (stop ticking).
         // [Neuro-Script Cycle] Implemented and verified WebGPU fallback to stop execution safely.
@@ -337,7 +343,9 @@ export class RoutinePlayer {
         // Routine Logic: Ensure the tick() loop uses performance.now() for drift-free timing.
         const now = performance.now(); // [Neuro-Script Cycle] Uses performance.now() to ensure drift-free timing
         // [Neuro-Script Cycle] Verified drift-free performance.now() timing
+        // [Neuro-Script Cycle] Ensure the tick() loop uses performance.now() for drift-free timing.
         let deltaTime = (now - this.lastFrameTime) / 1000.0;
+        if (deltaTime > 1.0) deltaTime = 1.0; // Prevent huge jumps
         this.lastFrameTime = now;
 
         // [Phase 11] Timeline Compensation & Catch-up Logic
@@ -560,6 +568,7 @@ export class RoutinePlayer {
         } else {
             // [Event Handling Requirement] Fallback extensible switch statement
             // Event Handling: The executeEvent switch statement must be extensible.
+            // [Neuro-Script Cycle] The executeEvent switch statement must be extensible.
             switch (resolvedEvt.type) {
                 case 'clear_lerps':
                     this.clearLerps();

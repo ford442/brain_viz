@@ -1,5 +1,11 @@
 // [Neuro-Weaver] Mini routines data, part 2 of 2 (split from mini-routines.js for file-size limits)
 export const MINI_ROUTINES_PART2 = {
+    '@': [
+        { time: 0.0, type: 'text', message: 'SIMULATING CIRCADIAN RHYTHM (24H CYCLE)', duration: 3.0 },
+        { time: 0.0, type: 'circadian_rhythm', duration: 12.0 },
+        { time: 12.0, type: 'text', message: 'CIRCADIAN CYCLE COMPLETE', duration: 2.0 }
+    ],
+
     '7': [ // Top View
         { time: 0.0, type: 'camera', target: 'top', duration: 1.5, ease: 'quadInOut' },
         { time: 0.0, type: 'text', message: 'Dorsal View', duration: 1.5 }

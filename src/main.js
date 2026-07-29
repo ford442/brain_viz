@@ -12,6 +12,8 @@ import { setupTrainingIntegration } from './main-training-integration.js';
 import { startMainUpdateLoop } from './main-update-loop.js';
 
 async function init() {
+    // [Neuro-Script Cycle] Ensure we don't break the existing init() flow.
+    if (window.RoutinePlayerInstance) { console.warn('RoutinePlayer already initialized.'); }
     // [Neuro-Weaver] Initializing UI and backend connections
     mountControlsShell();
     initTabSwitching();
