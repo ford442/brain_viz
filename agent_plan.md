@@ -89,6 +89,7 @@
 - [x] **Dynamic Continuous Respiration:** Make respiration a continuous loop driven by audio energy instead of a one-shot event.
 - [x] **Music-Reactive Visual Parameters:** Map audio features to visual elements (e.g., energy -> zoom, bass -> colorShift, onset -> sparkle).
 - [x] **Procedural Routine Generation:** Add a button to generate infinite random routines on the fly for continuous playback.
+- [x] **Interactive Synthesis Control Layout:** Implement live performance mode mapping computer keyboard to dynamic frequencies in AudioReactor.
 ### Phase 3 Extension: Brain DJ Mode (New)
 - [x] **Central Reactivity Bus:** Create a single ReactivityEngine (or expand AudioReactor) that computes normalized audio features (bass, energy, brightness, onset) and broadcasts them to all visual systems.
 - [x] **Dynamic Respiration (continued):** Finish the respiration rate system: central `respirationRate` state driven primarily by audio, with temporary boosts from strong visual stimuli. Make the respiration loop continuous.
