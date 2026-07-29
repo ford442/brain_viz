@@ -30,6 +30,9 @@ export class AudioReactor {
         // Onset / Beat Detection
         this.previousEnergy = 0;
         this.lastBeatTime = 0;
+
+        // Synthesis Control
+        this.activeOscillators = new Map(); // frequency -> OscillatorNode
     }
 
     async start() {
@@ -77,6 +80,60 @@ export class AudioReactor {
 
         this.isActive = false;
         console.log("[AudioReactor] Stopped.");
+    }
+
+    // --- Interactive Synthesis Control Layout ---
+    playTone(frequency) {
+        if (!this.audioContext) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.audioContext = new AudioContext();
+        }
+
+        // Ensure analyser exists for visual reaction
+        if (!this.analyser) {
+            this.analyser = this.audioContext.createAnalyser();
+            this.analyser.fftSize = this.fftSize;
+            this.analyser.smoothingTimeConstant = this.smoothingTimeConstant;
+            const bufferLength = this.analyser.frequencyBinCount;
+            this.dataArray = new Uint8Array(bufferLength);
+            // In synth mode, we might not have a microphone stream, so mark active
+            this.isActive = true;
+        }
+
+        if (this.audioContext.state === 'suspended') {
+            this.audioContext.resume();
+        }
+
+        if (this.activeOscillators.has(frequency)) return;
+
+        const osc = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+
+        gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.3, this.audioContext.currentTime + 0.05);
+
+        osc.connect(gainNode);
+        gainNode.connect(this.analyser);
+        gainNode.connect(this.audioContext.destination);
+
+        osc.start();
+        this.activeOscillators.set(frequency, { osc, gainNode });
+    }
+
+    stopTone(frequency) {
+        if (!this.activeOscillators.has(frequency)) return;
+
+        const { osc, gainNode } = this.activeOscillators.get(frequency);
+
+        gainNode.gain.cancelScheduledValues(this.audioContext.currentTime);
+        gainNode.gain.setValueAtTime(gainNode.gain.value, this.audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 0.1);
+
+        osc.stop(this.audioContext.currentTime + 0.1);
+        this.activeOscillators.delete(frequency);
     }
 
     getFeatures() {

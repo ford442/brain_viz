@@ -235,8 +235,43 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
     const audioReactor = new AudioReactor();
     player.audioReactor = audioReactor;
 
+    // --- INTERACTIVE SYNTHESIS CONTROL LAYOUT ---
+    // Map a 13-key row on the keyboard to a C-major/chromatic octave starting at C3 (130.81 Hz)
+    const synthKeyMap = {
+        'A': 130.81, // C3
+        'W': 138.59, // C#3
+        'S': 146.83, // D3
+        'E': 155.56, // D#3
+        'D': 164.81, // E3
+        'F': 174.61, // F3
+        'T': 185.00, // F#3
+        'G': 196.00, // G3
+        'Y': 207.65, // G#3
+        'H': 220.00, // A3
+        'U': 233.08, // A#3
+        'J': 246.94, // B3
+        'K': 261.63  // C4
+    };
+
     // --- KEYBOARD TRIGGERS ---
     document.addEventListener('keydown', (e) => {
+        if (e.repeat) return; // Ignore hold repeats for synth notes
+
+        // The Synth control shares keys with the mini-routines.
+        // To avoid breaking existing tests (e.g., test using 'a' for Adrenaline)
+        // while allowing synth play, we trigger the synth but DO NOT return early
+        // if there is a matching routine below.
+        let synthPlayed = false;
+        const upperKey = e.key.toUpperCase();
+        if (synthKeyMap[upperKey] && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            const tag = (e.target && e.target.tagName) || '';
+            const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (e.target && e.target.isContentEditable);
+            if (!typing) {
+                audioReactor.playTone(synthKeyMap[upperKey]);
+                synthPlayed = true;
+            }
+        }
+
         if (e.code === 'Space') {
             e.preventDefault();
             if (player.waitingForSignal === 'continue_scan') {
@@ -257,6 +292,13 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
         if (routine) {
             console.log(`[Main] Triggering Mini-Routine: ${e.key}`);
             player.playNow(routine);
+        }
+    });
+
+    document.addEventListener('keyup', (e) => {
+        const upperKey = e.key.toUpperCase();
+        if (synthKeyMap[upperKey]) {
+            audioReactor.stopTone(synthKeyMap[upperKey]);
         }
     });
 
