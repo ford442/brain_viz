@@ -47,6 +47,8 @@ export function registerNarrativeFlowHandlers(handlers, player) {
         }
     });
 
+
+
     handlers.set('flashback', (evt) => {
         const intensity = evt.intensity || 1.0;
         const message = evt.message || 'MEMORY FLASHBACK';

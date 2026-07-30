@@ -612,3 +612,28 @@ MINI_ROUTINES_PART2[']'] = [ // Cellular Apoptosis Simulation
     { time: 10.0, type: 'cellular_apoptosis', intensity: 0.0, duration: 4.0, message: 'Recovery and Regeneration' },
     { time: 14.0, type: 'calm' }
 ];
+
+MINI_ROUTINES_PART2['$'] = [ // [Phase 2.5] Dynamic Seasonal Lighting Simulation
+    { time: 0.0, type: 'text', message: 'SIMULATING DYNAMIC SEASONAL LIGHTING', duration: 3.0 },
+    // Spring (0-4s)
+    { time: 0.0, type: 'lerp', key: 'ambientLight', path: [0.1, 0.3], duration: 4.0, ease: 'sineInOut' },
+    { time: 0.0, type: 'lerp', key: 'dirIntensity', path: [0.2, 0.8], duration: 4.0, ease: 'sineInOut' },
+    { time: 0.0, type: 'lerp', key: 'colorShift', path: [0.0, -0.4], duration: 4.0, ease: 'sineInOut' },
+    { time: 0.0, type: 'lerp', key: 'flowSpeed', path: [1.0, 1.5], duration: 4.0, ease: 'sineInOut' },
+    // Summer (4-8s)
+    { time: 4.0, type: 'lerp', key: 'ambientLight', value: 0.5, duration: 4.0, ease: 'sineInOut' },
+    { time: 4.0, type: 'lerp', key: 'dirIntensity', value: 1.2, duration: 4.0, ease: 'sineInOut' },
+    { time: 4.0, type: 'lerp', key: 'colorShift', value: 0.5, duration: 4.0, ease: 'sineInOut' },
+    { time: 4.0, type: 'lerp', key: 'flowSpeed', value: 2.0, duration: 4.0, ease: 'sineInOut' },
+    // Autumn (8-12s)
+    { time: 8.0, type: 'lerp', key: 'ambientLight', value: 0.3, duration: 4.0, ease: 'sineInOut' },
+    { time: 8.0, type: 'lerp', key: 'dirIntensity', value: 0.6, duration: 4.0, ease: 'sineInOut' },
+    { time: 8.0, type: 'lerp', key: 'colorShift', value: 0.8, duration: 4.0, ease: 'sineInOut' },
+    { time: 8.0, type: 'lerp', key: 'flowSpeed', value: 1.0, duration: 4.0, ease: 'sineInOut' },
+    // Winter (12-16s)
+    { time: 12.0, type: 'lerp', key: 'ambientLight', value: 0.1, duration: 4.0, ease: 'sineInOut' },
+    { time: 12.0, type: 'lerp', key: 'dirIntensity', value: 0.2, duration: 4.0, ease: 'sineInOut' },
+    { time: 12.0, type: 'lerp', key: 'colorShift', value: -0.6, duration: 4.0, ease: 'sineInOut' },
+    { time: 12.0, type: 'lerp', key: 'flowSpeed', value: 0.5, duration: 4.0, ease: 'sineInOut' },
+    { time: 16.0, type: 'text', message: 'SEASONAL CYCLE COMPLETE', duration: 2.0 }
+];
