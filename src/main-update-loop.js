@@ -1,11 +1,12 @@
 // main-update-loop.js — RAF loop syncing UI, SynaptiX, audio reactivity, and routine transport
-export function startMainUpdateLoop(renderer, player, inputs, labels, tensorPlayer, synaptixEngine, inferenceEngine, audioReactor, transport, directorLabels, modeSelector, aiPromptRef, trainingEngine) {
+export function startMainUpdateLoop(renderer, player, inputs, labels, tensorPlayer, synaptixEngine, inferenceEngine, audioReactor, transport, directorLabels, modeSelector, aiPromptRef, trainingEngine, sessionController) {
     let lastAIStep = 0;
     let lastTrainingTime = 0;
     const liveSourceStatus = document.getElementById('live-source-status');
 
     const updateLoop = (timestamp) => {
-        tensorPlayer.update(timestamp);
+        if (sessionController?.player.active) sessionController.updatePlayback(timestamp);
+        else tensorPlayer.update(timestamp);
 
         if (trainingEngine) {
             // Training objectives represent wall-clock hold durations. Keep a
@@ -152,6 +153,10 @@ export function startMainUpdateLoop(renderer, player, inputs, labels, tensorPlay
             directorLabels.RotY.textContent = renderer.rotation.y.toFixed(3);
             directorLabels.Zoom.textContent = renderer.zoom.toFixed(2);
         }
+
+        // Capture after live inputs have updated, using this RAF timestamp as the
+        // shared origin for tensor, thumbnail, and audio feature samples.
+        sessionController?.updateRecording(timestamp);
 
         requestAnimationFrame(updateLoop);
     };

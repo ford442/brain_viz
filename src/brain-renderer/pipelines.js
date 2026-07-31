@@ -1,4 +1,4 @@
-import { vertexShader, fragmentShader, fiberVertexShader, fiberFragmentShader, computeShader, somaVertexShader, somaFragmentShader, sparkVertexShader, sparkFragmentShader, postVertexShader, postFragmentShader, pointCloudVertexShader, pointCloudFragmentShader } from '../shaders.js';
+import { vertexShader, fragmentShader, computeShader, somaVertexShader, somaFragmentShader, sparkVertexShader, sparkFragmentShader, postVertexShader, postFragmentShader, pointCloudVertexShader, pointCloudFragmentShader } from '../shaders.js';
 import { RENDER_UNIFORM_BUFFER_SIZE, COMPUTE_UNIFORM_BUFFER_SIZE } from './constants.js';
 
 export function applyPipelineMethods(Target) {
@@ -10,7 +10,7 @@ export function applyPipelineMethods(Target) {
         // Create Storage Buffer for Tensor Data (Read/Write in Compute, Read-Only in Vertex)
         this.tensorBuffer = this.device.createBuffer({
     size: this.voxelBufferSize * 4, // 32x32x32 floats
-    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC
         });
 
         this.aiTensorBuffer = this.device.createBuffer({
@@ -25,6 +25,14 @@ export function applyPipelineMethods(Target) {
     size: this.voxelCount * 12 * 4, // 3 vec4<f32> per voxel
     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
         });
+
+        // Named-pathway state is deliberately separate from the shared render
+        // uniform contract: two aligned vec4 blocks (control + transmitter color).
+        this.pathwayStateBuffer = this.device.createBuffer({
+    size: 32,
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+        });
+        this.updatePathwayStateBuffer();
 
         // Render uniforms: 2 mat4s (32 floats) + scalar block (28 floats including padding) = 60 floats / 240 bytes.
         // The buffer is padded to 256 bytes to satisfy WebGPU uniform buffer alignment requirements.

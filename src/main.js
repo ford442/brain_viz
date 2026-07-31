@@ -2,7 +2,7 @@
 // Neuro-Weaver V2.8 Implementation - With Routine Engine
 import { InferenceEngine } from './inference-engine.js';
 import { FilterUIOverlay, initUIControls, initDirectorTools, initTooltips, initRangeTooltips } from './ui-utils.js';
-import { mountControlsShell, initTabSwitching, setupLegendPanel, setupOverlays, setupRoutineTransport, setupBciPanel, setupXrPanel, setupNeuromodulatorPanel } from './ui-panels.js';
+import { mountControlsShell, initTabSwitching, setupLegendPanel, setupOverlays, setupRoutineTransport, setupBciPanel, setupXrPanel, setupNeuromodulatorPanel, setupSessionPanel, setupPathwayPanel } from './ui-panels.js';
 import { setupModeSelector } from './ui-mode-selector.js';
 import { collectInputsAndLabels } from './main-dom.js';
 import { setupRendererBackend } from './main-renderer-setup.js';
@@ -52,8 +52,10 @@ async function init() {
         );
 
         const bciSession = setupBciPanel(renderer, controls, tensorPlayer, player);
+        const sessionController = setupSessionPanel(renderer, tensorPlayer, bciSession, player, synaptixEngine);
         setupXrPanel(renderer, player);
         setupNeuromodulatorPanel(renderer, controls);
+        setupPathwayPanel(renderer, player, modeSelector);
         const trainingEngine = setupTrainingIntegration(renderer, player, audioReactor, synaptixEngine, bciSession);
 
         initUIControls(renderer, inputs, labels);
@@ -78,7 +80,7 @@ async function init() {
         const directorLabels = initDirectorTools(renderer, player);
 
         startMainUpdateLoop(renderer, player, inputs, labels, tensorPlayer, synaptixEngine,
-            inferenceEngine, audioReactor, transport, directorLabels, modeSelector, aiPromptRef, trainingEngine);
+            inferenceEngine, audioReactor, transport, directorLabels, modeSelector, aiPromptRef, trainingEngine, sessionController);
 
         // Ensure InferenceEngine is valid before initialization
         if (inferenceEngine) {

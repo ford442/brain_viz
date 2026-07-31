@@ -141,9 +141,7 @@ export function registerNarrativeFlowHandlers(handlers, player) {
             });
         } else {
             player.setPlaybackSpeed(evt.value);
-            if (player.onEvent) {
-                player.onEvent({ type: 'speed', value: evt.value });
-            }
+            player.emitEvent({ type: 'speed', value: evt.value });
         }
     });
 

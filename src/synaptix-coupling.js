@@ -29,7 +29,10 @@ function buildRegionIndices() {
 
 const REGION_INDICES = buildRegionIndices();
 
-function regionMeans(tensor) {
+export function getAnatomicalRegionMeans(tensor) {
+    if (!tensor || tensor.length !== VOXEL_COUNT) {
+        return Object.fromEntries(SYNAPTIX_REGIONS.map((name) => [name, 0]));
+    }
     const means = {};
     for (const name of SYNAPTIX_REGIONS) {
         const indices = REGION_INDICES[name];
@@ -110,8 +113,8 @@ export class SynaptiXCouplingModel {
         }
         if (timestamp - this.lastSampleTime < 1000 / this.sampleRate) return this.stats;
         this.lastSampleTime = timestamp;
-        const avatarAMeans = regionMeans(avatarA);
-        const partnerMeans = regionMeans(partner);
+        const avatarAMeans = getAnatomicalRegionMeans(avatarA);
+        const partnerMeans = getAnatomicalRegionMeans(partner);
         this.samples.push({ timestamp, avatarA: avatarAMeans, partner: partnerMeans });
         this.trim(timestamp);
 

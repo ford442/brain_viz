@@ -15,6 +15,7 @@ Key capabilities:
 - **Routine engine**: Scripted, timed sequences of parameters, camera moves, audio, and stimuli (`RoutinePlayer`).
 - **BCI playback and live devices**: Stream pre-recorded/synthetic tensors or calibrated Muse/OpenBCI EEG through the human 32×32×32 field.
 - **WebXR immersive mode**: WebGL2-backed stereo VR walkthrough and tabletop AR with controller/hand tensor stimulation.
+- **Double Mirror sessions**: Local-only synchronized 32³ tensor, webcam-thumbnail, microphone-feature, and note capture with strict `.nwsession` replay/scrubbing, descriptive analysis, and CSV export.
 - **AI "dreaming" mode**: ONNX Runtime integration that runs SqueezeNet inference to drive stimulus injection (`InferenceEngine`).
 - **Audio reactivity**: Web Audio API microphone input that modulates amplitude and flow speed (`AudioReactor`).
 - **Altitude/hypoxia simulation**: Physiological modeling of oxygen deprivation effects on neural signaling.
@@ -72,6 +73,10 @@ brain_viz/
 │   ├── wasm-engine.js          # [Phase 1] JS loader + bridge for C++ BrainTensorEngine WASM module
 │   ├── inference-engine.js     # ONNX SqueezeNet wrapper for AI mode
 │   ├── audio-reactor.js        # Web Audio microphone reactivity
+│   ├── session-format.js       # NWS1 binary codec and strict import validation
+│   ├── session-recorder.js     # 10 Hz local multimodal capture + IndexedDB spill
+│   ├── session-player.js       # Synchronized human-tensor replay and scrubbing
+│   ├── session-analysis.js     # Occipital/audio pairing, heatmap, Pearson, CSV
 │   └── icosahedron.js          # Icosahedron vertex/index constants (used for instanced somas)
 ├── vite.config.js          # Vite config (COOP/COEP headers, ONNX exclude, WASM assets)
 ├── package.json            # npm manifest (includes build:wasm script)
@@ -116,7 +121,8 @@ brain_viz/
 │   ├── verify_branching.py        # Choice/branching routine logic
 │   ├── verify_glitch.py           # Glitch storm corruption simulation
 │   ├── verify_training.py         # Neurofeedback Training Mode courses + keyboard demo baseline
-│   └── *.png                      # Screenshots generated on each run (gitignored)
+│   ├── *.png                      # Screenshots generated on each run (gitignored)
+│   └── verify_session.py           # Double Mirror round-trip/lifecycle verification
 ├── docs/                   # Architecture, roadmap, and mode-specific docs (see docs/ROADMAP.md, docs/archive/)
 ├── .github/
 │   └── copilot-instructions.md  # GitHub Copilot context instructions
@@ -141,6 +147,7 @@ brain_viz/
 - **`main.js`** — Wires the DOM UI to the renderer, sets up keyboard shortcuts, initializes `RoutinePlayer`, `AudioReactor`, `TensorPlayer`, and `InferenceEngine`, and runs the main update loop. Also wires the WASM engine toggle UI.
 - **`icosahedron.js`** — Static icosahedron vertex and index arrays exported as constants. Used by `brain-renderer.js` for instanced soma geometry.
 - **`training-engine.js`** — Neurofeedback Training Mode: `TrainingEngine` class, simulated 0..1 metric samplers (`calm`, `occipitalAlpha`, `flowResonance`), the `BUILTIN_COURSES` catalog (Calm Focus / Panic Recovery / Flow Sustain), streak/drift-penalty/star scoring, and `localStorage` session history. See `docs/training-mode.md`.
+- **`session-recorder.js` / `session-player.js`** — Double Mirror capture and replay ownership. Recording samples the current human tensor without mutating it; playback exclusively owns the human tensor until stopped and never modifies the SynaptiX partner tensor. See `docs/session-format.md`.
 
 ---
 
@@ -305,6 +312,7 @@ python verification/verify_branching.py         # Choice/branching routine logic
 python verification/verify_glitch.py            # Glitch storm corruption simulation
 python verification/verify_bci_device.py        # Mocked Muse GATT + OpenBCI UDP/WebSocket bridge
 python verification/verify_webxr.py             # Mocked stereo XR + routine rig/raycast/fallback
+python verification/verify_session.py           # NWS1 capture/replay/analysis/lifecycle checks
 ```
 
 `verification/` is the single canonical verification tree (tracked in git; only generated screenshots/`__pycache__` are gitignored). There is no separate `tests/verification/` tree — it was removed as part of consolidating the two parallel suites that used to exist.

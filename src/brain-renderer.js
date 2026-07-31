@@ -9,6 +9,7 @@ import { applyUniformsMethods } from './brain-renderer/uniforms.js';
 import { applyRenderLoopMethods } from './brain-renderer/render-loop.js';
 import { applyCoreMethods } from './brain-renderer/core-methods.js';
 import { applySynaptiXBridgeMethods } from './brain-renderer/synaptix-bridges.js';
+import { applyPathwayMethods, createPathwayState } from './pathway-renderer.js';
 
 export class BrainRenderer {
     /**
@@ -33,6 +34,8 @@ export class BrainRenderer {
         this.fov = Math.PI / 4;
         this.targetFov = Math.PI / 4;
         this.time = 0;
+        this.pathwayState = createPathwayState();
+        this.pathwaySelections = [];
         this.isRunning = false;
         this.tensorPlaybackMode = false; // [BCI] When true, compute shader skipped; TensorPlayer drives the voxel buffer
         this.geometryRows = 80;
@@ -327,7 +330,7 @@ export class BrainRenderer {
         // Create Storage Buffer for Tensor Data (Read/Write in Compute, Read-Only in Vertex)
         this.tensorBuffer = this.device.createBuffer({
             size: this.voxelBufferSize * 4, // 32x32x32 floats
-            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC
         });
 
         this.aiTensorBuffer = this.device.createBuffer({
@@ -1256,6 +1259,26 @@ export class BrainRenderer {
         this.device.queue.writeBuffer(this.tensorBuffer, 0, float32Array);
     }
 
+    async getVoxelDataSnapshot() {
+        if (this.tensorPlaybackMode || (this.wasmMode && this.wasmEngine?.available)) {
+            return new Float32Array(this._lastHumanTensor);
+        }
+        const size = this.voxelCount * 4;
+        const readback = this.device.createBuffer({ size, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });
+        try {
+            const encoder = this.device.createCommandEncoder();
+            encoder.copyBufferToBuffer(this.tensorBuffer, 0, readback, 0, size);
+            this.device.queue.submit([encoder.finish()]);
+            await readback.mapAsync(GPUMapMode.READ);
+            const tensor = new Float32Array(readback.getMappedRange().slice(0));
+            this._lastHumanTensor.set(tensor);
+            return tensor;
+        } finally {
+            if (readback.mapState === 'mapped') readback.unmap();
+            readback.destroy();
+        }
+    }
+
     setAITensorData(float32Array) {
         if (!float32Array || float32Array.length !== this.voxelCount) {
             console.warn(`[BrainRenderer] Ignored AI tensor update with invalid size: ${float32Array?.length ?? 'null'}`);
@@ -1276,3 +1299,4 @@ applyUniformsMethods(BrainRenderer);
 applyRenderLoopMethods(BrainRenderer);
 applyCoreMethods(BrainRenderer);
 applySynaptiXBridgeMethods(BrainRenderer);
+applyPathwayMethods(BrainRenderer);

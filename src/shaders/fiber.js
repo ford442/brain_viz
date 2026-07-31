@@ -66,6 +66,14 @@ struct FiberVertexInput {
     @location(2) fiberMeta: vec4<f32>,
     @location(3) fiberStart: vec3<f32>,
     @location(4) fiberEnd: vec3<f32>,
+    @location(5) pathwayMeta: vec4<f32>,
+}
+
+struct PathwayState {
+    // selected numeric ID, route progress, pulse intensity, blocked flag
+    control: vec4<f32>,
+    // transmitter RGB and low static-highlight strength
+    colorAndStatic: vec4<f32>,
 }
 
 struct FiberVertexOutput {
@@ -80,12 +88,36 @@ struct FiberVertexOutput {
     @location(7) fiberMaterial: vec4<f32>,
     @location(8) fiberTangent: vec3<f32>,
     @location(9) fiberFlags: vec2<f32>,
+    @location(10) pathwayEmission: f32,
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var<storage, read> activityTensor: array<f32>;
 @group(0) @binding(2) var<storage, read> aiTensor: array<f32>;
 @group(0) @binding(3) var<storage, read> fiberDirections: array<vec4<f32>>;
+@group(0) @binding(4) var<uniform> pathwayState: PathwayState;
+
+fn getPathwayEmission(meta: vec4<f32>, position: vec3<f32>) -> f32 {
+    if (meta.x <= 0.0 || abs(meta.x - pathwayState.control.x) > 0.25 || pathwayState.control.w > 0.5) {
+        return 0.0;
+    }
+    let routeProgress = clamp(meta.z, 0.0, 1.0);
+    let selectionWeight = clamp(meta.w, 0.0, 1.0);
+    let head = clamp(1.0 - abs(routeProgress - pathwayState.control.y) / 0.12, 0.0, 1.0);
+    let behind = pathwayState.control.y - routeProgress;
+    var tail = 0.0;
+    if (behind >= 0.0 && behind <= 0.22) {
+        tail = (1.0 - behind / 0.22) * 0.55;
+    }
+    var emission = (pathwayState.colorAndStatic.w + max(head, tail) * pathwayState.control.z) * selectionWeight;
+    if (uniforms.lesionActive > 0.0 && uniforms.lesionRadius > 0.0) {
+        let lesionDistance = distance(position, uniforms.lesionCenter);
+        if (lesionDistance < uniforms.lesionRadius) {
+            emission *= 1.0 - uniforms.lesionActive * (1.0 - lesionDistance / uniforms.lesionRadius);
+        }
+    }
+    return max(0.0, emission);
+}
 
 fn getAIVoxelValue(worldPos: vec3<f32>) -> f32 {
     let normPos = (worldPos / BRAIN_RANGE) * 0.5 + 0.5;
@@ -229,6 +261,7 @@ fn main(input: FiberVertexInput) -> FiberVertexOutput {
     let signalStrength = calculateSignalFlow(input.fiberStart, input.fiberEnd, uniforms.time, conductionSpeed, segmentPhase, flowBias, effectiveMyelin, radius, bundleId);
     let aiSignal = calculateSignalFlow(input.fiberStart, input.fiberEnd, uniforms.time, uniforms.flowSpeed * 2.4 * (0.4 + effectiveMyelin * 0.8 + radius * 10.0), segmentPhase, flowBias, 0.12, radius * 0.35, bundleId + 100.0);
     let resonance = 1.0 - smoothstep(0.0, uniforms.resonanceThreshold, abs(signalStrength - aiSignal));
+    let pathwayEmission = getPathwayEmission(input.pathwayMeta, input.position);
     var baseColor = vec3<f32>(0.0);
 
     if (isAI) {
@@ -256,6 +289,7 @@ fn main(input: FiberVertexInput) -> FiberVertexOutput {
     let sheath = mix(0.8, 1.25, effectiveMyelin) * ranvier;
     baseColor += vec3<f32>(1.0, 0.92, 0.55) * resonance * select(0.08, 0.18, isAI);
     baseColor += vec3<f32>(0.8, 0.96, 1.0) * tractCoverage * tractAlignment * uniforms.fiberCoupling * 0.22;
+    baseColor += pathwayState.colorAndStatic.xyz * pathwayEmission;
 
     output.position = uniforms.mvpMatrix * vec4<f32>(finalPos, 1.0);
     output.worldPos = worldPos;
@@ -268,6 +302,7 @@ fn main(input: FiberVertexInput) -> FiberVertexOutput {
     output.fiberMaterial = vec4<f32>(effectiveMyelin, radius, hierarchy, taper);
     output.fiberTangent = tangent;
     output.fiberFlags = vec2<f32>(select(0.0, 1.0, isAI), resonance);
+    output.pathwayEmission = pathwayEmission;
     return output;
 }
 `;
@@ -343,6 +378,7 @@ struct FiberFragmentInput {
     @location(7) fiberMaterial: vec4<f32>,
     @location(8) fiberTangent: vec3<f32>,
     @location(9) fiberFlags: vec2<f32>,
+    @location(10) pathwayEmission: f32,
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
@@ -438,4 +474,3 @@ fn main(input: FiberFragmentInput) -> @location(0) vec4<f32> {
     return vec4<f32>(finalRgbOut, alpha);
 }
 `;
-

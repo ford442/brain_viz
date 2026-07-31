@@ -22,6 +22,24 @@
     text-transform: uppercase;
 }
 
+#session-playback-overlay {
+    position: fixed;
+    right: 18px;
+    top: 18px;
+    width: 320px;
+    pointer-events: none;
+    z-index: 240;
+    padding: 8px;
+    border: 1px solid rgba(0,229,229,0.35);
+    border-radius: 8px;
+    background: rgba(3,12,20,0.88);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.45);
+}
+#session-playback-overlay img { display:block; width:100%; aspect-ratio:16/9; object-fit:cover; background:#02070b; }
+#session-playback-caption { min-height:18px; padding:6px 2px 2px; color:#d8f5ff; font:12px var(--font-sans); }
+#session-playback-audio { height:5px; margin-top:4px; background:#10202a; border-radius:3px; overflow:hidden; }
+#session-playback-audio > span { display:block; width:0; height:100%; background:linear-gradient(90deg,#00aacc,#00ffaa); }
+
 /* Mode-change toast */
 .mode-toast {
     position: absolute;

@@ -139,6 +139,9 @@ export function registerCoreHandlers(handlers, player) {
             coords = player.regions[evt.target];
         } else if (Array.isArray(evt.target)) {
             coords = evt.target;
+        } else if (evt.target?.pathway && evt.target?.edge) {
+            const edge = player.renderer.getPathwayState?.().edges.find((candidate) => candidate.id === evt.target.edge);
+            if (edge?.selections?.length) coords = edge.selections[0].samplePosition;
         }
 
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
@@ -147,6 +150,21 @@ export function registerCoreHandlers(handlers, player) {
 
         player.renderer.triggerLesion(coords, radius);
         player.startLerp({ key: 'lesionActive', value: intensity, duration: duration, ease: 'quadOut' });
+    });
+
+    handlers.set('pathway_pulse', (evt) => {
+        const duration = evt.duration !== undefined ? evt.duration : 3;
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1;
+        player.renderer.setParams({ style: 2 });
+        player.renderer.pulsePathway(evt.pathway, { duration, intensity });
+    });
+
+    handlers.set('pathway_block', (evt) => {
+        const blocked = evt.blocked !== undefined ? Boolean(evt.blocked) : true;
+        if (!player.renderer.setPathwayBlocked(evt.pathway, blocked)) return;
+        if (blocked && Number.isFinite(evt.duration) && evt.duration > 0) {
+            setTimeout(() => player.renderer.setPathwayBlocked(evt.pathway, false), evt.duration * 1000);
+        }
     });
 
     handlers.set('tms_distortion', tmsHandler);

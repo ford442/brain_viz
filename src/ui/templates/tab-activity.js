@@ -112,6 +112,26 @@ export function renderActivityTab() {
                     </div>
                 </div>
 
+                <div class="section-header" data-section="activity-pathways">Named Pathways</div>
+                <div class="section-content pathway-panel" id="pathway-panel">
+                    <div class="control-group">
+                        <label for="pathway-select">Pathway overlay</label>
+                        <select id="pathway-select"></select>
+                    </div>
+                    <div class="pathway-button-row">
+                        <button id="pathway-pulse" type="button">Pulse</button>
+                        <button id="pathway-block" type="button">Block</button>
+                        <button id="pathway-demo" type="button">Run Demo</button>
+                    </div>
+                    <div id="pathway-status" class="pathway-status" aria-live="polite"></div>
+                    <div class="pathway-legend">
+                        <div><span id="pathway-color" class="pathway-swatch"></span><b>Dopamine</b> — gold narrative signal</div>
+                        <div><b>Landmarks:</b> VTA · nucleus accumbens · prefrontal cortex</div>
+                        <div><b>Branches:</b> mesolimbic · mesocortical</div>
+                        <div class="pathway-caveat">Schematic landmarks and procedural fibers; not atlas registration or tractography.</div>
+                    </div>
+                </div>
+
                 <!-- [Phase 1 WASM] C++ Engine Toggle -->
                 <div class="section-header" data-section="activity-wasm">Simulation Engine</div>
                 <div class="section-content">

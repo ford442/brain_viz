@@ -1,5 +1,6 @@
 import { BrainGeometry } from '../brain-geometry.js';
-import { vertexShader, fragmentShader, fiberVertexShader, fiberFragmentShader, computeShader, somaVertexShader, somaFragmentShader, sparkVertexShader, sparkFragmentShader, postVertexShader, postFragmentShader, pointCloudVertexShader, pointCloudFragmentShader } from '../shaders.js';
+import { vertexShader, fragmentShader, computeShader, somaVertexShader, somaFragmentShader, sparkVertexShader, sparkFragmentShader, postVertexShader, postFragmentShader, pointCloudVertexShader, pointCloudFragmentShader } from '../shaders.js';
+import { fiberVertexShader, fiberFragmentShader } from '../shaders/fiber.js';
 
 export function applyCoreMethods(Target) {
     Target.prototype.setupInputHandlers = function() {
@@ -61,6 +62,8 @@ export function applyCoreMethods(Target) {
         this.fiberNormalBuffer = this.createBuffer(geometry.getFiberNormalData(), GPUBufferUsage.VERTEX);
         this.fiberMetaBuffer = this.createBuffer(geometry.getFiberDataWithMetadata(), GPUBufferUsage.VERTEX);
         this.fiberPathBuffer = this.createBuffer(geometry.getFiberPathData(), GPUBufferUsage.VERTEX);
+        this.pathwayMetaBuffer = this.createBuffer(geometry.getPathwayMetadata(), GPUBufferUsage.VERTEX);
+        this.pathwaySelections = geometry.getPathwaySelections();
         this.fiberVertexCount = geometry.getFiberVertexCount();
         
         // 3. Setup Resource Groups
@@ -75,7 +78,8 @@ export function applyCoreMethods(Target) {
         { binding: 0, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
         { binding: 1, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } },
         { binding: 2, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } },
-        { binding: 3, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } }
+        { binding: 3, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } },
+        { binding: 4, visibility: GPUShaderStage.VERTEX, buffer: { type: 'uniform' } }
     ]
         });
         
@@ -88,7 +92,8 @@ export function applyCoreMethods(Target) {
         { binding: 0, resource: { buffer: this.uniformBuffer } },
         { binding: 1, resource: { buffer: this.tensorBuffer } },
         { binding: 2, resource: { buffer: this.aiTensorBuffer } },
-        { binding: 3, resource: { buffer: this.fiberDirectionBuffer } }
+        { binding: 3, resource: { buffer: this.fiberDirectionBuffer } },
+        { binding: 4, resource: { buffer: this.pathwayStateBuffer } }
     ]
         });
         const makeAvatarBindGroup = (uniformBuffer, tensorBuffer) => this.device.createBindGroup({
@@ -97,7 +102,8 @@ export function applyCoreMethods(Target) {
         { binding: 0, resource: { buffer: uniformBuffer } },
         { binding: 1, resource: { buffer: tensorBuffer } },
         { binding: 2, resource: { buffer: tensorBuffer } },
-        { binding: 3, resource: { buffer: this.fiberDirectionBuffer } }
+        { binding: 3, resource: { buffer: this.fiberDirectionBuffer } },
+        { binding: 4, resource: { buffer: this.pathwayStateBuffer } }
     ]
         });
         this.avatarABindGroup = makeAvatarBindGroup(this.avatarAUniformBuffer, this.tensorBuffer);
@@ -139,7 +145,8 @@ export function applyCoreMethods(Target) {
                     { shaderLocation: 3, offset: 0, format: 'float32x3' },
                     { shaderLocation: 4, offset: 12, format: 'float32x3' }
                 ]
-            }
+            },
+            { arrayStride: 16, attributes: [{ shaderLocation: 5, offset: 0, format: 'float32x4' }] }
         ]
     },
     fragment: {
@@ -195,6 +202,26 @@ export function applyCoreMethods(Target) {
         }
         this._lastHumanTensor.set(float32Array);
         this.device.queue.writeBuffer(this.tensorBuffer, 0, float32Array);
+    };
+
+    Target.prototype.getVoxelDataSnapshot = async function() {
+        if (this.tensorPlaybackMode || (this.wasmMode && this.wasmEngine?.available)) {
+            return new Float32Array(this._lastHumanTensor);
+        }
+        const size = this.voxelCount * 4;
+        const readback = this.device.createBuffer({ size, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });
+        try {
+            const encoder = this.device.createCommandEncoder();
+            encoder.copyBufferToBuffer(this.tensorBuffer, 0, readback, 0, size);
+            this.device.queue.submit([encoder.finish()]);
+            await readback.mapAsync(GPUMapMode.READ);
+            const tensor = new Float32Array(readback.getMappedRange().slice(0));
+            this._lastHumanTensor.set(tensor);
+            return tensor;
+        } finally {
+            if (readback.mapState === 'mapped') readback.unmap();
+            readback.destroy();
+        }
     };
 
     Target.prototype.setPartnerTensorData = function(float32Array) {

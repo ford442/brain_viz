@@ -46,6 +46,7 @@ export function applyRenderLoopMethods(Target) {
         this.time += 0.016;
         this.updateAltitudeState(); // Update altitude/hypoxia parameters before uniforms
         this.updateUniforms();
+        this.updatePathwayStateBuffer();
         if (this.params.style >= 4.0) this.updateSynaptiXBridges();
         
         const commandEncoder = this.device.createCommandEncoder();
@@ -102,6 +103,7 @@ export function applyRenderLoopMethods(Target) {
     renderPass.setVertexBuffer(1, this.fiberNormalBuffer);
     renderPass.setVertexBuffer(2, this.fiberMetaBuffer);
     renderPass.setVertexBuffer(3, this.fiberPathBuffer);
+    renderPass.setVertexBuffer(4, this.pathwayMetaBuffer);
     renderPass.draw(this.fiberVertexCount);
 
     // 2. Draw Dense Point Cloud (Boutons / Varicosities) [V3.1]

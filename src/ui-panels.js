@@ -8,3 +8,5 @@ export { setupBciPanel } from './ui-bci-panel.js';
 export { setupXrPanel } from './ui-xr-panel.js';
 export { setupNeuromodulatorPanel } from './ui-neuromodulator-panel.js';
 export { setupTrainingPanel } from './ui-training-panel.js';
+export { setupSessionPanel } from './ui-session-panel.js';
+export { setupPathwayPanel } from './ui-pathway-panel.js';

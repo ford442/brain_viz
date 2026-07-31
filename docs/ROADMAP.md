@@ -39,6 +39,7 @@ For the current architecture and module responsibilities, see [`AGENTS.md`](../A
 | 24 | Neurofeedback Training Mode | `TrainingEngine`, simulated metric sampling, gamified hold-in-band objectives with streak/drift scoring and stars, `training_start`/`training_checkpoint`/`training_end` routine events with auto-branching, Training tab UI with session history, keyboard demo-baseline courses |
 | 25 | Live EEG / BCI Devices | Muse Classic/Athena Web Bluetooth, OpenBCI UDP/WebSocket bridge, calibrated band-power projection into the human 32³ tensor, editable channel mapping, `.nwbci` recording/replay, and BCI routine events |
 | 26 | WebXR Immersive Mode | WebGL2 stereo VR, routine-driven XR rig, controller/hand energy painting, lobe viewpoints, and optional tabletop AR |
+| 27 | Double Mirror Multimodal Sessions | Local-only synchronized 32³ tensor, webcam-thumbnail, microphone-feature, and note capture; strict `.nwsession` replay/scrubbing; descriptive occipital/audio correlation heatmap; aligned CSV export |
 
 ## Open Items
 
@@ -71,4 +72,5 @@ Deduplicated from the historical "Dream Log" entries across the archived plans �
 - [`docs/webgl-fallback.md`](webgl-fallback.md) — WebGL2 fallback/debug renderer
 - [`docs/wasm-engine.md`](wasm-engine.md) — C++/WASM hybrid simulation engine
 - [`docs/SCIENTIFIC_ACCURACY_REPORT.md`](SCIENTIFIC_ACCURACY_REPORT.md) — physiological model verification
-- [`docs/DOUBLE_MIRROR_VISION.md`](DOUBLE_MIRROR_VISION.md) — speculative, larger-scope multimodal vision (separate from this roadmap)
+- [`docs/session-format.md`](session-format.md) — shipped Double Mirror capture, NWS1 format, replay, analysis, privacy, and scientific limits
+- [`docs/DOUBLE_MIRROR_VISION.md`](DOUBLE_MIRROR_VISION.md) — shipped V1 boundary and longer-term multimodal ideas

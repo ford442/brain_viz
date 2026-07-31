@@ -1,9 +1,9 @@
-> **Speculative future vision, not a roadmap.** This document explores a much larger, separate idea — fusing EEG with other personal data streams (video, audio, text) — distinct in scope from the shipped Neuro-Weaver engine. For the actual phase-by-phase roadmap and dream backlog, see [`docs/ROADMAP.md`](ROADMAP.md).
+> **V1 is implemented.** Neuro-Weaver now ships local-only Double Mirror sessions with synchronized human 32³ tensor frames, 10 Hz webcam thumbnails, derived microphone features, notes, `.nwsession` replay/scrubbing, descriptive correlation analysis, and CSV export. See [`session-format.md`](session-format.md) for the exact contract. The larger ideas below remain a vision, not a claim that continuous media, cloud fusion, or causal inference exists.
 
 # Brain Data Integration Plan: Toward a "Double Mirror" of the Person
 
 ## Overview
-This plan outlines a theoretical framework for expanding the `brain_viz` repository beyond real-time EEG brain event visualization. The goal is to create a multimodal "double mirror" – a comprehensive digital representation of an individual's cognitive and sensory experiences by integrating EEG data with other personal data streams such as images, videos, audio, and text.
+This plan outlines a framework extending `brain_viz` beyond real-time brain event visualization. The first implementation is intentionally bounded: it records the current human visualization tensor whether sourced from simulation, BCI, playback, or WASM, but stores only still thumbnails, derived audio features, and user-entered text alongside it.
 
 The "double mirror" concept refers to a layered reflection of the person: one layer showing external inputs (sensory data) and another showing internal brain activity (EEG), synchronized to reveal correlations between perception, cognition, and behavior.
 
@@ -12,12 +12,11 @@ We theorize collecting and combining the following data types with EEG scans:
 
 ### 1. Visual Data
 - **Images**: Static snapshots captured during EEG sessions (e.g., via webcam or mobile camera). These could include facial expressions, surroundings, or stimuli presented to the user.
-- **Videos**: Continuous recordings of the user's environment or actions, synchronized with EEG timestamps.
+- **Videos**: Continuous recordings remain future/out of scope. V1 stores only 320×180 still thumbnails.
 - **Purpose**: Correlate visual stimuli with brain wave patterns. For example, track how the brain responds to specific images or changes in visual input.
 
 ### 2. Audio Data
-- **Ambient Audio**: Recordings of environmental sounds during EEG monitoring.
-- **User Speech/Vocalization**: Captured via microphone, including conversations or self-talk.
+- **Ambient Audio / speech**: Raw or audible recording remains future/out of scope. V1 stores only five derived feature values per sample.
 - **Purpose**: Analyze auditory processing in the brain. Integrate speech patterns with EEG to study language processing, emotional tone, or stress responses.
 
 ### 3. Textual Data
@@ -30,12 +29,12 @@ We theorize collecting and combining the following data types with EEG scans:
 - **Wearable Data**: From smartwatches or fitness trackers for holistic health monitoring.
 
 ## Integration Approach
-- **Synchronization**: Use precise timestamps to align all data streams with EEG recordings. Leverage tools like Python's `datetime` or JavaScript's `Date` objects for millisecond-level accuracy.
+- **Synchronization**: Shipped V1 uses one monotonic `performance.now()` origin and a shared 10 Hz tick across retained streams.
 - **Data Fusion**: Employ machine learning models (e.g., via TensorFlow in Python) to fuse multimodal data. Techniques could include:
   - Multimodal embeddings (combining text, image, audio vectors with EEG features).
   - Time-series analysis to find correlations between EEG waves and sensory inputs.
 - **Visualization**: Extend the current tensor-based animation to include overlays of visual/audio/text elements synced with brain activity. Use libraries like Three.js (JavaScript) for 3D rendering.
-- **Storage and Privacy**: Design a secure data schema (e.g., JSON or HDF5) ensuring user consent and data anonymization. Consider cloud storage with encryption.
+- **Storage and Privacy**: Shipped V1 uses a documented, dependency-free NWS1 envelope, explicit local-only consent, temporary IndexedDB chunks, and user-initiated download. Cloud storage and encryption remain out of scope.
 
 ## Potential Applications
 - **Personalized Therapy**: Identify triggers for anxiety or focus issues by correlating EEG with daily experiences.
@@ -50,9 +49,13 @@ We theorize collecting and combining the following data types with EEG scans:
 - **Scalability**: Designing modular code to add new data types without disrupting existing EEG visualization.
 
 ## Next Steps
-1. **Prototype Data Collection**: Add simple webcam and microphone integration to capture basic images/audio during EEG sessions.
-2. **Experiment with Fusion**: Implement a basic ML model to correlate EEG with a single modality (e.g., text sentiment analysis).
+1. **Harden V1 Data Collection**: Continue validating camera/microphone differences across physical devices without expanding retained media.
+2. **Evaluate Fusion Carefully**: Any later model must be explicitly separated from V1's descriptive, non-causal correlation output.
 3. **User Testing**: Gather feedback on the "double mirror" concept through small-scale trials.
 4. **Documentation**: Update this plan as experiments progress, adding code examples and results.
 
 This plan serves as a starting point for discussion and development. Contributions and ideas are welcome!
+
+## Scientific and privacy boundary
+
+Double Mirror V1 is not a medical or diagnostic instrument. Pearson correlations and heatmap occupancy are descriptive summaries sensitive to sampling, preprocessing, browser scheduling, and sensor latency; they do not establish causality or identify mental states. Downloaded sessions may contain sensitive brain activity, face/environment thumbnails, microphone-derived measurements, moods, and notes. The user is responsible for access control and retention after download.

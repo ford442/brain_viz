@@ -2,6 +2,7 @@
 import { RoutinePlayer } from './routine-player.js';
 import { AudioReactor } from './audio-reactor.js';
 import { MINI_ROUTINES } from './mini-routines.js';
+import { DOPAMINE_PATHWAY_DEMO } from './pathways.js';
 
 export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo) {
     // --- 1. SETUP ROUTINE PLAYER ---
@@ -150,7 +151,7 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
             player.renderer.params.growth = (player.renderer.params.growth || 0) + (evt.value || 0.1);
         }
     });
-    player.registerSubRoutines(MINI_ROUTINES);
+    player.registerSubRoutines({ ...MINI_ROUTINES, 'dopamine-pathway-demo': DOPAMINE_PATHWAY_DEMO });
 
     MINI_ROUTINES['E'] = [
         { time: 0.0, type: 'text', message: 'Visual Cortex Processing', duration: 3.0 },

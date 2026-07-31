@@ -42,6 +42,14 @@ export function applyAccessorsMethods(Target) {
  return new Float32Array(this.fiberPaths); 
     };
 
+    Target.prototype.getPathwayMetadata = function() {
+ return this.pathwayMetadata instanceof Float32Array ? this.pathwayMetadata : new Float32Array(this.pathwayMetadata);
+    };
+
+    Target.prototype.getPathwaySelections = function() {
+ return this.pathwaySelections.map((selection) => ({ ...selection, samplePosition: [...selection.samplePosition] }));
+    };
+
     Target.prototype.getSparkSourceData = function() {
  return new Float32Array(this.sparkSources); 
     };

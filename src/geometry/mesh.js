@@ -1,3 +1,5 @@
+import { buildPathwayMetadata } from '../pathways.js';
+
 export function applyMeshMethods(Target) {
     Target.prototype.generate = function(rows, cols) {
         this.randomState = this.seed >>> 0;
@@ -12,6 +14,8 @@ export function applyMeshMethods(Target) {
         this.sparkSources = [];
         this.fiberMetadata = [];
         this.fiberPaths = [];
+        this.pathwayMetadata = [];
+        this.pathwaySelections = [];
         this.fiberCenterlines = [];
 
         // 1. Generate deformed sphere (Brain Mesh)
@@ -57,6 +61,12 @@ export function applyMeshMethods(Target) {
 
         // 4. Generate U-fibers (shallow association fibers)
         this.generateUFibers();
+
+        // [Neuro-Weaver] Named pathways reuse main centerlines only. This parallel
+        // stream does not alter fiber order, bundle IDs, or affinity generation.
+        const pathwayData = buildPathwayMetadata(this.fiberCenterlines, this.fibers);
+        this.pathwayMetadata = pathwayData.metadata;
+        this.pathwaySelections = pathwayData.selections;
 
         // 5. Generate cortical mantle micro-node cloud for dense connectome rendering
         this.generateCorticalMantleCloud();

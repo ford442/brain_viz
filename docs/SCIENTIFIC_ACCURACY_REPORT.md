@@ -53,6 +53,19 @@ this.params.oxygenLevel = Math.max(0.3, 1.0 - (altFraction * 0.7));
 
 **Conclusion:** All anatomical region mappings are spatially correct per standard neuroanatomy.
 
+### 2.1 Mesocorticolimbic Dopamine Pathway — Schematic Visualization
+
+The named dopamine overlay distinguishes two ventral tegmental area (VTA) projections:
+
+- **Mesolimbic:** VTA → bilateral nucleus accumbens.
+- **Mesocortical:** VTA → bilateral prefrontal cortex.
+
+These labels reflect established descriptions of the forked mesocorticolimbic dopamine circuit. The visualization's 32³ voxel landmarks and its selected procedural fibers are explicitly **schematic**: the generated brain is not atlas-registered, and the highlighted geometry is not diffusion MRI tractography.
+
+References: [VTA dopamine-system review](https://pmc.ncbi.nlm.nih.gov/articles/PMC11011984/); [mesocorticolimbic review](https://pmc.ncbi.nlm.nih.gov/articles/PMC2958859/).
+
+The traveling gold pulse is a narrative representation of neurotransmitter signaling. It does not model dopamine concentration, receptor occupancy or binding, axonal/synaptic delay, reuptake, metabolism, or pharmacokinetics. Likewise, interaction with the stroke-lesion sphere is only a local emission mask over intersecting rendered fibers; it is not a physiological model of ischemia or infarct propagation.
+
 ---
 
 ## 3. Regional Hypoxia Vulnerability ⚠️ PARTIALLY CORRECT

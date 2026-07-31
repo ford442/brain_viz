@@ -4,12 +4,12 @@ import { COMPUTE_UNIFORM_BUFFER_SIZE } from './constants.js';
 import { assertUniformLayout, assertShaderUniformsMatch } from '../shaders/uniform-layout.js';
 import {
     vertexShader, fragmentShader,
-    fiberVertexShader, fiberFragmentShader,
     somaVertexShader, somaFragmentShader,
     sparkVertexShader, sparkFragmentShader,
     postFragmentShader,
     pointCloudVertexShader, pointCloudFragmentShader,
 } from '../shaders.js';
+import { fiberVertexShader, fiberFragmentShader } from '../shaders/fiber.js';
 
 // Dev-only: the layout assertions below only need to run once, not every frame.
 let uniformLayoutChecked = false;

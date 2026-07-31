@@ -16,6 +16,8 @@ export class BrainGeometry {
         this.fiberNormals = [];
         this.fiberMetadata = [];
         this.fiberPaths = [];
+        this.pathwayMetadata = [];
+        this.pathwaySelections = [];
         this.somaInstances = [];
         this.pointCloudInstances = [];
         this.sparkSources = [];

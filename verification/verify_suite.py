@@ -9,6 +9,7 @@ VERIFICATION_DIR = ROOT / "verification"
 SCRIPTS = [
     "verify_brain.py",
     "verify_stimulus.py",
+    "verify_pathways.py",
     "verify_camera.py",
     "verify_routine.py",
     "verify_synaptix.py",
@@ -22,6 +23,7 @@ SCRIPTS = [
     "verify_training.py",
     "verify_bci_device.py",
     "verify_webxr.py",
+    "verify_session.py",
 ]
 
 

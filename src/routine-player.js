@@ -35,6 +35,7 @@ export class RoutinePlayer {
         this.loop = false;
         this.timerId = null;
         this.onEvent = null; // Callback for UI updates
+        this.eventSubscribers = new Set();
         this.lastPauseTime = 0;
         this.subRoutines = {}; // [Phase 2] Sub-Routine System
         this.customPresets = {}; // [Phase 2] Custom Camera Presets
@@ -102,6 +103,19 @@ export class RoutinePlayer {
             return;
         }
         this.handlers.set(type, callback);
+    }
+
+    subscribe(callback) {
+        if (typeof callback !== 'function') return () => {};
+        this.eventSubscribers.add(callback);
+        return () => this.eventSubscribers.delete(callback);
+    }
+
+    emitEvent(event) {
+        if (typeof this.onEvent === 'function') this.onEvent(event);
+        for (const callback of this.eventSubscribers) {
+            try { callback(event); } catch (error) { console.error('[Routine] Event subscriber failed:', error); }
+        }
     }
 
     /**
@@ -276,7 +290,7 @@ export class RoutinePlayer {
         this.isPlaying = false;
         this.cancelScheduledTick();
         console.log(`[Routine] Paused at ${this.currentTime.toFixed(2)}s`);
-        if (this.onEvent) this.onEvent({ type: 'pause', value: true });
+        this.emitEvent({ type: 'pause', value: true });
     }
 
     resume() {
@@ -287,7 +301,7 @@ export class RoutinePlayer {
 
         this.tick();
         console.log("[Routine] Resumed");
-        if (this.onEvent) this.onEvent({ type: 'pause', value: false });
+        this.emitEvent({ type: 'pause', value: false });
     }
 
     stop() {
@@ -298,7 +312,7 @@ export class RoutinePlayer {
         this.cursor = 0;
         this.activeLerps = [];
         this.waitingForSignal = null;
-        if (this.onEvent) this.onEvent({ type: 'stop' });
+        this.emitEvent({ type: 'stop' });
     }
 
     // [Routine Logic Requirement] Ensure the tick() loop uses performance.now() for drift-free timing
@@ -529,14 +543,10 @@ export class RoutinePlayer {
                 }
             } else if (lerp.key === 'playbackSpeed') {
                 this.setPlaybackSpeed(currentVal);
-                if (this.onEvent) {
-                    this.onEvent({ type: 'speed', value: currentVal });
-                }
+                this.emitEvent({ type: 'speed', value: currentVal });
             } else {
                 this.renderer.setParams({ [lerp.key]: currentVal });
-                if (this.onEvent) {
-                    this.onEvent({ type: 'param', key: lerp.key, value: currentVal });
-                }
+                this.emitEvent({ type: 'param', key: lerp.key, value: currentVal });
             }
 
             return rawProgress < 1.0;
@@ -592,9 +602,7 @@ export class RoutinePlayer {
         }
 
         // Dispatch to UI listener if configured
-        if (typeof this.onEvent === 'function') {
-            this.onEvent(resolvedEvt);
-        }
+        this.emitEvent(resolvedEvt);
 
         // [Safety Guard] Ensure player state is valid after event execution
         if (this.state.respirationRate < 1.0) {

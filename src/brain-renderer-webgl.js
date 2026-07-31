@@ -2,6 +2,7 @@ import { BrainGeometry } from './brain-geometry.js';
 import { Mat4 } from './math-utils.js';
 import { meshVertexSource, meshFragmentSource, pointVertexSource, pointFragmentSource } from './webgl-shaders.js';
 import { clamp01, mix, smoothstep, createDefaultParams, createProgram } from './webgl-gl-utils.js';
+import { applyPathwayMethods, computePathwayEmission, createPathwayState } from './pathway-renderer.js';
 
 const BRAIN_RANGE = 1.6;
 
@@ -24,6 +25,8 @@ export class BrainRendererWebGL {
         this.targetFov = Math.PI / 4;
         this.camera = { zoom: this.zoom };
         this.time = 0;
+        this.pathwayState = createPathwayState();
+        this.pathwaySelections = [];
         this.isRunning = false;
         this.tensorPlaybackMode = false;
         this.geometryRows = 80;
@@ -63,6 +66,7 @@ export class BrainRendererWebGL {
         this.baseFiberVertices = null;
         this.baseFiberPaths = null;
         this.baseFiberMeta = null;
+        this.basePathwayMeta = null;
         this.baseSomaInstances = null;
         this.fiberAffinityData = null;
         this.tensorPointPositions = null;
@@ -72,6 +76,7 @@ export class BrainRendererWebGL {
         this.partnerMeshPositions = null;
         this.partnerMeshColors = null;
         this.fiberColors = null;
+        this.pathwayEmissions = null;
         this.somaColorSize = null;
 
         this.meshProgram = null;
@@ -179,6 +184,8 @@ export class BrainRendererWebGL {
         this.baseFiberVertices = this.geometry.getFiberData();
         this.baseFiberPaths = this.geometry.getFiberPathData();
         this.baseFiberMeta = this.geometry.getFiberDataWithMetadata();
+        this.basePathwayMeta = this.geometry.getPathwayMetadata();
+        this.pathwaySelections = this.geometry.getPathwaySelections();
         this.baseSomaInstances = this.geometry.getSomaInstanceData();
         this.fiberAffinityData = this.geometry.getFiberAffinityData();
 
@@ -187,6 +194,7 @@ export class BrainRendererWebGL {
         this.partnerMeshPositions = new Float32Array(this.baseVertices);
         this.partnerMeshColors = new Float32Array(this.baseVertices.length);
         this.fiberColors = new Float32Array(this.baseFiberVertices.length);
+        this.pathwayEmissions = new Float32Array(this.baseFiberVertices.length / 3);
         this.somaColorSize = new Float32Array((this.baseSomaInstances.length / 9) * 4);
 
         const wireIndices = new Uint32Array(this.baseIndices.length * 2);
@@ -422,6 +430,13 @@ export class BrainRendererWebGL {
         this.stimulus.mercuryActive = Math.max(0.0, intensity);
     }
 
+    triggerLesion(center, radius) {
+        this.params.lesionCenterX = center[0];
+        this.params.lesionCenterY = center[1];
+        this.params.lesionCenterZ = center[2];
+        this.params.lesionRadius = Math.max(0, radius);
+    }
+
     calmState() {
         this.params.frequency = 2.0;
         this.params.amplitude = 0.5;
@@ -618,6 +633,16 @@ export class BrainRendererWebGL {
     updateDynamicBuffers() {
         const gl = this.gl;
         const style = this.params.style || 0;
+        const pathwayRenderState = this.getPathwayRenderState();
+        const pathwayColor = pathwayRenderState.selected?.color || [0, 0, 0];
+        const lesion = {
+            center: [this.params.lesionCenterX || 0, this.params.lesionCenterY || 0, this.params.lesionCenterZ || 0],
+            radius: this.params.lesionRadius || 0,
+            active: this.params.lesionActive || 0,
+        };
+        const noLesion = { center: lesion.center, radius: lesion.radius, active: 0 };
+        const edgeIds = new Map((pathwayRenderState.selected?.edges || []).map((edge) => [edge.numericId, edge.id]));
+        const pathwayMetrics = { selectedVertexCount: 0, emissiveVertexCount: 0, maxEmission: 0, peakProgress: 0, lesionSuppressedVertexCount: 0, edges: {} };
 
         for (let i = 0; i < this.baseVertices.length; i += 3) {
             const pos = [this.baseVertices[i + 0], this.baseVertices[i + 1], this.baseVertices[i + 2]];
@@ -647,6 +672,7 @@ export class BrainRendererWebGL {
         }
 
         for (let i = 0; i < this.baseFiberVertices.length; i += 3) {
+            const vertexIndex = i / 3;
             const pathIndex = (i / 3) * 6;
             const midpoint = [
                 (this.baseFiberPaths[pathIndex + 0] + this.baseFiberPaths[pathIndex + 3]) * 0.5,
@@ -661,10 +687,42 @@ export class BrainRendererWebGL {
             const baseColor = style >= 4.0
                 ? [0.75 + resonance * 0.2, 0.35 + humanVal * 0.3, 0.95]
                 : [0.1 + humanVal * 0.9, 0.65 + myelin * 0.2, 0.95 - myelin * 0.35];
-            this.fiberColors[i + 0] = clamp01(baseColor[0]);
-            this.fiberColors[i + 1] = clamp01(baseColor[1]);
-            this.fiberColors[i + 2] = clamp01(baseColor[2]);
+            const pathwayMetaIndex = vertexIndex * 4;
+            const isSelectedPathway = this.basePathwayMeta[pathwayMetaIndex] === pathwayRenderState.selectedNumericId;
+            const pathwayMeta = isSelectedPathway ? this.basePathwayMeta.subarray(pathwayMetaIndex, pathwayMetaIndex + 4) : null;
+            const vertexPosition = isSelectedPathway
+                ? [this.baseFiberVertices[i], this.baseFiberVertices[i + 1], this.baseFiberVertices[i + 2]]
+                : null;
+            const emission = isSelectedPathway ? computePathwayEmission(pathwayMeta, pathwayRenderState, vertexPosition, lesion) : 0;
+            const rawEmission = isSelectedPathway && lesion.active > 0
+                ? computePathwayEmission(pathwayMeta, pathwayRenderState, vertexPosition, noLesion)
+                : emission;
+            this.pathwayEmissions[vertexIndex] = emission;
+            this.fiberColors[i + 0] = clamp01(baseColor[0] + pathwayColor[0] * emission);
+            this.fiberColors[i + 1] = clamp01(baseColor[1] + pathwayColor[1] * emission);
+            this.fiberColors[i + 2] = clamp01(baseColor[2] + pathwayColor[2] * emission);
+            if (isSelectedPathway) {
+                pathwayMetrics.selectedVertexCount++;
+                if (emission > 0.01) pathwayMetrics.emissiveVertexCount++;
+                if (rawEmission > 0.01 && emission < rawEmission * 0.8) pathwayMetrics.lesionSuppressedVertexCount++;
+                if (emission > pathwayMetrics.maxEmission) {
+                    pathwayMetrics.maxEmission = emission;
+                    pathwayMetrics.peakProgress = pathwayMeta[2];
+                }
+                const edgeId = edgeIds.get(pathwayMeta[1]) || String(pathwayMeta[1]);
+                const edgeMetric = pathwayMetrics.edges[edgeId] || { vertexCount: 0, emissiveVertexCount: 0, lesionSuppressedVertexCount: 0, maxEmission: 0, meanEmission: 0 };
+                edgeMetric.vertexCount++;
+                if (emission > 0.01) edgeMetric.emissiveVertexCount++;
+                if (rawEmission > 0.01 && emission < rawEmission * 0.8) edgeMetric.lesionSuppressedVertexCount++;
+                edgeMetric.maxEmission = Math.max(edgeMetric.maxEmission, emission);
+                edgeMetric.meanEmission += emission;
+                pathwayMetrics.edges[edgeId] = edgeMetric;
+            }
         }
+        for (const edgeMetric of Object.values(pathwayMetrics.edges)) {
+            edgeMetric.meanEmission /= Math.max(1, edgeMetric.vertexCount);
+        }
+        this.pathwayState.metrics = pathwayMetrics;
 
         const somaCount = this.baseSomaInstances.length / 9;
         for (let i = 0; i < somaCount; i++) {
@@ -949,6 +1007,10 @@ export class BrainRendererWebGL {
         this._lastHumanTensor.set(float32Array);
     }
 
+    getVoxelDataSnapshot() {
+        return new Float32Array(this._lastHumanTensor);
+    }
+
     setPartnerTensorData(float32Array) {
         if (!float32Array || float32Array.length !== this.voxelCount) {
             return;
@@ -978,3 +1040,5 @@ export class BrainRendererWebGL {
         }
     }
 }
+
+applyPathwayMethods(BrainRendererWebGL);

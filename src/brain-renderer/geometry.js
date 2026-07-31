@@ -26,6 +26,7 @@ export function applyGeometryMethods(Target) {
     this.fiberNormalBuffer,
     this.fiberMetaBuffer,
     this.fiberPathBuffer,
+    this.pathwayMetaBuffer,
     this.somaInstanceBuffer,
     this.somaVertexBuffer,
     this.somaIndexBuffer,
@@ -50,6 +51,8 @@ export function applyGeometryMethods(Target) {
         this.fiberNormalBuffer = this.createBuffer(geometry.getFiberNormalData(), GPUBufferUsage.VERTEX);
         this.fiberMetaBuffer = this.createBuffer(geometry.getFiberDataWithMetadata(), GPUBufferUsage.VERTEX);
         this.fiberPathBuffer = this.createBuffer(geometry.getFiberPathData(), GPUBufferUsage.VERTEX);
+        this.pathwayMetaBuffer = this.createBuffer(geometry.getPathwayMetadata(), GPUBufferUsage.VERTEX);
+        this.pathwaySelections = geometry.getPathwaySelections();
         this.fiberVertexCount = geometry.getFiberVertexCount();
         this.initSomaResources(geometry);
         this.initSparkResources(geometry);

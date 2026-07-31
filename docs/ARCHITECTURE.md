@@ -44,6 +44,16 @@ Matrix mathematics:
 - View matrix (lookAt)
 - Rotation matrices
 
+### Double Mirror session modules
+
+- `session-recorder.js` takes observational 10 Hz snapshots from the active human tensor and optional camera/audio sources, spilling chunks to temporary IndexedDB storage.
+- `session-format.js` owns strict NWS1 serialization and parsing for `.nwsession` files.
+- `session-player.js` arbitrates replay ownership of the human tensor while preserving the SynaptiX partner tensor.
+- `session-analysis.js` reuses the SynaptiX anatomical partition for aligned occipital/audio descriptive analysis and CSV export.
+- `ui-session-panel.js` owns explicit local consent, browser permission requests, transport controls, synchronized overlays, object-URL cleanup, heatmap rendering, and downloads.
+
+The main update loop skips TensorPlayer while session replay is active. Loading replay also disconnects live BCI and pauses paired SynaptiX human-frame sequences; stopping returns to simulation without reconnecting BCI. WebGPU capture uses a read-only buffer copy so it observes the actual compute-owned tensor without changing compute/render ordering.
+
 ## How It Works
 
 1. **Initialization**:

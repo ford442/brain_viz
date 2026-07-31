@@ -97,7 +97,8 @@ export function applyFibersMethods(Target) {
         const pC = [bun.c[0]+j.jC[0]+j.tC[0], bun.c[1]+j.jC[1]+j.tC[1], bun.c[2]+j.jC[2]+j.tC[2]];
         const pE = [bun.e[0]+j.jE[0]+j.tE[0], bun.e[1]+j.jE[1]+j.tE[1], bun.e[2]+j.jE[2]+j.tE[2]];
         const pts = this.generateSplinePath(pS, pC, pE, 12);
-        this.fiberCenterlines.push({ pts, bundleId: bun.id, myelin: bun.m });
+        const centerline = { pts, bundleId: bun.id, myelin: bun.m, vertexStart: this.fibers.length / 3, vertexCount: 0 };
+        this.fiberCenterlines.push(centerline);
 
         for (let i = 0; i < pts.length - 1; i++) {
             const [x1, y1, z1] = pts[i];
@@ -147,6 +148,7 @@ export function applyFibersMethods(Target) {
                 this.addSomaInstance(mp[0], mp[1], mp[2], bun.r * 0.22 * (1.0 - t*0.3), 1, bun.id, this.random()*6.28, this.random());
             }
         }
+        centerline.vertexCount = this.fibers.length / 3 - centerline.vertexStart;
 
         // Start / mid / end mesh somas for each sub-fiber
         const mid = pts[Math.floor(pts.length / 2)];
@@ -399,12 +401,14 @@ export function applyFibersMethods(Target) {
     ];
 
     const pts = this.generateSplinePath(start, control, end, 8);
+    const centerline = { pts, bundleId: BUNDLE_ID_U, myelin: 0.15, vertexStart: this.fibers.length / 3, vertexCount: 0 };
     for (let j = 0; j < pts.length - 1; j++) {
         if (this.isInsideBrain(pts[j][0], pts[j][1], pts[j][2]) || this.isInsideBrain(pts[j+1][0], pts[j+1][1], pts[j+1][2])) {
             this.addFiberTubeSegment(pts[j], pts[j+1], 0.006, 0.004, BUNDLE_ID_U, 0.15, j/(pts.length-1), false);
         }
     }
-    this.fiberCenterlines.push({ pts, bundleId: BUNDLE_ID_U, myelin: 0.15 });
+    centerline.vertexCount = this.fibers.length / 3 - centerline.vertexStart;
+    this.fiberCenterlines.push(centerline);
     for (let j = 0; j < pts.length; j++) {
         if (this.isInsideBrain(pts[j][0], pts[j][1], pts[j][2])) {
             this.addPointCloudInstance(pts[j][0], pts[j][1], pts[j][2], 0.005, 3, BUNDLE_ID_U, this.random()*6.28);
