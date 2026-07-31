@@ -11,7 +11,11 @@ import { setupSynaptiXIntegration } from './main-synaptix-integration.js';
 import { setupTrainingIntegration } from './main-training-integration.js';
 import { startMainUpdateLoop } from './main-update-loop.js';
 
+let isInitialized = false;
+
 async function init() {
+    if (isInitialized) return; // Safety: Prevent multiple initializations
+    isInitialized = true;
     // [Neuro-Script Cycle] Ensure we don't break the existing init() flow.
     if (window.RoutinePlayerInstance) { console.warn('RoutinePlayer already initialized.'); }
     // [Neuro-Weaver] Initializing UI and backend connections

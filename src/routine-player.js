@@ -359,6 +359,7 @@ export class RoutinePlayer {
         // [Neuro-Script Cycle] Verified drift-free performance.now() timing
         // [Neuro-Script Cycle] Ensure the tick() loop uses performance.now() for drift-free timing.
         let deltaTime = (now - this.lastFrameTime) / 1000.0;
+        if (isNaN(deltaTime) || deltaTime < 0) deltaTime = 0; // Safety: ensure deltaTime is always a valid number
         if (deltaTime > 1.0) deltaTime = 1.0; // Prevent huge jumps
         this.lastFrameTime = now;
 

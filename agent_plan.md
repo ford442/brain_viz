@@ -404,6 +404,7 @@
 - [x] **Circadian Rhythm:** Visualized circadian rhythm synchronization by cycling global illumination and activity levels over a simulated 24-hour period.
 
 ### Phase 2.5 Extension: Dynamic Seasonal Lighting Simulation
-- [ ] **Dynamic Seasonal Lighting:** Visualized dynamic seasonal lighting.
+- [x] **Dynamic Seasonal Lighting:** Visualized dynamic seasonal lighting.
 
 *Idea:* "What if we visualized age-related cognitive decline as a gradual decrease in neural plasticity and global flow speed over long playback sessions?"
+*Idea:* "What if we added localized strokes that affect certain parts of the brain temporarily?"
