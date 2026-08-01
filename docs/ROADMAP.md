@@ -43,7 +43,7 @@ For the current architecture and module responsibilities, see [`AGENTS.md`](../A
 
 ## Open Items
 
-- **Advanced Trigger System** (Phase 3) — allow complex multi-key combinations to trigger routines, instead of single-key bindings only. Not yet implemented.
+- **Advanced Trigger System** (Phase 3) — allow complex multi-key combinations to trigger routines, instead of single-key bindings only. Implemented.
 
 ## Dream Backlog (Not Yet Implemented)
 

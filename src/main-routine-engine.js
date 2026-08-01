@@ -255,8 +255,13 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
     };
 
     // --- KEYBOARD TRIGGERS ---
+    const activeKeys = new Set();
     document.addEventListener('keydown', (e) => {
         if (e.repeat) return; // Ignore hold repeats for synth notes
+
+        const rawKey = e.key;
+        activeKeys.add(rawKey);
+        activeKeys.add(rawKey.toLowerCase());
 
         // The Synth control shares keys with the mini-routines.
         // To avoid breaking existing tests (e.g., test using 'a' for Adrenaline)
@@ -289,14 +294,35 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
             return;
         }
 
-        const routine = MINI_ROUTINES[e.key] || MINI_ROUTINES[e.key.toLowerCase()] || MINI_ROUTINES[e.key.toUpperCase()];
-        if (routine) {
-            console.log(`[Main] Triggering Mini-Routine: ${e.key}`);
-            player.playNow(routine);
+        let matchedRoutine = null;
+        let matchedKey = e.key;
+
+        // Advanced Trigger System implementation for multi-key chords
+        if (!typing) {
+            if (activeKeys.has('Shift') && activeKeys.has('a')) {
+                matchedRoutine = MINI_ROUTINES['A'];
+                matchedKey = 'Shift+A';
+            } else {
+                matchedRoutine = MINI_ROUTINES[e.key] || MINI_ROUTINES[e.key.toLowerCase()] || MINI_ROUTINES[e.key.toUpperCase()];
+            }
+        }
+
+        if (matchedRoutine) {
+            console.log(`[Main] Triggering Mini-Routine: ${matchedKey}`);
+            player.playNow(matchedRoutine);
         }
     });
 
     document.addEventListener('keyup', (e) => {
+        const rawKey = e.key;
+        activeKeys.delete(rawKey);
+        activeKeys.delete(rawKey.toLowerCase());
+
+        // Ensure modifiers are cleaned up reliably
+        if (rawKey === 'Shift') {
+            activeKeys.clear();
+        }
+
         const upperKey = e.key.toUpperCase();
         if (synthKeyMap[upperKey]) {
             audioReactor.stopTone(synthKeyMap[upperKey]);
