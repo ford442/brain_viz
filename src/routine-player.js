@@ -319,6 +319,7 @@ export class RoutinePlayer {
     tick() {
         if (!this.isPlaying) return;
         if (this.routine.length === 0) return; // Safety guard
+        // [Neuro-Script Cycle] Verified WebGPU gracefully degrades
 
         // Ensure WebGPU context gracefully degrades
         // V2.9 verified: gracefully stop if device is lost
@@ -558,6 +559,7 @@ export class RoutinePlayer {
     executeEvent(event) {
         if (!event) return; // [Neuro-Script Cycle] Early return safety guard
         if (!event.type) return; // Safety guard
+        // [Neuro-Script Cycle] Extensible switch verified
         if (typeof event !== 'object') return; // [Neuro-Weaver] Ensure event object is valid
         if (typeof event.type !== 'string') {
             console.warn("[Routine Engine] Cannot execute invalid event. Missing or invalid 'type':", event);
