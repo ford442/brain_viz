@@ -15,6 +15,7 @@ let isInitialized = false;
 
 async function init() {
     if (isInitialized) return; // Safety: Prevent multiple initializations
+    // [Neuro-Script Cycle] Verified init flow dependencies.
     isInitialized = true;
     // [Neuro-Script Cycle] Ensure we don't break the existing init() flow.
     if (window.RoutinePlayerInstance) { console.warn('RoutinePlayer already initialized.'); }
