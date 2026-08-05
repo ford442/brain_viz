@@ -415,3 +415,4 @@
 - [x] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
 
 *Idea:* "What if we visualized Serotonin levels as color shifts?"
+*Idea:* "What if we visualized Melatonin levels as a slow dimming effect?"

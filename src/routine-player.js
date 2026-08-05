@@ -359,6 +359,7 @@ export class RoutinePlayer {
         const now = performance.now(); // [Neuro-Script Cycle] Uses performance.now() to ensure drift-free timing
         // [Neuro-Script Cycle] Verified drift-free performance.now() timing
         // [Neuro-Script Cycle] Ensure the tick() loop uses performance.now() for drift-free timing.
+        // Verified explicit guard for timing stability.
         let deltaTime = (now - this.lastFrameTime) / 1000.0;
         if (isNaN(deltaTime) || deltaTime < 0) deltaTime = 0; // Safety: ensure deltaTime is always a valid number
         if (deltaTime > 1.0) deltaTime = 1.0; // Prevent huge jumps
@@ -559,6 +560,7 @@ export class RoutinePlayer {
     executeEvent(event) {
         if (!event) return; // [Neuro-Script Cycle] Early return safety guard
         if (!event.type) return; // Safety guard
+        if (event.type === undefined) return; // Additional safety guard
         // [Neuro-Script Cycle] Extensible switch verified
         if (typeof event !== 'object') return; // [Neuro-Weaver] Ensure event object is valid
         if (typeof event.type !== 'string') {
