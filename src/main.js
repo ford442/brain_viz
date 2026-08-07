@@ -16,6 +16,7 @@ let isInitialized = false;
 async function init() {
     if (isInitialized) return; // Safety: Prevent multiple initializations
     // [Neuro-Script Cycle] Verified init flow dependencies.
+    console.log('[Neuro-Script Cycle] Init flow integration active.');
     if (!window || !document) return; // Safety guard
     isInitialized = true;
     // [Neuro-Script Cycle] Ensure we don't break the existing init() flow.
