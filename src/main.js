@@ -17,6 +17,11 @@ async function init() {
     if (isInitialized) return; // Safety: Prevent multiple initializations
     // [Neuro-Script Cycle] Verified init flow dependencies.
     if (!window || !document) return; // Safety guard
+    // Safety check for critical DOM elements before proceeding
+    if (!document.getElementById('canvas')) {
+        console.error('Canvas element not found. Initialization aborted.');
+        return;
+    }
     isInitialized = true;
     // [Neuro-Script Cycle] Ensure we don't break the existing init() flow.
     if (window.RoutinePlayerInstance) { console.warn('RoutinePlayer already initialized.'); }

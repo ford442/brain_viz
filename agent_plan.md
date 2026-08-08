@@ -416,3 +416,6 @@
 
 *Idea:* "What if we visualized Serotonin levels as color shifts?"
 *Idea:* "What if we visualized Melatonin levels as a slow dimming effect?"
+### Phase 2.5 Extension: WebGPU Safety
+- [x] **WebGPU Degradation:** Ensure routine-player fails gracefully on WebGPU context loss.
+*Idea:* "What if we visualized WebGPU context loss as a complete neural freeze and static decay?"
