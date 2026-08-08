@@ -416,3 +416,10 @@
 
 *Idea:* "What if we visualized Serotonin levels as color shifts?"
 *Idea:* "What if we visualized Melatonin levels as a slow dimming effect?"
+
+### Phase 2.5 Extension: Routine Refinements
+- [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
+- [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
+- [x] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
+
+*Idea:* "What if we visualized Serotonin levels as color shifts?"

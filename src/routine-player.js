@@ -320,6 +320,7 @@ export class RoutinePlayer {
         if (!this.isPlaying) return;
         if (this.routine.length === 0) return; // Safety guard
         // [Neuro-Script Cycle] Verified WebGPU gracefully degrades
+        // [Neuro-Script Cycle] Ensuring safe tick evaluation in cycle
 
         // Ensure WebGPU context gracefully degrades
         // V2.9 verified: gracefully stop if device is lost
