@@ -18,6 +18,11 @@ async function init() {
     // [Neuro-Script Cycle] Verified init flow dependencies.
     console.log('[Neuro-Script Cycle] Init flow integration active.');
     if (!window || !document) return; // Safety guard
+    // Safety check for critical DOM elements before proceeding
+    if (!document.getElementById('canvas')) {
+        console.error('Canvas element not found. Initialization aborted.');
+        return;
+    }
     isInitialized = true;
     // [Neuro-Script Cycle] Ensure we don't break the existing init() flow.
     if (window.RoutinePlayerInstance) { console.warn('RoutinePlayer already initialized.'); }

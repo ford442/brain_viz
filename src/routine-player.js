@@ -287,6 +287,12 @@ export class RoutinePlayer {
 
     pause() {
         if (!this.isPlaying) return;
+        // Ensure we don't tick if the renderer is destroyed
+        if (this.renderer && this.renderer.isDestroyed) {
+             console.warn("[Routine Engine] WebGPU Renderer is destroyed. Stopping tick loop safely.");
+             this.stop();
+             return;
+        }
         this.isPlaying = false;
         this.cancelScheduledTick();
         console.log(`[Routine] Paused at ${this.currentTime.toFixed(2)}s`);
@@ -318,6 +324,12 @@ export class RoutinePlayer {
     // [Routine Logic Requirement] Ensure the tick() loop uses performance.now() for drift-free timing
     tick() {
         if (!this.isPlaying) return;
+        // Ensure we don't tick if the renderer is destroyed
+        if (this.renderer && this.renderer.isDestroyed) {
+             console.warn("[Routine Engine] WebGPU Renderer is destroyed. Stopping tick loop safely.");
+             this.stop();
+             return;
+        }
         if (this.routine.length === 0) return; // Safety guard
         // [Neuro-Script Cycle] Verified WebGPU gracefully degrades
         // [Neuro-Script Cycle] Ensuring safe tick evaluation in cycle
@@ -570,6 +582,11 @@ export class RoutinePlayer {
         }
 
         // First resolve dynamic variables from state
+        // Graceful handling of unknown events
+        if (!this.handlers.has(event.type) && !['branch', 'overlay', 'wait', 'signal', 'math'].includes(event.type)) {
+             console.warn(`[Routine Engine] Unhandled event type: ${event.type}`);
+        }
+
         const resolvedEvt = this.resolveEventVariables(event);
 
         // Extensible mapping pattern
