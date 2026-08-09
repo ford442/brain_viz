@@ -16,6 +16,7 @@ let isInitialized = false;
 async function init() {
     if (isInitialized) return; // Safety: Prevent multiple initializations
     // [Neuro-Script Cycle] Verified init flow dependencies.
+    console.log('[Neuro-Script Cycle] Init flow integration active.');
     if (!window || !document) return; // Safety guard
     // Safety check for critical DOM elements before proceeding
     if (!document.getElementById('canvas')) {

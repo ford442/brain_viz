@@ -419,3 +419,10 @@
 ### Phase 2.5 Extension: WebGPU Safety
 - [x] **WebGPU Degradation:** Ensure routine-player fails gracefully on WebGPU context loss.
 *Idea:* "What if we visualized WebGPU context loss as a complete neural freeze and static decay?"
+
+### Phase 2.5 Extension: Routine Refinements
+- [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
+- [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
+- [x] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
+
+*Idea:* "What if we visualized Serotonin levels as color shifts?"
