@@ -1151,8 +1151,41 @@ fn main(input: FiberFragmentInput) -> @location(0) vec4<f32> {
     let breadcrumbColor = vec3<f32>(1.0, 0.9, 0.4) * breadcrumbGlow * 3.0;
     let glowLuma = max(emissive.r, max(emissive.g, emissive.b));
 
-    let finalRgb = diffuse * twistShade + highlight + activityGlow + avalancheColor + emissive + reasoningWarm + breadcrumbColor + vec3<f32>(1.0, 0.95, 0.65) * resonance * 0.35;
-    let alpha = clamp(0.18 + input.signal * 0.4 + ndotl * 0.16 + rim * 0.18 + anisotropic * 0.12 + glowLuma * 0.12, 0.12, 0.96) * ambientOcclusion * mix(0.82, 1.0, taper);
+    var finalRgb = diffuse * twistShade + highlight + activityGlow + avalancheColor + emissive + reasoningWarm + breadcrumbColor + vec3<f32>(1.0, 0.95, 0.65) * resonance * 0.35;
+    var alpha = clamp(0.18 + input.signal * 0.4 + ndotl * 0.16 + rim * 0.18 + anisotropic * 0.12 + glowLuma * 0.12, 0.12, 0.96) * ambientOcclusion * mix(0.82, 1.0, taper);
+
+    if (uniforms.style < 4.0 && uniforms.style >= 2.0) {
+        // --- CLEAN CONNECTOME (TRACTOGRAPHY) ---
+        // 1. Organic Lattice Structure (Warped Grid)
+        let freq = 12.0;
+        let warp = snoise(input.worldPos * 3.0) * 0.05;
+        let warpedPos = input.worldPos + vec3<f32>(warp);
+
+        let grid = abs(fract(warpedPos * freq) - 0.5);
+        let lineThickness = 0.08;
+
+        let fiberX = (1.0 - smoothstep(0.0, lineThickness, grid.y)) * (1.0 - smoothstep(0.0, lineThickness, grid.z));
+        let fiberY = (1.0 - smoothstep(0.0, lineThickness, grid.x)) * (1.0 - smoothstep(0.0, lineThickness, grid.z));
+        let fiberZ = (1.0 - smoothstep(0.0, lineThickness, grid.x)) * (1.0 - smoothstep(0.0, lineThickness, grid.y));
+
+        let fiberStructure = max(fiberX, max(fiberY, fiberZ));
+
+        let flowDir = warpedPos.x + warpedPos.y + warpedPos.z;
+        let flowPhase = fract(flowDir * 2.0 - uniforms.time * uniforms.flowSpeed * 0.2);
+        let pulse = smoothstep(0.8, 1.0, flowPhase) * uniforms.amplitude;
+
+        let baseColor = vec3<f32>(0.1, 0.4, 0.8);
+        let activeColor = vec3<f32>(0.8, 0.95, 1.0);
+
+        finalRgb = mix(baseColor, activeColor, pulse);
+
+        let visibility = max(fiberStructure * 0.4, pulse);
+        alpha = visibility * min(uniforms.amplitude + 0.2, 1.0);
+
+        if (alpha < 0.05) {
+            discard;
+        }
+    }
 
 
     // [Phase 19] Dopamine Trails Glow

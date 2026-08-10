@@ -331,6 +331,7 @@ export class RoutinePlayer {
              return;
         }
         if (this.routine.length === 0) return; // Safety guard
+        if (!this.renderer) { this.stop(); return; } // [Neuro-Script Cycle] Safety guard: stop ticking if renderer is missing completely
         // [Neuro-Script Cycle] Verified WebGPU gracefully degrades
         // [Neuro-Script Cycle] Ensuring safe tick evaluation in cycle
 
@@ -576,6 +577,7 @@ export class RoutinePlayer {
         if (event.type === undefined) return; // Additional safety guard
         // [Neuro-Script Cycle] Extensible switch verified
         if (typeof event !== 'object') return; // [Neuro-Weaver] Ensure event object is valid
+        if (event.duration !== undefined && event.duration < 0) event.duration = 0; // [Neuro-Script Cycle] Sanitize negative durations
         if (typeof event.type !== 'string') {
             console.warn("[Routine Engine] Cannot execute invalid event. Missing or invalid 'type':", event);
             return;
