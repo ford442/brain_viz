@@ -83,6 +83,7 @@
 - [x] **Respiration Simulation:** Implement a respiration event type that links to heartbeat and modulates flow speed and overall scene intensity.
 - [x] **Interactive Timeline Editor:** Created a visual, drag-and-drop timeline editor for sequence building instead of writing JSON directly.
 - [x] **Routine Markers:** Add a 'marker' event type to log specific points in the timeline for external syncing.
+- [ ] **Dynamic Particle Speed Modulation:** Add support for routines to dynamically control individual particle traversal speed in addition to global flow speed.
 ### Phase 3: "Brain DJ" Mode (Live Performance)
 - [x] **Dynamic Environment Reactions:** Allow respiration rate to dynamically react to visual stimuli or events.
 - [x] **Keyboard Triggers:** Bind number keys (1-9) to specific mini-routines (e.g., Press '1' for "Sudden Surprise", '2' for "Calm Down").
@@ -362,6 +363,7 @@
 * *Idea:* "What if we visualized neurotransmitter depletion as gradual mesh decimation?"
 * *Idea:* "What if we visualize targeted neuro-stimulation (like TMS) as persistent magnetic field distortions?"
 * *Idea:* "What if we visualized cellular apoptosis (programmed cell death) as a slow fading and shrinking of individual soma instances?"
+* *Idea:* "What if we visualize Serotonin levels as dynamic color shifts in combination with procedural volumetric fluid dynamics across the tensor volume?"
 
 ### Phase 12: Interactive Volumetric Polish
 - [x] **Clip Plane + Internal Reveal:** Dynamic Z-axis slicing integration into the routine system.
