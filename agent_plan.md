@@ -83,7 +83,7 @@
 - [x] **Respiration Simulation:** Implement a respiration event type that links to heartbeat and modulates flow speed and overall scene intensity.
 - [x] **Interactive Timeline Editor:** Created a visual, drag-and-drop timeline editor for sequence building instead of writing JSON directly.
 - [x] **Routine Markers:** Add a 'marker' event type to log specific points in the timeline for external syncing.
-- [ ] **Dynamic Particle Speed Modulation:** Add support for routines to dynamically control individual particle traversal speed in addition to global flow speed.
+- [x] **Dynamic Particle Speed Modulation:** Add support for routines to dynamically control individual particle traversal speed in addition to global flow speed.
 ### Phase 3: "Brain DJ" Mode (Live Performance)
 - [x] **Dynamic Environment Reactions:** Allow respiration rate to dynamically react to visual stimuli or events.
 - [x] **Keyboard Triggers:** Bind number keys (1-9) to specific mini-routines (e.g., Press '1' for "Sudden Surprise", '2' for "Calm Down").
@@ -434,3 +434,6 @@
 * [2026-08-09] - Completed Routine Logic Refactor. Ensured `tick()` uses `performance.now()`, `executeEvent` uses switch, and WebGPU degrades safely. Added tasks for Interpolation and Camera Maps, and Serotonin to Dream Log.
 
 *Idea:* "What if we visualized Serotonin levels as color shifts?"
+- [ ] **Parameter Interpolation/Easing:** Enhance region injection feedback parameters with smooth interpolation.
+- [ ] **Camera Coordinates Map:** Define explicit regions for better camera angles.
+*Idea:* "What if we visualized neurotransmitters using distinct particle shapes and unique traversal algorithms?"

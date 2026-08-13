@@ -59,6 +59,7 @@ struct Uniforms {
     sensoryDeprivation: f32,
     spatialMemory: f32,
     apoptosis: f32,
+    particleSpeed: f32,
 }
 
 struct VertexInput {

@@ -67,6 +67,7 @@ struct Uniforms {
     sensoryDeprivation: f32,
     spatialMemory: f32,
     apoptosis: f32,
+    particleSpeed: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var tDiffuse: texture_2d<f32>;
@@ -239,6 +240,7 @@ struct Uniforms {
     sensoryDeprivation: f32,
     spatialMemory: f32,
     apoptosis: f32,
+    particleSpeed: f32,
 }
 
 struct VertexInput {
@@ -468,6 +470,7 @@ struct Uniforms {
     sensoryDeprivation: f32,
     spatialMemory: f32,
     apoptosis: f32,
+    particleSpeed: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
