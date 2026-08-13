@@ -637,3 +637,11 @@ MINI_ROUTINES_PART2['$'] = [ // [Phase 2.5] Dynamic Seasonal Lighting Simulation
     { time: 12.0, type: 'lerp', key: 'flowSpeed', value: 0.5, duration: 4.0, ease: 'sineInOut' },
     { time: 16.0, type: 'text', message: 'SEASONAL CYCLE COMPLETE', duration: 2.0 }
 ];
+
+MINI_ROUTINES_PART2['\\'] = [
+    { time: 0.0, type: 'text', message: 'DYNAMIC PARTICLE SPEED MODULATION', duration: 3.0 },
+    { time: 0.0, type: 'lerp', key: 'particleSpeed', path: [1.0, 10.0], duration: 4.0, ease: 'sineInOut' },
+    { time: 4.0, type: 'lerp', key: 'particleSpeed', path: [10.0, 0.1], duration: 4.0, ease: 'sineInOut' },
+    { time: 8.0, type: 'lerp', key: 'particleSpeed', path: [0.1, 1.0], duration: 4.0, ease: 'sineInOut' },
+    { time: 12.0, type: 'text', message: 'ROUTINE COMPLETE', duration: 2.0 }
+];
