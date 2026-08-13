@@ -420,6 +420,17 @@ export function registerNarrativeFlowHandlers(handlers, player) {
         }
     });
 
+    handlers.set('spatial_memory_retrieval', (evt) => {
+        const intensity = evt.intensity || 1.0;
+        const duration = evt.duration || 3000;
+
+        player.renderer.setParams({ memoryBreadcrumbs: 0.0 });
+        player.startLerp({ key: 'memoryBreadcrumbs', value: intensity, duration: duration * 0.2, ease: 'sineOut' });
+
+        // Instead of setTimeout or mutating the routine, we use a delayed tween
+        player.startLerp({ key: 'memoryBreadcrumbs', value: 0.0, duration: duration * 0.8, ease: 'sineIn', delay: duration * 0.2 });
+    });
+
     handlers.set('psychedelic_trip', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
         const duration = evt.duration !== undefined ? evt.duration : 1.0;

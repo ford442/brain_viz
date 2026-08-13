@@ -19,6 +19,7 @@
 // struct actually uses. (WGSL spec ยง13.4.1 / ยง13.4.2 host-shareable layout.)
 const WGSL_TYPE_INFO = {
     f32: { size: 4, align: 4 },
+    vec2: { size: 8, align: 8 },
     vec3: { size: 12, align: 16 },
     vec4: { size: 16, align: 16 },
     mat4x4: { size: 64, align: 16 },
@@ -45,6 +46,8 @@ export const RENDER_UNIFORM_LAYOUT = [
     { name: 'flowSpeed', type: 'f32' },
     { name: 'colorShift', type: 'f32' },
     { name: 'dopamineTrails', type: 'f32' },
+    { name: 'memoryBreadcrumbs', type: 'f32' },
+    { name: 'padDopamine', type: 'vec2' },
     { name: 'slicePlane', type: 'vec4' },
     { name: 'sparkle', type: 'f32' },
     { name: 'growth', type: 'f32' },
@@ -165,7 +168,7 @@ export function assertUniformLayout(actualOffsets, actualFloatCount) {
     }
 }
 
-const FIELD_LINE_RE = /^\s*(\w+)\s*:\s*(f32|vec3<f32>|vec4<f32>|mat4x4<f32>)\s*,/gm;
+const FIELD_LINE_RE = /^\s*(\w+)\s*:\s*(f32|vec2<f32>|vec3<f32>|vec4<f32>|mat4x4<f32>)\s*,/gm;
 
 /**
  * Extracts the ordered field-name list of the first `struct Uniforms { ... }`

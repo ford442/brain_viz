@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { BrainGeometry } from '../src/brain-geometry.js';
-import { vertexShader, fragmentShader } from '../src/shaders.js';
+import { vertexShader, fragmentShader, fiberVertexShader, fiberFragmentShader } from '../src/shaders.js';
 
 const geometry = new BrainGeometry();
 geometry.generate(24, 24);
@@ -11,7 +11,7 @@ const metadata = geometry.getFiberDataWithMetadata();
 assert.ok(fibers.length > 0, 'fibers should be generated');
 assert.ok(metadata.length > 0, 'fiber metadata should be generated');
 assert.equal(
-  metadata.length / 3,
+  metadata.length / 4,
   fibers.length / 3,
   'fiber metadata must align 1:1 with fiber vertices'
 );
@@ -21,7 +21,7 @@ let maxRadius = 0;
 let minMyelin = Number.POSITIVE_INFINITY;
 let maxMyelin = 0;
 
-for (let i = 0; i < metadata.length; i += 3) {
+for (let i = 0; i < metadata.length; i += 4) {
   const radius = metadata[i + 0];
   const myelin = metadata[i + 2];
   assert.ok(radius > 0, `radius must be > 0 (got ${radius})`);
@@ -35,8 +35,8 @@ for (let i = 0; i < metadata.length; i += 3) {
 assert.ok(maxRadius > minRadius * 1.5, 'fibers should have clear radius hierarchy');
 assert.ok(maxMyelin > minMyelin + 0.2, 'fibers should have distinct myelin levels');
 
-assert.ok(vertexShader.includes('effectiveMyelin'), 'vertex shader should use myelin in connectome shading');
-assert.ok(vertexShader.includes('conductionSpeed'), 'vertex shader should vary pulse conduction speed');
-assert.ok(fragmentShader.includes('length(input.color)'), 'fragment shader should derive alpha from hierarchical fiber brightness');
+assert.ok(fiberVertexShader.includes('effectiveMyelin'), 'fiber vertex shader should use myelin in connectome shading');
+assert.ok(fiberVertexShader.includes('conductionSpeed'), 'fiber vertex shader should vary pulse conduction speed');
+assert.ok(fiberFragmentShader.includes('glowLuma'), 'fiber fragment shader should derive alpha from hierarchical fiber brightness');
 
 console.log('test_shader passed');
