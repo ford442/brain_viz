@@ -58,6 +58,7 @@ struct Uniforms {
     sensoryDeprivation: f32,
     spatialMemory: f32,
     apoptosis: f32,
+    particleSpeed: f32,
 }
 
 struct SparkInput {
@@ -145,7 +146,7 @@ fn main(input: SparkInput) -> SparkOutput {
 
     let localActivity = sampleSmoothedVoxelValue(anchor);
     let pulseSpeed = uniforms.flowSpeed * mix(0.55, 1.25, localActivity + uniforms.fluidActive * 0.2);
-    let travel = (fract(uniforms.time * pulseSpeed * speedMul + input.anchorPhase.w + bundleId * 0.071) - 0.5);
+    let travel = (fract(uniforms.time * pulseSpeed * uniforms.particleSpeed * speedMul + input.anchorPhase.w + bundleId * 0.071) - 0.5);
     let trailScale = mix(0.10, 0.34, localActivity) * mix(0.8, 1.25, strength) * uniforms.trailLength;
     let center = anchor + tangent * (travel * trailScale);
 
@@ -257,6 +258,7 @@ struct Uniforms {
     sensoryDeprivation: f32,
     spatialMemory: f32,
     apoptosis: f32,
+    particleSpeed: f32,
 }
 
 struct SparkInput {
@@ -333,6 +335,7 @@ struct TensorParams {
     sensoryDeprivation: f32,
     spatialMemory: f32,
     apoptosis: f32,
+    particleSpeed: f32,
 }
 
 @group(0) @binding(0) var<storage, read_write> activityTensor: array<f32>;

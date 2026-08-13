@@ -58,6 +58,7 @@ struct Uniforms {
     sensoryDeprivation: f32,
     spatialMemory: f32,
     apoptosis: f32,
+    particleSpeed: f32,
 }
 
 struct VertexInput {
@@ -319,6 +320,7 @@ struct Uniforms {
     sensoryDeprivation: f32,
     spatialMemory: f32,
     apoptosis: f32,
+    particleSpeed: f32,
 }
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 

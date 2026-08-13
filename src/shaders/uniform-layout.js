@@ -94,6 +94,7 @@ export const RENDER_UNIFORM_LAYOUT = [
     { name: 'sensoryDeprivation', type: 'f32' },
     { name: 'spatialMemory', type: 'f32' },
     { name: 'apoptosis', type: 'f32' },
+    { name: 'particleSpeed', type: 'f32' },
 ];
 
 /**
