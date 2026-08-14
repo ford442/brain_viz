@@ -649,5 +649,10 @@ MINI_ROUTINES_PART2['%'] = [ // [Phase 2.5] Dynamic Particle Speed Modulation
     { time: 5.0, type: 'lerp', key: 'flowSpeed', value: 5.0, duration: 1.0 }, // Speed up global flow
     { time: 5.0, type: 'lerp', key: 'particleSpeed', value: 0.0, duration: 1.0 }, // Halt particles
     { time: 9.0, type: 'lerp', key: 'particleSpeed', value: 1.0, duration: 2.0 }, // Resume
-    { time: 9.0, type: 'lerp', key: 'flowSpeed', value: 1.0, duration: 2.0 } // Normal flow
+    { time: 9.0, type: 'lerp', key: 'flowSpeed', value: 1.0, duration: 2.0 }, // Normal flow
+    { time: 0.0, type: 'text', message: 'DYNAMIC PARTICLE SPEED MODULATION', duration: 3.0 },
+    { time: 0.0, type: 'lerp', key: 'particleSpeed', path: [1.0, 10.0], duration: 4.0, ease: 'sineInOut' },
+    { time: 4.0, type: 'lerp', key: 'particleSpeed', path: [10.0, 0.1], duration: 4.0, ease: 'sineInOut' },
+    { time: 8.0, type: 'lerp', key: 'particleSpeed', path: [0.1, 1.0], duration: 4.0, ease: 'sineInOut' },
+    { time: 12.0, type: 'text', message: 'ROUTINE COMPLETE', duration: 2.0 }
 ];
