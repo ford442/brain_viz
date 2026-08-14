@@ -435,6 +435,6 @@
 * [2026-08-09] - Completed Routine Logic Refactor. Ensured `tick()` uses `performance.now()`, `executeEvent` uses switch, and WebGPU degrades safely. Added tasks for Interpolation and Camera Maps, and Serotonin to Dream Log.
 
 *Idea:* "What if we visualized Serotonin levels as color shifts?"
-- [ ] **Parameter Interpolation/Easing:** Enhance region injection feedback parameters with smooth interpolation.
-- [ ] **Camera Coordinates Map:** Define explicit regions for better camera angles.
+- [x] **Parameter Interpolation/Easing:** Enhance region injection feedback parameters with smooth interpolation.
+- [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 *Idea:* "What if we visualized neurotransmitters using distinct particle shapes and unique traversal algorithms?"

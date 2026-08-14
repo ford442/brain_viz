@@ -787,10 +787,8 @@ export class RoutinePlayer {
                     this.startLerp({ key: 'sparkle', value: Math.min(1.0, baseSparkle + (0.15 * intensity)), duration: 0.2, ease: 'quadOut' });
                     this.startLerp({ key: 'flowSpeed', value: baseFlow + (1.0 * intensity), duration: 0.2, ease: 'quadOut' });
 
-                    setTimeout(() => {
-                        this.startLerp({ key: 'sparkle', value: baseSparkle, duration: duration, ease: 'sineInOut' });
-                        this.startLerp({ key: 'flowSpeed', value: baseFlow, duration: duration, ease: 'sineInOut' });
-                    }, 200);
+                    this.startLerp({ key: 'sparkle', value: baseSparkle, duration: duration, ease: 'sineInOut', delay: 0.2 });
+                    this.startLerp({ key: 'flowSpeed', value: baseFlow, duration: duration, ease: 'sineInOut', delay: 0.2 });
                 }
             },
             get isPlaying() { return this._player.isPlaying; },
