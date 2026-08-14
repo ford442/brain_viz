@@ -27,6 +27,7 @@
  * @property {number} diffusionRate - [Phase 21] Neuromodulator spatial diffusion rate.
  * @property {number} pulseSaturation - [Phase 21] Neuromodulator pulse color saturation.
  * @property {number} trailLength - [Phase 21] Neuromodulator trail length multiplier.
+ * @property {number} particleSpeed - Dynamic control over individual particle traversal speed.
  * @property {number} retentionBiasX - [Phase 21] Regional retention bias: frontal.
  * @property {number} retentionBiasY - [Phase 21] Regional retention bias: occipital.
  * @property {number} retentionBiasZ - [Phase 21] Regional retention bias: temporal.

@@ -1016,7 +1016,7 @@ export class BrainRenderer {
         uData[OFFSET_SENSORYDEPRIVATION] = this.params.sensoryDeprivation;
         uData[OFFSET_SPATIALMEMORY] = this.params.spatialMemory;
         uData[OFFSET_APOPTOSIS] = this.params.apoptosis;
-        uData[OFFSET_PARTICLESPEED] = this.params.particleSpeed ?? 1.0;
+        uData[OFFSET_PARTICLESPEED] = this.params.particleSpeed !== undefined ? this.params.particleSpeed : 1.0;
 
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         

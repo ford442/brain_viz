@@ -638,7 +638,18 @@ MINI_ROUTINES_PART2['$'] = [ // [Phase 2.5] Dynamic Seasonal Lighting Simulation
     { time: 16.0, type: 'text', message: 'SEASONAL CYCLE COMPLETE', duration: 2.0 }
 ];
 
-MINI_ROUTINES_PART2['\\'] = [
+MINI_ROUTINES_PART2['%'] = [ // [Phase 2.5] Dynamic Particle Speed Modulation
+    { time: 0.0, type: 'style', value: 2.0 }, // Connectome Mode (where sparks are most visible)
+    { time: 0.0, type: 'text', message: 'PARTICLE SPEED BURST (SLOW FLOW)', duration: 4.0 },
+    { time: 0.0, type: 'lerp', key: 'flowSpeed', value: 0.5, duration: 1.0 }, // Slow down global flow
+    { time: 0.0, type: 'lerp', key: 'particleSpeed', value: 10.0, duration: 0.5 }, // Boost just particles
+    { time: 3.0, type: 'lerp', key: 'particleSpeed', value: 1.0, duration: 2.0 }, // Settle back down
+
+    { time: 5.0, type: 'text', message: 'PARTICLE HALT (FAST FLOW)', duration: 4.0 },
+    { time: 5.0, type: 'lerp', key: 'flowSpeed', value: 5.0, duration: 1.0 }, // Speed up global flow
+    { time: 5.0, type: 'lerp', key: 'particleSpeed', value: 0.0, duration: 1.0 }, // Halt particles
+    { time: 9.0, type: 'lerp', key: 'particleSpeed', value: 1.0, duration: 2.0 }, // Resume
+    { time: 9.0, type: 'lerp', key: 'flowSpeed', value: 1.0, duration: 2.0 }, // Normal flow
     { time: 0.0, type: 'text', message: 'DYNAMIC PARTICLE SPEED MODULATION', duration: 3.0 },
     { time: 0.0, type: 'lerp', key: 'particleSpeed', path: [1.0, 10.0], duration: 4.0, ease: 'sineInOut' },
     { time: 4.0, type: 'lerp', key: 'particleSpeed', path: [10.0, 0.1], duration: 4.0, ease: 'sineInOut' },

@@ -95,8 +95,10 @@ export function applyUniformsMethods(Target) {
         const OFFSET_VISUAL_FATIGUE = 89;
         const OFFSET_SENSORY_DEPRIVATION = 90;
         const OFFSET_SPATIAL_MEMORY = 91;
+        const OFFSET_APOPTOSIS = 96;
+        const OFFSET_PARTICLE_SPEED = 97;
 
-        const RENDER_UNIFORM_FLOAT_COUNT = 92;
+        const RENDER_UNIFORM_FLOAT_COUNT = 100;
         const uData = new Float32Array(RENDER_UNIFORM_FLOAT_COUNT);
         uData.set(mvp, OFFSET_MVP);
         uData.set(model, OFFSET_MODEL);
@@ -161,6 +163,8 @@ export function applyUniformsMethods(Target) {
         uData[OFFSET_VISUAL_FATIGUE] = this.params.visualFatigue || 0.0;
         uData[OFFSET_SENSORY_DEPRIVATION] = this.params.sensoryDeprivation || 0.0;
         uData[OFFSET_SPATIAL_MEMORY] = this.params.spatialMemory || 0.0;
+        uData[OFFSET_APOPTOSIS] = this.params.apoptosis || 0.0;
+        uData[OFFSET_PARTICLE_SPEED] = this.params.particleSpeed !== undefined ? this.params.particleSpeed : 1.0;
 
         // [SynaptiX Multi-Brain] Each avatar gets the same camera rotation but a
         // distinct local transform and tensor-only bind group.
@@ -200,7 +204,8 @@ export function applyUniformsMethods(Target) {
                 lesionRadius: OFFSET_LESION_RADIUS, decimation: OFFSET_DECIMATION, psychedelic: OFFSET_PSYCHEDELIC,
                 immuneActivity: OFFSET_IMMUNE_ACTIVITY, plasticityDecay: OFFSET_PLASTICITY_DECAY,
                 visualFatigue: OFFSET_VISUAL_FATIGUE, sensoryDeprivation: OFFSET_SENSORY_DEPRIVATION,
-                spatialMemory: OFFSET_SPATIAL_MEMORY,
+                spatialMemory: OFFSET_SPATIAL_MEMORY, apoptosis: OFFSET_APOPTOSIS,
+                particleSpeed: OFFSET_PARTICLE_SPEED
             }, RENDER_UNIFORM_FLOAT_COUNT);
             assertShaderUniformsMatch({
                 vertexShader, fragmentShader, fiberVertexShader, fiberFragmentShader,
