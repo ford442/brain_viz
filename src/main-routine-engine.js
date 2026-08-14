@@ -29,7 +29,9 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
         'parietal-lobe': { rotation: { x: 1.0, y: 0 }, zoom: 2.5 },
         'temporal-lobe-left': { rotation: { x: 0.2, y: 1.57 }, zoom: 2.5 },
         'temporal-lobe-right': { rotation: { x: 0.2, y: -1.57 }, zoom: 2.5 },
-        'cerebellum': { rotation: { x: -0.8, y: 3.14 }, zoom: 2.5 }
+        'cerebellum': { rotation: { x: -0.8, y: 3.14 }, zoom: 2.5 },
+        'amygdala': { rotation: { x: 0.0, y: 1.57 }, zoom: 1.2 },
+        'hippocampus': { rotation: { x: 0.2, y: -1.57 }, zoom: 1.4 }
     };
 
     const explicitSplineMap = {
