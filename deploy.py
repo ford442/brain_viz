@@ -45,7 +45,31 @@ DEPLOY_TIMEOUT: int = int(os.getenv("DEPLOY_TIMEOUT", "600"))
 # ============================================================
 
 
-def build_zip(build_path: Path) -> bytes:
+
+def fetch_remote_sizes(target_folder, target_site="test"):
+    """Ask the VPS for {rel_path: bytes} already on the deploy target."""
+    base = CONTABO_BASE_URL.rstrip("/")
+    url = f"{base}/api/deploy/{PROJECT_NAME}/sizes"
+    headers = {}
+    token = globals().get("DEPLOY_TOKEN")
+    if token:
+        headers["X-Deploy-Token"] = token
+    params = {"target_site": target_site or "test"}
+    if target_folder:
+        params["target_folder"] = target_folder
+    try:
+        response = requests.get(url, params=params, headers=headers, timeout=60)
+        if response.status_code == 200:
+            files = response.json().get("files") or {}
+            print(f"Remote size map: {len(files)} file(s)")
+            return {str(k).replace("\\", "/"): int(v) for k, v in files.items()}
+        print(f"  ! sizes HTTP {response.status_code}; uploading all files")
+    except Exception as exc:
+        print(f"  ! Could not fetch remote sizes ({exc}); uploading all files")
+    return {}
+
+
+def build_zip(build_path: Path, skip_sizes=None) -> bytes:
     """Zip the contents of build_path into an in-memory archive."""
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", compression=zipfile.ZIP_DEFLATED) as zf:
@@ -56,7 +80,12 @@ def build_zip(build_path: Path) -> bytes:
             parts = rel.parts
             if any(p in (".git", "node_modules", "__pycache__") for p in parts):
                 continue
-            zf.write(file, str(rel))
+            rel_s = str(rel).replace("\\", "/")
+            local_size = file.stat().st_size
+            if (skip_sizes or {}).get(rel_s) == local_size:
+                print(f"  = {rel} ({local_size} bytes, unchanged)")
+                continue
+            zf.write(file, rel_s)
             print(f"  + {rel}")
     return buf.getvalue()
 
@@ -82,8 +111,19 @@ def deploy_bundle(build_path: Path) -> bool:
         form_data["target_folder"] = target_folder
 
     print("Building zip archive...")
-    zip_bytes = build_zip(build_path)
+    target_folder_for_sizes = globals().get("DEPLOY_FOLDER") or globals().get("TARGET_FOLDER") or PROJECT_NAME
+    if "target_folder" in locals() and target_folder:
+        target_folder_for_sizes = target_folder
+    target_site_for_sizes = globals().get("DEPLOY_TARGET", "test")
+    print("Checking remote file sizes...")
+    skip_sizes = fetch_remote_sizes(target_folder_for_sizes, target_site_for_sizes)
+    zip_bytes = build_zip(build_path, skip_sizes)
     print(f"Archive size: {len(zip_bytes) / 1024:.1f} KB\n")
+
+    with zipfile.ZipFile(io.BytesIO(zip_bytes)) as _zf:
+        if not _zf.namelist():
+            print("All files identical in size on the target; nothing to upload.")
+            return True
 
     for attempt in range(1, DEPLOY_MAX_RETRIES + 1):
         if attempt > 1:
