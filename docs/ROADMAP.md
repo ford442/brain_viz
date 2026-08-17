@@ -74,3 +74,4 @@ Deduplicated from the historical "Dream Log" entries across the archived plans �
 - [`docs/SCIENTIFIC_ACCURACY_REPORT.md`](SCIENTIFIC_ACCURACY_REPORT.md) — physiological model verification
 - [`docs/session-format.md`](session-format.md) — shipped Double Mirror capture, NWS1 format, replay, analysis, privacy, and scientific limits
 - [`docs/DOUBLE_MIRROR_VISION.md`](DOUBLE_MIRROR_VISION.md) — shipped V1 boundary and longer-term multimodal ideas
+- **Neuro-Visual Endorphin Release Simulation** — What if we visualized the effects of endorphins as a temporary suppression of stress parameters and an increase in harmonic wave synchronization?
