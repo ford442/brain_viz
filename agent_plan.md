@@ -439,3 +439,10 @@
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 *Idea:* "What if we visualized neurotransmitters using distinct particle shapes and unique traversal algorithms?"
 *Idea:* "What if we visualized the effects of endorphins as a temporary suppression of stress parameters and an increase in harmonic wave synchronization?"
+
+### Phase 2.5 Extension: Routine Refinements
+- [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
+- [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
+
+*Idea:* "What if we visualized age-related cognitive decline as a gradual decrease in neural plasticity and global flow speed over long playback sessions?"
+*Idea:* "What if we added localized strokes that affect certain parts of the brain temporarily?"
