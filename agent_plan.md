@@ -16,20 +16,20 @@
 - [x] **Routine Logic & Extensibility Refactor:** Ensure `tick()` loop uses `performance.now()`, `executeEvent` is extensible, and WebGPU context gracefully degrades.
 
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
-- [x] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
+- [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
-- [x] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
+- [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 - [x] **Dynamic FOV Interpolation:** Smoothly interpolate the actual camera FOV during rapid movements to increase cinematic speed feel.
-- [x] **Camera Coordinates Map:** Define explicit spline regions for complex camera angles.
-- [x] **Parameter Interpolation/Easing:** Enhance routines with advanced smooth interpolation logic.
+- [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
+- [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
 - [x] **Camera Collision Detection Improvements:** Enhance pathfinding camera transitions to avoid mesh intersections during large field of view shifts.
 - [x] **Routine Logic & Extensibility Refactor:** Ensure `tick()` loop uses `performance.now()`, `executeEvent` is extensible, and WebGPU context gracefully degrades.
 - [x] **Memory Fragmentation:** Implement memory fragmentation event and routine.
-- [x] **Parameter Interpolation/Easing:** Added parameter interpolation.
+- [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
 - [x] **Sleep Deprivation Simulation:** Implement progressive desaturation, blurring, and increased glitch frequency to simulate sleep deprivation.
 - [x] **Sensory Overload Simulation:** Implement sensory overload event and routine.
-- [x] **Parameter Interpolation/Easing:** Enhance routines with advanced smooth interpolation logic.
-- [x] **Camera Coordinates Map:** Define explicit spline regions for complex camera angles.
+- [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
+- [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 - [x] **Environmental Hazards:** Implement electrical and mercury event handlers.
 - [x] **Serotonin Color Shift:** Implement `serotonin` event handler in `routine-player.js` to simulate serotonin flood via `colorShift` and `flowSpeed`.
 - [x] **Default Mode Network (DMN) Routine:** Visualize the Default Mode Network as a low-frequency hum during idle states.
@@ -38,13 +38,13 @@
 - [x] **Cognitive Stress Distortion:** Implement `stress` uniform to visualize cognitive load/stress via high-frequency surface vertex displacement.
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
 - [x] **Dynamic Time Dilation:** Modulate playback speed.
-- [x] **Parameter Interpolation/Easing:** Enhance routines with smooth interpolation.
-- [x] **Routine Logic & Extensibility Refactor:** Verified tick() loop uses performance.now(), executeEvent is extensible, and WebGPU context gracefully degrades.
+- [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
+- [x] **Routine Logic & Extensibility Refactor:** Ensure `tick()` loop uses `performance.now()`, `executeEvent` is extensible, and WebGPU context gracefully degrades.
 - [x] **Interactive Visual Overlays:** Support HTML/Markdown overlays that can pause execution until user interacts.
 - [x] **Branching/Conditional Routines:** Allow routines to branch dynamically based on user interaction or internal state variables.
 - [x] **Routine Variables/Math:** Support variables and basic arithmetic in routine events.
 - [x] **Dynamic Time Dilation:** Allow routines to modulate their own playback speed (`speed` event) to simulate bullet-time or fast-forward natively.
-- [x] **Parameter Interpolation/Easing:** Add parameter interpolation to routines.
+- [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
 - [x] **Parameter Interpolation/Easing (Spline):** Enhance interpolation with spline paths for complex transitions.
 - [x] **Spline Camera Coordinates:** Use splines for complex camera fly-throughs.
 - [x] **Pathfinding Camera:** Enhance camera transitions with collision avoidance to prevent clipping through the brain mesh during large rotations.
@@ -140,13 +140,13 @@
 ### Phase 18: Routine Logic Refinement
 - [x] **Routine Logic & Extensibility Refactor:** Ensure `tick()` loop uses `performance.now()`, `executeEvent` is extensible, and WebGPU context gracefully degrades.
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
-- [x] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
+- [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 - [x] **Procedural Serotonin Fluid Sim:** Enhance Serotonin visualizing not just with color shift but with volumetric fluid dynamics.
 
 ### Phase 19: Cognitive Phenomena Animation
 - [x] **Memory Formation Animation:** Implement `memory_formation` event handler in `routine-handlers.js` to simulate memory formation via `sparkle`, `growth`, and `flowSpeed`. Bound to 'K' key in `mini-routines.js`.
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
-- [x] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
+- [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 
 
 ### Phase 20: Render Pipeline Innovations
@@ -173,7 +173,7 @@
 
 ### Phase 21: Routine Engine Extensibility
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
-- [x] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
+- [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 
 ### Phase 22: Advanced Interpolation and Extensibility
 - [x] **Interpolation Easing Curves:** Implement cubic/sine easing curves for spline interpolation.
@@ -373,7 +373,7 @@
 ### Phase 13: Neuromodulation Interface
 - [x] **Region Injection API:** Enable scripted or click-based localized energy injection at specific anatomical coordinates within the tensor volume.
 - [x] **API Event Easing:** Smooth out manual Region API injections (e.g., cross-fade the effects or add decay options so they feel natural instead of immediate spikes).
-- [x] **Parameter Interpolation/Easing:** Enhance region injection feedback parameters with smooth interpolation.
+- [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
 
 ### Phase 14: Emergent Neural Behaviors
 - [x] **Synchronized Firing Patterns:** Implement a `sync_burst` event to simulate coordinated multi-region firing with rhythmic interpolation.
@@ -386,8 +386,8 @@
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 
-- [x] **Parameter Interpolation/Easing:** Enhance routines with smooth interpolation and advanced easing.
-- [x] **Camera Coordinates Map:** Define explicit regions for better camera angles and fly-throughs.
+- [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
+- [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 
 
 ### Phase 17: Advanced Routine Control
@@ -421,7 +421,7 @@
 ### Phase 2.5 Extension: Routine Refinements
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
-- [x] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
+- [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 
 *Idea:* "What if we visualized Serotonin levels as color shifts?"
 *Idea:* "What if we visualized Melatonin levels as a slow dimming effect?"
@@ -433,14 +433,14 @@
 ### Phase 2.5 Extension: Routine Refinements
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
-- [x] **Camera Camera Coordinates Map:** Define explicit regions for better camera angles.
+- [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 
 *Idea:* "What if we visualized Serotonin levels as color shifts?"
 
 * [2026-08-09] - Completed Routine Logic Refactor. Ensured `tick()` uses `performance.now()`, `executeEvent` uses switch, and WebGPU degrades safely. Added tasks for Interpolation and Camera Maps, and Serotonin to Dream Log.
 
 *Idea:* "What if we visualized Serotonin levels as color shifts?"
-- [x] **Parameter Interpolation/Easing:** Enhance region injection feedback parameters with smooth interpolation.
+- [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 *Idea:* "What if we visualized neurotransmitters using distinct particle shapes and unique traversal algorithms?"
 *Idea:* "What if we visualized the effects of endorphins as a temporary suppression of stress parameters and an increase in harmonic wave synchronization?"
