@@ -5,6 +5,7 @@ import { MINI_ROUTINES } from './mini-routines.js';
 import { DOPAMINE_PATHWAY_DEMO } from './pathways.js';
 
 export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo) {
+    // Setup Routine Engine integrating main UI with RoutinePlayer.
     // --- 1. SETUP ROUTINE PLAYER ---
     // Define explicit regions for easy scripting and better camera angles
     const regionCoordinatesMap = {
@@ -40,10 +41,6 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
     };
 
     // Initialize RoutinePlayer, ensuring it expects the BrainRenderer instance
-    // [Integration Check] Verified `init()` flow is not broken
-    // [Issue Checklist] RoutinePlayer integrated with renderer, regionMap, and cameraMap
-    // [Neuro-Script Cycle] RoutinePlayer initialized and evaluated
-    // Check Dependencies: ensure RoutinePlayer expects a BrainRenderer instance
     if (!renderer) {
         console.error("BrainRenderer instance missing. Cannot initialize RoutinePlayer.");
         return;
@@ -118,14 +115,10 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
     if (rendererInfo.usingWebGPU) {
         attachDeviceLostHandler(renderer, player);
     }
-
-    // Integration verified: RoutinePlayer instantiated safely without breaking init flow
-    // [Neuro-Script Cycle] Routine engine integration explicit validation
     console.log("[Neuro-Script Initialization Cycle] Routine Engine Instantiated.");
 
     window.playerState = player.state;
     window.visualizerAPI = player.getAPI();
-    // [Neuro-Script Cycle] Implemented clearLerps API feature
 
 
     player.registerHandler('style', () => {});

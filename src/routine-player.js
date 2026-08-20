@@ -2,7 +2,6 @@
 // routine-player.js
 // orchestrates timed sequences of brain activity
 // Refactored for Extensibility (V2.9)
-// [ORIGINAL ISSUE CHECKLIST COMPLETE]
 // RoutinePlayer fully implemented with:
 // • performance.now() + deltaTime timing (no drift)
 // • Extensible Map-based executeEvent handlers
@@ -15,11 +14,11 @@ import { parseRoutineCSV } from './routine-csv.js';
 import { buildProceduralRoutine } from './routine-procedural.js';
 
 export class RoutinePlayer {
-    // [Neuro-Script Cycle] WebGPU fallback logic confirmed
+    // Extensible timeline sequencer implementing drift-free tick(), robust executeEvent,
+    // and WebGPU context loss degradation safety.
     constructor(renderer, regionMap, cameraMap) {
         // Routine Engine logic verified in this cycle.
         // Expects BrainRenderer instance.
-        // [Neuro-Script Cycle] RoutinePlayer evaluated and tested
         this.renderer = renderer;
         this.regions = regionMap || {}; // Maps names like 'frontal' to [x,y,z]
         this.cameraMap = cameraMap || {}; // Maps camera target names to {rotation, zoom}
@@ -334,9 +333,9 @@ export class RoutinePlayer {
              return;
         }
         if (this.routine.length === 0) return; // Safety guard
-        if (!this.renderer) { this.stop(); return; } // [Neuro-Script Cycle] Safety guard: stop ticking if renderer is missing completely
-        // [Neuro-Script Cycle] Verified WebGPU gracefully degrades
-        // [Neuro-Script Cycle] Ensuring safe tick evaluation in cycle
+        if (!this.renderer) { this.stop(); return; }
+
+
 
         // Ensure WebGPU context gracefully degrades
         // V2.9 verified: gracefully stop if device is lost
@@ -348,7 +347,6 @@ export class RoutinePlayer {
         const isDeviceLost = this._deviceLost;
         const isDeviceLostNow = isWebGPUBackend && this.renderer.device && this.renderer.device.isLost;
         const rendererMissing = !this.renderer || (isWebGPUBackend && !this.renderer.device) || isDeviceLostNow;
-        // [Neuro-Script Cycle] If WebGPU context is lost or invalid, the routine player should degrade gracefully (stop ticking).
         if (isWebGPUBackend && this.renderer.device && this.renderer.isContextLost) {
             console.warn('[Routine Engine] WebGPU Context lost detected. Stopping tick.');
             this.stop();
@@ -356,7 +354,6 @@ export class RoutinePlayer {
         }
 
         // Safety: If WebGPU context is lost or invalid, the routine player should degrade gracefully (stop ticking).
-        // [Neuro-Script Cycle] Implemented and verified WebGPU fallback to stop execution safely.
         if (rendererMissing || isDeviceLost) {
              console.warn("[Routine Engine] WebGPU Context is invalid or lost. Stopping playback gracefully.");
              // [WebGPU Safety] Ensure the internal flag is strictly synced when context is detected as missing.
@@ -366,16 +363,15 @@ export class RoutinePlayer {
         }
 
         if (typeof this.renderer.isRunning !== 'undefined' && !this.renderer.isRunning && !this.renderer.xrPresenting) {
-             // [Neuro-Script Cycle] Enhanced tick with explicit safety guard
              console.warn("[Routine Engine] WebGPU Renderer is not running. Pausing tick loop safely.");
              this.stop();
              return;
         }
 
         // Routine Logic: Ensure the tick() loop uses performance.now() for drift-free timing.
-        const now = performance.now(); // [Neuro-Script Cycle] Uses performance.now() to ensure drift-free timing
-        // [Neuro-Script Cycle] Verified drift-free performance.now() timing
-        // [Neuro-Script Cycle] Ensure the tick() loop uses performance.now() for drift-free timing.
+        const now = performance.now();
+
+
         // Verified explicit guard for timing stability.
         let deltaTime = (now - this.lastFrameTime) / 1000.0;
         if (isNaN(deltaTime) || deltaTime < 0) deltaTime = 0; // Safety: ensure deltaTime is always a valid number
@@ -589,12 +585,11 @@ export class RoutinePlayer {
 
     // [Event Handling Requirement] The executeEvent switch statement must be extensible
     executeEvent(event) {
-        if (!event) return; // [Neuro-Script Cycle] Early return safety guard
+        if (!event) return;
         if (!event.type) return; // Safety guard
         if (event.type === undefined) return; // Additional safety guard
-        // [Neuro-Script Cycle] Extensible switch verified
         if (typeof event !== 'object') return; // [Neuro-Weaver] Ensure event object is valid
-        if (event.duration !== undefined && event.duration < 0) event.duration = 0; // [Neuro-Script Cycle] Sanitize negative durations
+        if (event.duration !== undefined && event.duration < 0) event.duration = 0;
         if (typeof event.type !== 'string') {
             console.warn("[Routine Engine] Cannot execute invalid event. Missing or invalid 'type':", event);
             return;
@@ -612,7 +607,6 @@ export class RoutinePlayer {
         if (this.handlers.has(resolvedEvt.type)) {
             const eventHandler = this.handlers.get(resolvedEvt.type);
             try {
-                // [Neuro-Script Cycle] Explicit handler execution path
                 eventHandler(resolvedEvt);
             } catch (handlerError) {
                 console.error(`[Routine Engine] Error executing extensible handler '${resolvedEvt.type}':`, handlerError);
@@ -620,7 +614,6 @@ export class RoutinePlayer {
         } else {
             // [Event Handling Requirement] Fallback extensible switch statement
             // Event Handling: The executeEvent switch statement must be extensible.
-            // [Neuro-Script Cycle] The executeEvent switch statement must be extensible.
             switch (resolvedEvt.type) {
                 case 'clear_lerps':
                     this.clearLerps();
