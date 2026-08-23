@@ -17,7 +17,6 @@ export class RoutinePlayer {
     // Extensible timeline sequencer implementing drift-free tick(), robust executeEvent,
     // and WebGPU context loss degradation safety.
     constructor(renderer, regionMap, cameraMap) {
-        // Routine Engine logic verified in this cycle.
         // Expects BrainRenderer instance.
         this.renderer = renderer;
         this.regions = regionMap || {}; // Maps names like 'frontal' to [x,y,z]
@@ -323,7 +322,6 @@ export class RoutinePlayer {
         this.emitEvent({ type: 'stop' });
     }
 
-    // [Routine Logic Requirement] Ensure the tick() loop uses performance.now() for drift-free timing
     tick() {
         if (!this.isPlaying) return;
         // Ensure we don't tick if the renderer is destroyed
@@ -337,8 +335,6 @@ export class RoutinePlayer {
 
 
 
-        // Ensure WebGPU context gracefully degrades
-        // V2.9 verified: gracefully stop if device is lost
         // Gracefully stop if device is lost fallback
         // The WebGL2 fallback renderer has no `device` concept (backendType === 'webgl'),
         // so the device-loss check only applies to the WebGPU backend; WebGL health is
@@ -353,10 +349,8 @@ export class RoutinePlayer {
             return;
         }
 
-        // Safety: If WebGPU context is lost or invalid, the routine player should degrade gracefully (stop ticking).
         if (rendererMissing || isDeviceLost) {
              console.warn("[Routine Engine] WebGPU Context is invalid or lost. Stopping playback gracefully.");
-             // [WebGPU Safety] Ensure the internal flag is strictly synced when context is detected as missing.
              if (rendererMissing) this._deviceLost = true;
              this.stop();
              return;
@@ -368,11 +362,8 @@ export class RoutinePlayer {
              return;
         }
 
-        // Routine Logic: Ensure the tick() loop uses performance.now() for drift-free timing.
         const now = performance.now();
 
-
-        // Verified explicit guard for timing stability.
         let deltaTime = (now - this.lastFrameTime) / 1000.0;
         if (isNaN(deltaTime) || deltaTime < 0) deltaTime = 0; // Safety: ensure deltaTime is always a valid number
         if (deltaTime > 1.0) deltaTime = 1.0; // Prevent huge jumps
@@ -583,12 +574,11 @@ export class RoutinePlayer {
         });
     }
 
-    // [Event Handling Requirement] The executeEvent switch statement must be extensible
     executeEvent(event) {
         if (!event) return;
         if (!event.type) return; // Safety guard
         if (event.type === undefined) return; // Additional safety guard
-        if (typeof event !== 'object') return; // [Neuro-Weaver] Ensure event object is valid
+        if (typeof event !== 'object') return;
         if (event.duration !== undefined && event.duration < 0) event.duration = 0;
         if (typeof event.type !== 'string') {
             console.warn("[Routine Engine] Cannot execute invalid event. Missing or invalid 'type':", event);
@@ -612,8 +602,7 @@ export class RoutinePlayer {
                 console.error(`[Routine Engine] Error executing extensible handler '${resolvedEvt.type}':`, handlerError);
             }
         } else {
-            // [Event Handling Requirement] Fallback extensible switch statement
-            // Event Handling: The executeEvent switch statement must be extensible.
+            // Fallback extensible switch statement
             switch (resolvedEvt.type) {
                 case 'clear_lerps':
                     this.clearLerps();
@@ -793,9 +782,7 @@ export class RoutinePlayer {
 // [Phase 2.5] Flow state added
 // [Phase 2.5] Dynamic weather added
 // [Phase 2.5] GSR Sync logic extended
-// Update cycle triggered for automated checks
 
 // [Phase 2.5] Dream Log Extension: Stroke Lesion
 // [Phase 2.5] Dream Log Extension: Neurotransmitter Depletion
 // [Phase 2.5] Added Pupillary Dilation Support
-// End of Neuro-Script Implementation Cycle update

@@ -6,7 +6,7 @@
 ## 🧠 Strategic Roadmap
 **Neuro-Script Implementation Cycle — Round 2**
 ### Phase 1: The Sequencing Core (Routine Engine)
-* [2026-08-19] - Completed Neuro-Script Implementation Cycle. Verified routine logic, event handling, and safety.
+- [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
 
 - [x] **Routine Player Module:** Implement `routine-player.js` to handle time-based event execution (Stimulus, Style Change, Parameter Tweaks). [x] RoutinePlayer + main.js integration (already existed and was enhanced in prior work)
 - [x] **Main Integration:** Refactor `main.js` to initialize `RoutinePlayer` and expose it to the UI.

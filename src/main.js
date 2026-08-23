@@ -15,8 +15,6 @@ let isInitialized = false;
 
 async function init() {
     if (isInitialized) return; // Safety: Prevent multiple initializations
-    // [Neuro-Script Cycle] Verified init flow dependencies.
-    console.log('[Neuro-Script Cycle] Init flow integration active.');
     if (!window || !document) return; // Safety guard
     // Safety check for critical DOM elements before proceeding
     if (!document.getElementById('canvas')) {
@@ -24,7 +22,6 @@ async function init() {
         return;
     }
     isInitialized = true;
-    // [Neuro-Script Cycle] Ensure we don't break the existing init() flow.
     if (window.RoutinePlayerInstance) { console.warn('RoutinePlayer already initialized.'); }
     // [Neuro-Weaver] Initializing UI and backend connections
     mountControlsShell();
@@ -40,9 +37,8 @@ async function init() {
         const { renderer, rendererInfo } = await setupRendererBackend(canvas);
         const modeSelector = setupModeSelector(renderer);
 
-        // [Neuro-Script Cycle] setupRoutineEngine returns RoutinePlayer and AudioReactor instances.
         const { player, audioReactor } = setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo);
-        if (!player) console.warn('[Neuro-Script Cycle] RoutinePlayer failed to initialize.'); // [Neuro-Script Cycle] Verified init flow dependencies.
+        if (!player) console.warn('RoutinePlayer failed to initialize.');
 
         setupLegendPanel();
         const legendPanel = document.getElementById('legend-panel');
@@ -113,4 +109,3 @@ async function init() {
 }
 
 init();
-// End of Neuro-Script Implementation Cycle update
