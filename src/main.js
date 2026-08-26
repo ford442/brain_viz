@@ -40,9 +40,10 @@ async function init() {
         const { renderer, rendererInfo } = await setupRendererBackend(canvas);
         const modeSelector = setupModeSelector(renderer);
 
-        // [Neuro-Script Cycle] setupRoutineEngine returns RoutinePlayer and AudioReactor instances.
+        // Initialize Routine Engine subsystems (RoutinePlayer, AudioReactor).
+        // Safely injected without breaking existing renderer initialization flow.
         const { player, audioReactor } = setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo);
-        if (!player) console.warn('[Neuro-Script Cycle] RoutinePlayer failed to initialize.'); // [Neuro-Script Cycle] Verified init flow dependencies.
+        if (!player) console.warn('[Routine Engine] RoutinePlayer failed to initialize.');
 
         setupLegendPanel();
         const legendPanel = document.getElementById('legend-panel');

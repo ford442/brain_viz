@@ -13,24 +13,11 @@ export function registerNeuromodulatorsHandlers(handlers, player) {
         // Smoothly fade back after full surge is reached
         if (duration > 0) {
             const ease = evt.ease || 'sineInOut';
+            const delay = 2.0; // Wait for the initial surge to complete before fading out
 
-            // Keep chronological ordering for reverting the values back to normal
-            if (player.routine) {
-                const revertTime = player.elapsedTime + 2.0;
-
-                const revertEvents = [
-                    { time: revertTime, type: 'lerp', key: 'colorShift', value: 0.0, duration: duration, ease: ease },
-                    { time: revertTime, type: 'lerp', key: 'flowSpeed', value: 4.0, duration: duration, ease: 'quadOut' },
-                    { time: revertTime, type: 'lerp', key: 'fluidActive', value: 0.0, duration: duration, ease: ease }
-                ];
-
-                let insertIdx = player.currentEventIndex ?? player.cursor;
-                while (insertIdx < player.routine.length && player.routine[insertIdx].time < revertTime) {
-                    insertIdx++;
-                }
-
-                player.routine.splice(insertIdx, 0, ...revertEvents);
-            }
+            player.startLerp({ key: 'colorShift', value: 0.0, duration: duration, ease: ease, delay: delay });
+            player.startLerp({ key: 'flowSpeed', value: 4.0, duration: duration, ease: 'quadOut', delay: delay });
+            player.startLerp({ key: 'fluidActive', value: 0.0, duration: duration, ease: ease, delay: delay });
         }
     });
 

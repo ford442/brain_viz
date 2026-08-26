@@ -437,6 +437,12 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
 
             finalColor = vec3<f32>(0.2, 0.6, 1.0);
 
+            // Explicit Shader integration for Serotonin color shift
+            if (uniforms.colorShift > 0.0) {
+                let warmShift = vec3<f32>(1.0, 0.7, 0.2); // Warm gold/orange for Serotonin
+                finalColor = mix(finalColor, warmShift, uniforms.colorShift);
+            }
+
             // Style 1 (Cyber): Digital Grid
             if (uniforms.style > 0.5 && uniforms.style < 1.5) {
                 finalColor = vec3<f32>(0.0, 0.9, 0.5);

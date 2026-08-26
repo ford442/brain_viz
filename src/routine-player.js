@@ -14,10 +14,14 @@ import { parseRoutineCSV } from './routine-csv.js';
 import { buildProceduralRoutine } from './routine-procedural.js';
 
 export class RoutinePlayer {
-    // Extensible timeline sequencer implementing drift-free tick(), robust executeEvent,
-    // and WebGPU context loss degradation safety.
+    /**
+     * Extensible timeline sequencer.
+     * Architectural Features:
+     * - Timing: Uses performance.now() and delta-time compensation to ensure drift-free sequencing.
+     * - Extensibility: executeEvent() resolves variables dynamically and dispatches to a Map of registered handlers, with a switch fallback.
+     * - Safety: Tick loop degrades gracefully and halts execution if WebGPU context is lost or renderer is destroyed.
+     */
     constructor(renderer, regionMap, cameraMap) {
-        // Routine Engine logic verified in this cycle.
         // Expects BrainRenderer instance.
         this.renderer = renderer;
         this.regions = regionMap || {}; // Maps names like 'frontal' to [x,y,z]

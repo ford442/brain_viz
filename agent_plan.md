@@ -13,6 +13,7 @@
 - [x] **"Deep Thought" Script:** Hardcode the demo routine (Organic -> Visual Input -> Connectome Processing -> Heatmap Aftermath).
 - [x] **Playback UI:** Add a "Run Sequence" button and a transport clock (Play/Stop/Loop) to the DOM.
 ### Phase 2: Advanced Choreography
+- [x] **Serotonin Color Shift Feature:** Implemented and wired the Serotonin color shift routine to key 4 and updated the UI legend.
 - [x] **Routine Logic & Extensibility Refactor:** Ensure `tick()` loop uses `performance.now()`, `executeEvent` is extensible, and WebGPU context gracefully degrades.
 
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
@@ -189,6 +190,7 @@
 - [x] **Psychedelic Visuals Offset Fix:** Corrected uniform offset issues in `src/brain-renderer.js` to include missing uniforms like `psychedelic` and restored `dopamineTrails` struct alignment as demanded by the updated WGSL structural layout, restoring the `psychedelic_trip` functionality.
 
 ## 🧪 "Dream" Log (Future Concepts)
+* *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "What if we mapped real-time geographic data (like population density or traffic) to localized structural density and glow intensity in the tensor volume?"
 * [x] "What if we visualize immune cell migration as particle streams during an inflammatory response?"
 * *Idea:* "What if we visualize psychedelic experiences as morphing geometric structures in the tensor volume?" (Implemented as Phase 2.5 Extension - Psychedelic Visuals)"
