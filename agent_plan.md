@@ -6,7 +6,7 @@
 ## 🧠 Strategic Roadmap
 **Neuro-Script Implementation Cycle — Round 2**
 ### Phase 1: The Sequencing Core (Routine Engine)
-* [2026-08-19] - Completed Neuro-Script Implementation Cycle. Verified routine logic, event handling, and safety.
+- [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
 
 - [x] **Routine Player Module:** Implement `routine-player.js` to handle time-based event execution (Stimulus, Style Change, Parameter Tweaks). [x] RoutinePlayer + main.js integration (already existed and was enhanced in prior work)
 - [x] **Main Integration:** Refactor `main.js` to initialize `RoutinePlayer` and expose it to the UI.
@@ -192,6 +192,8 @@
 ## 🧪 "Dream" Log (Future Concepts)
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "What if we mapped real-time geographic data (like population density or traffic) to localized structural density and glow intensity in the tensor volume?"
+
+* [2026-08-25] - Verified Neuro-Script Implementation Cycle: `routine-player.js` already natively uses `performance.now()`, an extensible `executeEvent` switch/map, and WebGPU degradation guards. No structural diffs were required to satisfy the architectural request. Dream Log updated with Serotonin color shifts.
 * [x] "What if we visualize immune cell migration as particle streams during an inflammatory response?"
 * *Idea:* "What if we visualize psychedelic experiences as morphing geometric structures in the tensor volume?" (Implemented as Phase 2.5 Extension - Psychedelic Visuals)"
 *Idea:* "What if we mapped real-time galvanic skin response to mesh structural noise?"
@@ -203,7 +205,6 @@
 * *Idea:* "What if we visualized visual cortex processing by simulating progressive edge-detection filters directly on the render pipeline?
 * *Idea:* "A shared Neuro-Script Exchange where people can publish, fork, and remix visualization routines. The player becomes both a performance instrument and a collaborative canvas."
 * *Idea:* "What if we mapped real-time stock market data to connectome signal pulses?"
-* *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "What if we visualized auditory hallucinations as rapid localized cortex flashes?"
 * *Idea:* "What if we visualized breathing rate as a subtle global illumination pulsing effect?"
 * *Idea:* "Visualizing breathing rate as a slow sine wave modulating the alpha channel of the background."
@@ -231,7 +232,6 @@
 * *Idea:* "Chromatic Aberration Shader" - Add post-processing for cinematic distortion.
 * *Idea:* "Collaborative Brain Storming" - Multi-user session where multiple people can inject stimuli into the same visualization via WebSockets.
 * *Idea:* "What if we visualized Acetylcholine levels as memory consolidation?"
-* *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "What if we allowed scripts to trigger external events like Haptic Feedback API?"
 * *Idea:* "Multimodal Embeddings" - Connect an ML backend to translate input text (e.g., from an LLM) into corresponding brain state routines automatically.
 * *Idea:* "What if we visualized ATP energy depletion as slow frame rates and desaturation?"
@@ -260,7 +260,6 @@
 * *Idea:* "What if we visualized Acetylcholine levels as memory consolidation?"
 * *Idea:* "What if we visualized the Default Mode Network as a low-frequency hum during idle states?"
 * *Idea:* "What if we visualized Histamine release as a localized inflammatory response/color shift?"
-* *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * [2026-05-04] - Completed Phase 5 (Acetylcholine Memory Consolidation). Implemented `acetylcholine` event handler in `routine-player.js` to simulate memory consolidation via `sparkle` and `flowSpeed`. Bound to 'r' key in `main.js`. Added immune cell migration idea to Dream Log.
 * [2026-04-13] - Completed Phase 5 (Noradrenaline Spike). Implemented `noradrenaline` event handler in `routine-player.js` to simulate global alertness via connectome frequency and flow speed. Bound to 'u' key in `main.js`. Added Histamine idea to Dream Log.
 * [2026-04-12] - Completed "Architecture & Innovation" step. Marked parameter interpolation and camera coordinate map tasks as complete. Added Default Mode Network idea to Dream Log.
@@ -269,7 +268,6 @@
 * [2026-05-02] - Completed Phase 2 (Endorphin Rush). Implemented `endorphin` event handler in `routine-player.js` to temporarily suppress stress/shake parameters. Bound to 'e' key in `main.js`. Added GABA idea to Dream Log.
 * [2026-05-01] - Added Adrenaline Surge event (`adrenaline`) to `routine-player.js`. Bound routine to 'a' key in `main.js` and updated legend. Added "Hormonal Flow Physics" idea to Dream Log.
 * [2026-03-30] - Completed Phase 5 (Cortisol Decay). Implemented `cortisol` uniform in shaders for structural decay and vertex displacement towards center. Added event handler in `routine-player.js` and updated UI/Demo Routine 'k' in `main.js`. Added Melatonin idea to Dream Log.
-* *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * [2026-04-10] - Updated routine-player.js to ensure performance.now() is used in tick(), executeEvent is fully extensible with registerHandler, and WebGPU degradation safety is implemented. Added parameter interpolation tasks and new Dream Log idea.
 * [2026-04-15] - Completed Phase 2 (Binaural Beats). Implemented `binaural` event type in `routine-player.js` using Web Audio API StereoPanner. Added 'k' mini-routine to `main.js`. Added "Procedural Binaural Generation" to Dream Log.
 * [2026-03-29] - Completed Phase 2 (CSS Filters & Markdown Subtitles). Added `cssFilter` event type and updated `text` event to parse Markdown. Added new routine to `main.js`. Added Cortisol idea to Dream Log.
@@ -281,7 +279,6 @@
 * [2026-03-09] - Completed Phase 2 (Spline Camera Coordinates). Modified `camera` event handler in `routine-player.js` to support spline interpolation across multiple targets. Added new mini-routine 'v' to `main.js`. Added "Interactive Brain Regions" to Dream Log.
 * *Idea:* "Visualize specific neurotransmitter pathways:" E.g., showing the Dopamine pathway from the VTA to the Nucleus Accumbens.
 * *Idea:* "Oxytocin Burst" - Visualizing trust and bonding as synchronized pulses across both hemispheres.
-* *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "Adaptive Routines" - What if routines could adapt based on real-time emotion detection via webcam?
 * [2026-03-28] - Completed Phase 2 (Cognitive Stress Distortion). Implemented `stress` uniform in shaders for high-frequency vertex displacement. Added event handler in `routine-player.js` and updated UI/Panic Routine in `main.js`. Added Dream Log idea.
 * [2026-03-10] - Completed Phase 2 (Interactive Visual Overlays). Implemented `overlay` event type in `routine-player.js` and `main.js` supporting HTML content and interactive pause/resume logic. Added "Branching/Conditional Routines" to roadmap and emotion detection to Dream Log.
@@ -291,7 +288,6 @@
 * [2026-03-06] - Completed Phase 2 (Haptic Feedback & Flashbacks). Added `haptic` and `flashback` events to `RoutinePlayer`. Implemented "Memory Flashback" routine in `main.js`. Added "Multimodal Embeddings" to Dream Log.
 * [2026-03-05] - Completed Phase 7 (Neuronal Glitch). Implemented `glitch` event handler in `RoutinePlayer`, mapping it to cinematic post-processing parameters. Added "Glitch Storm" mini-routine to `main.js`. Added "Memory Fragment Flashbacks" to Dream Log.
 * *Idea:* "Memory Fragmentation: Visualize memory loss as mesh decoupling."
-* *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "Neuromodulation Interface" - What if we allowed users to connect external API data to drive these neuromodulators directly?
 * *Idea:* "What if we visualized Dopamine pathways as glowing trails?"
 * *Idea:* "Region Injection API - Enable scripted or click-based localized energy injection at specific anatomical coordinates within the tensor volume."
@@ -359,7 +355,6 @@
 * [2025-02-05] - Completed Phase 1 (Routine Engine) and Phase 2 (Easing/Transitions). Added Serotonin Color Shift to Dream Log.
 * [Date] - Plan initialized.
 * *Idea:* "What if we visualized Adrenaline surges as sudden global illumination flashes?"
-* *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "What if we mapped real-time weather data to global illumination and fog density?"
 * [2026-05-20] - Completed Phase 3 (Dynamic Environment Reactions). Integrated stateful respiration rate driven by visual stimuli and AudioReactor to simulate excitement.
 * *Idea:* "What if we visualized breathing rate visually using volumetric particle condensation near the olfactory bulb?"
@@ -398,7 +393,6 @@
 
 *Idea:* "What if prolonged synchronized bursts triggered long-term structural plasticity, permanently altering the connectome layout?"
 *Idea:* "What if we visualize memory formation as glowing paths forming across multiple cortical regions simultaneously?"
-*Idea:* "What if we visualized Serotonin levels as color shifts?"
 
 *Idea:* "What if we could simulate the interaction between Dopamine and Serotonin directly as color blending pathways?"
 [x] "What if we visualized spatial memory retrieval as glowing breadcrumbs traveling backwards along the connectome fibers?"
@@ -425,7 +419,6 @@
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 
-*Idea:* "What if we visualized Serotonin levels as color shifts?"
 *Idea:* "What if we visualized Melatonin levels as a slow dimming effect?"
 * *Idea:* "What if we visualized the effects of caffeine via increased global flow speed and rapid erratic particle speed bursts?"
 ### Phase 2.5 Extension: WebGPU Safety
@@ -437,11 +430,9 @@
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 
-*Idea:* "What if we visualized Serotonin levels as color shifts?"
 
 * [2026-08-09] - Completed Routine Logic Refactor. Ensured `tick()` uses `performance.now()`, `executeEvent` uses switch, and WebGPU degrades safely. Added tasks for Interpolation and Camera Maps, and Serotonin to Dream Log.
 
-*Idea:* "What if we visualized Serotonin levels as color shifts?"
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 *Idea:* "What if we visualized neurotransmitters using distinct particle shapes and unique traversal algorithms?"
@@ -453,5 +444,12 @@
 
 *Idea:* "What if we visualized age-related cognitive decline as a gradual decrease in neural plasticity and global flow speed over long playback sessions?"
 *Idea:* "What if we added localized strokes that affect certain parts of the brain temporarily?"
+
+
+### Phase 2: Advanced Choreography
+- [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
+- [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
+
+*Idea:* "What if we visualized Serotonin levels as color shifts?"
 
 *Idea:* "What if we visualized Serotonin levels as color shifts?"
