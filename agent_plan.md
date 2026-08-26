@@ -4,8 +4,10 @@
 **Velocity:** 1 Feature per Cycle
 ---
 ## 🧠 Strategic Roadmap
+*Idea:* "What if we visualized Cognitive Load as a procedural heatmap overlaid on the visual cortex?"
 **Neuro-Script Implementation Cycle — Round 2**
 ### Phase 1: The Sequencing Core (Routine Engine)
+- [x] **Cognitive Load Overlay:** Implement `cognitive_load` event handler in `routine-player.js`.
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
 
 - [x] **Routine Player Module:** Implement `routine-player.js` to handle time-based event execution (Stimulus, Style Change, Parameter Tweaks). [x] RoutinePlayer + main.js integration (already existed and was enhanced in prior work)
