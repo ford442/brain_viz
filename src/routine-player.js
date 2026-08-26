@@ -594,7 +594,21 @@ export class RoutinePlayer {
         const resolvedEvt = this.resolveEventVariables(event);
 
         // Extensible mapping pattern
-        if (this.handlers.has(resolvedEvt.type)) {
+
+        // Extensible mapping pattern
+        if (resolvedEvt.type === 'cognitive_load') {
+            if (this.renderer && this.renderer.params) {
+                const currentLoad = this.renderer.params.cognitiveLoad || 0;
+                this.startLerp({
+                    key: 'cognitiveLoad',
+                    value: resolvedEvt.value,
+                    duration: resolvedEvt.duration || 1.0,
+                    ease: resolvedEvt.ease || 'quadOut'
+                });
+                console.log(`[Routine Engine] Cognitive load set to ${resolvedEvt.value} over ${resolvedEvt.duration}s`);
+            }
+        } else if (this.handlers.has(resolvedEvt.type)) {
+
             const eventHandler = this.handlers.get(resolvedEvt.type);
             try {
                 eventHandler(resolvedEvt);

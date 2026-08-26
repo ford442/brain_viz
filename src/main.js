@@ -88,7 +88,24 @@ async function init() {
         initTooltips();
         const directorLabels = initDirectorTools(renderer, player);
 
-        startMainUpdateLoop(renderer, player, inputs, labels, tensorPlayer, synaptixEngine,
+
+        const cogLegendPanel = document.getElementById('legend-panel');
+        if (cogLegendPanel) {
+            const newEntry = document.createElement('div');
+            newEntry.innerHTML = '<b>L</b> : Trigger Cognitive Load Simulation';
+            cogLegendPanel.appendChild(newEntry);
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'l' || e.key === 'L') {
+                if (player) {
+                    player.executeEvent({ type: 'cognitive_load', value: 1.0, duration: 2.0 });
+                }
+            }
+        });
+
+        startMainUpdateLoop(renderer
+, player, inputs, labels, tensorPlayer, synaptixEngine,
             inferenceEngine, audioReactor, transport, directorLabels, modeSelector, aiPromptRef, trainingEngine, sessionController);
 
         // Ensure InferenceEngine is valid before initialization
