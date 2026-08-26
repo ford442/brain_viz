@@ -41,6 +41,7 @@ export function setupLegendPanel() {
             <div class="legend-row">
                 <div class="legend-item"><span class="legend-key">UI</span><span>Neuromodulator Panel</span></div>
                 <div class="legend-item"><span class="legend-key">d</span><span>Dopamine</span></div>
+                <div class="legend-item"><span class="legend-key">4</span><span>Serotonin Surge</span></div>
                 <div class="legend-item"><span class="legend-key">e</span><span>Endorphin</span></div>
                 <div class="legend-item"><span class="legend-key">y</span><span>Oxytocin</span></div>
                 <div class="legend-item"><span class="legend-key">r</span><span>Acetylcholine</span></div>

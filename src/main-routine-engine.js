@@ -286,7 +286,7 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
         const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (e.target && e.target.isContentEditable);
         if (!typing && !e.ctrlKey && !e.metaKey && !e.altKey && e.key >= '1' && e.key <= '5') {
             modeSelector.applyStyle(parseFloat(e.key) - 1.0);
-            return;
+            // Allow execution to continue so mapped mini-routines (like '4' for Serotonin) can run
         }
 
         let matchedRoutine = null;
