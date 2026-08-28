@@ -22,10 +22,10 @@ For the current architecture and module responsibilities, see [`AGENTS.md`](../A
 | 7 | Cinematic Post-Processing | Chromatic aberration, film grain, depth of field, neuronal glitch |
 | 8 | Data Integration | CSV/fMRI time-series and event-list import into `RoutinePlayer` |
 | 9 | Engine Evolution & Polish | Procedural cellular advection, cognitive-load-driven dynamic LoD |
-| 10 | Neuroplasticity & Future Concepts | Real-time neuroplasticity growth, auditory hallucination flashes |
+| 10 | Neuroplasticity & Future Concepts | Real-time neuroplasticity growth and decay, auditory hallucination flashes |
 | 11 | Robust Expression & Hardening | Timeline catch-up/drift compensation, graceful WebGPU device-lost recovery with telemetry |
 | 12 | Interactive Volumetric Polish | Clip-plane internal reveal |
-| 13 | Neuromodulation Interface | Click/scripted region injection API with easing |
+| 13 | Neuromodulation Interface | Click/scripted region injection API with easing, continuous drag/paint gesture |
 | 14 | Emergent Neural Behaviors | Synchronized firing bursts, dynamic fiber topology under sustained sync |
 | 15 | Synaptic Plasticity Animation | Dendritic growth visualization (see also Phase 10) |
 | 16 | Cinematic Polish | Interpolation and camera-map refinements |
@@ -57,11 +57,9 @@ Deduplicated from the historical "Dream Log" entries across the archived plans �
 - **Adaptive Routines** — routines that adapt based on real-time emotion detection via webcam.
 - **Neuromodulation External API** — connect external live data feeds to drive neuromodulator profiles directly.
 - **Custom Audio-Feature Mapping Matrix** — a GUI for users to map arbitrary audio features to arbitrary visual parameters.
-- **Region-Injection Paint Gesture** — extend the click-based Region Injection API (Phase 13) to a continuous drag/paint gesture.
 - **Procedural Binaural Generation** — automatically generate binaural beat frequencies for a desired brainwave target instead of manual frequency entry.
 - **Biofeedback Adaptive Audio** — modulate generative audio pitch/volume/tempo from heart-rate or other biofeedback metrics.
 - **External Data Sonification** — map external real-time feeds (e.g. stock market data, social-media sentiment) to connectome signal pulses, as a novelty/art mode.
-- **Neuroplasticity Decay** — visualize reduced neuroplasticity in simulated aging brains.
 
 ## Related Specs & Vision Docs
 
