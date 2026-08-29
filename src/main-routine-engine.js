@@ -164,42 +164,52 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
     let mainLastY = 0;
 
     canvas.addEventListener('mousedown', (e) => {
-        mainIsDragging = false;
+        mainIsDragging = true;
         mainDragDistance = 0;
         mainLastX = e.clientX;
         mainLastY = e.clientY;
+        injectAtCursor(e);
     });
 
     canvas.addEventListener('mousemove', (e) => {
+        if (!mainIsDragging) return;
         const dx = e.clientX - mainLastX;
         const dy = e.clientY - mainLastY;
-        mainDragDistance += Math.sqrt(dx * dx + dy * dy);
-        if (mainDragDistance > 5) {
-            mainIsDragging = true;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        mainDragDistance += dist;
+        // Inject only if moved a bit to avoid flooding
+        if (dist > 10) {
+            injectAtCursor(e);
+            mainLastX = e.clientX;
+            mainLastY = e.clientY;
         }
-        mainLastX = e.clientX;
-        mainLastY = e.clientY;
     });
 
     canvas.addEventListener('mouseup', (e) => {
-        if (!mainIsDragging) {
-            // Determine a relative coordinate
-            const rect = canvas.getBoundingClientRect();
-            const u = (e.clientX - rect.left) / rect.width;
-            const v = (e.clientY - rect.top) / rect.height;
-
-            // Map screen roughly to tensor volume coordinates (-1.6 to 1.6)
-            const nx = (u - 0.5) * 2.0;
-            const ny = -(v - 0.5) * 2.0;
-
-            const targetCoords = [nx * 1.6, ny * 1.6, 0.0];
-            console.log(`[Main] Explicit click detected. Injecting API stimulus at ${targetCoords.map(n => n.toFixed(2)).join(',')}`);
-
-            if (window.visualizerAPI && window.visualizerAPI.injectRegion) {
-                window.visualizerAPI.injectRegion(targetCoords, 2.0, 1.5);
-            }
-        }
+        mainIsDragging = false;
     });
+
+    canvas.addEventListener('mouseleave', (e) => {
+        mainIsDragging = false;
+    });
+
+    function injectAtCursor(e) {
+        const rect = canvas.getBoundingClientRect();
+        const u = (e.clientX - rect.left) / rect.width;
+        const v = (e.clientY - rect.top) / rect.height;
+
+        // Map screen roughly to tensor volume coordinates (-1.6 to 1.6)
+        const nx = (u - 0.5) * 2.0;
+        const ny = -(v - 0.5) * 2.0;
+
+        const targetCoords = [nx * 1.6, ny * 1.6, 0.0];
+        console.log(`[Main] Paint gesture detected. Injecting API stimulus at ${targetCoords.map(n => n.toFixed(2)).join(',')}`);
+
+        if (window.visualizerAPI && window.visualizerAPI.injectRegion) {
+            window.visualizerAPI.injectRegion(targetCoords, 2.0, 0.5); // shorter duration for continuous paint
+        }
+    }
 
     MINI_ROUTINES['M'] = [
         { time: 0.0, type: 'text', message: 'Memory Fragmentation Sequence', duration: 2.0 },
