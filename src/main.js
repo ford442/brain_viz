@@ -40,7 +40,11 @@ async function init() {
         // Initialize Routine Engine subsystems (RoutinePlayer, AudioReactor).
         // Safely injected without breaking existing renderer initialization flow.
         const { player, audioReactor } = setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo);
-        if (!player) console.warn('[Routine Engine] RoutinePlayer failed to initialize.');
+        if (player) {
+             console.log('[Routine Engine] RoutinePlayer sequencer initialized successfully.');
+        } else {
+             console.warn('[Routine Engine] RoutinePlayer failed to initialize.');
+        }
 
         setupLegendPanel();
         const legendPanel = document.getElementById('legend-panel');
