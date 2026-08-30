@@ -10,6 +10,10 @@
 - [x] **Cognitive Load Overlay:** Implement `cognitive_load` event handler in `routine-player.js`.
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
 
+### Phase 2: Advanced Choreography
+- [ ] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
+- [ ] **Camera Coordinates Map:** Define explicit regions for better camera angles.
+
 - [x] **Routine Player Module:** Implement `routine-player.js` to handle time-based event execution (Stimulus, Style Change, Parameter Tweaks). [x] RoutinePlayer + main.js integration (already existed and was enhanced in prior work)
 - [x] **Main Integration:** Refactor `main.js` to initialize `RoutinePlayer` and expose it to the UI.
 - [x] **"Deep Thought" Script:** Hardcode the demo routine (Organic -> Visual Input -> Connectome Processing -> Heatmap Aftermath).
@@ -194,6 +198,7 @@
 ## 🧪 "Dream" Log (Future Concepts)
 * *Idea:* "What if we visualized the Default Mode Network transitioning into task-positive networks during problem-solving tasks?"
 * *Idea:* "What if we visualized the Default Mode Network transitioning into task-positive networks during problem-solving tasks?"
+* *Idea:* "What if we visualized cortical thickness variations as topographical height maps during specific routines?"
 * *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * *Idea:* "What if we mapped real-time geographic data (like population density or traffic) to localized structural density and glow intensity in the tensor volume?"
 

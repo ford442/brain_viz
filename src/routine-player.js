@@ -349,13 +349,13 @@ export class RoutinePlayer {
         const isDeviceLostNow = isWebGPUBackend && this.renderer.device && this.renderer.device.isLost;
         const rendererMissing = !this.renderer || (isWebGPUBackend && !this.renderer.device) || isDeviceLostNow;
         if (isWebGPUBackend && this.renderer.device && this.renderer.isContextLost) {
-            console.warn('[Routine Engine] WebGPU Context lost detected. Stopping tick.');
+            console.warn('[Routine Engine] WebGPU Context lost detected dynamically. Degrading gracefully by stopping tick.');
             this.stop();
             return;
         }
 
         if (rendererMissing || isDeviceLost) {
-             console.warn("[Routine Engine] WebGPU Context is invalid or lost. Stopping playback gracefully.");
+             console.warn("[Routine Engine] WebGPU Context is permanently invalid or lost. Halting execution gracefully.");
              if (rendererMissing) this._deviceLost = true;
              this.stop();
              return;
@@ -609,25 +609,29 @@ export class RoutinePlayer {
             }
         } else {
             // Fallback extensible switch statement
-            switch (resolvedEvt.type) {
-                case 'clear_lerps':
-                    this.clearLerps();
-                    break;
-                case 'marker':
-                    console.log(`[Routine Engine] Marker Reached: ${resolvedEvt.label || 'Unnamed Marker'} at time ${this.elapsedTime.toFixed(2)}s`);
-                    break;
-                case 'pause':
-                    this.pause();
-                    break;
-                case 'resume':
-                    this.resume();
-                    break;
-                case 'stop':
-                    this.stop();
-                    break;
-                default:
-                    console.warn(`[Routine Engine] Unrecognized Event Type: '${resolvedEvt.type}'. Extensible switch/registry lacks this handler.`);
-                    break;
+            try {
+                switch (resolvedEvt.type) {
+                    case 'clear_lerps':
+                        this.clearLerps();
+                        break;
+                    case 'marker':
+                        console.log(`[Routine Engine] Marker Reached: ${resolvedEvt.label || 'Unnamed Marker'} at time ${this.elapsedTime.toFixed(2)}s`);
+                        break;
+                    case 'pause':
+                        this.pause();
+                        break;
+                    case 'resume':
+                        this.resume();
+                        break;
+                    case 'stop':
+                        this.stop();
+                        break;
+                    default:
+                        console.warn(`[Routine Engine] Unrecognized Event Type: '${resolvedEvt.type}'. Extensible switch/registry lacks this handler.`);
+                        break;
+                }
+            } catch (switchError) {
+                console.error(`[Routine Engine] Critical error executing event '${resolvedEvt.type}' via switch fallback:`, switchError);
             }
         }
 
