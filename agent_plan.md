@@ -11,8 +11,8 @@
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
 
 ### Phase 2: Advanced Choreography
-- [ ] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
-- [ ] **Camera Coordinates Map:** Define explicit regions for better camera angles.
+- [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
+- [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 
 - [x] **Routine Player Module:** Implement `routine-player.js` to handle time-based event execution (Stimulus, Style Change, Parameter Tweaks). [x] RoutinePlayer + main.js integration (already existed and was enhanced in prior work)
 - [x] **Main Integration:** Refactor `main.js` to initialize `RoutinePlayer` and expose it to the UI.
@@ -466,3 +466,4 @@
 
 *Idea:* "What if we visualized Serotonin levels as color shifts?"
 * [2026-08-30] - Verified RoutinePlayer codebase implementation and updated Dream Log in agent_plan.md.
+*Idea:* "What if we visualized the brain's neuroplasticity explicitly as newly spawning geometry that solidifies into permanent structural connections over multiple user sessions?"
