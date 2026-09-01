@@ -26,16 +26,20 @@ const HELPERS = `
     // Returns vec3(decay, diffusion, flowBias)
     // [Neuro-Weaver] Defines anatomical zones: Frontal, Occipital, Temporal, Parietal
     // With regional sensitivity to hypoxia
-    fn getRegionPhysics(worldPosition: vec3<f32>, style: f32) -> vec3<f32> {
-        var decay = params.neuroPhysics.x; // Default from profile
-        var diffusion = params.neuroPhysics.y;
+    // neuroPhysics: x=baseline decay, y=baseline diffusion (defaults 0.96 / 0.1 when the caller
+    // has no per-profile override). neuroRetention: per-region blend weight (x=frontal,
+    // y=occipital, z=temporal, w=parietal) toward that region's target decay/diffusion; pass
+    // vec4<f32>(1.0) for full override (matches the original hardcoded region values).
+    fn getRegionPhysics(worldPosition: vec3<f32>, style: f32, neuroPhysics: vec4<f32>, neuroRetention: vec4<f32>) -> vec3<f32> {
+        var decay = neuroPhysics.x; // Default from profile
+        var diffusion = neuroPhysics.y;
         var flowBias = 0.0;
         var oxygenSensitivity = 1.0; // Regional vulnerability to hypoxia
 
         // Frontal Lobe: High retention for complex thought, MOST vulnerable to hypoxia
         if (worldPosition.z > 0.5) {
-            decay = mix(decay, 0.998, params.neuroRetention.x);
-            diffusion = mix(diffusion, 0.15, params.neuroRetention.x);
+            decay = mix(decay, 0.998, neuroRetention.x);
+            diffusion = mix(diffusion, 0.15, neuroRetention.x);
             flowBias = -1.0;
             oxygenSensitivity = 1.8; // Executive function degrades first
         }
@@ -43,18 +47,18 @@ const HELPERS = `
         // [Scientific Fix] Occipital is NOT particularly resistant - it's at terminal
         // PCA branches (watershed zone) and can be vulnerable to hypoxia
         else if (worldPosition.z < -0.5) {
-            decay = mix(decay, 0.92, params.neuroRetention.y);
-            diffusion = mix(diffusion, 0.04, params.neuroRetention.y);
+            decay = mix(decay, 0.92, neuroRetention.y);
+            diffusion = mix(diffusion, 0.04, neuroRetention.y);
             oxygenSensitivity = 1.0; // Neutral - not resistant, at watershed zone
         }
         // Temporal / Parietal logic...
         else if (abs(worldPosition.x) > 0.5) {
-            decay = mix(decay, 0.95, params.neuroRetention.z); // Using temporal bias
-            diffusion = mix(diffusion, 0.08, params.neuroRetention.z);
+            decay = mix(decay, 0.95, neuroRetention.z); // Using temporal bias
+            diffusion = mix(diffusion, 0.08, neuroRetention.z);
             flowBias = 0.5;
             oxygenSensitivity = 1.2;
         } else {
-            decay = mix(decay, 0.96, params.neuroRetention.w); // Parietal/center bias
+            decay = mix(decay, 0.96, neuroRetention.w); // Parietal/center bias
         }
 
         return vec3<f32>(decay, diffusion, flowBias);

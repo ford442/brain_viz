@@ -98,12 +98,12 @@ struct FiberVertexOutput {
 @group(0) @binding(3) var<storage, read> fiberDirections: array<vec4<f32>>;
 @group(0) @binding(4) var<uniform> pathwayState: PathwayState;
 
-fn getPathwayEmission(meta: vec4<f32>, position: vec3<f32>) -> f32 {
-    if (meta.x <= 0.0 || abs(meta.x - pathwayState.control.x) > 0.25 || pathwayState.control.w > 0.5) {
+fn getPathwayEmission(pathwayMeta: vec4<f32>, position: vec3<f32>) -> f32 {
+    if (pathwayMeta.x <= 0.0 || abs(pathwayMeta.x - pathwayState.control.x) > 0.25 || pathwayState.control.w > 0.5) {
         return 0.0;
     }
-    let routeProgress = clamp(meta.z, 0.0, 1.0);
-    let selectionWeight = clamp(meta.w, 0.0, 1.0);
+    let routeProgress = clamp(pathwayMeta.z, 0.0, 1.0);
+    let selectionWeight = clamp(pathwayMeta.w, 0.0, 1.0);
     let head = clamp(1.0 - abs(routeProgress - pathwayState.control.y) / 0.12, 0.0, 1.0);
     let behind = pathwayState.control.y - routeProgress;
     var tail = 0.0;
@@ -184,7 +184,7 @@ fn sampleFiberCoupledSignal(worldPos: vec3<f32>, tangent: vec3<f32>, isAI: bool)
 
 fn calculateSignalFlow(startPos: vec3<f32>, endPos: vec3<f32>, time: f32, speed: f32, segmentPhase: f32, flowBias: f32, myelin: f32, radius: f32, bundleId: f32) -> f32 {
     let midpoint = mix(startPos, endPos, 0.5);
-    let region = getRegionPhysics(midpoint, uniforms.style);
+    let region = getRegionPhysics(midpoint, uniforms.style, vec4<f32>(0.96, 0.1, 0.0, 0.0), vec4<f32>(1.0, 1.0, 1.0, 1.0));
     let diffusionNorm = clamp(region.y / 0.15, 0.0, 1.0);
     var travel = fract(time * speed + segmentPhase + bundleId * 0.031);
     if (flowBias < -0.1) {
@@ -256,7 +256,7 @@ fn main(input: FiberVertexInput) -> FiberVertexOutput {
     let tractCoverage = coupledSignal.y;
     let tractAlignment = coupledSignal.z;
     let midpoint = mix(input.fiberStart, input.fiberEnd, 0.5);
-    let flowBias = getRegionPhysics(midpoint, uniforms.style).z;
+    let flowBias = getRegionPhysics(midpoint, uniforms.style, vec4<f32>(0.96, 0.1, 0.0, 0.0), vec4<f32>(1.0, 1.0, 1.0, 1.0)).z;
     let conductionBoost = 1.0 + uniforms.fiberCoupling * (0.25 + tractCoverage * 0.45 + tractAlignment * 0.35);
     let conductionSpeed = uniforms.flowSpeed * select(1.0, 2.35, isAI) * (0.45 + effectiveMyelin * 1.65 + radius * 18.0) * conductionBoost;
     let signalStrength = calculateSignalFlow(input.fiberStart, input.fiberEnd, uniforms.time, conductionSpeed, segmentPhase, flowBias, effectiveMyelin, radius, bundleId);
