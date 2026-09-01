@@ -399,7 +399,7 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     let worldPosition = indexToWorld(index, dim);
     let normalizedPosition = clamp((worldPosition / BRAIN_RANGE) * 0.5 + 0.5, vec3<f32>(0.0), vec3<f32>(1.0));
 
-    let physics = getRegionPhysics(worldPosition, params.style);
+    let physics = getRegionPhysics(worldPosition, params.style, params.neuroPhysics, params.neuroRetention);
     var decay = physics.x;
     var diffusion = physics.y;
     let flowBias = physics.z;
@@ -615,7 +615,7 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
         let aiVal = sampleAIActivation(worldPosition, dim);
         let aiEnergy = aiVal * params.aiInfluence;
         if (aiEnergy > 0.0005 || val > 0.0005) {
-            let aiRegion = getRegionPhysics(worldPosition, 1.0);
+            let aiRegion = getRegionPhysics(worldPosition, 1.0, params.neuroPhysics, params.neuroRetention);
             let aiDiffusionBias = clamp(aiRegion.y / 0.15, 0.0, 1.0);
             let aiGeometricDecay = mix(1.18, 0.86, aiDiffusionBias);
             let aiSparsity = smoothstep(0.14, 0.82, aiVal);

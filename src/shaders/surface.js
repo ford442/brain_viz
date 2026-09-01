@@ -111,7 +111,7 @@ fn sampleSmoothedAIVoxelValue(worldPos: vec3<f32>) -> f32 {
 
 fn calculateSignalFlow(startPos: vec3<f32>, endPos: vec3<f32>, time: f32, speed: f32, segmentPhase: f32, flowBias: f32, myelin: f32, radius: f32, bundleId: f32) -> f32 {
     let midpoint = mix(startPos, endPos, 0.5);
-    let region = getRegionPhysics(midpoint, uniforms.style);
+    let region = getRegionPhysics(midpoint, uniforms.style, vec4<f32>(0.96, 0.1, 0.0, 0.0), vec4<f32>(1.0, 1.0, 1.0, 1.0));
     let diffusionNorm = clamp(region.y / 0.15, 0.0, 1.0);
     var travel = fract(time * speed + segmentPhase + bundleId * 0.031);
 
