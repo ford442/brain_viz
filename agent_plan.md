@@ -449,6 +449,7 @@
 - [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 *Idea:* "What if we visualized neurotransmitters using distinct particle shapes and unique traversal algorithms?"
 *Idea:* "What if we visualized the effects of endorphins as a temporary suppression of stress parameters and an increase in harmonic wave synchronization?"
+*Idea:* "What if we visualized Cortical Spreading Depression (CSD) as a slow-moving wave of intense depolarization followed by suppression across the cortical surface?"
 
 ### Phase 2.5 Extension: Routine Refinements
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
@@ -465,5 +466,6 @@
 *Idea:* "What if we visualized Serotonin levels as color shifts?"
 
 *Idea:* "What if we visualized Serotonin levels as color shifts?"
+* [2026-09-04] - Executed Neuro-Script Implementation Cycle. Verified that `routine-player.js` timing (`performance.now()`), event extensibility, and WebGPU degradation safety are already implemented. Added Cortical Spreading Depression (CSD) idea to Dream Log.
 * [2026-08-30] - Verified RoutinePlayer codebase implementation and updated Dream Log in agent_plan.md.
 *Idea:* "What if we visualized the brain's neuroplasticity explicitly as newly spawning geometry that solidifies into permanent structural connections over multiple user sessions?"
