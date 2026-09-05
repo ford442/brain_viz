@@ -327,6 +327,11 @@ export class RoutinePlayer {
         this.emitEvent({ type: 'stop' });
     }
 
+    /**
+     * The main execution loop for the timeline sequencer.
+     * Utilizes performance.now() and delta-time compensation to ensure drift-free sequencing.
+     * Safely halts execution if the WebGPU context is lost or the renderer is destroyed.
+     */
     tick() {
         if (!this.isPlaying) return;
         // Ensure we don't tick if the renderer is destroyed
@@ -579,6 +584,13 @@ export class RoutinePlayer {
         });
     }
 
+    /**
+     * Executes a scheduled routine event.
+     * Resolves variables dynamically and dispatches to a registered handler map,
+     * falling back to a switch statement for core functionality.
+     *
+     * @param {Object} event - The event object to execute.
+     */
     executeEvent(event) {
         if (!event) return;
         if (!event.type) return; // Safety guard
