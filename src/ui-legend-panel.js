@@ -95,6 +95,7 @@ export function setupLegendPanel() {
             <div class="legend-row">
                 <div class="legend-item"><span class="legend-key">0</span><span>Focus</span></div>
                 <div class="legend-item"><span class="legend-key">-</span><span>Breathe</span></div>
+                <div class="legend-item"><span class="legend-key">T</span><span>DMN / TPN Switch</span></div>
                 <div class="legend-item"><span class="legend-key">l</span><span>Lighting</span></div>
                 <div class="legend-item"><span class="legend-key">g</span><span>Fog</span></div>
                 <div class="legend-item"><span class="legend-key">f</span><span>Filters</span></div>

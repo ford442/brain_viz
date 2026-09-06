@@ -57,6 +57,14 @@ def verify() -> None:
             if overlay_visible:
                 raise AssertionError("Error overlay became visible")
 
+
+            # DMN to TPN Handoff routine
+            page.keyboard.press("T")
+            page.wait_for_timeout(10500) # wait past the 'engage' phase
+            page.screenshot(path=str(output_dir / "routine_tpn_engage.png"))
+            page.wait_for_timeout(4500) # wait through 'release' phase
+            page.screenshot(path=str(output_dir / "routine_tpn_release.png"))
+
             # Heartbeat routine
             page.keyboard.press("h")
             page.wait_for_timeout(3500)
