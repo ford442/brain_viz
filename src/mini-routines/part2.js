@@ -656,3 +656,21 @@ MINI_ROUTINES_PART2['%'] = [ // [Phase 2.5] Dynamic Particle Speed Modulation
     { time: 8.0, type: 'lerp', key: 'particleSpeed', path: [0.1, 1.0], duration: 4.0, ease: 'sineInOut' },
     { time: 12.0, type: 'text', message: 'ROUTINE COMPLETE', duration: 2.0 }
 ];
+
+MINI_ROUTINES_PART2['T'] = [ // [Phase 28] DMN to TPN Handoff
+    { time: 0.0, type: 'text', message: 'Entering Default Mode Network (Idle)...', duration: 2.0 },
+    { time: 0.0, type: 'style', value: 2 }, // Connectome
+    { time: 0.0, type: 'camera', target: 'overview', duration: 2.0 },
+    { time: 0.0, type: 'dmn', intensity: 1.0, duration: 4.0 },
+
+    { time: 5.0, type: 'text', message: 'Task-Positive Network Engaging...', duration: 2.0 },
+    { time: 5.0, type: 'camera', target: 'frontal-tour', duration: 4.0 },
+    { time: 5.0, type: 'dmn_to_tpn', phase: 'engage', duration: 3.0 },
+
+    { time: 10.0, type: 'text', message: 'Task Complete. Releasing TPN...', duration: 2.0 },
+    { time: 10.0, type: 'camera', target: 'isometric', duration: 3.0 },
+    { time: 10.0, type: 'dmn_to_tpn', phase: 'release', duration: 3.0 },
+
+    { time: 14.0, type: 'calm' },
+    { time: 14.0, type: 'style', value: 0 }
+];
