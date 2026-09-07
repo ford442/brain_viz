@@ -106,6 +106,35 @@ export function registerNarrativeFlowHandlers(handlers, player) {
             player.routine.splice(insertIdx, 0, ...revertEvents);
         }
     });
+    // [Phase 28] DMN to TPN Transition Handoff
+    handlers.set('dmn_to_tpn', (evt) => {
+        const intensity = evt.intensity || 1.0;
+        const duration = evt.duration || 3.0;
+        const phase = evt.phase || 'engage'; // 'engage' or 'release'
+        const ease = evt.ease || 'easeInOutSine';
+
+        if (phase === 'engage') {
+            // Fade out DMN hum, increase focus parameters
+            player.startLerp({ key: 'frequency', value: 8.0 * intensity, duration: duration, ease: ease });
+            player.startLerp({ key: 'amplitude', value: 1.5 * intensity, duration: duration, ease: ease });
+            player.startLerp({ key: 'flowSpeed', value: 6.0 * intensity, duration: duration, ease: ease });
+            player.startLerp({ key: 'colorShift', value: 0.5 * intensity, duration: duration, ease: ease });
+            player.startLerp({ key: 'sparkle', value: 0.8 * intensity, duration: duration, ease: ease });
+
+            // Light up Task-Positive regions (Dorsal Attention Network proxy)
+            player.executeEvent({ type: 'stimulus', target: 'frontal', intensity: 2.0 * intensity, duration: duration });
+            player.executeEvent({ type: 'stimulus', target: 'parietal', intensity: 2.0 * intensity, duration: duration });
+        } else if (phase === 'release') {
+            // Revert back to DMN idle state
+            player.startLerp({ key: 'frequency', value: 0.5 * intensity, duration: duration, ease: ease });
+            player.startLerp({ key: 'amplitude', value: 0.2 * intensity, duration: duration, ease: ease });
+            player.startLerp({ key: 'flowSpeed', value: 0.3 * intensity, duration: duration, ease: ease });
+            player.startLerp({ key: 'colorShift', value: -0.2 * intensity, duration: duration, ease: ease });
+            player.startLerp({ key: 'sparkle', value: 0.0, duration: duration, ease: ease });
+        }
+    });
+
+
 
     // [Phase 2] Oxytocin Burst
     handlers.set('oxytocin', (evt) => {

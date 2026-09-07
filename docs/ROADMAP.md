@@ -40,6 +40,7 @@ For the current architecture and module responsibilities, see [`AGENTS.md`](../A
 | 25 | Live EEG / BCI Devices | Muse Classic/Athena Web Bluetooth, OpenBCI UDP/WebSocket bridge, calibrated band-power projection into the human 32³ tensor, editable channel mapping, `.nwbci` recording/replay, and BCI routine events |
 | 26 | WebXR Immersive Mode | WebGL2 stereo VR, routine-driven XR rig, controller/hand energy painting, lobe viewpoints, and optional tabletop AR |
 | 27 | Double Mirror Multimodal Sessions | Local-only synchronized 32³ tensor, webcam-thumbnail, microphone-feature, and note capture; strict `.nwsession` replay/scrubbing; descriptive occipital/audio correlation heatmap; aligned CSV export |
+| 28 | Cognitive Phenomenon | DMN to task-positive network (TPN) handoff transition |
 
 ## Open Items
 

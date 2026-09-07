@@ -40,30 +40,30 @@ export class RoutinePlayer {
         this.onEvent = null; // Callback for UI updates
         this.eventSubscribers = new Set();
         this.lastPauseTime = 0;
-        this.subRoutines = {}; // [Phase 2] Sub-Routine System
-        this.customPresets = {}; // [Phase 2] Custom Camera Presets
+        this.subRoutines = {}; // Sub-Routine System
+        this.customPresets = {}; // Custom Camera Presets
         this.cameraRegions = new Map(); // Dynamic Camera Coordinate Region Mapping
         this.state = {
-            respirationRate: 1.0 // [Phase 3] Dynamic Environment Reactions
-        }; // [Phase 2] Internal State for Branching
+            respirationRate: 1.0 // Dynamic Environment Reactions
+        }; // Internal State for Branching
 
-        // [Phase 3] Continuous Respiration System
+        // Continuous Respiration System
         this.respirationActive = true; // Always on by default, or we can toggle it
         this.respirationPhaseTime = 0.0;
         this.currentRespirationRate = 1.0;
 
-        // [Phase 2] Event Synchronization
+        // Event Synchronization
         this.waitingForSignal = null; // String name of the signal we are waiting for
 
-        // [Phase 2] Easing Support
+        // Easing Support
         this.activeLerps = [];
         this.activeTasks = []; // { key, startVal, endVal, elapsed, duration }
 
-        // [Phase 2] Neuro-Sonification (AudioContext)
+        // Neuro-Sonification (AudioContext)
         this.audioContext = null;
-        this.audioBuffers = {}; // [Phase 2] Cache for external audio files
+        this.audioBuffers = {}; // Cache for external audio files
 
-        // [Phase 3] Extensible Event System
+        // Extensible Event System
         this.handlers = new Map();
         this.setupDefaultHandlers();
 
@@ -244,7 +244,7 @@ export class RoutinePlayer {
         }
     }
 
-    // [Phase 8] Data Integration: CSV Parser
+    // Data Integration: CSV Parser
     parseCSV(text) {
         return parseRoutineCSV(text, this.regions);
     }
@@ -261,7 +261,7 @@ export class RoutinePlayer {
         }
     }
 
-    // [Phase 3] Procedural Generation
+    // Procedural Generation
     generateProceduralRoutine(duration = 30.0, intensity = 1.0) {
         this.routine = buildProceduralRoutine(this.regions, duration, intensity);
         this.loop = false; // Don't loop procedural routines by default
@@ -327,6 +327,11 @@ export class RoutinePlayer {
         this.emitEvent({ type: 'stop' });
     }
 
+    /**
+     * The main execution loop for the timeline sequencer.
+     * Utilizes performance.now() and delta-time compensation to ensure drift-free sequencing.
+     * Safely halts execution if the WebGPU context is lost or the renderer is destroyed.
+     */
     tick() {
         if (!this.isPlaying) return;
         // Ensure we don't tick if the renderer is destroyed
@@ -374,7 +379,7 @@ export class RoutinePlayer {
         if (deltaTime > 1.0) deltaTime = 1.0; // Prevent huge jumps
         this.lastFrameTime = now;
 
-        // [Phase 11] Timeline Compensation & Catch-up Logic
+        // Timeline Compensation & Catch-up Logic
         // If the frame stalls (e.g., ONNX inference block, tab backgrounded),
         // cap the maximum deltaTime so we don't jump too far ahead in a single frame.
         // We accumulate the "debt" and slowly burn it off over subsequent frames
@@ -392,7 +397,7 @@ export class RoutinePlayer {
             this.timeDebt -= catchup;
         }
 
-        // [Phase 3] Continuous Audio-Driven Respiration
+        // Continuous Audio-Driven Respiration
         if (this.respirationActive) {
             // Read target energy directly from AudioReactor if available, otherwise fallback to base logic
             let targetRate = 1.0;
@@ -444,7 +449,7 @@ export class RoutinePlayer {
             }
         }
 
-        // [Phase 3] Gentle decay for state respirationRate (stimulus boost) back to baseline
+        // Gentle decay for state respirationRate (stimulus boost) back to baseline
         if (this.state.respirationRate > 1.0) {
             this.state.respirationRate -= deltaTime * 0.5;
             if (this.state.respirationRate < 1.0) {
@@ -536,7 +541,7 @@ export class RoutinePlayer {
         if (this.activeLerps.length === 0) return;
 
         this.activeLerps = this.activeLerps.filter(lerp => {
-            // [Phase 2] Dynamic Time Dilation: speed lerps must advance using raw dt,
+            // Dynamic Time Dilation: speed lerps must advance using raw dt,
             // otherwise lerping to 0 stalls the lerp itself.
             if (lerp.key === 'playbackSpeed') {
                 lerp.elapsed += dt;
@@ -551,7 +556,7 @@ export class RoutinePlayer {
 
             let currentVal;
             if (lerp.path) {
-                // [Phase 2] Parameter Interpolation/Easing (Spline)
+                // Parameter Interpolation/Easing (Spline)
                 currentVal = evaluateSpline(lerp.path, progress);
             } else {
                 currentVal = lerp.startVal + (lerp.endVal - lerp.startVal) * progress;
@@ -579,6 +584,13 @@ export class RoutinePlayer {
         });
     }
 
+    /**
+     * Executes a scheduled routine event.
+     * Resolves variables dynamically and dispatches to a registered handler map,
+     * falling back to a switch statement for core functionality.
+     *
+     * @param {Object} event - The event object to execute.
+     */
     executeEvent(event) {
         if (!event) return;
         if (!event.type) return; // Safety guard
@@ -707,7 +719,7 @@ export class RoutinePlayer {
         };
 
         if (event.path && Array.isArray(event.path)) {
-            // [Phase 2] Spline Support: Insert current value at the beginning for smooth transition
+            // Spline Support: Insert current value at the beginning for smooth transition
             lerpObj.path = [currentVal, ...event.path];
             console.log(`[Routine] Spline Lerp started: ${event.key} path ${JSON.stringify(lerpObj.path)} (${lerpObj.duration}s)`);
         } else {
@@ -789,10 +801,10 @@ export class RoutinePlayer {
         };
     }
 }
-// [Phase 2.5] Flow state added
-// [Phase 2.5] Dynamic weather added
-// [Phase 2.5] GSR Sync logic extended
+// Flow state added
+// Dynamic weather added
+// GSR Sync logic extended
 
-// [Phase 2.5] Dream Log Extension: Stroke Lesion
-// [Phase 2.5] Dream Log Extension: Neurotransmitter Depletion
-// [Phase 2.5] Added Pupillary Dilation Support
+// Stroke Lesion
+// Neurotransmitter Depletion
+// Added Pupillary Dilation Support
