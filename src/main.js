@@ -23,7 +23,7 @@ async function init() {
     }
     isInitialized = true;
     if (window.RoutinePlayerInstance) { console.warn('RoutinePlayer already initialized.'); }
-    // [Neuro-Weaver] Initializing UI and backend connections
+    // Initializing UI and backend connections
     mountControlsShell();
     initTabSwitching();
 
