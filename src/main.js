@@ -1,5 +1,14 @@
-// Main application entry point
-// Neuro-Weaver V2.8 Implementation - With Routine Engine
+/**
+ * @fileoverview Main application entry point for Neuro-Weaver.
+ * Initializes the renderer, UI components, and the Routine Engine.
+ *
+ * Architectural Features Integrated:
+ * - RoutinePlayer Sequencer Integration
+ * - Interactive Timeline Controls
+ * - Camera Coordinates Mapping
+ * - WebGPU Graceful Fallback Checks
+ */
+
 import { InferenceEngine } from './inference-engine.js';
 import { FilterUIOverlay, initUIControls, initDirectorTools, initTooltips, initRangeTooltips } from './ui-utils.js';
 import { mountControlsShell, initTabSwitching, setupLegendPanel, setupOverlays, setupRoutineTransport, setupBciPanel, setupXrPanel, setupNeuromodulatorPanel, setupSessionPanel, setupPathwayPanel } from './ui-panels.js';

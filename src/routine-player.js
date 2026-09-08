@@ -1,11 +1,14 @@
 // @ts-check
-// routine-player.js
-// orchestrates timed sequences of brain activity
-// Refactored for Extensibility (V2.9)
-// RoutinePlayer fully implemented with:
-// • performance.now() + deltaTime timing (no drift)
-// • Extensible Map-based executeEvent handlers
-// • WebGPU device.lost graceful fallback
+/**
+ * @fileoverview Orchestrates timed sequences of brain activity.
+ *
+ * Architectural Features:
+ * - Sequencer: Uses performance.now() and delta-time compensation to ensure drift-free sequencing.
+ * - Easing: Supports robust parameter interpolation with nonlinear easing (cubic, sine, etc.) and splines via startLerp().
+ * - Camera Map: Implements a declarative Camera Coordinates Map mapping friendly names to target rotations/zooms.
+ * - Extensibility: Map-based handler registration for events via executeEvent().
+ * - Safety: Tick loop degrades gracefully and halts execution if WebGPU context is lost or renderer is destroyed.
+ */
 
 import { Easing, evaluateSpline } from './math-utils.js';
 import { CAMERA_PRESETS, handleCamera } from './routine-camera.js';
