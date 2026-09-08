@@ -483,11 +483,13 @@
 ## 📜 Changelog
 * [2026-09-05] - Executed Neuro-Script Implementation Cycle. Verified that `routine-player.js` timing (`performance.now()`), event extensibility (via `registerHandler`), and WebGPU degradation safety are already implemented. Verified via `verify_routine_extensibility.js`. Added Serotonin color shifts to Dream Log.
 * [2026-09-06] - Executed Neuro-Script Implementation Cycle. Cleaned up noisy meta-comments replacing them with architectural docs. Verified routine-player.js requirements were already fulfilled and added verification test verify_routine_clear_lerps.js.
+* [2026-09-08] - Executed Neuro-Script Implementation Cycle. Cleaned up remaining meta-comments in `src/main.js` and `src/routine-player.js`, adding clean JSDoc file overviews. Added `verification/verify_easing.js` to ensure interpolation logic works. Marked Parameter Interpolation and Camera Map tasks complete, and added Neural Network Pruning to Dream Log.
 
 
 ### Phase 2: Advanced Choreography
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
-- [ ] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
-- [ ] **Camera Coordinates Map:** Define explicit regions for better camera angles.
+- [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.
+- [x] **Camera Coordinates Map:** Define explicit regions for better camera angles.
 
 *Idea:* "What if we visualized Cortical Spreading Depression (CSD) as a slow-moving wave of intense depolarization followed by suppression across the cortical surface?"
+*Idea:* "What if we visualized Neural Network pruning by having dendritic connections slowly fade and disappear based on lack of use over time?"
