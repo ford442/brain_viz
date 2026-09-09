@@ -173,6 +173,14 @@ export const MINI_ROUTINES_PART1 = {
         { time: 6.0, type: 'calm' },
         { time: 6.0, type: 'style', value: 0 }
     ],
+    '_': [ // Neural Network Pruning
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'text', message: 'Simulating Neural Network Pruning', duration: 3.0 },
+        { time: 0.0, type: 'neural_pruning', duration: 10.0 },
+        { time: 12.0, type: 'text', message: 'Synaptic connections pruned.', duration: 3.0 },
+        { time: 15.0, type: 'calm' }
+    ],
+
     'z': [ // Default Mode Network
         { time: 0.0, type: 'style', value: 2 }, // Connectome
         { time: 0.0, type: 'camera', target: 'isometric', duration: 2.0 },

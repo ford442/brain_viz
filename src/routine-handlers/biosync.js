@@ -1,6 +1,22 @@
 import { handleCamera } from '../routine-camera.js';
 
 export function registerBiosyncHandlers(handlers, player) {
+    // Neural Network Pruning (simulates decay of connections due to lack of use)
+    handlers.set('neural_pruning', (evt) => {
+        const duration = evt.duration || 5.0;
+        const ease = evt.ease || 'quadInOut';
+
+        // Gradually decay connections and reduce visual activity
+        player.startLerp({ key: 'growth', value: 0.1, duration: duration, ease: ease });
+        player.startLerp({ key: 'sparkle', value: 0.0, duration: duration, ease: ease });
+        player.startLerp({ key: 'flowSpeed', value: 0.2, duration: duration, ease: ease });
+        player.startLerp({ key: 'ambientLight', value: 0.1, duration: duration, ease: ease });
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
+
     handlers.set('neuromodulator', (evt) => {
         const profileKey = evt.profile;
         if (profileKey && window.updateNeuromodulatorUI) {
