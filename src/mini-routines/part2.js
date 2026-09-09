@@ -484,14 +484,13 @@ export const MINI_ROUTINES_PART2 = {
         { time: 7.0, type: 'lerp', key: 'colorShift', value: 0.0, duration: 3.0 },
         { time: 10.0, type: 'calm' }
     ],
-    'T': [ // Transcranial Magnetic Stimulation
-        { time: 0.0, type: 'text', message: 'Targeted Neuro-Stimulation (TMS)', duration: 3.0 },
-        { time: 0.0, type: 'camera', target: 'frontal', duration: 1.0 },
-        { time: 1.0, type: 'tms_distortion', target: 'frontal-lobe', intensity: 2.0, radius: 0.35, duration: 1.5 },
-        { time: 2.0, type: 'tms_distortion', target: 'parietal-lobe', intensity: 2.0, radius: 0.35, duration: 1.5 },
-        { time: 3.0, type: 'tms_distortion', target: 'occipital-lobe', intensity: 2.0, radius: 0.35, duration: 1.5 },
-        { time: 5.0, type: 'camera', target: 'global', duration: 2.0 },
-        { time: 7.0, type: 'calm' }
+    'T': [ // DMN to TPN Transition
+        { time: 0.0, type: 'style', value: 2 }, // Connectome
+        { time: 0.0, type: 'text', message: 'Engaging Task-Positive Network (Focus)', duration: 3.0 },
+        { time: 0.0, type: 'camera', target: 'frontal', duration: 2.0, ease: 'easeInOutSine' },
+        { time: 2.0, type: 'dmn_to_tpn', phase: 'engage', intensity: 1.0, duration: 4.0 },
+        { time: 8.0, type: 'text', message: 'Reverting to Default Mode Network (Idle)', duration: 3.0 },
+        { time: 9.0, type: 'dmn_to_tpn', phase: 'release', intensity: 1.0, duration: 4.0 }
     ],
 
     'A': [ // Auditory Hallucination
