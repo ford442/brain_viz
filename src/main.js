@@ -9,7 +9,6 @@
  * - WebGPU Graceful Fallback Checks
  */
 
-import { InferenceEngine } from './inference-engine.js';
 import { FilterUIOverlay, initUIControls, initDirectorTools, initTooltips, initRangeTooltips } from './ui-utils.js';
 import { mountControlsShell, initTabSwitching, setupLegendPanel, setupOverlays, setupRoutineTransport, setupBciPanel, setupXrPanel, setupNeuromodulatorPanel, setupSessionPanel, setupPathwayPanel } from './ui-panels.js';
 import { setupModeSelector } from './ui-mode-selector.js';
@@ -74,6 +73,7 @@ async function init() {
         const transport = setupRoutineTransport(player, controls);
         // Ensuring RoutineTransport logic satisfies core timing UI controls
 
+        const { InferenceEngine } = await import('./inference-engine.js');
         const inferenceEngine = new InferenceEngine();
         const aiPromptRef = { value: 'visual cortex resonance prompt' };
 

@@ -1,6 +1,6 @@
 // ui-routine-transport.js
-import { TimelineEditor } from './timeline-editor.js';
-import { setupTimelineEditor } from './ui-timeline-editor.js';
+// TimelineEditor / setupTimelineEditor are dynamically imported on first use
+// (see btnEditor.onclick below) to keep the editor UI out of the initial bundle.
 
 export function setupRoutineTransport(player, controls) {
     // --- UI FOR ROUTINE ---
@@ -223,9 +223,8 @@ export function setupRoutineTransport(player, controls) {
     fileWrapper.appendChild(fileInput);
     routineContainer.appendChild(fileWrapper);
 
-    // --- GUI Timeline Editor ---
-    setupTimelineEditor(player, routineContainer);
-    const timelineEditor = new TimelineEditor(player);
+    // --- GUI Timeline Editor (lazy-loaded: modules are only fetched on first open) ---
+    let timelineEditorReady = null;
 
     const btnEditor = document.createElement('button');
     btnEditor.textContent = 'Open Timeline Editor';
@@ -238,7 +237,25 @@ export function setupRoutineTransport(player, controls) {
     btnEditor.style.borderRadius = '6px';
     btnEditor.style.color = '#ccaabb';
     btnEditor.style.cursor = 'pointer';
-    btnEditor.onclick = () => timelineEditor.open();
+    btnEditor.onclick = async () => {
+        if (!timelineEditorReady) {
+            btnEditor.disabled = true;
+            const originalLabel = btnEditor.textContent;
+            btnEditor.textContent = 'Loading editor…';
+            timelineEditorReady = Promise.all([
+                import('./timeline-editor.js'),
+                import('./ui-timeline-editor.js')
+            ]).then(([{ TimelineEditor }, { setupTimelineEditor }]) => {
+                setupTimelineEditor(player, routineContainer);
+                return new TimelineEditor(player);
+            }).finally(() => {
+                btnEditor.disabled = false;
+                btnEditor.textContent = originalLabel;
+            });
+        }
+        const timelineEditor = await timelineEditorReady;
+        timelineEditor.open();
+    };
 
     routineContainer.appendChild(btnEditor);
     // --- End GUI Timeline Editor ---
