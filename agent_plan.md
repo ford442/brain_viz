@@ -496,3 +496,7 @@
 *Idea:* "What if we visualized Cortical Spreading Depression (CSD) as a slow-moving wave of intense depolarization followed by suppression across the cortical surface?"
 *Idea:* "What if we visualized Neural Network pruning by having dendritic connections slowly fade and disappear based on lack of use over time?"
 *Idea:* "What if we visualized the brain's neuroplasticity explicitly as newly spawning geometry that solidifies into permanent structural connections over multiple user sessions?"
+
+### Phase 29: Cortical Spreading Depression
+- [x] **Cortical Spreading Depression:** Slow-moving depolarization wave across the cortical surface, followed by suppression (`csd` event).
+* [2026-09-11] - Implemented Cortical Spreading Depression (`csd` handler). Marked Phase 29 complete.

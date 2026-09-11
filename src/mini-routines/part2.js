@@ -5,6 +5,11 @@ export const MINI_ROUTINES_PART2 = {
         { time: 0.0, type: 'circadian_rhythm', duration: 12.0 },
         { time: 12.0, type: 'text', message: 'CIRCADIAN CYCLE COMPLETE', duration: 2.0 }
     ],
+    '$': [ // Cortical Spreading Depression
+        { time: 0.0, type: 'text', message: 'CORTICAL SPREADING DEPRESSION', duration: 2.0 },
+        { time: 0.0, type: 'csd', duration: 8.0, intensity: 1.0 },
+        { time: 8.0, type: 'text', message: 'CSD SUPPRESSION RECOVERING...', duration: 2.0 }
+    ],
 
     '7': [ // Top View
         { time: 0.0, type: 'camera', target: 'top', duration: 1.5, ease: 'quadInOut' },
