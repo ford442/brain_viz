@@ -609,6 +609,16 @@ MINI_ROUTINES_PART2['"'] = [ // [Phase 2.5] Spatial Memory Retrieval
     { time: 4.0, type: 'text', message: 'Memory Consolidated', duration: 2.0 }
 ];
 
+MINI_ROUTINES_PART2['('] = [ // Cortical Thickness Visualization
+    { time: 0.0, type: 'text', message: 'Simulating Cortical Atrophy...', duration: 4.0 },
+    { time: 0.0, type: 'camera', target: 'overview', duration: 3.0 },
+    { time: 1.0, type: 'cortical_thickness', intensity: -1.5, duration: 6.0, message: 'Cortical mantle thinning' },
+    { time: 8.0, type: 'text', message: 'Initiating Neuroplasticity Recovery...', duration: 3.0 },
+    { time: 8.0, type: 'cortical_thickness', intensity: 1.0, duration: 5.0, message: 'Cortical mantle swelling' },
+    { time: 14.0, type: 'cortical_thickness', intensity: 0.0, duration: 4.0, message: 'Returning to baseline' },
+    { time: 18.0, type: 'calm' }
+];
+
 MINI_ROUTINES_PART2[']'] = [ // Cellular Apoptosis Simulation
     { time: 0.0, type: 'text', message: 'Cellular Apoptosis Initiated...', duration: 4.0 },
     { time: 0.0, type: 'camera', target: 'overview', duration: 3.0 },
