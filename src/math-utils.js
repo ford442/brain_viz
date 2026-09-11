@@ -160,6 +160,28 @@ function dot(a, b) {
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
+// [Neuro-Weaver] Ray/sphere intersection. Returns the nearest point where
+// `direction` (from `origin`) enters the sphere, or null if it misses.
+// Shared by webxr-manager.js (VR controller painting) and raycast-utils.js
+// (desktop mouse painting).
+export function raySphere(origin, direction, center, radius) {
+    const ox = origin[0] - center[0];
+    const oy = origin[1] - center[1];
+    const oz = origin[2] - center[2];
+    const b = ox * direction[0] + oy * direction[1] + oz * direction[2];
+    const c = ox * ox + oy * oy + oz * oz - radius * radius;
+    const discriminant = b * b - c;
+    if (discriminant < 0) return null;
+    const root = Math.sqrt(discriminant);
+    const distance = -b - root > 0 ? -b - root : -b + root;
+    if (distance <= 0) return null;
+    return [
+        origin[0] + direction[0] * distance,
+        origin[1] + direction[1] * distance,
+        origin[2] + direction[2] * distance,
+    ];
+}
+
 // [Neuro-Weaver] Advanced Easing Functions for RoutinePlayer
 export const Easing = {
     linear: t => t,

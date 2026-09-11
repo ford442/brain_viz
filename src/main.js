@@ -16,6 +16,9 @@ import { setupModeSelector } from './ui-mode-selector.js';
 import { collectInputsAndLabels } from './main-dom.js';
 import { setupRendererBackend } from './main-renderer-setup.js';
 import { setupRoutineEngine } from './main-routine-engine.js';
+import { setupPaintIntegration } from './main-paint-integration.js';
+import { setupSonificationIntegration } from './main-sonification-integration.js';
+import { setupReactivityIntegration } from './main-reactivity-integration.js';
 import { setupSynaptiXIntegration } from './main-synaptix-integration.js';
 import { setupTrainingIntegration } from './main-training-integration.js';
 import { startMainUpdateLoop } from './main-update-loop.js';
@@ -54,6 +57,7 @@ async function init() {
         } else {
              console.warn('[Routine Engine] RoutinePlayer failed to initialize.');
         }
+        const paintController = setupPaintIntegration(renderer, canvas, player);
 
         setupLegendPanel();
         const legendPanel = document.getElementById('legend-panel');
@@ -65,6 +69,8 @@ async function init() {
 
         setupOverlays(player, filterOverlay, inputs, labels);
         const controls = document.getElementById('controls');
+        const sonificationEngine = setupSonificationIntegration(renderer, player, audioReactor, controls);
+        const reactivityRouter = setupReactivityIntegration(renderer, player, audioReactor, controls);
         const transport = setupRoutineTransport(player, controls);
         // Ensuring RoutineTransport logic satisfies core timing UI controls
 
@@ -82,7 +88,7 @@ async function init() {
         setupPathwayPanel(renderer, player, modeSelector);
         const trainingEngine = setupTrainingIntegration(renderer, player, audioReactor, synaptixEngine, bciSession);
 
-        initUIControls(renderer, inputs, labels);
+        initUIControls(renderer, inputs, labels, paintController);
 
         const mainStyleDropdown = document.getElementById('style-mode');
         if (mainStyleDropdown) {
@@ -121,7 +127,7 @@ async function init() {
 
         startMainUpdateLoop(renderer
 , player, inputs, labels, tensorPlayer, synaptixEngine,
-            inferenceEngine, audioReactor, transport, directorLabels, modeSelector, aiPromptRef, trainingEngine, sessionController);
+            inferenceEngine, audioReactor, transport, directorLabels, modeSelector, aiPromptRef, trainingEngine, sessionController, sonificationEngine, reactivityRouter);
 
         // Ensure InferenceEngine is valid before initialization
         if (inferenceEngine) {

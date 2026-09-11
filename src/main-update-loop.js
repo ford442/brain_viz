@@ -1,5 +1,5 @@
 // main-update-loop.js — RAF loop syncing UI, SynaptiX, audio reactivity, and routine transport
-export function startMainUpdateLoop(renderer, player, inputs, labels, tensorPlayer, synaptixEngine, inferenceEngine, audioReactor, transport, directorLabels, modeSelector, aiPromptRef, trainingEngine, sessionController) {
+export function startMainUpdateLoop(renderer, player, inputs, labels, tensorPlayer, synaptixEngine, inferenceEngine, audioReactor, transport, directorLabels, modeSelector, aiPromptRef, trainingEngine, sessionController, sonificationEngine, reactivityRouter) {
     let lastAIStep = 0;
     let lastTrainingTime = 0;
     const liveSourceStatus = document.getElementById('live-source-status');
@@ -40,22 +40,11 @@ export function startMainUpdateLoop(renderer, player, inputs, labels, tensorPlay
             audioReactor.update(renderer, player);
             const features = audioReactor.getFeatures();
 
-            if (window.baseParams === undefined) {
-                window.baseParams = {
-                    zoom: renderer.camera?.zoom || 2.5,
-                    colorShift: renderer.params.colorShift || 0.0,
-                    sparkle: renderer.params.sparkle || 0.0
-                };
-            }
-
-            const targetZoom = window.baseParams.zoom - (features.energy * 0.4);
-            renderer.setCameraParams({ zoom: targetZoom });
-
-            const targetColorShift = window.baseParams.colorShift + (features.bass * 2.8);
-            renderer.setParams({ colorShift: targetColorShift });
-
-            const targetSparkle = window.baseParams.sparkle + (features.brightness * 1.8);
-            renderer.setParams({ sparkle: targetSparkle });
+            // Audio->param mapping now lives in the user-editable Reactivity
+            // Router matrix (src/reactivity-router.js), defaulting to the
+            // 'classic' preset that reproduces the old fixed bass/energy/
+            // brightness mapping. See src/main-reactivity-integration.js.
+            reactivityRouter?.apply(renderer);
 
             if (features.onset > 0.6 && Math.random() > 0.6) {
                 const r = 1.0 + Math.random() * 0.3;
@@ -66,6 +55,10 @@ export function startMainUpdateLoop(renderer, player, inputs, labels, tensorPlay
                 const z = r * Math.cos(phi);
                 renderer.injectStimulus(x, y, z, features.onset * 2.5);
             }
+        }
+
+        if (sonificationEngine?.isActive) {
+            sonificationEngine.update(renderer, player, synaptixEngine, timestamp);
         }
 
         if (inputs.amplitude) inputs.amplitude.value = renderer.params.amplitude;

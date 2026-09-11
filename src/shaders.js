@@ -1893,6 +1893,21 @@ struct TensorParams {
     synaptiXActive: f32,
     // [V3.2] Fiber-volume coupling (offset 100)
     fiberCoupling: f32,
+    // Offsets 104-167 are written by JS (uniforms.js) for neuromodulator/
+    // lesion params this compute shader does not consume (pre-existing
+    // drift, out of scope for Paint Energy). Scalar filler keeps every
+    // subsequent field's byte offset correct — do NOT collapse into an
+    // array<f32,N>, which would force 16-byte stride in the uniform address
+    // space and silently shift stimulusRadius/stimulusErase below.
+    _reserved0: f32, _reserved1: f32, _reserved2: f32, _reserved3: f32,
+    _reserved4: f32, _reserved5: f32, _reserved6: f32, _reserved7: f32,
+    _reserved8: f32, _reserved9: f32, _reserved10: f32, _reserved11: f32,
+    _reserved12: f32, _reserved13: f32, _reserved14: f32, _reserved15: f32,
+    // [Paint Energy] offset 168: brush radius (0 = legacy fixed sigma 0.5,
+    // used by single-click/region-button callers that don't pass a radius).
+    // offset 172: erase/damping mode flag (>0.5 = erase).
+    stimulusRadius: f32,
+    stimulusErase: f32,
 }
 
 @group(0) @binding(0) var<storage, read_write> activityTensor: array<f32>;
@@ -2100,10 +2115,18 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
     // Stimulus Injection
     if (params.stimulusActive > 0.0) {
         let d = distance(worldPosition, params.stimulusPos);
-        var signal = gaussian_pulse(d, 0.5);
+        let sigma = select(0.5, params.stimulusRadius, params.stimulusRadius > 0.0001);
+        var signal = gaussian_pulse(d, sigma);
         signal *= params.mitochondrialFunction;
         if (signal > 0.01) {
-            val = val + params.stimulusActive * signal;
+            if (params.stimulusErase > 0.5) {
+                // [Paint Energy] Eraser mode: damp existing energy within the
+                // brush footprint instead of adding new energy.
+                let eraseFactor = clamp(1.0 - params.stimulusActive * signal, 0.0, 1.0);
+                val = val * eraseFactor;
+            } else {
+                val = val + params.stimulusActive * signal;
+            }
         }
     }
 

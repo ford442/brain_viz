@@ -1,5 +1,7 @@
 import { vertexShader, fragmentShader, computeShader, somaVertexShader, somaFragmentShader, sparkVertexShader, sparkFragmentShader, postVertexShader, postFragmentShader, pointCloudVertexShader, pointCloudFragmentShader } from '../shaders.js';
 import { RENDER_UNIFORM_BUFFER_SIZE, COMPUTE_UNIFORM_BUFFER_SIZE } from './constants.js';
+import { immuneVertexShader, immuneFragmentShader } from '../shaders/immune.js';
+import { createImmunePool, IMMUNE_STRIDE } from '../immune-particles.js';
 
 export function applyPipelineMethods(Target) {
     Target.prototype.initVolumetricResources = function() {
@@ -118,6 +120,73 @@ export function applyPipelineMethods(Target) {
      1.0, -1.0,
      1.0,  1.0
         ]), GPUBufferUsage.VERTEX);
+    };
+
+    // [Phase 6] Immune cell migration particles.
+    // The pool is allocated once (2k cap) and recycled; the GPU buffer is only
+    // rewritten when a surge is seeded or cleared, so idle frames cost nothing
+    // beyond the draw call (which is itself skipped when immuneActivity is 0).
+    Target.prototype.initImmuneResources = function() {
+        if (!this.immunePool) {
+    this.immunePool = createImmunePool();
+        }
+        this.immuneInstanceCount = this.immunePool.capacity;
+        this.immuneInstanceBuffer = this.device.createBuffer({
+    size: Math.max(IMMUNE_STRIDE * 4, this.immunePool.data.byteLength),
+    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+        });
+        this.uploadImmunePool();
+
+        this.immuneQuadBuffer = this.createBuffer(new Float32Array([
+    -1.0, -1.0,
+     1.0, -1.0,
+    -1.0,  1.0,
+    -1.0,  1.0,
+     1.0, -1.0,
+     1.0,  1.0
+        ]), GPUBufferUsage.VERTEX);
+    };
+
+    Target.prototype.uploadImmunePool = function() {
+        if (!this.device || !this.immuneInstanceBuffer || !this.immunePool) return;
+        this.device.queue.writeBuffer(this.immuneInstanceBuffer, 0, this.immunePool.data);
+        this.immunePool.dirty = false;
+    };
+
+    Target.prototype.initImmunePipeline = function(renderBindGroupLayout, format) {
+        this.immunePipeline = this.device.createRenderPipeline({
+    layout: this.device.createPipelineLayout({ bindGroupLayouts: [renderBindGroupLayout] }),
+    vertex: {
+        module: this.device.createShaderModule({ code: immuneVertexShader }),
+        entryPoint: 'main',
+        buffers: [
+            { arrayStride: 8, attributes: [{ shaderLocation: 0, offset: 0, format: 'float32x2' }] },
+            {
+                arrayStride: IMMUNE_STRIDE * 4,
+                stepMode: 'instance',
+                attributes: [
+                    { shaderLocation: 1, offset: 0, format: 'float32x4' },  // origin + stagger
+                    { shaderLocation: 2, offset: 16, format: 'float32x4' }, // target + spawnTime
+                    { shaderLocation: 3, offset: 32, format: 'float32x4' }, // control + seed
+                    { shaderLocation: 4, offset: 48, format: 'float32x4' }  // speed, intensity, pad
+                ]
+            }
+        ]
+    },
+    fragment: {
+        module: this.device.createShaderModule({ code: immuneFragmentShader }),
+        entryPoint: 'main',
+        targets: [{
+            format: format,
+            blend: {
+                color: { srcFactor: 'src-alpha', dstFactor: 'one', operation: 'add' },
+                alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' }
+            }
+        }]
+    },
+    primitive: { topology: 'triangle-list', cullMode: 'none' },
+    depthStencil: { depthWriteEnabled: false, depthCompare: 'less', format: 'depth32float' }
+        });
     };
 
     Target.prototype.initSomaPipeline = function(renderBindGroupLayout, format) {

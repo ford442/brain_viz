@@ -1,7 +1,7 @@
 // @ts-check
 import { Mat4 } from '../math-utils.js';
 import { COMPUTE_UNIFORM_BUFFER_SIZE } from './constants.js';
-import { assertUniformLayout, assertShaderUniformsMatch } from '../shaders/uniform-layout.js';
+import { assertUniformLayout, assertShaderUniformsMatch, assertComputeUniformLayout } from '../shaders/uniform-layout.js';
 import {
     vertexShader, fragmentShader,
     somaVertexShader, somaFragmentShader,
@@ -10,9 +10,11 @@ import {
     pointCloudVertexShader, pointCloudFragmentShader,
 } from '../shaders.js';
 import { fiberVertexShader, fiberFragmentShader } from '../shaders/fiber.js';
+import { immuneVertexShader, immuneFragmentShader } from '../shaders/immune.js';
 
 // Dev-only: the layout assertions below only need to run once, not every frame.
 let uniformLayoutChecked = false;
+let computeUniformLayoutChecked = false;
 
 export function applyUniformsMethods(Target) {
     Target.prototype.updateUniforms = function() {
@@ -211,6 +213,7 @@ export function applyUniformsMethods(Target) {
                 vertexShader, fragmentShader, fiberVertexShader, fiberFragmentShader,
                 somaVertexShader, somaFragmentShader, sparkVertexShader, sparkFragmentShader,
                 postFragmentShader, pointCloudVertexShader, pointCloudFragmentShader,
+                immuneVertexShader, immuneFragmentShader,
             });
         }
 
@@ -285,12 +288,37 @@ export function applyUniformsMethods(Target) {
         dv.setFloat32(160, this.params.lesionRadius, true);
         dv.setFloat32(164, this.params.decimation, true);
 
+        // [Paint Energy] offset 168: brush radius (0 = legacy fixed sigma
+        // 0.5 for single-click/region-button callers). offset 172:
+        // erase/damping flag. See src/shaders.js TensorParams for the WGSL side.
+        dv.setFloat32(168, this.stimulus.radius ?? 0.0, true);
+        dv.setFloat32(172, this.stimulus.erase ? 1.0 : 0.0, true);
+
+        if (!computeUniformLayoutChecked) {
+            computeUniformLayoutChecked = true;
+            assertComputeUniformLayout({ stimulusRadius: 168 / 4, stimulusErase: 172 / 4 });
+        }
+
         // Upload to GPU
         this.device.queue.writeBuffer(this.computeUniformBuffer, 0, cBuf);
 
         // Auto-reset pulse (single frame injection)
         if (this.stimulus.active > 0) {
-    if (this.stimulus.decayRate > 0) {
+    if (this.stimulus.decayHalfLife > 0) {
+        // [Paint Energy] Exponential half-life decay — set by injectStimulus()
+        // when a caller (the paint brush) passes decayHalfLife. Takes
+        // priority over the legacy linear decayRate ramp below. lastDecayTime
+        // is re-stamped on every injectStimulus() call, so active intensity
+        // only actually decays once injections stop (e.g. after pointerup).
+        const now = performance.now();
+        const dt = (now - this.stimulus.lastDecayTime) / 1000.0;
+        this.stimulus.active *= Math.pow(0.5, dt / this.stimulus.decayHalfLife);
+        this.stimulus.lastDecayTime = now;
+        if (this.stimulus.active < 0.001) {
+            this.stimulus.active = 0.0;
+            this.stimulus.decayHalfLife = 0.0;
+        }
+    } else if (this.stimulus.decayRate > 0) {
         const now = performance.now();
         const dt = (now - this.stimulus.lastTime) / 1000.0; // convert to seconds
         this.stimulus.active = Math.max(0.0, this.stimulus.active - this.stimulus.decayRate * dt);

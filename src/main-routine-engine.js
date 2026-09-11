@@ -157,59 +157,11 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
     ];
 
 
-    // Click-based localized energy injection via new API
-    let mainIsDragging = false;
-    let mainDragDistance = 0;
-    let mainLastX = 0;
-    let mainLastY = 0;
-
-    canvas.addEventListener('mousedown', (e) => {
-        mainIsDragging = true;
-        mainDragDistance = 0;
-        mainLastX = e.clientX;
-        mainLastY = e.clientY;
-        injectAtCursor(e);
-    });
-
-    canvas.addEventListener('mousemove', (e) => {
-        if (!mainIsDragging) return;
-        const dx = e.clientX - mainLastX;
-        const dy = e.clientY - mainLastY;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-
-        mainDragDistance += dist;
-        // Inject only if moved a bit to avoid flooding
-        if (dist > 10) {
-            injectAtCursor(e);
-            mainLastX = e.clientX;
-            mainLastY = e.clientY;
-        }
-    });
-
-    canvas.addEventListener('mouseup', (e) => {
-        mainIsDragging = false;
-    });
-
-    canvas.addEventListener('mouseleave', (e) => {
-        mainIsDragging = false;
-    });
-
-    function injectAtCursor(e) {
-        const rect = canvas.getBoundingClientRect();
-        const u = (e.clientX - rect.left) / rect.width;
-        const v = (e.clientY - rect.top) / rect.height;
-
-        // Map screen roughly to tensor volume coordinates (-1.6 to 1.6)
-        const nx = (u - 0.5) * 2.0;
-        const ny = -(v - 0.5) * 2.0;
-
-        const targetCoords = [nx * 1.6, ny * 1.6, 0.0];
-        console.log(`[Main] Paint gesture detected. Injecting API stimulus at ${targetCoords.map(n => n.toFixed(2)).join(',')}`);
-
-        if (window.visualizerAPI && window.visualizerAPI.injectRegion) {
-            window.visualizerAPI.injectRegion(targetCoords, 2.0, 0.5); // shorter duration for continuous paint
-        }
-    }
+    // [Paint Energy] The old always-on, naive screen-plane drag injector that
+    // used to live here has been replaced by PaintController (a real
+    // raycast-driven brush with enable/disable, radius/falloff/decay, and an
+    // eraser mode) — see src/paint-controller.js, wired up in
+    // src/main-paint-integration.js.
 
     MINI_ROUTINES['M'] = [
         { time: 0.0, type: 'text', message: 'Memory Fragmentation Sequence', duration: 2.0 },

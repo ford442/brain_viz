@@ -52,3 +52,67 @@ export class Tensor {
         return new Tensor(newData, this.shape);
     }
 }
+
+// [Neuro-Sonification] Lobe classification mirrors the anatomical regions used
+// throughout the codebase (see regionCoordinatesMap in main-routine-engine.js
+// and the depth-based region masks in synaptix-engine.js): frontal = +Z,
+// occipital = -Z, parietal = +Y, temporal = |X| sides, deep = near-center.
+const LOBE_NAMES = ['frontal', 'occipital', 'parietal', 'temporal', 'deep'];
+const DEEP_RADIUS = 0.35;
+
+function classifyVoxelLobe(wx, wy, wz) {
+    const radius = Math.sqrt(wx * wx + wy * wy + wz * wz);
+    if (radius < DEEP_RADIUS) return 'deep';
+
+    const absX = Math.abs(wx);
+    if (absX >= Math.abs(wy) && absX >= Math.abs(wz)) return 'temporal';
+    if (wy > absX && wy >= wz) return 'parietal';
+    return wz >= 0 ? 'frontal' : 'occipital';
+}
+
+/**
+ * Computes mean/variance activation per anatomical lobe from a flattened
+ * voxelDim^3 tensor (index = x + y*voxelDim + z*voxelDim*voxelDim, matching
+ * the compute-shader/phantom-generation convention used elsewhere).
+ * @param {Float32Array} tensorData
+ * @param {number} voxelDim
+ * @returns {Object<string, {mean: number, variance: number, count: number}>}
+ */
+export function computeLobeStats(tensorData, voxelDim = 32) {
+    const sums = {};
+    const sumSquares = {};
+    const counts = {};
+    for (const lobe of LOBE_NAMES) {
+        sums[lobe] = 0;
+        sumSquares[lobe] = 0;
+        counts[lobe] = 0;
+    }
+
+    let idx = 0;
+    for (let z = 0; z < voxelDim; z++) {
+        const wz = (z / voxelDim) * 2.0 - 1.0;
+        for (let y = 0; y < voxelDim; y++) {
+            const wy = (y / voxelDim) * 2.0 - 1.0;
+            for (let x = 0; x < voxelDim; x++) {
+                const wx = (x / voxelDim) * 2.0 - 1.0;
+                const lobe = classifyVoxelLobe(wx, wy, wz);
+                const value = tensorData[idx] || 0;
+                sums[lobe] += value;
+                sumSquares[lobe] += value * value;
+                counts[lobe] += 1;
+                idx++;
+            }
+        }
+    }
+
+    const stats = {};
+    for (const lobe of LOBE_NAMES) {
+        const count = counts[lobe] || 1;
+        const mean = sums[lobe] / count;
+        const variance = Math.max(0, sumSquares[lobe] / count - mean * mean);
+        stats[lobe] = { mean, variance, count };
+    }
+    return stats;
+}
+
+export { LOBE_NAMES };

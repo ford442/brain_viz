@@ -299,6 +299,20 @@ button:disabled {
     box-shadow: 0 0 10px rgba(34, 170, 102, 0.4);
 }
 
+/* [Paint Energy] Toggle-state feedback for Enable Paint Mode / Eraser Mode */
+.btn-region.active {
+    background: #2a3a70;
+    border-color: #88aaff;
+    color: #cfe0ff;
+    box-shadow: 0 0 10px rgba(136, 170, 255, 0.6);
+}
+.btn-hazard.active {
+    background: #5a2f14;
+    border-color: #ffaa66;
+    color: #ffd9b3;
+    box-shadow: 0 0 10px rgba(255, 170, 102, 0.6);
+}
+
 /* 2-column grid for region + random buttons */
 .btn-grid {
     display: grid;

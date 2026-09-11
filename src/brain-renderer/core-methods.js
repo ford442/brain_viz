@@ -69,6 +69,7 @@ export function applyCoreMethods(Target) {
         // 3. Setup Resource Groups
         this.initSomaResources(geometry);
         this.initSparkResources(geometry);
+        this.initImmuneResources();
         this.initVolumetricResources();
         this.uploadFiberDirections(geometry);
         
@@ -160,6 +161,7 @@ export function applyCoreMethods(Target) {
 
         this.initSomaPipeline(renderBindGroupLayout, format);
         this.initSparkPipeline(renderBindGroupLayout, format);
+        this.initImmunePipeline(renderBindGroupLayout, format);
         this.initPointCloudPipeline(renderBindGroupLayout, format);
         this.initSynaptiXBridges(format);
         this.initComputePipeline();

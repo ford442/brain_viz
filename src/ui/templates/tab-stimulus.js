@@ -29,6 +29,25 @@ export function renderStimulusTab() {
                     </div>
                 </div>
 
+                <div class="section-header" data-section="stim-paint">Paint Energy</div>
+                <div class="section-content">
+                    <button id="paint-toggle" class="btn-region" type="button" data-tooltip="Click-drag on the brain to paint activation energy">Enable Paint Mode</button>
+                    <button id="paint-erase-toggle" class="btn-hazard" type="button" data-tooltip="Paint strokes damp existing energy instead of adding it">Eraser Mode</button>
+                    <div class="control-group">
+                        <label data-tooltip="Radius of the paint brush">Brush Radius <span id="val-paint-radius" class="value">0.35</span></label>
+                        <input type="range" id="paint-radius" min="0.1" max="1.0" step="0.01" value="0.35">
+                    </div>
+                    <div class="control-group">
+                        <label data-tooltip="Peak intensity of each paint stroke">Brush Intensity <span id="val-paint-intensity" class="value">0.80</span></label>
+                        <input type="range" id="paint-intensity" min="0.05" max="2.0" step="0.05" value="0.8">
+                    </div>
+                    <div class="control-group">
+                        <label data-tooltip="Half-life of painted energy after the stroke ends">Decay Half-Life (s) <span id="val-paint-decay" class="value">1.2</span></label>
+                        <input type="range" id="paint-decay" min="0.1" max="5.0" step="0.1" value="1.2">
+                    </div>
+                    <button id="paint-clear" class="btn-calm" type="button" data-tooltip="Clear all accumulated tensor field energy (same as Reset Activity)">Clear Paint</button>
+                </div>
+
                 <div class="section-header" data-section="stim-state">State Control</div>
                 <div class="section-content">
                     <button id="stim-calm" class="btn-calm" type="button" data-tooltip="Reset all parameters to baseline resting values">Calm State</button>

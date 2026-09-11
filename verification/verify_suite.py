@@ -9,11 +9,13 @@ VERIFICATION_DIR = ROOT / "verification"
 SCRIPTS = [
     "verify_brain.py",
     "verify_stimulus.py",
+    "verify_paint.py",
     "verify_pathways.py",
     "verify_camera.py",
     "verify_routine.py",
     "verify_synaptix.py",
     "verify_neuromodulators.py",
+    "verify_immune.py",
     "verify_timeline_editor.py",
     "verify_ai_inference.py",
     "verify_cinematic_fx.py",

@@ -157,7 +157,12 @@ export class BrainRenderer {
             electricalActive: 0.0,
             mercuryActive: 0.0,
             decayRate: 0.0,
-            lastTime: 0
+            lastTime: 0,
+            // [Paint Energy]
+            radius: 0.0,
+            erase: false,
+            decayHalfLife: 0.0,
+            lastDecayTime: 0
         };
 
         // Altitude/Hypoxia Internal State

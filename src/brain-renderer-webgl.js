@@ -3,6 +3,7 @@ import { Mat4 } from './math-utils.js';
 import { meshVertexSource, meshFragmentSource, pointVertexSource, pointFragmentSource } from './webgl-shaders.js';
 import { clamp01, mix, smoothstep, createDefaultParams, createProgram } from './webgl-gl-utils.js';
 import { applyPathwayMethods, computePathwayEmission, createPathwayState } from './pathway-renderer.js';
+import { createImmunePool, seedImmuneSurge, clearImmunePool, sampleImmuneParticle } from './immune-particles.js';
 
 const BRAIN_RANGE = 1.6;
 
@@ -51,8 +52,16 @@ export class BrainRendererWebGL {
             pos: [0, 0, 0],
             active: 0.0,
             electricalActive: 0.0,
-            mercuryActive: 0.0
+            mercuryActive: 0.0,
+            // [Paint Energy]
+            radius: 0.0,
+            erase: false,
+            decayHalfLife: 0.0,
+            lastDecayTime: 0
         };
+        // [Paint Energy] Guards the orbit-drag mouse handlers below so a
+        // paint stroke on the canvas doesn't also rotate the camera.
+        this.paintModeActive = false;
         this.debugOptions = {
             wireframe: false,
             tensorField: true,
@@ -87,6 +96,13 @@ export class BrainRendererWebGL {
         this.fiberVao = null;
         this.tensorVao = null;
         this.somaVao = null;
+        // [Phase 6] Simplified CPU immune particles. The fallback uses a
+        // smaller pool than WebGPU (point sprites, integrated on the CPU).
+        this.immunePool = createImmunePool(512);
+        this.immuneVao = null;
+        this.immuneDrawCount = 0;
+        this.immunePositions = new Float32Array(this.immunePool.capacity * 3);
+        this.immuneColorSize = new Float32Array(this.immunePool.capacity * 4);
         this.meshBuffers = {};
         this.frameHandle = null;
         this.bridgeVao = null;
@@ -102,8 +118,12 @@ export class BrainRendererWebGL {
         let isDragging = false;
         let lastX = 0;
         let lastY = 0;
-        this.canvas.addEventListener('mousedown', (e) => { isDragging = true; lastX = e.clientX; lastY = e.clientY; });
+        this.canvas.addEventListener('mousedown', (e) => {
+            if (this.paintModeActive) return;
+            isDragging = true; lastX = e.clientX; lastY = e.clientY;
+        });
         this.canvas.addEventListener('mousemove', (e) => {
+            if (this.paintModeActive) return;
             if (isDragging) {
                 this.targetRotation.y += (e.clientX - lastX) * 0.01;
                 this.targetRotation.x += (e.clientY - lastY) * 0.01;
@@ -149,6 +169,7 @@ export class BrainRendererWebGL {
 
         this.buildAndUploadGeometry();
         this.buildTensorDebugGrid();
+        this.buildImmuneResources();
         this.resize();
     }
 
@@ -343,6 +364,74 @@ export class BrainRendererWebGL {
         gl.bindVertexArray(null);
     }
 
+    // [Phase 6] Immune cell migration — simplified CPU particle path.
+    buildImmuneResources() {
+        const gl = this.gl;
+        this.meshBuffers.immunePosition = gl.createBuffer();
+        this.meshBuffers.immuneColorSize = gl.createBuffer();
+        this.immuneVao = gl.createVertexArray();
+        gl.bindVertexArray(this.immuneVao);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.meshBuffers.immunePosition);
+        gl.bufferData(gl.ARRAY_BUFFER, this.immunePositions.byteLength, gl.DYNAMIC_DRAW);
+        gl.enableVertexAttribArray(0);
+        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.meshBuffers.immuneColorSize);
+        gl.bufferData(gl.ARRAY_BUFFER, this.immuneColorSize.byteLength, gl.DYNAMIC_DRAW);
+        gl.enableVertexAttribArray(1);
+        gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 0, 0);
+        gl.bindVertexArray(null);
+    }
+
+    spawnImmuneParticles(target, intensity = 1.0) {
+        const site = (Array.isArray(target) && target.length >= 3 && !target.some(isNaN))
+            ? target
+            : (this.stimulus && this.stimulus.pos) || [0, 0, 0];
+        this._immuneSurgeSeed = (this._immuneSurgeSeed || 0) + 97.3;
+        const count = seedImmuneSurge(this.immunePool, site, intensity, this.time, this._immuneSurgeSeed);
+        this.params.immuneActivity = clamp01(intensity);
+        return count;
+    }
+
+    clearImmuneParticles() {
+        clearImmunePool(this.immunePool);
+        this.params.immuneActivity = 0.0;
+        this.immuneDrawCount = 0;
+    }
+
+    updateImmuneParticles() {
+        const activity = clamp01(this.params.immuneActivity || 0.0);
+        if (activity <= 0.001 || this.immunePool.activeCount === 0) {
+            this.immuneDrawCount = 0;
+            return;
+        }
+
+        let written = 0;
+        for (let i = 0; i < this.immunePool.activeCount; i++) {
+            const p = sampleImmuneParticle(this.immunePool, i, this.time, activity);
+            if (!p) continue;
+            this.immunePositions[written * 3 + 0] = p.x;
+            this.immunePositions[written * 3 + 1] = p.y;
+            this.immunePositions[written * 3 + 2] = p.z;
+            // Leukocyte green-white, flaring gold during the phagocytosis burst.
+            // The point shader reuses .w as both point size and alpha, so the
+            // fade is baked into RGB and .w carries the sprite size.
+            const lum = p.alpha * (0.8 + p.burst * 1.6);
+            this.immuneColorSize[written * 4 + 0] = mix(0.35, 1.0, p.burst) * lum;
+            this.immuneColorSize[written * 4 + 1] = mix(1.0, 0.92, p.burst) * lum;
+            this.immuneColorSize[written * 4 + 2] = mix(0.55, 0.6, p.burst) * lum;
+            this.immuneColorSize[written * 4 + 3] = 3.0 * p.size;
+            written++;
+        }
+        this.immuneDrawCount = written;
+        if (written === 0) return;
+
+        const gl = this.gl;
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.meshBuffers.immunePosition);
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.immunePositions.subarray(0, written * 3));
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.meshBuffers.immuneColorSize);
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.immuneColorSize.subarray(0, written * 4));
+    }
+
     resize() {
         const gl = this.gl;
         const load = Math.max(0, Math.min(1, this.params.cognitiveLoad));
@@ -407,7 +496,11 @@ export class BrainRendererWebGL {
         this._altitudeInternal.lastAltitude = alt;
     }
 
-    injectStimulus(targetX, targetY, targetZ, intensity) {
+    // `duration` is accepted (and ignored, same as before) purely as a
+    // positional placeholder so radius/erase/decayHalfLife land in the same
+    // argument slots as the WebGPU renderer's injectStimulus() — callers
+    // like PaintController invoke both renderers uniformly.
+    injectStimulus(targetX, targetY, targetZ, intensity, duration = 0.0, radius = null, erase = false, decayHalfLife = 0.0) {
         const BOUNDARY_LIMIT = 1.45;
         if ([targetX, targetY, targetZ, intensity].some((val) => isNaN(val))) {
             return;
@@ -418,6 +511,15 @@ export class BrainRendererWebGL {
             Math.max(-BOUNDARY_LIMIT, Math.min(BOUNDARY_LIMIT, targetZ))
         ];
         this.stimulus.active = Math.max(0.0, intensity);
+        // [Paint Energy]
+        this.stimulus.radius = (radius === null || isNaN(radius)) ? 0.0 : Math.max(0.0, radius);
+        this.stimulus.erase = Boolean(erase);
+        if (decayHalfLife > 0) {
+            this.stimulus.decayHalfLife = decayHalfLife;
+            this.stimulus.lastDecayTime = performance.now();
+        } else {
+            this.stimulus.decayHalfLife = 0.0;
+        }
     }
 
     injectElectrical(intensity) {
@@ -452,6 +554,7 @@ export class BrainRendererWebGL {
         this.params.cognitiveLoad = 0.0;
         this.params.fluidActive = 0.0;
         this.params.immuneActivity = 0.0;
+        this.clearImmuneParticles();
         this.params.fogDensity = 0.0;
         this.params.aberration = 0.0;
         this.params.grain = 0.0;
@@ -555,7 +658,11 @@ export class BrainRendererWebGL {
         const style = this.params.style || 0;
         const time = this.time;
         const wave = Math.sin(time * (this.params.frequency || 1.0)) * 0.5 + 0.5;
-        const stimulusRadius = 0.22 + coupling * 0.16;
+        // [Paint Energy] Configurable brush radius; falls back to the legacy
+        // fiber-coupling-derived radius for single-click/region callers.
+        const stimulusRadius = (this.stimulus.radius && this.stimulus.radius > 0.0001)
+            ? this.stimulus.radius
+            : (0.22 + coupling * 0.16);
 
         for (let z = 0; z < dim; z++) {
             for (let y = 0; y < dim; y++) {
@@ -610,7 +717,14 @@ export class BrainRendererWebGL {
                         const dy = worldY - this.stimulus.pos[1];
                         const dz = worldZ - this.stimulus.pos[2];
                         const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-                        nextVal += Math.exp(-(dist * dist) / (stimulusRadius * stimulusRadius)) * this.stimulus.active * 0.34;
+                        const signal = Math.exp(-(dist * dist) / (stimulusRadius * stimulusRadius));
+                        if (this.stimulus.erase) {
+                            // [Paint Energy] Eraser mode: damp existing energy
+                            // within the brush footprint instead of adding.
+                            nextVal *= Math.max(0.0, 1.0 - this.stimulus.active * signal);
+                        } else {
+                            nextVal += signal * this.stimulus.active * 0.34;
+                        }
                     }
 
                     if (this.stimulus.electricalActive > 0.0) {
@@ -625,13 +739,31 @@ export class BrainRendererWebGL {
         }
 
         current.set(next);
-        this.stimulus.active = 0.0;
+
+        // [Paint Energy] Exponential half-life decay (set by injectStimulus()
+        // when a caller passes decayHalfLife, e.g. the paint brush) takes
+        // priority over the legacy immediate single-shot reset below.
+        // lastDecayTime is re-stamped on every injectStimulus() call, so
+        // active intensity only actually decays once injections stop.
+        if (this.stimulus.active > 0.0 && this.stimulus.decayHalfLife > 0) {
+            const now = performance.now();
+            const dt = (now - this.stimulus.lastDecayTime) / 1000.0;
+            this.stimulus.active *= Math.pow(0.5, dt / this.stimulus.decayHalfLife);
+            this.stimulus.lastDecayTime = now;
+            if (this.stimulus.active < 0.001) {
+                this.stimulus.active = 0.0;
+                this.stimulus.decayHalfLife = 0.0;
+            }
+        } else {
+            this.stimulus.active = 0.0;
+        }
         this.stimulus.electricalActive = 0.0;
         this.stimulus.mercuryActive = 0.0;
     }
 
     updateDynamicBuffers() {
         const gl = this.gl;
+        this.updateImmuneParticles();
         const style = this.params.style || 0;
         const pathwayRenderState = this.getPathwayRenderState();
         const pathwayColor = pathwayRenderState.selected?.color || [0, 0, 0];
@@ -915,7 +1047,8 @@ export class BrainRendererWebGL {
                 this.drawMesh(partner, false, this.partnerMeshVao);
             }
             this.drawBridges(mvp);
-            const single = this.baseIndices.length + this.baseFiberVertices.length / 3 + this.baseSomaInstances.length / 9;
+            this.drawImmuneParticles(mvp);
+            const single =this.baseIndices.length + this.baseFiberVertices.length / 3 + this.baseSomaInstances.length / 9;
             const dual = this.baseIndices.length * 2 + (this.baseFiberVertices.length / 3) * 2 + interiorCount * 2 + this.bridgeVertexCount;
             this.synaptixPerformance = { ...this.synaptixPerformance, singleWorkUnits: single, dualWorkUnits: dual, workRatio: dual / Math.max(1, single) };
             return;
@@ -931,6 +1064,12 @@ export class BrainRendererWebGL {
             const wireframe = this.debugOptions.wireframe || style === 1.0;
             this.drawMesh(mvp, wireframe);
         }
+        this.drawImmuneParticles(mvp);
+    }
+
+    drawImmuneParticles(mvp) {
+        if (!this.immuneDrawCount) return;
+        this.drawPoints(mvp, this.immuneVao, this.immuneDrawCount);
     }
 
     getSynaptiXPerformanceStats() {

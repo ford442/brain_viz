@@ -130,6 +130,19 @@ export function applyRenderLoopMethods(Target) {
         renderPass.setVertexBuffer(1, this.sparkInstanceBuffer);
         renderPass.draw(6, this.sparkInstanceCount);
     }
+
+    // 5. Draw Immune Cell Migration Streams [Phase 6]
+    // Skipped entirely while there is no inflammation, so the subsystem is
+    // free outside of a histamine / immune_migration event.
+    if (this.immunePipeline && this.immuneInstanceCount > 0 && (this.params.immuneActivity || 0.0) > 0.001) {
+        if (this.immunePool && this.immunePool.dirty) {
+            this.uploadImmunePool();
+        }
+        renderPass.setPipeline(this.immunePipeline);
+        renderPass.setVertexBuffer(0, this.immuneQuadBuffer);
+        renderPass.setVertexBuffer(1, this.immuneInstanceBuffer);
+        renderPass.draw(6, this.immunePool ? this.immunePool.activeCount : 0);
+    }
         }
 
         if (isSynaptiX && (this.params.dualAvatarEnabled ?? true)) {

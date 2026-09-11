@@ -10,7 +10,7 @@ export class FilterUIOverlay {
     }
 }
 
-export function initUIControls(renderer, uiInputs, uiLabels) {
+export function initUIControls(renderer, uiInputs, uiLabels, paintController) {
     // [Neuro-Weaver] Sync UI State with Renderer Params
     const syncParam = (paramKey, paramValue) => {
         const floatVal = parseFloat(paramValue);
@@ -137,6 +137,36 @@ export function initUIControls(renderer, uiInputs, uiLabels) {
     });
 
     document.getElementById('stim-reset')?.addEventListener('click', () => renderer.resetActivity());
+
+    // [Paint Energy] Brush controls
+    if (paintController) {
+        const paintToggleBtn = document.getElementById('paint-toggle');
+        paintToggleBtn?.addEventListener('click', () => {
+            if (paintController.enabled) paintController.disable();
+            else paintController.enable();
+            paintToggleBtn.classList.toggle('active', paintController.enabled);
+            paintToggleBtn.textContent = paintController.enabled ? 'Disable Paint Mode' : 'Enable Paint Mode';
+        });
+
+        const paintEraseBtn = document.getElementById('paint-erase-toggle');
+        paintEraseBtn?.addEventListener('click', () => {
+            paintController.setEraseMode(!paintController.erase);
+            paintEraseBtn.classList.toggle('active', paintController.erase);
+        });
+
+        const brushSliderKeyMap = { 'paint-radius': 'radius', 'paint-intensity': 'intensity', 'paint-decay': 'decayHalfLife' };
+        Object.entries(brushSliderKeyMap).forEach(([id, brushKey]) => {
+            const input = document.getElementById(id);
+            input?.addEventListener('input', (evt) => {
+                const value = parseFloat(evt.target.value);
+                paintController.setBrush({ [brushKey]: value });
+                const label = document.getElementById(`val-${id}`);
+                if (label) label.textContent = value.toFixed(2);
+            });
+        });
+
+        document.getElementById('paint-clear')?.addEventListener('click', () => paintController.clearPaint());
+    }
 }
 
 export function initDirectorTools(renderer, player) {

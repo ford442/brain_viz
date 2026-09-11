@@ -1,5 +1,7 @@
 // [Neuro-Weaver] WebGL-first WebXR companion. WebGPU remains the authoritative
 // desktop renderer until a broadly available WebGPU XR layer exists.
+import { raySphere } from './math-utils.js';
+
 const LOBE_PRESETS = ['global', 'frontal', 'occipital', 'temporal', 'parietal', 'deep'];
 
 const PRESET_CAMERA = {
@@ -43,24 +45,6 @@ function rotateY(angle) {
     const c = Math.cos(angle);
     const s = Math.sin(angle);
     return new Float32Array([c, 0, -s, 0, 0, 1, 0, 0, s, 0, c, 0, 0, 0, 0, 1]);
-}
-
-function raySphere(origin, direction, center, radius) {
-    const ox = origin[0] - center[0];
-    const oy = origin[1] - center[1];
-    const oz = origin[2] - center[2];
-    const b = ox * direction[0] + oy * direction[1] + oz * direction[2];
-    const c = ox * ox + oy * oy + oz * oz - radius * radius;
-    const discriminant = b * b - c;
-    if (discriminant < 0) return null;
-    const root = Math.sqrt(discriminant);
-    const distance = -b - root > 0 ? -b - root : -b + root;
-    if (distance <= 0) return null;
-    return [
-        origin[0] + direction[0] * distance,
-        origin[1] + direction[1] * distance,
-        origin[2] + direction[2] * distance,
-    ];
 }
 
 export class WebXRManager {

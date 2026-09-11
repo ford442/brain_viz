@@ -19,6 +19,7 @@
 // struct actually uses. (WGSL spec ยง13.4.1 / ยง13.4.2 host-shareable layout.)
 const WGSL_TYPE_INFO = {
     f32: { size: 4, align: 4 },
+    u32: { size: 4, align: 4 },
     vec2: { size: 8, align: 8 },
     vec3: { size: 12, align: 16 },
     vec4: { size: 16, align: 16 },
@@ -98,6 +99,53 @@ export const RENDER_UNIFORM_LAYOUT = [
 ];
 
 /**
+ * The compute `TensorParams` struct (src/shaders.js, computeShader export),
+ * through the [Paint Energy] `stimulusRadius`/`stimulusErase` fields added at
+ * the end. Fields from `_reserved0` on are scalar filler bridging pre-existing
+ * drift where uniforms.js writes more neuromodulator/lesion floats than this
+ * compute shader declares/consumes (see the comment in shaders.js) — they
+ * keep stimulusRadius/stimulusErase's offsets correct without asserting
+ * byte-for-byte parity with every JS-side write.
+ *
+ * @type {UniformLayoutField[]}
+ */
+export const COMPUTE_UNIFORM_LAYOUT = [
+    { name: 'time', type: 'f32' },
+    { name: 'voxelDim', type: 'u32' },
+    { name: 'frequency', type: 'f32' },
+    { name: 'amplitude', type: 'f32' },
+    { name: 'spikeThreshold', type: 'f32' },
+    { name: 'smoothing', type: 'f32' },
+    { name: 'style', type: 'f32' },
+    { name: 'stimulusPos', type: 'vec3' },
+    { name: 'stimulusActive', type: 'f32' },
+    { name: 'hypoxiaStress', type: 'f32' },
+    { name: 'metabolicRate', type: 'f32' },
+    { name: 'mitochondrialFunction', type: 'f32' },
+    { name: 'fluidActive', type: 'f32' },
+    { name: 'electricalActive', type: 'f32' },
+    { name: 'mercuryActive', type: 'f32' },
+    { name: 'cognitiveLoad', type: 'f32' },
+    { name: 'stress', type: 'f32' },
+    { name: 'heavyMetal', type: 'f32' },
+    { name: 'pad2', type: 'f32' },
+    { name: 'aiInfluence', type: 'f32' },
+    { name: 'resonanceThreshold', type: 'f32' },
+    { name: 'synaptiXActive', type: 'f32' },
+    { name: 'fiberCoupling', type: 'f32' },
+    { name: '_reserved0', type: 'f32' }, { name: '_reserved1', type: 'f32' },
+    { name: '_reserved2', type: 'f32' }, { name: '_reserved3', type: 'f32' },
+    { name: '_reserved4', type: 'f32' }, { name: '_reserved5', type: 'f32' },
+    { name: '_reserved6', type: 'f32' }, { name: '_reserved7', type: 'f32' },
+    { name: '_reserved8', type: 'f32' }, { name: '_reserved9', type: 'f32' },
+    { name: '_reserved10', type: 'f32' }, { name: '_reserved11', type: 'f32' },
+    { name: '_reserved12', type: 'f32' }, { name: '_reserved13', type: 'f32' },
+    { name: '_reserved14', type: 'f32' }, { name: '_reserved15', type: 'f32' },
+    { name: 'stimulusRadius', type: 'f32' },
+    { name: 'stimulusErase', type: 'f32' },
+];
+
+/**
  * Computes the WGSL-aligned float offset of every field in `layout`, in
  * declaration order, per uniform-address-space AlignOf/SizeOf rules.
  *
@@ -126,19 +174,8 @@ export function computeStructOffsets(layout) {
 
 const isDev = typeof import.meta !== 'undefined' && !!(import.meta.env && import.meta.env.DEV);
 
-/**
- * Dev-only guard: throws if the JS-side `Float32Array` offsets used to
- * populate the render uniform buffer (the OFFSET_* constants in
- * brain-renderer/uniforms.js) have drifted from the offsets the canonical
- * WGSL struct actually requires. No-op outside dev builds.
- *
- * @param {Object<string, number>} actualOffsets - Field name -> float offset, as currently written by updateUniforms().
- * @param {number} [actualFloatCount] - The JS-side RENDER_UNIFORM_FLOAT_COUNT, checked against the computed struct size.
- */
-export function assertUniformLayout(actualOffsets, actualFloatCount) {
-    if (!isDev) return;
-
-    const { offsets: expected, totalFloats } = computeStructOffsets(RENDER_UNIFORM_LAYOUT);
+function checkLayoutMatch(layout, layoutFileLabel, actualOffsets, actualFloatCount) {
+    const { offsets: expected, totalFloats } = computeStructOffsets(layout);
     const mismatches = [];
 
     for (const [name, expectedOffset] of Object.entries(expected)) {
@@ -152,7 +189,7 @@ export function assertUniformLayout(actualOffsets, actualFloatCount) {
 
     for (const name of Object.keys(actualOffsets)) {
         if (!(name in expected)) {
-            mismatches.push(`'${name}' is written by JS but is not a field of RENDER_UNIFORM_LAYOUT`);
+            mismatches.push(`'${name}' is written by JS but is not a field of ${layoutFileLabel}`);
         }
     }
 
@@ -162,7 +199,53 @@ export function assertUniformLayout(actualOffsets, actualFloatCount) {
 
     if (mismatches.length > 0) {
         throw new Error(
-            `[UniformLayout] JS uniform offsets no longer match the canonical WGSL Uniforms struct ` +
+            `[UniformLayout] JS uniform offsets no longer match the canonical WGSL struct ` +
+            `(src/shaders/uniform-layout.js). This causes silent data corruption on the GPU. Mismatches:\n  ` +
+            mismatches.join('\n  ')
+        );
+    }
+}
+
+/**
+ * Dev-only guard: throws if the JS-side `Float32Array` offsets used to
+ * populate the render uniform buffer (the OFFSET_* constants in
+ * brain-renderer/uniforms.js) have drifted from the offsets the canonical
+ * WGSL struct actually requires. No-op outside dev builds.
+ *
+ * @param {Object<string, number>} actualOffsets - Field name -> float offset, as currently written by updateUniforms().
+ * @param {number} [actualFloatCount] - The JS-side RENDER_UNIFORM_FLOAT_COUNT, checked against the computed struct size.
+ */
+export function assertUniformLayout(actualOffsets, actualFloatCount) {
+    if (!isDev) return;
+    checkLayoutMatch(RENDER_UNIFORM_LAYOUT, 'RENDER_UNIFORM_LAYOUT', actualOffsets, actualFloatCount);
+}
+
+/**
+ * Dev-only guard: same as assertUniformLayout(), but for the compute
+ * `TensorParams` struct (COMPUTE_UNIFORM_LAYOUT above) — specifically added
+ * to verify the [Paint Energy] `stimulusRadius`/`stimulusErase` offsets
+ * against CLAUDE.md's "WGSL Struct Alignment & Padding" hotspot. Only the
+ * fields passed in `actualOffsets` are checked, so callers may check a
+ * subset of COMPUTE_UNIFORM_LAYOUT without needing to model every
+ * pre-existing offset (see the drift note on COMPUTE_UNIFORM_LAYOUT).
+ *
+ * @param {Object<string, number>} actualOffsets
+ */
+export function assertComputeUniformLayout(actualOffsets) {
+    if (!isDev) return;
+    const { offsets: expected } = computeStructOffsets(COMPUTE_UNIFORM_LAYOUT);
+    const mismatches = [];
+    for (const [name, actual] of Object.entries(actualOffsets)) {
+        const expectedOffset = expected[name];
+        if (expectedOffset === undefined) {
+            mismatches.push(`'${name}' is not a field of COMPUTE_UNIFORM_LAYOUT`);
+        } else if (actual !== expectedOffset) {
+            mismatches.push(`'${name}' is at float offset ${actual}, WGSL struct requires ${expectedOffset}`);
+        }
+    }
+    if (mismatches.length > 0) {
+        throw new Error(
+            `[UniformLayout] JS compute-uniform offsets no longer match the canonical WGSL TensorParams struct ` +
             `(src/shaders/uniform-layout.js). This causes silent data corruption on the GPU. Mismatches:\n  ` +
             mismatches.join('\n  ')
         );

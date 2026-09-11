@@ -1,4 +1,27 @@
+import { seedImmuneSurge, clearImmunePool } from '../immune-particles.js';
+
 export function applyStimulusMethods(Target) {
+    // [Phase 6] Immune cell migration.
+    // Seeds a surge of leukocytes streaming from the pial vasculature toward
+    // the inflammation site. `target` defaults to the last injected stimulus so
+    // a bare `histamine` event still reads spatially.
+    Target.prototype.spawnImmuneParticles = function(target, intensity = 1.0) {
+        if (!this.immunePool) return 0;
+        const site = (Array.isArray(target) && target.length >= 3 && !target.some(isNaN))
+    ? target
+    : (this.stimulus && this.stimulus.pos) || [0, 0, 0];
+        const count = seedImmuneSurge(this.immunePool, site, intensity, this.time, this._immuneSurgeSeed = ((this._immuneSurgeSeed || 0) + 97.3));
+        this.params.immuneActivity = Math.max(0.0, Math.min(1.0, intensity));
+        return count;
+    };
+
+    /** Clear all immune particles (phagocytosis complete / glial cleanup). */
+    Target.prototype.clearImmuneParticles = function() {
+        clearImmunePool(this.immunePool);
+        this.params.immuneActivity = 0.0;
+    };
+
+
     Target.prototype.updateAltitudeState = function() {
         const alt = this.params.altitude;
 
@@ -56,7 +79,7 @@ export function applyStimulusMethods(Target) {
         this.params.tmsRadius = radius;
     };
 
-    Target.prototype.injectStimulus = function(targetX, targetY, targetZ, intensity, duration = 0.0) {
+    Target.prototype.injectStimulus = function(targetX, targetY, targetZ, intensity, duration = 0.0, radius = null, erase = false, decayHalfLife = 0.0) {
         // [Neuro-Weaver] Validation: Prevent injection of invalid values
         if ([targetX, targetY, targetZ, intensity, duration].some(val => isNaN(val))) {
      console.warn("Neuro-Weaver: Invalid stimulus parameters ignored");
@@ -73,14 +96,29 @@ export function applyStimulusMethods(Target) {
         ];
         // Ensure intensity is non-negative
         this.stimulus.active = Math.max(0.0, intensity);
-        if (duration > 0) {
+        // [Paint Energy] Brush radius (0/null = legacy fixed sigma) and
+        // eraser/damping mode. See src/shaders.js TensorParams.
+        this.stimulus.radius = (radius === null || isNaN(radius)) ? 0.0 : Math.max(0.0, radius);
+        this.stimulus.erase = Boolean(erase);
+        if (decayHalfLife > 0) {
+    // Exponential half-life decay takes priority over the linear
+    // decayRate ramp below — see the decay tick in uniforms.js.
+    this.stimulus.decayHalfLife = decayHalfLife;
+    this.stimulus.lastDecayTime = performance.now();
+    this.stimulus.decayRate = 0.0;
+        } else if (duration > 0) {
     this.stimulus.decayRate = intensity / duration;
     this.stimulus.lastTime = performance.now();
+    this.stimulus.decayHalfLife = 0.0;
         } else {
     this.stimulus.decayRate = 0.0;
+    this.stimulus.decayHalfLife = 0.0;
         }
 
-        // [Phase 1 WASM] Forward stimulus to the C++ engine when in WASM mode
+        // [Phase 1 WASM] Forward stimulus to the C++ engine when in WASM mode.
+        // Note: radius/erase/decayHalfLife are intentionally NOT forwarded —
+        // bte_inject_stimulus()'s C++ signature is fixed at 5 args, so WASM
+        // mode always uses the engine's built-in fixed radius/decay.
         if (this.wasmMode && this.wasmEngine.available) {
     this.wasmEngine.injectStimulus(
         this.stimulus.pos[0],
@@ -122,6 +160,7 @@ export function applyStimulusMethods(Target) {
         this.params.stress = 0.0;
         this.params.cortisol = 0.0;
         this.params.immuneActivity = 0.0;
+        clearImmunePool(this.immunePool);
 
         this.tms = null;
         this.params.cognitiveLoad = 0.0;

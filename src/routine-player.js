@@ -798,6 +798,10 @@ export class RoutinePlayer {
                     this.startLerp({ key: 'flowSpeed', value: baseFlow, duration: duration, ease: 'sineInOut', delay: 0.2 });
                 }
             },
+            paintEnable: (opts = {}) => this.executeEvent({ type: 'paint_enable', ...opts }),
+            paintDisable: () => this.executeEvent({ type: 'paint_disable' }),
+            paintSnapshot: (label) => this.executeEvent({ type: 'paint_snapshot', label }),
+            paintRestore: (indexOrLabel) => this.executeEvent({ type: 'paint_snapshot', restore: indexOrLabel }),
             get isPlaying() { return this._player.isPlaying; },
             get elapsedTime() { return this._player.elapsedTime; },
             _player: this

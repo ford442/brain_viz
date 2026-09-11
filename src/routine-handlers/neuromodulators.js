@@ -135,6 +135,14 @@ export function registerNeuromodulatorsHandlers(handlers, player) {
             player.startLerp({ key: 'colorShift', value: 0.0, duration: duration, ease: ease });
             player.startLerp({ key: 'sparkle', value: 0.0, duration: duration, ease: ease });
         }
+
+        // [Phase 6] Cleanup completes: phagocytosed debris and the immune
+        // particles that carried it are released, leaving the repaired tissue.
+        setTimeout(() => {
+            if (typeof player.renderer.clearImmuneParticles === 'function') {
+                player.renderer.clearImmuneParticles();
+            }
+        }, Math.max(0, duration) * 1000);
     });
 
     // [Phase 5] GABA Deceleration
@@ -281,6 +289,19 @@ export function registerNeuromodulatorsHandlers(handlers, player) {
 
     // [Phase 2] Histamine Inflammatory Response
     // [Phase 6] Immune Cell Migration
+    // [Phase 6] Immune cell migration.
+    // Resolves the inflammation site (named region, explicit coords, or the
+    // last injected stimulus) and streams leukocyte particles toward it.
+    const resolveImmuneSite = (evt) => {
+        if (typeof evt.target === 'string' && player.regions[evt.target]) {
+            return player.regions[evt.target];
+        }
+        if (Array.isArray(evt.target) && evt.target.length >= 3) {
+            return evt.target;
+        }
+        return null;
+    };
+
     handlers.set('immune_migration', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
         const duration = evt.duration || 4.0;
@@ -289,9 +310,46 @@ export function registerNeuromodulatorsHandlers(handlers, player) {
         player.renderer.setParams({
             immuneActivity: intensity
         });
+        if (typeof player.renderer.spawnImmuneParticles === 'function') {
+            player.renderer.spawnImmuneParticles(resolveImmuneSite(evt), intensity);
+        }
 
         if (duration > 0) {
             player.startLerp({ key: 'immuneActivity', value: 0.0, duration: duration, ease: ease });
+        }
+    });
+
+    // Sustained inflammatory recruitment — particles keep streaming until an
+    // `immune_resolve` (or `glial_cleanup`) clears them.
+    handlers.set('immune_surge', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+
+        player.renderer.setParams({
+            immuneActivity: Math.min(1.0, intensity),
+            colorShift: 0.4 * intensity
+        });
+        if (typeof player.renderer.spawnImmuneParticles === 'function') {
+            player.renderer.spawnImmuneParticles(resolveImmuneSite(evt), intensity);
+        }
+        // A surge does not self-terminate; only ramp down if a duration is given.
+        if (evt.duration > 0) {
+            player.startLerp({ key: 'immuneActivity', value: 0.0, duration: evt.duration, ease: evt.ease || 'quadOut' });
+        }
+    });
+
+    handlers.set('immune_resolve', (evt) => {
+        const duration = evt.duration !== undefined ? evt.duration : 2.0;
+
+        if (duration > 0) {
+            player.startLerp({ key: 'immuneActivity', value: 0.0, duration: duration, ease: evt.ease || 'quadOut' });
+            player.startLerp({ key: 'colorShift', value: 0.0, duration: duration, ease: evt.ease || 'quadOut' });
+            setTimeout(() => {
+                if (typeof player.renderer.clearImmuneParticles === 'function') {
+                    player.renderer.clearImmuneParticles();
+                }
+            }, duration * 1000);
+        } else if (typeof player.renderer.clearImmuneParticles === 'function') {
+            player.renderer.clearImmuneParticles();
         }
     });
 
@@ -302,7 +360,7 @@ export function registerNeuromodulatorsHandlers(handlers, player) {
         if (evt.target) {
             player.executeEvent({ type: 'stimulus', target: evt.target, intensity: intensity * 2.0 });
         }
-        player.executeEvent({ type: 'immune_migration', intensity: intensity * 0.6, duration: duration });
+        player.executeEvent({ type: 'immune_migration', target: evt.target, intensity: intensity * 0.6, duration: duration });
 
         // Inflammatory response: warm/red color shift, slight swelling (growth), and agitation (flowSpeed)
         player.renderer.setParams({
