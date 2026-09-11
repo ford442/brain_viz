@@ -152,6 +152,37 @@ export function registerBiosyncHandlers(handlers, player) {
         }
     });
 
+    // Cortical Spreading Depression (CSD)
+    handlers.set('csd', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const duration = evt.duration || 8.0;
+
+        // The wave of intense depolarization
+        const waveDuration = duration * 0.3;
+        player.startLerp({ key: 'amplitude', value: 1.5 * intensity, duration: waveDuration, ease: 'quadOut' });
+        player.startLerp({ key: 'sparkle', value: 2.0 * intensity, duration: waveDuration, ease: 'quadOut' });
+        player.startLerp({ key: 'flowSpeed', value: 15.0 * intensity, duration: waveDuration, ease: 'quadOut' });
+        player.startLerp({ key: 'colorShift', value: 0.8 * intensity, duration: waveDuration, ease: 'quadOut' });
+
+        // Followed by prolonged suppression
+        const suppressionDelay = waveDuration;
+        const suppressionDuration = duration * 0.7;
+
+        player.activeTasks.push({
+            delay: suppressionDelay,
+            execute: () => {
+                player.startLerp({ key: 'amplitude', value: 0.1, duration: suppressionDuration, ease: 'sineOut' });
+                player.startLerp({ key: 'sparkle', value: 0.0, duration: suppressionDuration, ease: 'sineOut' });
+                player.startLerp({ key: 'flowSpeed', value: 0.5, duration: suppressionDuration, ease: 'sineOut' });
+                player.startLerp({ key: 'colorShift', value: -0.5, duration: suppressionDuration, ease: 'sineOut' });
+            }
+        });
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
+
     // Cellular Apoptosis Simulation
     handlers.set('cellular_apoptosis', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
