@@ -41,6 +41,7 @@ For the current architecture and module responsibilities, see [`AGENTS.md`](../A
 | 26 | WebXR Immersive Mode | WebGL2 stereo VR, routine-driven XR rig, controller/hand energy painting, lobe viewpoints, and optional tabletop AR |
 | 27 | Double Mirror Multimodal Sessions | Local-only synchronized 32³ tensor, webcam-thumbnail, microphone-feature, and note capture; strict `.nwsession` replay/scrubbing; descriptive occipital/audio correlation heatmap; aligned CSV export |
 | 28 | Cognitive Phenomenon | DMN to task-positive network (TPN) handoff transition |
+| 29 | Cortical Dynamics | Cortical thickness atrophy and swelling visualization |
 
 ## Open Items
 
@@ -74,3 +75,4 @@ Deduplicated from the historical "Dream Log" entries across the archived plans �
 - [`docs/session-format.md`](session-format.md) — shipped Double Mirror capture, NWS1 format, replay, analysis, privacy, and scientific limits
 - [`docs/DOUBLE_MIRROR_VISION.md`](DOUBLE_MIRROR_VISION.md) — shipped V1 boundary and longer-term multimodal ideas
 - **Neuro-Visual Endorphin Release Simulation** — What if we visualized the effects of endorphins as a temporary suppression of stress parameters and an increase in harmonic wave synchronization?
+- **Neuro-Inflammation Simulation** — What if we visualize neuro-inflammation as localized redness and swelling?

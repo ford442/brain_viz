@@ -443,6 +443,11 @@
 
 
 * [2026-08-27] - Completed Neuro-Script Implementation Cycle. Cleaned up legacy `cognitive_load` logic in `RoutinePlayer`, and implemented "Region-Injection Paint Gesture" from Dream Log. Added "Cortical Thickness Visualization" to Dream Log.
+
+### Phase 29: Cortical Thickness Visualization
+- [x] **Cortical Thickness Visualization:** Visualizes atrophy or swelling of the cortical mantle via the `cortical_thickness` event handler, simulating aging or neuroplasticity.
+
+*Idea:* "What if we visualize neuro-inflammation as localized redness and swelling?"
 * [2026-08-09] - Completed Routine Logic Refactor. Ensured `tick()` uses `performance.now()`, `executeEvent` uses switch, and WebGPU degrades safely. Added tasks for Interpolation and Camera Maps, and Serotonin to Dream Log.
 
 - [x] **Parameter Interpolation/Easing:** Ensure routines have smooth interpolation.

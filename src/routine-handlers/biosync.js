@@ -183,6 +183,21 @@ export function registerBiosyncHandlers(handlers, player) {
         }
     });
 
+    // Cortical Thickness Modulation (Simulates atrophy or swelling)
+    handlers.set('cortical_thickness', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const duration = evt.duration || 5.0;
+        const ease = evt.ease || 'sineInOut';
+
+        // Base corticalThickness is typically around 0.11
+        // Modulate based on intensity (e.g., negative for thinning, positive for swelling)
+        player.startLerp({ key: 'corticalThickness', value: 0.11 + (intensity * 0.05), duration: duration, ease: ease });
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
+
     // Cellular Apoptosis Simulation
     handlers.set('cellular_apoptosis', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
