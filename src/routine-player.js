@@ -94,6 +94,13 @@ export class RoutinePlayer {
 
     setupDefaultHandlers() {
         const handlers = createDefaultHandlers(this);
+        handlers.set('neuro_inflammation', (evt) => {
+            const histamine = handlers.get('histamine');
+            if (typeof histamine === 'function') {
+                histamine({ ...evt, type: 'histamine', intensity: evt.intensity ?? 1.2 });
+            }
+        });
+
         for (const [type, handler] of handlers) {
             this.handlers.set(type, handler);
         }
