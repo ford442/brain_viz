@@ -505,3 +505,10 @@
 ### Phase 29: Cortical Spreading Depression
 - [x] **Cortical Spreading Depression:** Slow-moving depolarization wave across the cortical surface, followed by suppression (`csd` event).
 * [2026-09-11] - Implemented Cortical Spreading Depression (`csd` handler). Marked Phase 29 complete.
+
+### Phase 30: Neuro-Inflammation Simulation
+- [x] **Neuro-Inflammation Simulation:** Visualize neuro-inflammation as localized redness and swelling.
+
+* [2026-09-12] - Verified neuro-inflammation simulation is natively supported by the `histamine` event handler. Created `neuro_inflammation` alias in `routine-player.js` and wired it into `main.js`. Added verification test and checked off task.
+
+*Idea:* "What if we visualize microglia pruning synapses dynamically?"

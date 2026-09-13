@@ -117,7 +117,28 @@ async function init() {
             cogLegendPanel.appendChild(newEntry);
         }
 
+
+        const cogLegendPanelInflam = document.getElementById('legend-panel');
+        if (cogLegendPanelInflam) {
+            const newEntry = document.createElement('div');
+            newEntry.innerHTML = '<b>I</b> : Trigger Neuro-Inflammation Simulation';
+            cogLegendPanelInflam.appendChild(newEntry);
+        }
+
         window.addEventListener('keydown', (e) => {
+            if (e.key === 'i' || e.key === 'I') {
+                if (player) {
+                    player.loadRoutine([
+                        { time: 0, type: 'text', message: 'Neuro-inflammation', duration: 2 },
+                        { time: 0, type: 'neuro_inflammation', target: 'frontal', intensity: 1.2, duration: 4 },
+                        { time: 5, type: 'glial_cleanup', duration: 3 },
+                    ]);
+                    player.play();
+                }
+            }
+        });
+
+window.addEventListener('keydown', (e) => {
             if (e.key === 'l' || e.key === 'L') {
                 if (player) {
                     player.executeEvent({ type: 'cognitive_load', value: 1.0, duration: 2.0 });
