@@ -622,7 +622,7 @@ export class RoutinePlayer {
         const resolvedEvt = this.resolveEventVariables(event);
 
         // [Phase 33] Microglia Pruning Alias
-        if (resolvedEvt.type === 'glial_cleanup') {
+        if (resolvedEvt.type === 'synaptic_pruning') {
             resolvedEvt.type = 'microglia_pruning';
         }
 
