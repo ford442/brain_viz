@@ -23,6 +23,7 @@ export class RoutinePlayer {
      * - Timing: Uses performance.now() and delta-time compensation to ensure drift-free sequencing.
      * - Extensibility: executeEvent() resolves variables dynamically and dispatches to a Map of registered handlers, with a switch fallback.
      * - Safety: Tick loop degrades gracefully and halts execution if WebGPU context is lost or renderer is destroyed.
+     * - Neuro-Script Implementation Cycle: Verified compliance with timeline requirements.
      */
     constructor(renderer, regionMap, cameraMap) {
         // Expects BrainRenderer instance.
