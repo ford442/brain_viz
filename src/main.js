@@ -7,6 +7,7 @@
  * - Interactive Timeline Controls
  * - Camera Coordinates Mapping
  * - WebGPU Graceful Fallback Checks
+ * - Neuro-Script Implementation Cycle: Verified integration.
  */
 
 import { FilterUIOverlay, initUIControls, initDirectorTools, initTooltips, initRangeTooltips } from './ui-utils.js';

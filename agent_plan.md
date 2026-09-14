@@ -511,4 +511,11 @@
 
 * [2026-09-12] - Verified neuro-inflammation simulation is natively supported by the `histamine` event handler. Created `neuro_inflammation` alias in `routine-player.js` and wired it into `main.js`. Added verification test and checked off task.
 
+### Phase 31: Procedural Binaural Generation
+- [x] **Procedural Binaural Generation:** Automatically generate binaural beat frequencies for a desired brainwave target instead of manual frequency entry.
+
+### Phase 32: Neuro-Script Implementation Cycle Update
+- [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer. (Verified existing implementation meets all requirements: `performance.now()`, extensible `executeEvent`, WebGPU safety).
+
 *Idea:* "What if we visualize microglia pruning synapses dynamically?"
+*Idea:* "What if we visualize Serotonin levels as color shifts?"
