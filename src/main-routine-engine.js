@@ -148,6 +148,15 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
     });
     player.registerSubRoutines({ ...MINI_ROUTINES, 'dopamine-pathway-demo': DOPAMINE_PATHWAY_DEMO });
 
+    MINI_ROUTINES['Z'] = [
+        { time: 0.0, type: 'text', message: 'Glial Cleanup Activated', duration: 2.0 },
+        { time: 0.0, type: 'camera', target: 'close-up', duration: 2.0, ease: 'sineInOut' },
+        { time: 2.0, type: 'glial_cleanup', intensity: 1.5, duration: 6.0 },
+        { time: 8.0, type: 'text', message: 'Cleanup Complete', duration: 2.0 },
+        { time: 9.0, type: 'camera', target: 'overview', duration: 2.0, ease: 'sineInOut' }
+    ];
+
+
     MINI_ROUTINES['E'] = [
         { time: 0.0, type: 'text', message: 'Visual Cortex Processing', duration: 3.0 },
         { time: 0.0, type: 'visual_cortex_filter', intensity: 1.0, duration: 1.5, ease: 'cubicOut' },

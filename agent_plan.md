@@ -517,5 +517,10 @@
 ### Phase 32: Neuro-Script Implementation Cycle Update
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer. (Verified existing implementation meets all requirements: `performance.now()`, extensible `executeEvent`, WebGPU safety).
 
+### Phase 33: Microglia Pruning
+- [x] **Microglia Pruning:** Visualize microglia pruning synapses dynamically.
+
 *Idea:* "What if we visualize microglia pruning synapses dynamically?"
+*Idea:* "What if we visualized glial cells repairing damaged neurons after a stroke simulation?"
+
 *Idea:* "What if we visualize Serotonin levels as color shifts?"

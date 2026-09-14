@@ -199,6 +199,42 @@ export function registerBiosyncHandlers(handlers, player) {
     });
 
     // Cellular Apoptosis Simulation
+
+    // [Phase 33] Microglia Pruning
+    handlers.set('microglia_pruning', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const duration = evt.duration || 5.0;
+        const ease = evt.ease || 'sineInOut';
+
+        player.startLerp({ key: 'colorShift', value: 0.6 * intensity, duration: duration * 0.2, ease: 'quadOut' });
+
+        player.startLerp({ key: 'growth', value: Math.max(0.0, 1.0 - (0.5 * intensity)), duration: duration, ease: ease });
+        player.startLerp({ key: 'decimation', value: Math.min(1.0, 0.4 * intensity), duration: duration, ease: ease });
+
+        player.startLerp({ key: 'ambientLight', value: 0.4 * intensity, duration: duration * 0.3, ease: 'sineOut' });
+
+        if (duration > 0) {
+             const revertTime = player.elapsedTime + duration;
+             const revertDuration = 2.0;
+             const eventsToInsert = [
+                { time: revertTime, type: 'lerp', key: 'colorShift', value: 0.0, duration: revertDuration, ease: ease },
+                { time: revertTime, type: 'lerp', key: 'decimation', value: 0.0, duration: revertDuration, ease: ease },
+                { time: revertTime, type: 'lerp', key: 'ambientLight', value: 0.2, duration: revertDuration, ease: ease }
+             ];
+
+             if (player.routine) {
+                 let insertIdx = player.currentEventIndex ?? player.cursor;
+                 for (const ev of eventsToInsert) {
+                     while (insertIdx < player.routine.length && player.routine[insertIdx].time < ev.time) {
+                         insertIdx++;
+                     }
+                     player.routine.splice(insertIdx, 0, ev);
+                     insertIdx++;
+                 }
+             }
+        }
+    });
+
     handlers.set('cellular_apoptosis', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
         const duration = evt.duration || 6.0;

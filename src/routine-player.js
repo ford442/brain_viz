@@ -621,6 +621,12 @@ export class RoutinePlayer {
 
         const resolvedEvt = this.resolveEventVariables(event);
 
+        // [Phase 33] Microglia Pruning Alias
+        if (resolvedEvt.type === 'glial_cleanup') {
+            resolvedEvt.type = 'microglia_pruning';
+        }
+
+
         // Extensible mapping pattern
         if (this.handlers.has(resolvedEvt.type)) {
 
