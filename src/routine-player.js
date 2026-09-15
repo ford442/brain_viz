@@ -626,6 +626,14 @@ export class RoutinePlayer {
             resolvedEvt.type = 'microglia_pruning';
         }
 
+        // [Phase 34] Biofeedback Adaptive Audio
+        if (resolvedEvt.type === 'biofeedback_audio') {
+            resolvedEvt.type = 'sonify_param';
+            // Map the event parameters (e.g. state.respirationRate) to the sonification handler parameters
+            resolvedEvt.key = 'pitch';
+            resolvedEvt.value = (resolvedEvt.intensity || 1.0) * (this.state.respirationRate || 1.0);
+            resolvedEvt.duration = resolvedEvt.duration || 2.0;
+        }
 
         // Extensible mapping pattern
         if (this.handlers.has(resolvedEvt.type)) {
