@@ -671,6 +671,17 @@ MINI_ROUTINES_PART2['%'] = [ // [Phase 2.5] Dynamic Particle Speed Modulation
     { time: 12.0, type: 'text', message: 'ROUTINE COMPLETE', duration: 2.0 }
 ];
 
+MINI_ROUTINES_PART2['B'] = [ // [Phase 34] Biofeedback Adaptive Audio
+    { time: 0.0, type: 'text', message: 'Enabling Biofeedback Audio...', duration: 2.0 },
+    { time: 0.0, type: 'sonify_enable', preset: 'meditation' },
+    { time: 1.0, type: 'biofeedback_audio', heartRate: 70, duration: 2.0, message: 'Heart Rate: 70 BPM (Calm)' },
+    { time: 4.0, type: 'biofeedback_audio', heartRate: 110, duration: 3.0, message: 'Heart Rate: 110 BPM (Elevated)' },
+    { time: 8.0, type: 'biofeedback_audio', heartRate: 150, duration: 3.0, message: 'Heart Rate: 150 BPM (High Stress)' },
+    { time: 12.0, type: 'biofeedback_audio', heartRate: 70, duration: 4.0, message: 'Recovering... Heart Rate: 70 BPM' },
+    { time: 16.0, type: 'sonify_disable' },
+    { time: 16.0, type: 'calm' }
+];
+
 MINI_ROUTINES_PART2['T'] = [ // [Phase 28] DMN to TPN Handoff
     { time: 0.0, type: 'text', message: 'Entering Default Mode Network (Idle)...', duration: 2.0 },
     { time: 0.0, type: 'style', value: 2 }, // Connectome
