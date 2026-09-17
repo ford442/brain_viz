@@ -17,8 +17,15 @@ export class BrainRenderer {
      */
     constructor(canvas) {
         this.canvas = canvas;
+        this.adapter = null;
         this.device = null;
         this.context = null;
+        this.gpuFeatures = new Set();
+        this.isContextLost = false;
+        // Optional app-level hook invoked by handleDeviceLost() after the
+        // renderer has released its GPU objects (see main-routine-engine.js).
+        this.onDeviceLost = null;
+        this.lastGPUError = null;
 
         // Pipelines
         this.pipeline = null;      // Solid Mesh

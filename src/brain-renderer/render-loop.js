@@ -83,7 +83,9 @@ export function applyRenderLoopMethods(Target) {
         clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 }, 
         loadOp: 'clear', storeOp: 'store'
     }],
-    depthStencilAttachment: { view: this.depthTexture.createView(), depthClearValue: 1.0, depthLoadOp: 'clear', depthStoreOp: 'store' }
+    depthStencilAttachment: { view: this.depthTexture.createView(), depthClearValue: 1.0, depthLoadOp: 'clear', depthStoreOp: 'store' },
+    // undefined unless the adapter supports 'timestamp-query'.
+    timestampWrites: this.gpuTimer ? this.gpuTimer.timestampWrites() : undefined
         });
         
         renderPass.setBindGroup(0, this.bindGroup);
@@ -192,7 +194,9 @@ export function applyRenderLoopMethods(Target) {
         postPass.draw(6); // Draw full-screen quad
         postPass.end();
 
+        if (this.gpuTimer) this.gpuTimer.resolve(commandEncoder);
         this.device.queue.submit([commandEncoder.finish()]);
+        if (this.gpuTimer) this.gpuTimer.readback();
         requestAnimationFrame(() => this.render());
     };
 

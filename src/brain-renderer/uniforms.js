@@ -1,6 +1,6 @@
 // @ts-check
 import { Mat4 } from '../math-utils.js';
-import { COMPUTE_UNIFORM_BUFFER_SIZE } from './constants.js';
+import { COMPUTE_UNIFORM_BUFFER_SIZE, RENDER_UNIFORM_FLOAT_COUNT } from './constants.js';
 import { assertUniformLayout, assertShaderUniformsMatch, assertComputeUniformLayout } from '../shaders/uniform-layout.js';
 import {
     vertexShader, fragmentShader,
@@ -100,7 +100,7 @@ export function applyUniformsMethods(Target) {
         const OFFSET_APOPTOSIS = 96;
         const OFFSET_PARTICLE_SPEED = 97;
 
-        const RENDER_UNIFORM_FLOAT_COUNT = 100;
+        // Shared with the buffer allocation in ./constants.js.
         const uData = new Float32Array(RENDER_UNIFORM_FLOAT_COUNT);
         uData.set(mvp, OFFSET_MVP);
         uData.set(model, OFFSET_MODEL);

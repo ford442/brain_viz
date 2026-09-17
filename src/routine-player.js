@@ -362,7 +362,9 @@ export class RoutinePlayer {
         // covered by the isRunning check below.
         const isWebGPUBackend = this.renderer && this.renderer.backendType !== 'webgl';
         const isDeviceLost = this._deviceLost;
-        const isDeviceLostNow = isWebGPUBackend && this.renderer.device && this.renderer.device.isLost;
+        // GPUDevice.lost is a Promise, not a boolean — the renderer surfaces the
+        // resolved state as `isContextLost` (set by BrainRenderer.handleDeviceLost).
+        const isDeviceLostNow = isWebGPUBackend && this.renderer.isContextLost === true;
         const rendererMissing = !this.renderer || (isWebGPUBackend && !this.renderer.device) || isDeviceLostNow;
         if (isWebGPUBackend && this.renderer.device && this.renderer.isContextLost) {
             console.warn('[Routine Engine] WebGPU Context lost detected dynamically. Degrading gracefully by stopping tick.');

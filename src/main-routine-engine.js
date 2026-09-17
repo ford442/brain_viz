@@ -52,65 +52,65 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
 
     player.splineMap = explicitSplineMap;
 
-    // Ensure graceful WebGPU degradation handler is wired
+    // Ensure graceful WebGPU degradation handler is wired.
+    // The renderer owns the GPU lifecycle (device loss, disposal, re-creation —
+    // see BrainRenderer.handleDeviceLost/reinitialize). This layer only reacts:
+    // pause the timeline, offer recovery, resume the timeline.
     const attachDeviceLostHandler = (rndr, plyr) => {
-        if (rndr.device && rndr.device.lost) {
-             rndr.device.lost.then((info) => {
-                  const telemetryData = {
-                      event: "WebGPU_Context_Lost",
-                      timestamp: performance.now(),
-                      timelinePosition: plyr.currentTime,
-                      reason: info.reason,
-                      message: info.message
-                  };
-                  console.warn(`[Telemetry] WebGPU Context Lost:`, telemetryData);
+        rndr.onDeviceLost = (info) => {
+            const telemetryData = {
+                event: "WebGPU_Context_Lost",
+                timestamp: performance.now(),
+                timelinePosition: plyr.currentTime,
+                reason: info?.reason,
+                message: info?.message
+            };
+            console.warn(`[Telemetry] WebGPU Context Lost:`, telemetryData);
 
-                  plyr._deviceLost = true;
-                  plyr.stop();
-                  rndr.stop();
+            plyr._deviceLost = true;
+            plyr.stop();
 
-                  const errorDiv = document.getElementById('error');
-                  if (errorDiv) {
-                      errorDiv.classList.add('visible');
-                      const title = errorDiv.querySelector('.error-title');
-                      if (title) title.textContent = "WebGPU Context Lost";
+            const errorDiv = document.getElementById('error');
+            if (!errorDiv) return;
+            errorDiv.classList.add('visible');
+            const title = errorDiv.querySelector('.error-title');
+            if (title) title.textContent = "WebGPU Context Lost";
 
-                      const msg = document.getElementById('error-message');
-                      if (msg) {
-                          msg.innerHTML = `The GPU connection was lost (Reason: ${info.reason || 'unknown'}).<br><br>
-                          <button id="btn-reconnect" style="padding: 8px 16px; background: #00e5e5; color: #000; font-weight: bold; border: none; border-radius: 4px; cursor: pointer;">
-                              Reconnect & Restore Timeline
-                          </button>`;
+            const msg = document.getElementById('error-message');
+            if (!msg) return;
+            msg.innerHTML = `The GPU connection was lost (Reason: ${info?.reason || 'unknown'}).<br><br>
+                <button id="btn-reconnect" style="padding: 8px 16px; background: #00e5e5; color: #000; font-weight: bold; border: none; border-radius: 4px; cursor: pointer;">
+                    Reconnect & Restore Timeline
+                </button>`;
 
-                          document.getElementById('btn-reconnect').addEventListener('click', async () => {
-                              try {
-                                  console.log("[Telemetry] Attempting WebGPU Context Recovery...");
-                                  errorDiv.classList.remove('visible');
-                                  msg.innerHTML = '';
-                                  if (title) title.textContent = "Neural Interface Offline — WebGPU Required";
+            document.getElementById('btn-reconnect').addEventListener('click', async () => {
+                try {
+                    console.log("[Telemetry] Attempting WebGPU Context Recovery...");
+                    errorDiv.classList.remove('visible');
+                    msg.innerHTML = '';
+                    if (title) title.textContent = "Neural Interface Offline — WebGPU Required";
 
-                                  await rndr.initialize();
-                                  console.log("[Telemetry] Renderer re-initialized.");
+                    // reinitialize() disposes the old buffers/pipelines/textures
+                    // before allocating a new set, so recovery does not leak.
+                    await rndr.reinitialize();
+                    console.log("[Telemetry] Renderer re-initialized.");
 
-                                  attachDeviceLostHandler(rndr, plyr);
+                    // The new device needs the same loss handler attached.
+                    attachDeviceLostHandler(rndr, plyr);
 
-                                  rndr.start();
-                                  plyr._deviceLost = false;
-                                  if (plyr.routine && plyr.routine.length > 0) {
-                                      plyr.resume();
-                                  }
-                                  console.log(`[Telemetry] Timeline restored at position ${plyr.currentTime.toFixed(2)}s`);
-
-                              } catch (e) {
-                                  console.error("[Telemetry] Recovery failed:", e);
-                                  errorDiv.classList.add('visible');
-                                  msg.textContent = `Recovery failed: ${e.message}`;
-                              }
-                          });
-                      }
-                  }
-             });
-        }
+                    rndr.start();
+                    plyr._deviceLost = false;
+                    if (plyr.routine && plyr.routine.length > 0) {
+                        plyr.resume();
+                    }
+                    console.log(`[Telemetry] Timeline restored at position ${plyr.currentTime.toFixed(2)}s`);
+                } catch (e) {
+                    console.error("[Telemetry] Recovery failed:", e);
+                    errorDiv.classList.add('visible');
+                    msg.textContent = `Recovery failed: ${e.message}`;
+                }
+            });
+        };
     };
     if (rendererInfo.usingWebGPU) {
         attachDeviceLostHandler(renderer, player);
