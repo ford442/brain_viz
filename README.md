@@ -104,7 +104,7 @@ Neuro-Weaver's WASM engine is an optional runtime feature (`src/wasm-engine.js` 
 |------|---------|----------------------|----------|
 | Dev | `npm run dev` | No | Vite dev server with hot reload |
 | Web-only production | `npm run build` (alias: `npm run build:web`) | No | `dist/` — Vite bundle only |
-| Full hybrid | `npm run build:full` | Yes | `dist/` + `public/wasm/brain_tensor_engine.{js,wasm}` |
+| Full hybrid | `npm run build:full` | Yes | `dist/` + `public/wasm/brain_tensor_engine.{mjs,wasm}` |
 
 `npm run build` runs a `prebuild` check (`scripts/check_wasm.sh`) that prints an advisory notice — never a failure — when `public/wasm/` hasn't been built. To build the WASM engine on its own (e.g. after installing Emscripten via `.jules/setup.sh`), run `npm run build:wasm`; it locates `em++` via `$EMSDK`, an `emsdk` checkout in the repo root or `$HOME`, or an already-activated shell, instead of a hardcoded path. See [docs/wasm-engine.md](docs/wasm-engine.md) for details.
 
@@ -116,17 +116,19 @@ Use the WebGL2 path when you need a visually inspectable reference renderer:
 - debug helpers for wireframe, tensor points, and layer isolation
 - comparison target while porting scientific 3D features back into WGSL/WebGPU
 
-The WebGL2 path shares the same geometry generator, tensor buffers, camera state, style controls, and SynaptiX inputs. It is intentionally simpler than the WebGPU renderer: it approximates compute-driven volumetrics on the CPU so the scene remains debuggable in environments where WebGPU is hard to inspect automatically.
+The WebGL2 path shares the same geometry generator, tensor buffers, camera state, style controls, and SynaptiX inputs, and — since the neural-field contract landed — the same physics: `updateTensorSimulation()` calls the shared CPU reference stepper in `src/physics/tensor-field.js`, which implements [docs/tensor-physics.md](docs/tensor-physics.md) alongside the C++/WASM engine. It used to carry a simplified approximation of its own, so CI screenshots rendered different physics from the app. Its *rendering* is still intentionally simpler than the WebGPU path.
 
 ## Continuous Integration
 
 `.github/workflows/ci.yml` runs on every push and pull request to `main`:
 
 1. `npm ci`
-2. `npm run build` (equivalent to `npx vite build`) — frontend-only production build. CI does not provision an Emscripten SDK, so it never runs `build:full`/`build:wasm`; the WASM engine is optional at runtime (see [docs/wasm-engine.md](docs/wasm-engine.md)).
-3. `python3 scripts/test_run.py` — dev server smoke test.
-4. `pip install playwright` + `playwright install chromium` — sets up the Python Playwright runtime used by the verification scripts.
-5. `python3 verification/verify_suite.py` — runs the Playwright-based visual verification suite against the `?renderer=webgl` fallback (WebGPU/SwiftShader is too unreliable for headless CI).
+2. `npm test` — headless Node assertions (uniform layout, shaders, and the neural-field golden fixture).
+3. `npm run test:golden` — compiles the C++ neural-field engine with the runner's own C++17 compiler (no Emscripten) and compares it against the same fixture.
+4. `npm run build` (equivalent to `npx vite build`) — frontend-only production build. CI does not provision an Emscripten SDK, so it never runs `build:full`/`build:wasm`; the WASM engine is optional at runtime (see [docs/wasm-engine.md](docs/wasm-engine.md)).
+5. `python3 scripts/test_run.py` — dev server smoke test.
+6. `pip install playwright` + `playwright install chromium` — sets up the Python Playwright runtime used by the verification scripts.
+7. `python3 verification/verify_suite.py` — runs the Playwright-based visual verification suite against the `?renderer=webgl` fallback (WebGPU/SwiftShader is too unreliable for headless CI).
 
 `node_modules` and the Playwright browser cache are cached between runs. On failure, any screenshots written to `verification/` are uploaded as a build artifact for debugging. The WASM build is never a CI gate — it stays a local/manual step until an Emscripten toolchain is added to the workflow.
 

@@ -20,6 +20,7 @@
 - **Performance**: EEG data can be high-frequency — optimize for smooth real-time rendering.
 - **Interactivity**: Allow users to explore different brain regions, time ranges, or visualization modes.
 - **Future Potential**: Multi-user, live BCI integration, or exportable art pieces.
+- **One neural field**: the volumetric physics is specified in [`docs/tensor-physics.md`](tensor-physics.md) and implemented by the WGSL compute shader, `src/physics/tensor-field.js` (CPU reference, drives the WebGL2 fallback) and `wasm/brain_tensor_engine.cpp`. Never add a field effect to one of them only — spec first, then all three, then `npm run test:all`.
 
 ## Visualization Modes & Shortcuts
 A segmented pill selector at the top of the control panel switches the active render style. Keyboard shortcuts (ignored while typing in a field):

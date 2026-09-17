@@ -42,10 +42,14 @@ For the current architecture and module responsibilities, see [`AGENTS.md`](../A
 | 27 | Double Mirror Multimodal Sessions | Local-only synchronized 32³ tensor, webcam-thumbnail, microphone-feature, and note capture; strict `.nwsession` replay/scrubbing; descriptive occipital/audio correlation heatmap; aligned CSV export |
 | 28 | Cognitive Phenomenon | DMN to task-positive network (TPN) handoff transition |
 | 29 | Cortical Dynamics | Cortical thickness atrophy and swelling visualization |
+| 30 | Neural Field Physics Contract | `docs/tensor-physics.md` as the normative spec; `src/physics/tensor-field.js` CPU reference driving the WebGL2 fallback; C++ engine ported to the full model behind a generated `BrainTensorParams` ABI; golden 32³ fixture + `npm run test:golden`; SIMD/LTO/ESM WASM build |
 
 ## Open Items
 
 - **Advanced Trigger System** (Phase 3) — allow complex multi-key combinations to trigger routines, instead of single-key bindings only. Implemented.
+- **WGSL-vs-CPU field comparison** (Phase 30 follow-up) — the golden fixture pins the JS and C++ implementations to each other; comparing the compute shader itself needs a software WGSL runner. `docs/tensor-physics.md` §8 records the intentional divergences in the meantime.
+- **Reserved field parameters** (Phase 30 follow-up) — `retentionBias`, `decayRate`, `diffusionRate` and `cognitiveDissonance` reach `TensorParams` but no implementation of the field reads them; see `docs/tensor-physics.md` §6.14 before wiring any of them up.
+- **WASM pthreads** (Phase 30 follow-up) — off until the production host sends COOP/COEP; `WASM_PTHREADS=1` opts in once it does.
 
 ## Dream Backlog (Not Yet Implemented)
 
@@ -69,6 +73,7 @@ Deduplicated from the historical "Dream Log" entries across the archived plans �
 - [`docs/bci-device.md`](bci-device.md) — Muse/OpenBCI setup, live tensor mapping, recording, and routine events
 - [`docs/webxr.md`](webxr.md) — immersive VR/AR setup, controls, routine integration, and verification
 - [`docs/synaptix.md`](synaptix.md) / [`SYNAPTIX_SPEC.md`](SYNAPTIX_SPEC.md) — SynaptiX comparative mode
+- [`docs/tensor-physics.md`](tensor-physics.md) — the neural-field specification (normative)
 - [`docs/webgl-fallback.md`](webgl-fallback.md) — WebGL2 fallback/debug renderer
 - [`docs/wasm-engine.md`](wasm-engine.md) — C++/WASM hybrid simulation engine
 - [`docs/SCIENTIFIC_ACCURACY_REPORT.md`](SCIENTIFIC_ACCURACY_REPORT.md) — physiological model verification

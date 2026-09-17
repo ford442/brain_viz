@@ -20,6 +20,7 @@ This file is a map of "where to look" — the repo has grown a lot of documentat
 | SynaptiX comparative mode | [`docs/synaptix.md`](docs/synaptix.md), [`docs/SYNAPTIX_SPEC.md`](docs/SYNAPTIX_SPEC.md) |
 | WebGL2 fallback/debug renderer | [`docs/webgl-fallback.md`](docs/webgl-fallback.md) |
 | C++/WASM hybrid simulation engine | [`docs/wasm-engine.md`](docs/wasm-engine.md) |
+| Neural-field physics specification (normative) | [`docs/tensor-physics.md`](docs/tensor-physics.md) |
 | Double Mirror `.nwsession` capture/replay format and privacy boundary | [`docs/session-format.md`](docs/session-format.md) |
 | Double Mirror implemented V1 and longer-term vision | [`docs/DOUBLE_MIRROR_VISION.md`](docs/DOUBLE_MIRROR_VISION.md) |
 | Superseded/historical planning docs | [`docs/archive/`](docs/archive/) |

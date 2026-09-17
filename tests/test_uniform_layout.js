@@ -26,6 +26,8 @@ import {
     computeStructOffsets,
     extractUniformFieldOrder,
     assertShaderUniformsMatch,
+    generateTensorParamsHeader,
+    TENSOR_PARAMS_STRUCT_C,
 } from '../src/shaders/uniform-layout.js';
 import {
     RENDER_UNIFORM_BUFFER_SIZE,
@@ -188,5 +190,35 @@ for (const field of COMPUTE_UNIFORM_LAYOUT) {
 
 assert.ok(UNIFORMS_STRUCT_WGSL.startsWith('// [Neuro-Weaver] GENERATED'));
 assert.ok(TENSOR_PARAMS_STRUCT_WGSL.includes('stimulusErase: f32,'));
+
+// ---------------------------------------------------------------------------
+// 6. The C ABI header is a *checked-in generated file*, and must be current.
+//    The WASM engine reads TensorParams through this struct; if the layout
+//    moves and the header does not, the C++ side reads every field at the wrong
+//    offset and the simulation quietly does something else.
+// ---------------------------------------------------------------------------
+const paramsHeaderPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'wasm', 'brain_tensor_params.h');
+assert.equal(
+    readFileSync(paramsHeaderPath, 'utf8'),
+    generateTensorParamsHeader(),
+    "wasm/brain_tensor_params.h is stale. Regenerate it with 'node scripts/gen_wasm_params.mjs' " +
+    'so the C ABI still matches COMPUTE_UNIFORM_LAYOUT.'
+);
+
+for (const field of COMPUTE_UNIFORM_LAYOUT) {
+    assert.ok(
+        TENSOR_PARAMS_STRUCT_C.includes(` ${field.name};`) ||
+        TENSOR_PARAMS_STRUCT_C.includes(` ${field.name}[`),
+        `TensorParams.${field.name} is in the layout but missing from the generated C struct`
+    );
+}
+
+// The C struct's explicit padding has to reproduce the WGSL offsets exactly.
+for (const field of COMPUTE_UNIFORM_LAYOUT) {
+    assert.ok(
+        TENSOR_PARAMS_STRUCT_C.includes(`byte offset ${COMPUTE_UNIFORM_OFFSETS[field.name] * 4}`),
+        `The C struct does not place ${field.name} at its WGSL byte offset`
+    );
+}
 
 console.log('test_uniform_layout passed');

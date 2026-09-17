@@ -63,6 +63,11 @@ export function applyPipelineMethods(Target) {
         const data = geometry.getFiberAffinityData();
         if (data && data.byteLength === this.voxelCount * 12 * 4) {
     this.device.queue.writeBuffer(this.fiberDirectionBuffer, 0, data);
+    // [Tensor Physics] Kept so the WASM engine can be given the same tract
+    // geometry the compute shader reads. Without it the C++ field diffuses
+    // isotropically, which is a different simulation, not a faster one.
+    this._fiberAffinityData = data;
+    if (this.wasmEngine?.available) this.wasmEngine.setFiberAffinities(data);
         }
     };
 

@@ -33,8 +33,17 @@ jobs:
       # Headless layout/shader assertions — plain Node, no WebGPU or browser.
       # These catch uniform-struct drift that the visual suite cannot see
       # (a clip plane read four floats off still renders an image).
-      - name: Node unit tests (uniform layout, shaders)
+      - name: Node unit tests (uniform layout, shaders, tensor physics)
         run: npm test
+
+      # The C++ half of the neural-field contract (docs/tensor-physics.md).
+      # It compiles wasm/brain_tensor_engine.cpp with the runner's own C++17
+      # compiler — no Emscripten — and compares one 24-step run against the
+      # fixture the JS reference stepper produced. This is what catches the
+      # engines drifting apart, which is exactly how the C++ path spent several
+      # phases silently simulating a subset of the shader.
+      - name: Golden field test (C++ engine vs JS reference)
+        run: npm run test:golden
 
       - name: Build frontend (vite, no WASM)
         run: npm run build

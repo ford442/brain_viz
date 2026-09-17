@@ -1,96 +1,132 @@
 // brain_tensor_engine.h
-// [Phase 1 WASM] BrainTensorEngine — C++ header for Neuro-Weaver volumetric tensor simulation.
-// Mirrors and extends the WGSL compute shader logic from shaders.js.
-// Exposes a C API via emscripten EMSCRIPTEN_KEEPALIVE for JS/WASM interop.
+// [Tensor Physics] BrainTensorEngine — C API for the Neuro-Weaver volumetric
+// neural field.
+//
+// The engine implements the CPU reference model specified in
+// ../docs/tensor-physics.md. Its sibling implementation is the JavaScript
+// stepper in ../src/physics/tensor-field.js; the two are pinned to each other
+// by the golden fixture in ../tests/fixtures/ (npm run test:golden). The WGSL
+// compute shader in ../src/shaders/volumetric-compute.js remains the
+// authoritative *visual* path — spec §8 lists the two places the CPU model
+// deliberately diverges from it.
+//
+// Parameters are passed as a struct, not as a positional argument list. The
+// struct is generated from COMPUTE_UNIFORM_LAYOUT (the same declaration the
+// WGSL uniform buffer and the JS offsets come from), so a parameter added on
+// the renderer side can no longer be silently dropped on the way into C++.
 
 #pragma once
 
 #include <cstdint>
 
+#include "brain_tensor_params.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// ----- API -----
+// ----- Lifecycle -----
 
 /**
  * Allocate and initialise a new BrainTensorEngine.
  * @param voxelDim  Side length of the cubic tensor grid (typically 32).
- * @return          Opaque engine handle.  Pass to all other functions.
+ * @return          Opaque engine handle. Pass to all other functions.
  */
 void* bte_create(uint32_t voxelDim);
 
-/**
- * Free all resources owned by the engine.
- */
+/** Free all resources owned by the engine. */
 void bte_destroy(void* engine);
 
-/**
- * Advance the simulation by one time step.
- *
- * @param engine            Handle from bte_create().
- * @param time              Absolute simulation time (seconds).
- * @param frequency         Neural oscillation frequency.
- * @param amplitude         Base signal amplitude.
- * @param smoothing         Temporal smoothing factor (0–1).
- * @param style             Render style index (0=Organic,1=Cyber,2=Connectome,3=Heatmap).
- * @param hypoxiaStress     Cellular stress from oxygen deprivation (0–1).
- * @param metabolicRate     ATP consumption multiplier.
- * @param mitochondrialFn   ATP synthesis efficiency.
- * @param fluidActive       Fluid dynamics advection intensity (0–2).
- * @param electricalActive  Electrical hazard intensity (0–1).
- * @param mercuryActive     Mercury/heavy-metal hazard intensity (0–1).
- * @param heavyMetal        Accumulated structural heavy-metal damage (0–1).
- */
-void bte_update(
-    void*    engine,
-    float    time,
-    float    frequency,
-    float    amplitude,
-    float    smoothing,
-    float    style,
-    float    hypoxiaStress,
-    float    metabolicRate,
-    float    mitochondrialFn,
-    float    fluidActive,
-    float    electricalActive,
-    float    mercuryActive,
-    float    heavyMetal
-);
+// ----- Parameters -----
 
 /**
- * Inject a Gaussian stimulus pulse centred at world-space (x, y, z).
+ * sizeof(BrainTensorParams). The JS bridge compares this against
+ * COMPUTE_UNIFORM_BYTE_SIZE at init and refuses to run against a .wasm built
+ * from a stale layout, rather than reading garbage at shifted offsets.
+ */
+uint32_t bte_params_byte_size(void);
+
+/**
+ * Copy a full parameter block into the engine. Every field of the WGSL
+ * `TensorParams` struct is present; the engine reads the ones spec §6 lists
+ * and ignores the ones spec §6.14 documents as reserved.
+ */
+void bte_set_params(void* engine, const BrainTensorParams* params);
+
+/**
+ * Pointer to the engine's live parameter block, for callers that would rather
+ * write the fields in place than stage a copy. Valid until bte_destroy().
+ */
+BrainTensorParams* bte_get_params(void* engine);
+
+// ----- Field inputs -----
+
+/**
+ * Upload per-voxel fiber tract affinities: voxelDim³ × 3 slots × vec4
+ * (dir.xyz, weight). Passing len == 0 clears them (isotropic diffusion).
+ */
+void bte_set_fiber_affinities(void* engine, const float* data, uint32_t len);
+
+/**
+ * Fill the fiber affinities with the deterministic reference tract field
+ * (spec §7) — the same one makeReferenceFiberAffinities() builds in JS. Used
+ * by the golden test so both implementations see identical geometry with no
+ * fixture file to keep in sync.
+ */
+void bte_fill_reference_fiber_affinities(void* engine);
+
+/** Upload the SynaptiX AI tensor (voxelDim³ floats). len == 0 clears it. */
+void bte_set_ai_tensor(void* engine, const float* data, uint32_t len);
+
+// ----- Simulation -----
+
+/**
+ * Advance the simulation by one step using the currently-set parameters.
+ * Increments the internal frame counter that seeds the voxel hash (spec §8.1).
+ */
+void bte_update(void* engine);
+
+/**
+ * Inject a Gaussian stimulus pulse centred at world-space (x, y, z), applied
+ * immediately to the current field. Mirrors spec §6.9, including the paint
+ * brush radius and eraser mode that the old 5-argument entry point dropped.
  *
- * @param intensity     Peak signal strength.
- * @param mitochondrialFn  Current mitochondrial function (dampens response under hypoxia).
+ * @param radius     Brush sigma; <= 0.0001 selects the legacy fixed 0.5.
+ * @param erase      Non-zero damps energy inside the brush instead of adding.
  */
 void bte_inject_stimulus(void* engine, float x, float y, float z,
-                         float intensity, float mitochondrialFn);
+                         float intensity, float radius, float erase,
+                         float mitochondrialFn);
+
+// ----- Data transfer -----
 
 /**
- * Copy the current tensor data into a caller-owned Float32 buffer.
- * The buffer must be at least voxelDim³ × 4 bytes.
+ * Copy the current tensor into a caller-owned Float32 buffer.
+ * The buffer must hold at least voxelDim³ floats.
  */
 void bte_get_tensor_data(void* engine, float* outBuffer, uint32_t bufferLen);
 
-/**
- * Zero the entire activity tensor (instant reset).
- */
+/** Overwrite the current tensor (for seeding a reproducible test state). */
+void bte_set_tensor_data(void* engine, const float* data, uint32_t len);
+
+/** Zero the entire activity tensor and reset the frame counter. */
 void bte_reset(void* engine);
 
-/**
- * Return the flat voxel count (voxelDim³).
- */
+// ----- Introspection -----
+
+/** Flat voxel count (voxelDim³). */
 uint32_t bte_get_voxel_count(void* engine);
 
-/**
- * Return the voxel dimension (side length).
- */
+/** Voxel dimension (side length). */
 uint32_t bte_get_voxel_dim(void* engine);
 
-/**
- * Benchmark helper: run `steps` update cycles and return elapsed milliseconds.
- */
+/** Current frame counter (the salt for the voxel hash). */
+uint32_t bte_get_frame(void* engine);
+
+/** Set the frame counter — the golden test starts both steppers at 0. */
+void bte_set_frame(void* engine, uint32_t frame);
+
+/** Benchmark helper: run `steps` update cycles and return elapsed milliseconds. */
 double bte_benchmark(void* engine, uint32_t steps, float dt);
 
 #ifdef __cplusplus
