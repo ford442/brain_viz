@@ -59,6 +59,9 @@ export class RoutinePlayer {
         // Event Synchronization
         this.waitingForSignal = null; // String name of the signal we are waiting for
 
+        /** @type {import('./live-input-bus.js').LiveInputBus|null} Set externally by main-live-input-integration.js */
+        this.liveInputBus = null;
+
         // Easing Support
         this.activeLerps = [];
         this.activeTasks = []; // { key, startVal, endVal, elapsed, duration }
@@ -622,6 +625,15 @@ export class RoutinePlayer {
         }
 
         const resolvedEvt = this.resolveEventVariables(event);
+
+        // Live Input Bus condition sugar: `if: "live.alpha > 0.6"` gates any
+        // event on a live feature (src/live-input-bus.js), mirroring the
+        // existing wait/signal pause pattern but evaluated immediately instead
+        // of pausing the timeline. A malformed/unavailable condition fails
+        // open (the event still runs) — see LiveInputBus.evaluateCondition.
+        if (resolvedEvt.if !== undefined && this.liveInputBus && !this.liveInputBus.evaluateCondition(resolvedEvt.if)) {
+            return;
+        }
 
         // [Phase 33] Microglia Pruning Alias
         if (resolvedEvt.type === 'synaptic_pruning') {
