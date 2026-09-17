@@ -520,6 +520,10 @@
 ### Phase 33: Microglia Pruning
 - [x] **Microglia Pruning:** Visualize microglia pruning synapses dynamically.
 
+### Phase 34: Biofeedback Adaptive Audio
+- [x] **Biofeedback Adaptive Audio:** Modulate generative audio pitch/volume/tempo from heart-rate or other biofeedback metrics.
+
+*Idea:* "What if we visualized cellular senescence as accumulating dark spots and rigid fiber pathways?"
 *Idea:* "What if we visualize microglia pruning synapses dynamically?"
 *Idea:* "What if we visualized glial cells repairing damaged neurons after a stroke simulation?"
 
