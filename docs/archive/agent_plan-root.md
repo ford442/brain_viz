@@ -408,7 +408,7 @@
 *Idea:* "What if we visualize memory formation as glowing paths forming across multiple cortical regions simultaneously?"
 
 *Idea:* "What if we could simulate the interaction between Dopamine and Serotonin directly as color blending pathways?"
-[x] "What if we visualized spatial memory retrieval as glowing breadcrumbs traveling backwards along the connectome fibers?"
+- [x] "What if we visualized spatial memory retrieval as glowing breadcrumbs traveling backwards along the connectome fibers?"
 
 ### Phase 19: Dopamine Pathways Overlay
 - [x] **Dopamine Pathways:** Implement a task to visualize Dopamine pathways as glowing trails.

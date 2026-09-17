@@ -45,7 +45,7 @@
  *
  * @property {(newParams: Partial<import('./types.js').RendererParams>) => void} setParams - Merge params; flags `geometryDirty` when a geometry-affecting key changes.
  * @property {(newParams: Partial<import('./types.js').RendererParams>) => void} setSynaptiXParams - Alias of `setParams()` used by SynaptiX call sites.
- * @property {(preset: {rotation?: {x?: number, y?: number}, zoom?: number, fov?: number}) => void} setCameraParams - Write *target* camera state; the render loop's smoothing drives the transition. Used by RoutinePlayer camera events, the reactivity router's scroll-zoom binding, and WebXR viewpoint presets.
+ * @property {(preset?: {rotation?: {x?: number, y?: number}, zoom?: number, fov?: number}) => void} setCameraParams - Write *target* camera state; the render loop's smoothing drives the transition. Used by RoutinePlayer camera events, the reactivity router's scroll-zoom binding, and WebXR viewpoint presets.
  *
  * @property {(targetX: number, targetY: number, targetZ: number, intensity: number, duration?: number, radius?: number|null, erase?: boolean, decayHalfLife?: number) => void} injectStimulus - Inject a signal pulse at a voxel-space coordinate (paint gestures, routine stimulus events, BCI-driven region injection).
  * @property {(intensity: number) => void} injectElectrical - [Phase] Electrical shock overlay intensity.

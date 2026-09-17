@@ -16,7 +16,7 @@
 // Wired into: npm run check:facade (and npm test).
 
 import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, posix } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -29,11 +29,17 @@ const read = (relPath) => readFileSync(join(ROOT, relPath), 'utf8');
  * sync with the `import`/`applyXMethods(...)` lines in brain-renderer.js and
  * brain-renderer-webgl.js — this list is intentionally explicit rather than
  * "every file in the directory" so an unrelated helper file never silently
- * counts as satisfying the contract.
+ * counts as satisfying the contract. `resolveLiveMixinFiles()` below verifies
+ * this list against the entry point's actual import/invoke graph on every
+ * run, so a stale entry (a file listed here whose applyXMethods() call was
+ * since removed from the entry point) is a hard failure rather than a
+ * method search that silently keeps trusting a mixin nothing attaches
+ * anymore.
  */
 const BACKENDS = {
     webgpu: {
         label: 'BrainRenderer (WebGPU, brain-renderer.js)',
+        entryFile: 'src/brain-renderer.js',
         files: [
             'src/brain-renderer.js',
             'src/brain-renderer/pipelines.js',
@@ -48,6 +54,7 @@ const BACKENDS = {
     },
     webgl: {
         label: 'BrainRendererWebGL (WebGL2 fallback, brain-renderer-webgl.js)',
+        entryFile: 'src/brain-renderer-webgl.js',
         files: [
             'src/brain-renderer-webgl.js',
             'src/brain-renderer-webgl/geometry.js',
@@ -61,6 +68,63 @@ const BACKENDS = {
         ]
     }
 };
+
+/**
+ * Parse `entryFile` for `import { applyFoo } from './bar.js'` plus a
+ * top-level `applyFoo(SomeClass);` call, and resolve each to a repo-relative
+ * path (POSIX-style, matching how BACKENDS.files spells it). This is the
+ * actual "what does this backend's prototype get built from" graph — the
+ * static `files` list above is expected to equal it exactly.
+ * @param {string} entryFile
+ * @returns {Set<string>}
+ */
+function resolveLiveMixinFiles(entryFile) {
+    const text = read(entryFile);
+    const entryDir = posix.dirname(entryFile);
+
+    /** @type {Map<string, string>} imported identifier -> repo-relative file path */
+    const importedFrom = new Map();
+    for (const m of text.matchAll(/^import\s*\{([^}]*)\}\s*from\s*['"]([^'"]+)['"]/gm)) {
+        const [, names, from] = m;
+        if (!from.startsWith('.')) continue; // ignore package imports
+        const resolved = posix.normalize(posix.join(entryDir, from));
+        for (const rawName of names.split(',')) {
+            const name = rawName.trim();
+            if (name) importedFrom.set(name, resolved);
+        }
+    }
+
+    // Top-level invocations only (column 0) — a call inside a function body
+    // doesn't run at module-load time and doesn't attach anything.
+    const invoked = new Set([...text.matchAll(/^([A-Za-z_$][A-Za-z0-9_$]*)\(/gm)].map((m) => m[1]));
+
+    const live = new Set([entryFile]);
+    for (const [name, file] of importedFrom) {
+        if (name.startsWith('apply') && invoked.has(name)) live.add(file);
+    }
+    return live;
+}
+
+/**
+ * Fail loudly if BACKENDS.files has drifted from the entry point's real
+ * import/invoke graph, in either direction: a listed file whose
+ * applyXMethods() call was removed (the bug CodeRabbit flagged — silently
+ * "passing" on a mixin that no longer attaches anything), or a live mixin
+ * that was never added to the list (silently unchecked).
+ * @param {{label: string, entryFile: string, files: string[]}} backend
+ */
+function assertFileListMatchesEntryPoint(backend) {
+    const live = resolveLiveMixinFiles(backend.entryFile);
+    const listed = new Set(backend.files);
+    const stale = backend.files.filter((f) => !live.has(f));
+    const untracked = [...live].filter((f) => !listed.has(f));
+    if (stale.length > 0 || untracked.length > 0) {
+        const parts = [];
+        if (stale.length > 0) parts.push(`listed in BACKENDS but no longer applied by ${backend.entryFile}: ${stale.join(', ')}`);
+        if (untracked.length > 0) parts.push(`applied by ${backend.entryFile} but missing from BACKENDS: ${untracked.join(', ')}`);
+        throw new Error(`[check-renderer-facade] ${backend.label} file list is stale — ${parts.join('; ')}. Update BACKENDS in scripts/check-renderer-facade.mjs.`);
+    }
+}
 
 /**
  * Pull every method name out of the `BrainRendererFacade` typedef: JSDoc
@@ -101,6 +165,15 @@ function isImplemented(name, files) {
 }
 
 function main() {
+    for (const backend of Object.values(BACKENDS)) {
+        try {
+            assertFileListMatchesEntryPoint(backend);
+        } catch (err) {
+            console.error(/** @type {Error} */ (err).message);
+            process.exit(1);
+        }
+    }
+
     const facadeMethods = extractFacadeMethods();
     /** @type {string[]} */
     const failures = [];
