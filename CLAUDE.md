@@ -6,7 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 npm install                    # Install dependencies
-npm test                       # Headless Node assertions (uniform layout, shaders)
+npm test                       # Headless Node assertions (uniform layout, shaders, tensor physics)
+npm run test:golden            # C++ neural field vs the JS reference (needs a host C++ compiler)
+npm run test:all               # npm test + npm run test:golden
 npm run dev                    # Start dev server (http://localhost:5173)
 npm run build                  # Build production bundle to dist/
 npm run preview                # Preview production build locally
@@ -27,6 +29,7 @@ python3 verification/verify_suite.py  # Full visual verification suite (WebGL fa
 - **`brain-renderer.js`** — Core rendering engine. Manages WebGPU device/context, pipelines (render and compute), camera controls, uniforms, and the render loop. Methods: `setParams()`, `injectStimulus()`, `calmState()`, `resetActivity()`, `setVoxelData()`.
 - **`brain-geometry.js`** — Procedurally generates a deformed UV sphere (mimics gyri/sulci) and a Manhattan-style internal circuit grid. Outputs vertex, index, fiber, and soma buffers.
 - **`shaders.js`** — All WGSL code (vertex, fragment, compute, post-processing) as template strings for all five visualization styles.
+- **`src/physics/tensor-field.js`** — CPU reference implementation of the neural field (`docs/tensor-physics.md`). Drives the WebGL2 fallback and is the standard the C++/WASM engine is tested against.
 - **`brain-renderer-webgl.js`** / **`brain-renderer-factory.js`** — WebGL2 fallback/debug renderer and backend-selection bootstrap (`?renderer=webgpu` vs `?renderer=webgl`). See `docs/webgl-fallback.md`.
 - **`routine-player.js`** — Orchestrates timed events (stimulus, camera movement, animations, audio, text, branching).
 - **`tensor-player.js`** — Synthesizes BCI patterns and loads pre-recorded tensor series (.bin, .npy, .csv).
@@ -97,11 +100,35 @@ truth and a *generator*. It declares `RENDER_UNIFORM_LAYOUT` and
    follows automatically.
 3. Do not add `padN` filler fields — padding is computed.
 
+### 3a. One Neural Field, Three Consumers ⚠️
+**The Issue:** the volumetric field has three implementations — the WGSL compute
+shader (`src/shaders/volumetric-compute.js`), the CPU reference
+(`src/physics/tensor-field.js`), and the C++/WASM engine
+(`wasm/brain_tensor_engine.cpp`). They had drifted into three different feature
+sets, and nothing could tell them apart.
+
+**How it is handled:** `docs/tensor-physics.md` is the *specification*. Each
+step in the CPU reference and the C++ engine cites its section number, and
+`npm run test:golden` compares them against a committed 32³ fixture. The WebGL
+fallback no longer has physics of its own — it calls the reference stepper.
+
+**Action:**
+1. **Never add a field effect to one implementation only.** Spec first, then
+   `src/physics/tensor-field.js` and `wasm/brain_tensor_engine.cpp` together,
+   then the WGSL unless §8 documents a divergence.
+2. A parameter the field reads has to be in `COMPUTE_UNIFORM_LAYOUT`. The C ABI
+   struct is generated from it (`node scripts/gen_wasm_params.mjs`); `npm test`
+   fails if the checked-in header is stale.
+3. After a deliberate physics change: `node scripts/gen_tensor_fixture.mjs`,
+   then `npm run test:all`.
+
 ### 4. Minimal Automated Tests
 `npm test` runs headless Node assertions (`tests/test_uniform_layout.js`,
-`tests/test_shader.js`) — no WebGPU, no browser — covering uniform-struct
-alignment/drift and fiber geometry. CI runs them before the build. Everything
-else is **manual and visual**. Verify:
+`tests/test_shader.js`, `tests/test_tensor_physics.js`) — no WebGPU, no browser
+— covering uniform-struct alignment/drift, fiber geometry, and the neural-field
+contract. `npm run test:golden` additionally compiles the C++ engine with a host
+compiler and checks it against the same fixture. CI runs them before the build.
+Everything else is **manual and visual**. Verify:
 - Brain renders and animates smoothly (~60 FPS)
 - UI controls function correctly
 - Shader changes produce expected visuals in real-time
@@ -167,7 +194,8 @@ npm run dev
 
 ## Known Limitations
 
-- **Thin automated coverage.** `npm test` covers uniform-buffer layout and fiber geometry only; everything visual is manual, plus a Playwright-based `verification/` suite that runs against the WebGL2 fallback.
+- **Thin automated coverage.** `npm test` covers uniform-buffer layout, fiber geometry and the neural-field fixture; `npm run test:golden` covers the C++ engine. Everything visual is manual, plus a Playwright-based `verification/` suite that runs against the WebGL2 fallback.
+- **No WGSL-vs-CPU comparison.** The golden fixture pins the JS and C++ implementations to each other. Comparing the shader itself needs a software WGSL runner; see `docs/tensor-physics.md` §8 for the divergences that are intentional.
 - **WebGPU-primary, strict browser requirement for full fidelity.** The WebGL2 fallback trades visual/simulation fidelity for portability and automation.
 - **Memory fixed at startup.** Window resize recreates depth texture but not geometry buffers.
 - **Routine branching pauses.** `choice` and `wait` events pause the routine player.
@@ -182,5 +210,6 @@ npm run dev
 - **docs/DEVELOPER_CONTEXT.md** — Complexity hotspots, dependency flows, inherent limitations
 - **docs/ARCHITECTURE.md** — Detailed module breakdown
 - **docs/SCIENTIFIC_ACCURACY_REPORT.md** — Physiological models verification
+- **docs/tensor-physics.md** — The neural-field specification (normative; read before changing any field code)
 - **docs/webgl-fallback.md** / **docs/wasm-engine.md** — WebGL2 fallback and WASM hybrid engine details
 - **.github/copilot-instructions.md** — Comprehensive guide for AI agents

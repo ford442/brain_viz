@@ -74,7 +74,16 @@ beginComputePass → write tensorBuffer → end → beginRenderPass → read ten
 
 WebGPU orders these commands sequentially, making this safe. When `tensorPlaybackMode` is true, the compute pass is skipped and buffers are written directly from `setVoxelData()`.
 
-#### 3. **WGSL Buffer Alignment & Padding**
+#### 3. **One Neural Field, Three Consumers**
+
+The volumetric field exists as the WGSL compute shader, the CPU reference in `src/physics/tensor-field.js`, and the C++ engine in `wasm/brain_tensor_engine.cpp`. They had drifted into three different feature sets. `docs/tensor-physics.md` is now the specification; the CPU reference and the C++ engine cite its section numbers step by step, and `npm run test:golden` compares them against a committed 32³ fixture.
+
+- Never add a field effect to one implementation only — spec first, then both CPU implementations, then the WGSL.
+- The WebGL2 fallback has no physics of its own; it calls the reference stepper.
+- A parameter the field reads must be in `COMPUTE_UNIFORM_LAYOUT`. The C ABI struct is generated from it by `scripts/gen_wasm_params.mjs`, and `npm test` fails if the checked-in header is stale.
+- After a deliberate physics change: `node scripts/gen_tensor_fixture.mjs`, then `npm run test:all`.
+
+#### 4. **WGSL Buffer Alignment & Padding**
 
 Uniform structs require strict memory alignment (16-byte for `vec4`/`mat4`), so they are **generated, not hand-written**. `src/shaders/uniform-layout.js` declares `RENDER_UNIFORM_LAYOUT` / `COMPUTE_UNIFORM_LAYOUT` once and emits the WGSL structs (`UNIFORMS_STRUCT_WGSL`, `TENSOR_PARAMS_STRUCT_WGSL`), the JS write offsets (`RENDER_UNIFORM_OFFSETS`, `COMPUTE_UNIFORM_OFFSETS`), and the buffer sizes.
 
@@ -112,6 +121,13 @@ Uniform structs require strict memory alignment (16-byte for `vec4`/`mat4`), so 
 1. Define region bounds (x, y, z coordinates) in `brain-renderer.js`.
 2. Update `injectStimulus()` to handle the new region.
 3. Add a button to `index.html` and wire it in `main.js`.
+
+### Changing the Neural Field
+
+1. Edit `docs/tensor-physics.md` first — it is the specification, not a summary.
+2. Edit `src/physics/tensor-field.js` and `wasm/brain_tensor_engine.cpp` together; they carry the same section markers.
+3. Edit `src/shaders/volumetric-compute.js` unless §8 documents a divergence there.
+4. `node scripts/gen_tensor_fixture.mjs`, then `npm run test:all`.
 
 ### Adding a New Uniform Parameter
 

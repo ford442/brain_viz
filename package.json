@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "test": "node tests/test_uniform_layout.js && node tests/test_shader.js",
+    "test": "node tests/test_uniform_layout.js && node tests/test_shader.js && node tests/test_tensor_physics.js",
+    "test:golden": "bash scripts/test_golden.sh",
+    "test:all": "npm test && npm run test:golden",
+    "gen:wasm-params": "node scripts/gen_wasm_params.mjs",
+    "gen:tensor-fixture": "node scripts/gen_tensor_fixture.mjs",
     "prebuild": "bash scripts/check_wasm.sh",
     "build": "npm run build:web",
     "build:web": "vite build",

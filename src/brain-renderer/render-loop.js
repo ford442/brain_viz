@@ -56,11 +56,10 @@ export function applyRenderLoopMethods(Target) {
     if (this.wasmMode && this.wasmEngine.available) {
         // [Phase 1 WASM] Hybrid path: C++ engine runs simulation on CPU,
         // result is uploaded to the WebGPU storage buffer each frame.
-        this.wasmEngine.update(this.time, {
-            ...this.params,
-            _electricalActive: this.stimulus.electricalActive,
-            _mercuryActive:    this.stimulus.mercuryActive
-        });
+        // The stimulus block travels separately because it is renderer state,
+        // not a slider value; the bridge writes both into one TensorParams
+        // image laid out by COMPUTE_UNIFORM_OFFSETS.
+        this.wasmEngine.update(this.time, this.params, this.stimulus);
         const tensorData = this.wasmEngine.getTensorData();
         if (tensorData) {
             this._lastHumanTensor.set(tensorData);

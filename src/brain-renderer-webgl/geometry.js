@@ -39,6 +39,9 @@ export function applyGeometryMethods(Klass) {
             this.pathwaySelections = this.geometry.getPathwaySelections();
             this.baseSomaInstances = this.geometry.getSomaInstanceData();
             this.fiberAffinityData = this.geometry.getFiberAffinityData();
+            // [Tensor Physics] Tract directions are normalised once per geometry
+            // build, not once per frame — see docs/tensor-physics.md §7.1.
+            this.prepareFiberAffinities();
 
             this.meshPositions = new Float32Array(this.baseVertices);
             this.meshColors = new Float32Array(this.baseVertices.length);

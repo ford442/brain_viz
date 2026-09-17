@@ -7,14 +7,18 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+# The release glue is an ES module (.mjs) since the build moved to EXPORT_ES6;
+# a .js from an older build is still accepted, and src/wasm-engine.js falls back
+# to it at runtime.
+GLUE_MJS="${REPO_ROOT}/public/wasm/brain_tensor_engine.mjs"
 GLUE_JS="${REPO_ROOT}/public/wasm/brain_tensor_engine.js"
 GLUE_WASM="${REPO_ROOT}/public/wasm/brain_tensor_engine.wasm"
 
-if [[ -f "${GLUE_JS}" && -f "${GLUE_WASM}" ]]; then
+if [[ ( -f "${GLUE_MJS}" || -f "${GLUE_JS}" ) && -f "${GLUE_WASM}" ]]; then
     echo "[check_wasm] Found existing WASM build in public/wasm/."
 else
     cat <<'EOF'
-[check_wasm] Notice: public/wasm/brain_tensor_engine.{js,wasm} not found.
+[check_wasm] Notice: public/wasm/brain_tensor_engine.{mjs,wasm} not found.
              This build will ship the WebGPU/WebGL renderer only — the
              optional C++ WASM hybrid engine will not be available
              (wasm-engine.js falls back gracefully at runtime).

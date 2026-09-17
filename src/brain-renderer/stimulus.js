@@ -115,17 +115,21 @@ export function applyStimulusMethods(Target) {
     this.stimulus.decayHalfLife = 0.0;
         }
 
-        // [Phase 1 WASM] Forward stimulus to the C++ engine when in WASM mode.
-        // Note: radius/erase/decayHalfLife are intentionally NOT forwarded —
-        // bte_inject_stimulus()'s C++ signature is fixed at 5 args, so WASM
-        // mode always uses the engine's built-in fixed radius/decay.
+        // [Tensor Physics] Forward the stimulus to the C++ engine in WASM mode.
+        // Radius and eraser mode travel with it now — the old 5-argument C entry
+        // point could not express them, so WASM mode painted with a fixed brush
+        // and ignored the eraser entirely.
         if (this.wasmMode && this.wasmEngine.available) {
     this.wasmEngine.injectStimulus(
         this.stimulus.pos[0],
         this.stimulus.pos[1],
         this.stimulus.pos[2],
         this.stimulus.active,
-        this.params.mitochondrialFunction ?? 1.0
+        {
+            radius: this.stimulus.radius,
+            erase: this.stimulus.erase,
+            mitochondrialFunction: this.params.mitochondrialFunction ?? 1.0,
+        }
     );
         }
 
@@ -179,6 +183,11 @@ export function applyStimulusMethods(Target) {
         const ok = await this.wasmEngine.init();
         if (ok) {
     this.wasmMode = true;
+    // Hand the engine the same tract geometry the compute shader reads, and
+    // the field the GPU has built up so far, so switching paths mid-session
+    // continues the simulation instead of restarting it from zero.
+    if (this._fiberAffinityData) this.wasmEngine.setFiberAffinities(this._fiberAffinityData);
+    if (this._lastHumanTensor) this.wasmEngine.setTensorData(this._lastHumanTensor);
     console.log('[BrainRenderer] WASM simulation mode ENABLED');
         } else {
     console.warn('[BrainRenderer] WASM unavailable — staying on WebGPU compute');

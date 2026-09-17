@@ -1,6 +1,16 @@
-# WASM Engine — Phase 1 Technical Documentation
+# WASM Engine — Technical Documentation
 
-> **Status**: Phase 1 MVP — foundational C++ engine + JS bridge + hybrid render integration.
+> **Status**: the C++ engine implements the full neural-field contract in
+> [`docs/tensor-physics.md`](./tensor-physics.md) and is held to it by
+> `npm run test:golden`.
+>
+> **History note.** This page used to claim the C++ engine mirrored the WGSL
+> compute shader "step for step". That was untrue from Phase 1 onwards: the
+> engine implemented a subset (no `cognitiveLoad`, no `stress`, no paint radius
+> or eraser, no fiber coupling, no criticality cascade, no SynaptiX), and the
+> 13-float C ABI silently discarded every parameter beyond those it named.
+> The physics is now specified in one document, implemented twice, and the two
+> are compared by a test.
 
 ---
 
@@ -84,22 +94,57 @@ Output is placed in `public/wasm/` and served as static assets by Vite. Plain `n
 
 ## C++ API (`brain_tensor_engine.h`)
 
+Parameters travel as a **struct**, not a positional argument list. Growing the
+old `bte_update(...)` by one float per feature is what let the renderer send
+parameters the engine never received.
+
 ```c
 void*    bte_create(uint32_t voxelDim);
 void     bte_destroy(void* engine);
-void     bte_update(void* engine, float time, float frequency, float amplitude,
-                    float smoothing, float style,
-                    float hypoxiaStress, float metabolicRate, float mitochondrialFn,
-                    float fluidActive, float electricalActive,
-                    float mercuryActive, float heavyMetal);
+
+// Parameters — BrainTensorParams is generated from COMPUTE_UNIFORM_LAYOUT.
+uint32_t bte_params_byte_size(void);
+void     bte_set_params(void* engine, const BrainTensorParams* params);
+BrainTensorParams* bte_get_params(void* engine);
+
+// Field inputs
+void     bte_set_fiber_affinities(void* engine, const float* data, uint32_t len);
+void     bte_fill_reference_fiber_affinities(void* engine);
+void     bte_set_ai_tensor(void* engine, const float* data, uint32_t len);
+
+// Simulation
+void     bte_update(void* engine);
 void     bte_inject_stimulus(void* engine, float x, float y, float z,
-                             float intensity, float mitochondrialFn);
+                             float intensity, float radius, float erase,
+                             float mitochondrialFn);
+
+// Data transfer / introspection
 void     bte_get_tensor_data(void* engine, float* outBuffer, uint32_t bufferLen);
+void     bte_set_tensor_data(void* engine, const float* data, uint32_t len);
 void     bte_reset(void* engine);
 uint32_t bte_get_voxel_count(void* engine);
 uint32_t bte_get_voxel_dim(void* engine);
+uint32_t bte_get_frame(void* engine);
+void     bte_set_frame(void* engine, uint32_t frame);
 double   bte_benchmark(void* engine, uint32_t steps, float dt);
 ```
+
+### `wasm/brain_tensor_params.h` is generated
+
+`scripts/gen_wasm_params.mjs` emits it from `COMPUTE_UNIFORM_LAYOUT` — the same
+declaration that generates the WGSL `TensorParams` struct and the JS offsets —
+with explicit `_padN` filler reproducing the WGSL alignment. It is checked in,
+and `npm test` fails if it is stale.
+
+`bte_params_byte_size()` is the runtime guard: `src/wasm-engine.js` compares it
+against `COMPUTE_UNIFORM_BYTE_SIZE` at init and refuses a `.wasm` built from an
+older layout, instead of reading every field at a shifted offset.
+
+### Editor support
+
+`wasm/compile_flags.txt` is checked in, so clangd can analyse `wasm/` with no
+setup. `node scripts/gen_compile_commands.mjs` (also run by `build_wasm.sh`)
+writes a `compile_commands.json` with absolute paths; it is gitignored.
 
 ---
 
@@ -111,13 +156,20 @@ const wasmEngine = new WasmTensorEngine(32);
 // Load and initialise (safe to call multiple times)
 const ok = await wasmEngine.init();   // → true if WASM available
 
-// Advance simulation
-wasmEngine.update(time, rendererParams);
+// Give the engine the same tract geometry the compute shader reads.
+// Without it the field diffuses isotropically — a different simulation.
+wasmEngine.setFiberAffinities(geometry.getFiberAffinityData());
 
-// Inject stimulus pulse
-wasmEngine.injectStimulus(x, y, z, intensity, mitochondrialFn);
+// Advance simulation. The stimulus block travels separately from the sliders;
+// both are written into one TensorParams image laid out by the shared offsets.
+wasmEngine.update(time, renderer.params, renderer.stimulus);
 
-// Zero-copy read of tensor data (Float32Array view into WASM heap)
+// Inject stimulus pulse — radius and eraser mode included
+wasmEngine.injectStimulus(x, y, z, intensity, { radius, erase, mitochondrialFunction });
+
+// Read tensor data. The view is taken fresh from the module's current heap:
+// ALLOW_MEMORY_GROWTH detaches the old buffer on growth, and a view cached at
+// init would read as an empty array for the rest of the session.
 const data = wasmEngine.getTensorData();
 renderer.setVoxelData(data);
 
@@ -153,19 +205,35 @@ The WASM stimulus path is wired into `injectStimulus()`: when `wasmMode` is acti
 
 ---
 
-## Simulation Physics (mirrors WGSL compute shader)
+## Simulation physics
 
-The C++ engine replicates the WGSL compute shader **step for step**:
+The engine implements [`docs/tensor-physics.md`](./tensor-physics.md), which is
+the specification, not a summary of the code. Each step in
+`brain_tensor_engine.cpp` carries the spec section it implements, and
+`src/physics/tensor-field.js` carries the same markers on the same steps.
 
-1. **Region physics** (`get_region_physics`) — decay and diffusion by anatomical zone (frontal, occipital, temporal, parietal, cyber).
-2. **Hypoxia modulation** (`get_hypoxia_physics`) — scales decay/diffusion based on oxygen deprivation.
-3. **Laplacian diffusion** — 6-neighbour finite difference on the 32³ grid.
-4. **Directional flow** — frontal lobe upstream bias.
-5. **Fluid advection** — procedural velocity field (CSF simulation).
-6. **Hazard stimuli** — electrical (random spikes) and mercury (posterior accumulation).
-7. **Heavy-metal structural damage** — clamps activity and decay.
-8. **Base oscillation** — ambient `sin(time × frequency)` wave.
-9. **Decay + clamp** — `val *= decay; clamp(0, 1)`.
+Do not describe the physics here — it would become a third account of it, which
+is how this page came to claim something untrue. The short version:
+
+- §6.1–6.2 region physics, hypoxia modulation, clamped 6-neighbourhood
+- §6.3–6.4 fiber-coupled anisotropic diffusion and tract highway bias
+- §6.5 criticality cascades
+- §6.6–6.8 traveling phase wave, frontal flow bias, semi-Lagrangian fluid advection
+- §6.9–6.10 stimulus (paint radius and eraser) and the hazard paths
+- §6.11–6.13 ambient drive, SynaptiX mirror, decay and clamp
+
+§8 lists the four places the CPU model deliberately differs from the shader, and
+why each one has to.
+
+### Verifying the engine
+
+```bash
+npm run test:golden    # C++ engine vs the JS reference stepper's fixture
+npm run test:all       # the above, plus the Node test suite
+```
+
+`wasm/tests/golden_step_test.cpp` needs only a host C++17 compiler — not
+Emscripten — so the contract is checkable in ordinary CI.
 
 ---
 
@@ -194,4 +262,30 @@ If the WASM build has not been run, or the browser fails to load the module, `Wa
 
 - **Phase 2**: Multi-compartment neuron models; region-specific fibre dynamics; connectome graph simulation.
 - **Phase 3**: Real EEG/BCI tensor input pipelines; ONNX model hooks inside the C++ engine.
-- **Phase 4**: WebAssembly SIMD optimisation; WebWorker-based async compute; GPU ↔ WASM zero-copy interop via `GPUBuffer.mapAsync`.
+- **Phase 4**: ~~WebAssembly SIMD optimisation~~ (done: release builds use
+  `-O3 -flto -msimd128`); WebWorker-based async compute; GPU ↔ WASM zero-copy
+  interop via `GPUBuffer.mapAsync`.
+
+### Build flags
+
+`scripts/wasm_flags.sh` is the single definition, sourced by both
+`build_wasm.sh` and `build_wasm_colab.sh`. Release builds use `-O3 -flto
+-msimd128`; `FILESYSTEM=0` and `MALLOC=emmalloc` trim the glue; `EXPORT_ES6=1`
+makes the glue a real ES module (`brain_tensor_engine.mjs`) that
+`src/wasm-engine.js` imports from a URL built off `import.meta.env.BASE_URL`, so
+it resolves under `base: '/brain-viz/'` instead of 404ing at the host root.
+
+Two flags are deliberately **off**:
+
+- `-mrelaxed-simd` would permit fused multiply-add, changing rounding enough to
+  put the engine outside the golden fixture's epsilon. Enabling it means
+  re-measuring `GOLDEN_EPSILON` in the same commit.
+- `USE_PTHREADS` needs cross-origin isolation on every host that serves the app.
+  `vite.config.js` sets COOP/COEP on the dev and preview servers; the production
+  host (`deploy.py`) does not yet, and a pthreads build would simply fail to
+  start there. Opt in with `WASM_PTHREADS=1` once those headers ship.
+
+If the production host does not map `.mjs` to a JavaScript MIME type, the module
+import will be rejected by the browser; `src/wasm-engine.js` falls back to
+`brain_tensor_engine.js` from an older build, but the real fix is the server
+mapping.

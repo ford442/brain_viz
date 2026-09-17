@@ -81,6 +81,11 @@ export class BrainRendererWebGL {
         this.basePathwayMeta = null;
         this.baseSomaInstances = null;
         this.fiberAffinityData = null;
+        // [Tensor Physics] Unit-normalised copy of fiberAffinityData, rebuilt by
+        // prepareFiberAffinities() whenever geometry changes, plus the step
+        // counter that seeds the field's voxel hash.
+        this._normalizedFiberAffinity = null;
+        this._tensorFrame = 0;
         this.tensorPointPositions = null;
         this.tensorPointColorSize = null;
         this.meshPositions = null;

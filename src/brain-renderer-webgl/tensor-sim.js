@@ -1,5 +1,16 @@
+// src/brain-renderer-webgl/tensor-sim.js
+// [Tensor Physics] Field sampling and colouring for the WebGL2 fallback.
+//
+// The physics itself is NOT here any more. This file used to carry a third,
+// hand-written neural field — a simplified wave/coupling/paint approximation
+// that was never a port of the WGSL compute shader and drifted further from it
+// with every new effect. It now drives the shared CPU reference stepper in
+// src/physics/tensor-field.js, the same one the C++/WASM engine mirrors, so a
+// change to the field lands on every CPU path at once. See
+// docs/tensor-physics.md.
 import { clamp01, mix, smoothstep } from '../webgl-gl-utils.js';
 import { BRAIN_RANGE } from './constants.js';
+import { normalizeFiberAffinities, resolveFieldParams, stepTensorField } from '../physics/tensor-field.js';
 
 export function applyTensorSimMethods(Klass) {
     Object.assign(Klass.prototype, {
@@ -66,97 +77,69 @@ export function applyTensorSimMethods(Klass) {
             ];
         },
 
+        /**
+         * [Tensor Physics] Normalise the tract affinities once, when geometry
+         * is (re)built, and hand the stepper the result. Doing it here rather
+         * than per frame is both cheaper and what keeps this path's sample
+         * coordinates identical to the C++ engine's — see spec §7.1.
+         */
+        prepareFiberAffinities() {
+            this._normalizedFiberAffinity = this.fiberAffinityData
+                ? normalizeFiberAffinities(this.fiberAffinityData, this.voxelDim)
+                : null;
+            return this._normalizedFiberAffinity;
+        },
+
+        /**
+         * [Tensor Physics] Collect this renderer's live state into the shared
+         * `TensorParams` shape. Names match COMPUTE_UNIFORM_LAYOUT, so a new
+         * field the WebGPU path uploads reaches this path by being read here —
+         * not by someone re-deriving an effect in a private loop.
+         */
+        collectFieldParams() {
+            const p = this.params;
+            return resolveFieldParams({
+                voxelDim: this.voxelDim,
+                time: this.time,
+                frequency: p.frequency,
+                amplitude: p.amplitude,
+                spikeThreshold: p.spikeThreshold,
+                style: p.style,
+                fiberCoupling: p.fiberCoupling,
+                hypoxiaStress: p.hypoxiaStress,
+                metabolicRate: p.metabolicRate,
+                mitochondrialFunction: p.mitochondrialFunction,
+                fluidActive: p.fluidActive,
+                cognitiveLoad: p.cognitiveLoad,
+                stress: p.stress,
+                heavyMetal: p.heavyMetal,
+                resonanceThreshold: p.resonanceThreshold,
+                // SynaptiX stays visual-only on this path, matching the WebGPU
+                // renderer's uniform upload (see brain-renderer/uniforms.js).
+                synaptiXActive: 0.0,
+                aiInfluence: 0.0,
+                electricalActive: this.stimulus.electricalActive,
+                mercuryActive: this.stimulus.mercuryActive,
+                stimulusPosX: this.stimulus.pos[0],
+                stimulusPosY: this.stimulus.pos[1],
+                stimulusPosZ: this.stimulus.pos[2],
+                stimulusActive: this.stimulus.active,
+                stimulusRadius: this.stimulus.radius,
+                stimulusErase: this.stimulus.erase ? 1.0 : 0.0,
+            });
+        },
+
         updateTensorSimulation() {
-            const dim = this.voxelDim;
-            const current = this._lastHumanTensor;
-            const next = this._nextHumanTensor;
-            const amplitude = this.params.amplitude || 0;
-            const smoothing = this.params.smoothing || 0;
-            const coupling = this.params.fiberCoupling || 0;
-            const style = this.params.style || 0;
-            const time = this.time;
-            const wave = Math.sin(time * (this.params.frequency || 1.0)) * 0.5 + 0.5;
-            // [Paint Energy] Configurable brush radius; falls back to the legacy
-            // fiber-coupling-derived radius for single-click/region callers.
-            const stimulusRadius = (this.stimulus.radius && this.stimulus.radius > 0.0001)
-                ? this.stimulus.radius
-                : (0.22 + coupling * 0.16);
+            const affinity = this._normalizedFiberAffinity
+                ?? (this.fiberAffinityData ? this.prepareFiberAffinities() : null);
 
-            for (let z = 0; z < dim; z++) {
-                for (let y = 0; y < dim; y++) {
-                    for (let x = 0; x < dim; x++) {
-                        const idx = z * dim * dim + y * dim + x;
-                        const xm = Math.max(0, x - 1);
-                        const xp = Math.min(dim - 1, x + 1);
-                        const ym = Math.max(0, y - 1);
-                        const yp = Math.min(dim - 1, y + 1);
-                        const zm = Math.max(0, z - 1);
-                        const zp = Math.min(dim - 1, z + 1);
-                        const avg = (
-                            current[z * dim * dim + y * dim + xm] +
-                            current[z * dim * dim + y * dim + xp] +
-                            current[z * dim * dim + ym * dim + x] +
-                            current[z * dim * dim + yp * dim + x] +
-                            current[zm * dim * dim + y * dim + x] +
-                            current[zp * dim * dim + y * dim + x]
-                        ) / 6;
-
-                        const worldX = ((x / (dim - 1)) * 2.0 - 1.0) * BRAIN_RANGE;
-                        const worldY = ((y / (dim - 1)) * 2.0 - 1.0) * BRAIN_RANGE;
-                        const worldZ = ((z / (dim - 1)) * 2.0 - 1.0) * BRAIN_RANGE;
-                        let tractBias = 0.0;
-                        let coverage = 0.0;
-                        const affinityBase = idx * 12;
-                        for (let slot = 0; slot < 3; slot++) {
-                            const weight = this.fiberAffinityData[affinityBase + slot * 4 + 3];
-                            if (weight <= 0.01) continue;
-                            const dx = this.fiberAffinityData[affinityBase + slot * 4 + 0];
-                            const dy = this.fiberAffinityData[affinityBase + slot * 4 + 1];
-                            const dz = this.fiberAffinityData[affinityBase + slot * 4 + 2];
-                            const step = BRAIN_RANGE / dim;
-                            const ahead = this.sampleField([worldX + dx * step, worldY + dy * step, worldZ + dz * step]);
-                            const behind = this.sampleField([worldX - dx * step, worldY - dy * step, worldZ - dz * step]);
-                            tractBias += Math.max(ahead, behind) * weight;
-                            coverage += weight;
-                        }
-                        if (coverage > 0) {
-                            tractBias /= coverage;
-                        }
-
-                        const radial = Math.sqrt(worldX * worldX + worldY * worldY + worldZ * worldZ) / BRAIN_RANGE;
-                        const corticalBias = 1.0 - smoothstep(0.1, 0.95, radial);
-                        let nextVal = mix(current[idx], avg, 0.14 + smoothing * 0.22);
-                        nextVal = mix(nextVal, tractBias, coupling * (0.15 + coverage * 0.45));
-                        nextVal += (wave - 0.5) * amplitude * (0.02 + corticalBias * 0.04);
-                        nextVal -= current[idx] * (0.015 + this.params.hypoxiaStress * 0.025 + this.params.heavyMetal * 0.012);
-
-                        if (this.stimulus.active > 0.0) {
-                            const dx = worldX - this.stimulus.pos[0];
-                            const dy = worldY - this.stimulus.pos[1];
-                            const dz = worldZ - this.stimulus.pos[2];
-                            const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-                            const signal = Math.exp(-(dist * dist) / (stimulusRadius * stimulusRadius));
-                            if (this.stimulus.erase) {
-                                // [Paint Energy] Eraser mode: damp existing energy
-                                // within the brush footprint instead of adding.
-                                nextVal *= Math.max(0.0, 1.0 - this.stimulus.active * signal);
-                            } else {
-                                nextVal += signal * this.stimulus.active * 0.34;
-                            }
-                        }
-
-                        if (this.stimulus.electricalActive > 0.0) {
-                            nextVal += (Math.sin(time * 25.0 + worldX * 8.0 + worldY * 6.0) * 0.5 + 0.5) * this.stimulus.electricalActive * 0.06;
-                        }
-                        if (this.stimulus.mercuryActive > 0.0) {
-                            nextVal *= Math.max(0.0, 1.0 - this.stimulus.mercuryActive * 0.03);
-                        }
-                        next[idx] = clamp01(nextVal);
-                    }
-                }
-            }
-
-            current.set(next);
+            stepTensorField(this._lastHumanTensor, this._nextHumanTensor, {
+                params: this.collectFieldParams(),
+                fiberAffinity: affinity,
+                frame: this._tensorFrame | 0,
+            });
+            this._lastHumanTensor.set(this._nextHumanTensor);
+            this._tensorFrame = (this._tensorFrame | 0) + 1;
 
             // [Paint Energy] Exponential half-life decay (set by injectStimulus()
             // when a caller passes decayHalfLife, e.g. the paint brush) takes

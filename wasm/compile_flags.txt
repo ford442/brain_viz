@@ -1,0 +1,10 @@
+# [Tensor Physics] clangd fallback flags for wasm/.
+#
+# compile_commands.json (scripts/gen_compile_commands.mjs, or emitted by
+# scripts/build_wasm.sh) is preferred; this file makes the directory analysable
+# with no generation step at all. Emscripten's `-s` settings are link-time and
+# are deliberately absent — clangd does not understand them.
+-std=c++17
+-Wall
+-Wextra
+-I.

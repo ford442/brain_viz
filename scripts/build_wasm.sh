@@ -1,29 +1,44 @@
 #!/usr/bin/env bash
 # scripts/build_wasm.sh
-# [Phase 1 WASM] Build script for BrainTensorEngine C++ → WebAssembly
+# [Tensor Physics] Build BrainTensorEngine (C++ → WebAssembly).
+#
+# The flags live in scripts/wasm_flags.sh, which this script and
+# scripts/build_wasm_colab.sh both source. They used to be duplicated across
+# both scripts and a comment in wasm/brain_tensor_engine.cpp, and all three had
+# drifted apart.
 #
 # Prerequisites:
 #   - Emscripten SDK (emsdk) installed and activated.
-#     The .jules/setup.sh script handles SDK installation for CI.
-#     For local dev: follow https://emscripten.org/docs/getting_started/downloads.html
+#     .jules/setup.sh handles SDK installation for CI. For local dev see
+#     https://emscripten.org/docs/getting_started/downloads.html
 #
 # Usage:
-#   ./scripts/build_wasm.sh          # release build (default)
-#   ./scripts/build_wasm.sh --debug  # debug build with assertions
+#   ./scripts/build_wasm.sh             # release: -O3 -flto -msimd128
+#   ./scripts/build_wasm.sh --debug     # -O0, assertions, safe heap
+#   WASM_PTHREADS=1 ./scripts/build_wasm.sh   # opt into pthreads (see wasm_flags.sh)
 #
-# Output: public/wasm/brain_tensor_engine.{js,wasm}
+# Output: public/wasm/brain_tensor_engine.{mjs,wasm}, plus a regenerated
+# compile_commands.json so clangd can analyse wasm/.
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
+# ─── The generated C ABI header must match the live uniform layout ───────────
+# A stale header means the C++ engine reads every parameter at the wrong offset.
+# bte_params_byte_size() catches it at runtime; catching it here is cheaper.
+if command -v node >/dev/null 2>&1; then
+    node "${SCRIPT_DIR}/gen_wasm_params.mjs" --check
+else
+    echo "[build_wasm] WARNING: node not found — cannot verify wasm/brain_tensor_params.h" >&2
+fi
+
 # ─── Locate and activate the Emscripten SDK ──────────────────────────────────
 # Resolution order:
 #   1. em++ already on PATH — nothing to do.
 #   2. $EMSDK env var pointing at an emsdk checkout.
-#   3. emsdk cloned by .jules/setup.sh (git clone .../emsdk in the repo root
-#      or the user's home directory).
+#   3. emsdk cloned by .jules/setup.sh (repo root or $HOME).
 if command -v em++ >/dev/null 2>&1; then
     : # already activated in this shell
 elif [[ -n "${EMSDK:-}" && -f "${EMSDK}/emsdk_env.sh" ]]; then
@@ -42,58 +57,25 @@ else
     echo "[build_wasm]   https://emscripten.org/docs/getting_started/downloads.html" >&2
     exit 1
 fi
-SRC="${REPO_ROOT}/wasm/brain_tensor_engine.cpp"
+
 OUT_DIR="${REPO_ROOT}/public/wasm"
 OUT_NAME="brain_tensor_engine"
-
 mkdir -p "${OUT_DIR}"
 
-# ─── Build flags ──────────────────────────────────────────────────────────────
-COMMON_FLAGS=(
-    -std=c++17
-    -I"${REPO_ROOT}/wasm"
-
-    # WASM output
-    -s WASM=1
-    -s MODULARIZE=1
-    -s EXPORT_NAME="BrainTensorEngineModule"
-    -s ALLOW_MEMORY_GROWTH=1
-
-    # Export the C functions listed in brain_tensor_engine.h
-    -s EXPORTED_FUNCTIONS='[
-        "_bte_create",
-        "_bte_destroy",
-        "_bte_update",
-        "_bte_inject_stimulus",
-        "_bte_get_tensor_data",
-        "_bte_reset",
-        "_bte_get_voxel_count",
-        "_bte_get_voxel_dim",
-        "_bte_benchmark",
-        "_malloc",
-        "_free"
-    ]'
-    -s EXPORTED_RUNTIME_METHODS='["cwrap","getValue","setValue"]'
-
-    # Environment: web workers are possible but not required for Phase 1
-    -s ENVIRONMENT='web,worker'
-
-    # Output
-    -o "${OUT_DIR}/${OUT_NAME}.js"
-)
+export REPO_ROOT OUT_DIR OUT_NAME
+# shellcheck disable=SC1091
+source "${SCRIPT_DIR}/wasm_flags.sh"
 
 if [[ "${1:-}" == "--debug" ]]; then
     echo "[build_wasm] Building DEBUG build…"
-    em++ -O0 -g \
-        -s ASSERTIONS=2 \
-        -s SAFE_HEAP=1 \
-        "${COMMON_FLAGS[@]}" \
-        "${SRC}"
-    echo "[build_wasm] Debug output → ${OUT_DIR}/${OUT_NAME}.{js,wasm}"
+    em++ "${BTE_DEBUG_FLAGS[@]}" "${BTE_COMMON_FLAGS[@]}" "${BTE_SRC}"
 else
-    echo "[build_wasm] Building RELEASE build…"
-    em++ -O2 \
-        "${COMMON_FLAGS[@]}" \
-        "${SRC}"
-    echo "[build_wasm] Release output → ${OUT_DIR}/${OUT_NAME}.{js,wasm}"
+    echo "[build_wasm] Building RELEASE build (-O3 -flto -msimd128)…"
+    em++ "${BTE_RELEASE_FLAGS[@]}" "${BTE_COMMON_FLAGS[@]}" "${BTE_SRC}"
+fi
+
+echo "[build_wasm] Output → ${BTE_OUTPUT} (+ .wasm)"
+
+if command -v node >/dev/null 2>&1; then
+    node "${SCRIPT_DIR}/gen_compile_commands.mjs"
 fi

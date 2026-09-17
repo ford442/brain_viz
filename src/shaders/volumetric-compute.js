@@ -168,12 +168,16 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
         branchBias = clamp(0.5 + 0.5 * dot(normalize(gradient + vec3<f32>(0.001, 0.001, 0.001)), primaryAff.xyz), 0.0, 1.0);
     }
     let cascade = seeded * cascadeNoise * mix(0.18, 1.0, branchBias) * (0.35 + criticality * 0.85);
-    if (cascade > 0.0) {
-        val = max(val, localPeak * 0.84 + cascade * (0.42 + localPeak * 0.5));
-        val = val + cascade * branchBias * 0.48;
-        diffusion *= mix(1.0, 1.32, cascade);
-        decay *= mix(1.0, mix(0.94, 0.82, criticality), cascade);
-    }
+    // [Tensor Physics] Blended by 'cascade', not gated on 'cascade > 0'.
+    // See docs/tensor-physics.md §6.5: the gate made an otherwise continuous
+    // term jump 'val' straight to 0.84 * localPeak the instant it became
+    // non-zero, which is both a visible popping artefact and the reason the CPU
+    // implementations could not be held to the same result.
+    let cascadeMix = clamp(cascade, 0.0, 1.0);
+    let boosted = max(val, localPeak * 0.84 + cascade * (0.42 + localPeak * 0.5));
+    val = mix(val, boosted, cascadeMix) + cascade * branchBias * 0.48;
+    diffusion *= mix(1.0, 1.32, cascade);
+    decay *= mix(1.0, mix(0.94, 0.82, criticality), cascade);
 
     // [V3.2] Traveling Phase Wave along strongest fiber direction
     let phaseSpeed = 4.0;
@@ -219,15 +223,17 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
         let sigma = select(0.5, params.stimulusRadius, params.stimulusRadius > 0.0001);
         var signal = gaussian_pulse(d, sigma);
         signal *= params.mitochondrialFunction;
-        if (signal > 0.01) {
-            if (params.stimulusErase > 0.5) {
-                // [Paint Energy] Eraser mode: damp existing energy within the
-                // brush footprint instead of adding new energy.
-                let eraseFactor = clamp(1.0 - params.stimulusActive * signal, 0.0, 1.0);
-                val = val * eraseFactor;
-            } else {
-                val = val + params.stimulusActive * signal;
-            }
+        // [Tensor Physics] §8.4: no 'signal > 0.01' early-out. It saved nothing
+        // measurable on the GPU and put a hard step on the ring where the brush
+        // fades out, which the CPU implementations then had to reproduce
+        // exactly to stay within the golden fixture's epsilon.
+        if (params.stimulusErase > 0.5) {
+            // [Paint Energy] Eraser mode: damp existing energy within the
+            // brush footprint instead of adding new energy.
+            let eraseFactor = clamp(1.0 - params.stimulusActive * signal, 0.0, 1.0);
+            val = val * eraseFactor;
+        } else {
+            val = val + params.stimulusActive * signal;
         }
     }
 
@@ -252,6 +258,16 @@ fn main(@builtin(global_invocation_id) globalId: vec3<u32>) {
         val = min(val, 1.0 - (params.heavyMetal * 0.8));
         decay = min(decay, 0.999 - (params.heavyMetal * 0.05));
     }
+
+    // [Tensor Physics] §6.11 Ambient drive — the low-amplitude, cortically
+    // weighted heartbeat that keeps the field alive between stimuli. This is
+    // what 'amplitude' and 'frequency' drive; before the physics contract they
+    // were uploaded to TensorParams and read by nothing on this path, while the
+    // CPU paths each invented their own version of the same term.
+    let radial = length(worldPosition) / BRAIN_RANGE;
+    let corticalBias = 1.0 - smoothstep(0.1, 0.95, radial);
+    let ambientWave = sin(params.time * params.frequency) * 0.5 + 0.5;
+    val = val + (ambientWave - 0.5) * params.amplitude * (0.02 + corticalBias * 0.04);
 
     // SynaptiX AI mirror
     if (params.synaptiXActive > 0.5) {

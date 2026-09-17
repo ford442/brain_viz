@@ -8,7 +8,38 @@ The WebGL2 path is a secondary renderer for:
 - CI and smoke checks in environments where WebGPU is hard to inspect
 - feature-port work between CPU/reference rendering and the full WGSL pipeline
 
-WebGPU remains the authoritative renderer for compute-driven tensor physics and final visual quality.
+WebGPU remains the authoritative renderer for final visual quality.
+
+## Tensor physics
+
+The fallback does **not** have a simulation of its own. It used to: a simplified
+wave/coupling/paint approximation in `src/brain-renderer-webgl/tensor-sim.js`
+that was never a port of the WGSL compute shader and drifted further from it
+with every new effect, so CI screenshots were rendering different physics from
+the app.
+
+`updateTensorSimulation()` now calls the shared CPU reference stepper in
+`src/physics/tensor-field.js`, which implements
+[`docs/tensor-physics.md`](./tensor-physics.md) — the same specification the
+C++/WASM engine implements. `tensor-sim.js` keeps only what is genuinely
+renderer-specific: field sampling, resonance, and the per-style colour ramps.
+
+Two consequences worth knowing:
+
+- The fallback is slower per frame than it was — it is running the real field
+  (fiber-coupled anisotropic diffusion, criticality cascades, semi-Lagrangian
+  advection) at 32³ on the CPU, not a cheap approximation. Measured at roughly
+  15–25 ms per step in a browser JS engine, which puts a ceiling of about
+  40–60 FPS on the fallback on hardware where rasterisation is free. In the
+  headless CI configuration (SwiftShader, `--disable-gpu`) rasterisation
+  dominates and the step is around a tenth of the frame, so the suite's timings
+  are essentially unchanged. This is a debug and automation path; matching the
+  real physics is worth more here than frame rate.
+- `src/shaders/volumetric-compute.js` still differs from the CPU model in four
+  documented places (the voxel hash, and three points where a GPU-convenient
+  discontinuity cannot be reproduced consistently on two CPUs). See
+  `docs/tensor-physics.md` §8 before treating a small difference between a
+  WebGPU and a WebGL screenshot as a bug.
 
 ## Selection
 
