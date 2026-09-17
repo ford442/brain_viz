@@ -1,3 +1,4 @@
+// @ts-check
 export function applyRenderLoopMethods(Target) {
     Target.prototype.render = function() {
         // [V2.3] Main Render Loop

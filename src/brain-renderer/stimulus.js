@@ -1,3 +1,4 @@
+// @ts-check
 import { seedImmuneSurge, clearImmunePool } from '../immune-particles.js';
 
 export function applyStimulusMethods(Target) {

@@ -1,3 +1,4 @@
+// @ts-check
 import { BrainGeometry } from '../brain-geometry.js';
 import { vertexShader, fragmentShader, computeShader, somaVertexShader, somaFragmentShader, sparkVertexShader, sparkFragmentShader, postVertexShader, postFragmentShader, pointCloudVertexShader, pointCloudFragmentShader } from '../shaders.js';
 import { fiberVertexShader, fiberFragmentShader } from '../shaders/fiber.js';
@@ -29,6 +30,7 @@ export function applyCoreMethods(Target) {
     // loop's smoothing drives the transition. Routines, the XR viewpoint presets
     // and the reactivity router all depend on this — an empty body silently
     // disables every cinematic camera move on the primary renderer.
+    /** @type {import('../renderer-contract.js').BrainRendererFacade['setCameraParams']} */
     Target.prototype.setCameraParams = function({ rotation, zoom, fov } = {}) {
         if (rotation) {
             if (rotation.x !== undefined) this.targetRotation.x = rotation.x;

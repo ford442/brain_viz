@@ -33,8 +33,17 @@ jobs:
       # Headless layout/shader assertions — plain Node, no WebGPU or browser.
       # These catch uniform-struct drift that the visual suite cannot see
       # (a clip plane read four floats off still renders an image).
-      - name: Node unit tests (uniform layout, shaders, tensor physics)
+      - name: Node unit tests (uniform layout, shaders, tensor physics, renderer facade)
         run: npm test
+
+      # JSDoc typecheck for the files that opt into `// @ts-check` (renderer
+      # internals, routine player, wasm engine, types.js). Most renderer
+      # methods are attached by mixins tsc can't see across module boundaries
+      # (see src/renderer-contract.js) — `npm run check:facade` above is what
+      # actually enforces both backends implement the shared contract; this
+      # step catches signature/type drift within the files that are checked.
+      - name: Typecheck (tsc --noEmit, @ts-check files only)
+        run: npm run typecheck
 
       # The C++ half of the neural-field contract (docs/tensor-physics.md).
       # It compiles wasm/brain_tensor_engine.cpp with the runner's own C++17
