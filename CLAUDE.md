@@ -6,9 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 npm install                    # Install dependencies
-npm test                       # Headless Node assertions (uniform layout, shaders, tensor physics)
+npm test                       # Headless Node assertions (uniform layout, shaders, tensor physics, renderer facade)
 npm run test:golden            # C++ neural field vs the JS reference (needs a host C++ compiler)
 npm run test:all               # npm test + npm run test:golden
+npm run typecheck              # tsc --noEmit over the JSDoc-checked files (see §3b)
+npm run check:facade           # Both renderer backends implement src/renderer-contract.js
 npm run dev                    # Start dev server (http://localhost:5173)
 npm run build                  # Build production bundle to dist/
 npm run preview                # Preview production build locally
@@ -121,6 +123,40 @@ fallback no longer has physics of its own — it calls the reference stepper.
    fails if the checked-in header is stale.
 3. After a deliberate physics change: `node scripts/gen_tensor_fixture.mjs`,
    then `npm run test:all`.
+
+### 3b. One Renderer Facade, Two Backends
+**The Issue:** `BrainRenderer` (WebGPU) and `BrainRendererWebGL` each assemble
+their public methods from `applyXMethods(Target)` mixins spread across many
+files (`src/brain-renderer/*.js`, `src/brain-renderer-webgl/*.js`). There is no
+shared interface, so a method can exist on one backend and silently not the
+other — `setCameraParams` once shipped as a no-op on one side this way, and a
+missing `triggerTMS` on the WebGL side threw mid-routine.
+
+**How it is handled:** `src/renderer-contract.js` is a JSDoc-only
+`BrainRendererFacade` typedef listing the app-facing method surface
+`main.js`, `RoutinePlayer`, BCI, WebXR, Double Mirror sessions, and SynaptiX
+call on either backend. `scripts/check-renderer-facade.mjs` (`npm run
+check:facade`, part of `npm test`) statically greps every mixin file for each
+facade method name and fails if either backend is missing one — a JSDoc
+`@implements` on the classes themselves doesn't work here because TypeScript
+can't see prototype methods attached by a mixin in another file (see the
+class-level comments in `brain-renderer.js` / `brain-renderer-webgl.js`).
+`docs/webgl-fallback.md` has the human-readable capability matrix.
+
+**Action:**
+1. A new method that belongs on both backends (i.e. app code should be able
+   to call it without a capability check) gets a `@property` entry in
+   `BrainRendererFacade` **and** an implementation on both
+   `BrainRenderer`/`BrainRendererWebGL` before it ships. `npm run
+   check:facade` fails the build otherwise.
+2. A backend-specific extension (WebGPU pipeline internals, WebGL debug/XR
+   helpers) does not belong in the facade — document it in the "Extensions"
+   block at the bottom of `renderer-contract.js` instead, and have callers
+   guard it (`renderer.method?.(...)`, a `backendType` check).
+3. Individual files can opt into `// @ts-check` (see `jsconfig.json`); `npm
+   run typecheck` runs `tsc -p jsconfig.json --noEmit` over whichever files
+   do. This project has no `.ts` files and no TypeScript syntax — checking is
+   JSDoc-only, same as `RendererParams` in `src/types.js`.
 
 ### 4. Minimal Automated Tests
 `npm test` runs headless Node assertions (`tests/test_uniform_layout.js`,
