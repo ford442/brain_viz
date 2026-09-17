@@ -57,7 +57,7 @@
  * @property {() => void} updateAltitudeState - Advance the altitude/hypoxia physiology model by one frame from `params.altitude`.
  *
  * @property {(float32Array: Float32Array) => void} setVoxelData - Upload a full 32x32x32 human tensor frame (BCI/session playback/TensorPlayer).
- * @property {() => Promise<Float32Array>} getVoxelDataSnapshot - Read back the current human tensor (async on WebGPU: a GPU buffer copy; synchronous cache on WebGL).
+ * @property {() => Promise<Float32Array>} getVoxelDataSnapshot - Read back the current human tensor. Always returns a Promise: WebGPU awaits a GPU buffer copy; WebGL resolves immediately from its cached tensor.
  * @property {(float32Array: Float32Array) => boolean} setPartnerTensorData - Upload a full 32x32x32 SynaptiX partner/AI tensor frame.
  * @property {(float32Array: Float32Array) => boolean} setAITensorData - Deprecated alias of `setPartnerTensorData()`.
  * @property {(state: Object) => void} setSynaptiXCoupling - Record the latest human/AI regional coupling snapshot for resonance-driven visuals.

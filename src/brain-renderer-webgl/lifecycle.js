@@ -70,7 +70,9 @@ export function applyLifecycleMethods(Klass) {
             this._lastHumanTensor.set(float32Array);
         },
 
-        getVoxelDataSnapshot() {
+        // Async to match the facade (BrainRenderer's WebGPU implementation awaits
+        // a GPU buffer readback) — a caller using .then() must work on either backend.
+        async getVoxelDataSnapshot() {
             return new Float32Array(this._lastHumanTensor);
         },
 

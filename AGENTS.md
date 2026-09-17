@@ -93,9 +93,11 @@ brain_viz/
 │   ├── fix_main.py         # One-off main.js repair script
 │   ├── test_compile.py     # Stub for build verification
 │   └── test_run.py         # Dev-server smoke test (see §4, §7)
-├── tests/                  # Ad hoc test stubs (no automated suite — see §7)
-│   ├── patch_render_test.js    # Render pipeline patch/test stub
-│   └── test_shader.js          # Shader-related test stub
+├── tests/                  # Headless Node assertions run by `npm test` (see §7)
+│   ├── test_uniform_layout.js  # Uniform-struct alignment/drift against src/shaders/uniform-layout.js
+│   ├── test_shader.js          # Shader/fiber-geometry contract checks
+│   ├── test_tensor_physics.js  # Neural-field fixture (see docs/tensor-physics.md, golden-scenario.js)
+│   └── patch_render_test.js    # Older render-pipeline patch/test stub, not run by `npm test`
 ├── routines/               # JSON/CSV routine data
 │   ├── deep_thought.json
 │   ├── altitude_simulation.json
