@@ -46,7 +46,7 @@ Key capabilities:
 **Browser Requirements:**
 - Chrome 113+ or Edge 113+ with WebGPU enabled for the primary renderer.
 - A WebGL2 fallback renderer is available via `?renderer=webgl` for debugging, automation, and porting work.
-- COOP/COEP headers are configured in `vite.config.js` for `crossOriginIsolated` (required for multi-threaded WASM).
+- COOP/COEP headers are configured in `vite.config.js` for both `server` and `preview` for `crossOriginIsolated` (required for multi-threaded WASM). Production hosts serving `dist/` must send the same headers — see the header note at the top of `deploy.py`.
 
 ---
 
@@ -226,7 +226,7 @@ When `tensorPlaybackMode` is `true` (driven by `TensorPlayer`), the compute pass
 
 WGSL structs require strict memory alignment. The `Uniforms` struct in `shaders.js` has explicit scalar/padding layout, and the JavaScript side writes a `Float32Array` with hardcoded offsets.
 
-- **Render uniform buffer**: 64 floats (`RENDER_UNIFORM_FLOAT_COUNT = 64`), which is 256 bytes. This already satisfies WebGPU uniform alignment requirements, so the buffer is allocated at exactly 256 bytes.
+- **Render uniform buffer**: `RENDER_UNIFORM_FLOAT_COUNT = 100` floats written per frame (400 bytes). `RENDER_UNIFORM_BUFFER_SIZE` in `src/brain-renderer/constants.js` rounds that up to the 256-byte uniform binding alignment, i.e. 512 bytes allocated.
 - **Compute uniform buffer**: 80 bytes fixed size (`COMPUTE_UNIFORM_BUFFER_SIZE = 80`). The active data spans offsets 0–71 (time, voxelDim, frequency, amplitude, spikeThreshold, smoothing, style, padding, stimulusPos, stimulusActive, hypoxiaStress, metabolicRate, mitochondrialFunction, fluidActive, electricalActive, mercuryActive), with trailing padding to reach 80 bytes.
 
 **When adding new uniforms, you MUST manually calculate and respect WGSL alignment rules in both the shader struct and the JavaScript `Float32Array`/`DataView` writing to it.** Failure results in silent data corruption or validation errors.
@@ -350,7 +350,7 @@ python verification/verify_session.py           # NWS1 capture/replay/analysis/l
 ## 9. Security Considerations
 
 - **Hardcoded credentials:** `scripts/deploy.py` contains a plaintext password. Do not commit modified versions with real secrets if the repo is public.
-- **Cross-Origin Isolation:** `vite.config.js` sets `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp`. This is required for `SharedArrayBuffer` and multi-threaded ONNX WASM, but it blocks certain cross-origin resources (e.g., external images/audio) unless they send appropriate CORS headers.
+- **Cross-Origin Isolation:** `vite.config.js` sets `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp` on both the dev server and `vite preview`; the production host must set them too (see `deploy.py`). This is required for `SharedArrayBuffer` and multi-threaded ONNX WASM, but it blocks certain cross-origin resources (e.g., external images/audio) unless they send appropriate CORS headers.
 - **Microphone access:** `audio-reactor.js` requests `getUserMedia({ audio: true })`. This triggers a browser permission prompt.
 - **External audio URLs:** Some routines fetch audio from external URLs (`cdn.freesound.org`). Ensure these URLs are HTTPS and CORS-enabled.
 - **No input sanitization on tensor files:** `TensorPlayer` loads user-supplied `.bin`, `.npy`, and `.csv` files directly into GPU buffers. While the code checks array lengths, malformed files can cause runtime errors or garbage visualization.

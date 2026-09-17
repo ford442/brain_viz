@@ -12,6 +12,19 @@ Usage:
 
 Requirements:
   pip install requests
+
+Production server requirement — cross-origin isolation:
+  The app needs `crossOriginIsolated === true` for SharedArrayBuffer,
+  multi-threaded ONNX Runtime and WASM pthreads. Vite sets these headers for
+  `npm run dev` and `npm run preview` (see vite.config.js), but a static host
+  serving dist/ must send them itself or those paths silently degrade to
+  single-threaded/synthetic fallbacks:
+
+      Cross-Origin-Opener-Policy: same-origin
+      Cross-Origin-Embedder-Policy: require-corp
+
+  Note that require-corp also blocks cross-origin subresources that do not send
+  `Cross-Origin-Resource-Policy` / CORS headers.
 """
 
 import io

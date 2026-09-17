@@ -1,6 +1,7 @@
 import { BrainGeometry } from '../brain-geometry.js';
 import { vertexShader, fragmentShader, computeShader, somaVertexShader, somaFragmentShader, sparkVertexShader, sparkFragmentShader, postVertexShader, postFragmentShader, pointCloudVertexShader, pointCloudFragmentShader } from '../shaders.js';
 import { fiberVertexShader, fiberFragmentShader } from '../shaders/fiber.js';
+import { createGPUContext, configureCanvas, destroyGPUResources, GPUTimer } from './gpu-context.js';
 
 export function applyCoreMethods(Target) {
     Target.prototype.setupInputHandlers = function() {
@@ -23,30 +24,42 @@ export function applyCoreMethods(Target) {
         });
     };
 
-    Target.prototype.setCameraParams = function({ rotation, zoom, fov }) {
- rotation, zoom, fov 
+    // Camera contract (must stay behaviourally identical to the WebGL2 fallback in
+    // src/brain-renderer-webgl.js): write the *target* camera state so the render
+    // loop's smoothing drives the transition. Routines, the XR viewpoint presets
+    // and the reactivity router all depend on this — an empty body silently
+    // disables every cinematic camera move on the primary renderer.
+    Target.prototype.setCameraParams = function({ rotation, zoom, fov } = {}) {
+        if (rotation) {
+            if (rotation.x !== undefined) this.targetRotation.x = rotation.x;
+            if (rotation.y !== undefined) this.targetRotation.y = rotation.y;
+        }
+        if (zoom !== undefined) {
+            this.targetZoom = Math.max(2, Math.min(10, zoom));
+        }
+        if (fov !== undefined) {
+            this.targetFov = Math.max(0.1, Math.min(Math.PI - 0.1, fov));
+        }
     };
 
     Target.prototype.initialize = async function() {
-        const adapter = await navigator.gpu.requestAdapter();
-        if (!adapter) throw new Error('No GPU');
-        
-        const requiredFeatures = [];
-        const featuresToCheck = [
-    'float32-filterable', 'float32-blendable', 'clip-distances',
-    'depth32float-stencil8', 'texture-component-swizzle'
-        ];
-        
-        for (const feature of featuresToCheck) {
-    if (adapter.features.has(feature)) {
-        requiredFeatures.push(feature);
-    }
-        }
-        
-        this.device = await adapter.requestDevice({ requiredFeatures });
-        this.context = this.canvas.getContext('webgpu');
-        const format = navigator.gpu.getPreferredCanvasFormat();
-        this.context.configure({ device: this.device, format: format, alphaMode: 'opaque' });
+        // All adapter/device/canvas options live in ./gpu-context.js.
+        const gpu = await createGPUContext({
+            canvas: this.canvas,
+            voxelCount: this.voxelCount,
+            onDeviceLost: (info) => this.handleDeviceLost(info),
+            onUncapturedError: (error) => {
+                this.lastGPUError = error;
+            }
+        });
+        this.adapter = gpu.adapter;
+        this.device = gpu.device;
+        this.context = gpu.context;
+        this.gpuFeatures = gpu.features;
+        this.isContextLost = false;
+        // GPU-time budget probe; a no-op when the adapter lacks 'timestamp-query'.
+        this.gpuTimer = new GPUTimer(this.device, gpu.hasTimestampQuery);
+        const format = gpu.format;
         
         // Geometry
         const geometry = this.buildGeometry();
@@ -176,6 +189,67 @@ export function applyCoreMethods(Target) {
         this.createRenderTarget(width, height);
 
         console.log("Renderer V2.6 Verified with Post-Processing");
+    };
+
+    /**
+     * Free every GPU object this renderer owns. Safe to call more than once and
+     * safe to call on an already-lost device (destroy() on a lost device is a
+     * no-op, but the handles must still be dropped so nothing stale is bound
+     * against a replacement device).
+     */
+    Target.prototype.dispose = function() {
+        this.isRunning = false;
+        if (this.gpuTimer) { this.gpuTimer.destroy(); this.gpuTimer = null; }
+        destroyGPUResources(this);
+        if (this.context && typeof this.context.unconfigure === 'function') {
+            try { this.context.unconfigure(); } catch (e) { /* context already gone */ }
+        }
+        if (this.device && typeof this.device.destroy === 'function') {
+            try { this.device.destroy(); } catch (e) { /* already lost */ }
+        }
+        this.device = null;
+        this.context = null;
+        this.adapter = null;
+    };
+
+    /**
+     * Re-acquire the GPU after a device loss. Always disposes first so a
+     * recovery cycle cannot leak a full set of buffers/textures.
+     */
+    Target.prototype.reinitialize = async function() {
+        this.dispose();
+        await this.initialize();
+        this.isContextLost = false;
+        return this;
+    };
+
+    /**
+     * Device-loss owner. Renderer-level concerns (stopping the loop, marking the
+     * context lost, releasing GPU objects) are handled here; the UI/timeline
+     * reaction is delegated to an optional callback installed by the app layer.
+     * @param {GPUDeviceLostInfo} info
+     */
+    Target.prototype.handleDeviceLost = function(info) {
+        // 'destroyed' is our own dispose()/reinitialize() call, not a real loss.
+        if (info && info.reason === 'destroyed' && !this.isRunning) return;
+        this.isContextLost = true;
+        this.isRunning = false;
+        if (this.gpuTimer) { this.gpuTimer.enabled = false; this.gpuTimer = null; }
+        console.warn(`[BrainRenderer] WebGPU device lost (${info?.reason || 'unknown'}): ${info?.message || ''}`);
+        destroyGPUResources(this);
+        if (typeof this.onDeviceLost === 'function') {
+            try {
+                this.onDeviceLost(info);
+            } catch (e) {
+                console.error('[BrainRenderer] onDeviceLost handler failed:', e);
+            }
+        }
+    };
+
+    /** Re-apply the canvas configuration (e.g. after an external unconfigure). */
+    Target.prototype.reconfigure = function() {
+        if (!this.device || !this.context) return;
+        configureCanvas(this.context, this.device);
     };
 
     Target.prototype.setParams = function(newParams) {

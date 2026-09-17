@@ -1,5 +1,10 @@
 import { defineConfig } from 'vite';
 
+const crossOriginIsolationHeaders = {
+  'Cross-Origin-Opener-Policy': 'same-origin',
+  'Cross-Origin-Embedder-Policy': 'require-corp',
+};
+
 export default defineConfig(({ command }) => ({
   // Deployed under test.1ink.us/brain-viz/ (see deploy.py). Without this,
   // Vite emits all asset URLs (including the ONNX Runtime .mjs/.wasm
@@ -9,12 +14,12 @@ export default defineConfig(({ command }) => ({
   // applied to `build` — the dev server (and scripts/test_run.py,
   // verification/verify_suite.py) still expect localhost:5173 root.
   base: command === 'build' ? '/brain-viz/' : '/',
-  server: {
-    headers: {
-      'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'require-corp',
-    }
-  },
+  // Cross-origin isolation (crossOriginIsolated === true) is required for
+  // SharedArrayBuffer, multi-threaded ONNX Runtime and WASM pthreads. It must be
+  // served by *every* host that serves the app, not just the dev server — see
+  // scripts/deploy.py for the production-server requirement.
+  server: { headers: crossOriginIsolationHeaders },
+  preview: { headers: crossOriginIsolationHeaders },
   optimizeDeps: {
     exclude: ['onnxruntime-web']
   },

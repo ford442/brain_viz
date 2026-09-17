@@ -36,8 +36,8 @@ export function applyPipelineMethods(Target) {
         });
         this.updatePathwayStateBuffer();
 
-        // Render uniforms: 2 mat4s (32 floats) + scalar block (28 floats including padding) = 60 floats / 240 bytes.
-        // The buffer is padded to 256 bytes to satisfy WebGPU uniform buffer alignment requirements.
+        // Render uniforms: RENDER_UNIFORM_FLOAT_COUNT (100) floats = 400 bytes,
+        // padded up to the 256-byte uniform binding alignment by constants.js.
         this.uniformBuffer = this.device.createBuffer({
     size: RENDER_UNIFORM_BUFFER_SIZE,
     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
