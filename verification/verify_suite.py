@@ -26,6 +26,7 @@ SCRIPTS = [
     "verify_bci_device.py",
     "verify_webxr.py",
     "verify_session.py",
+    "verify_live_input_bus.py",
 ]
 
 

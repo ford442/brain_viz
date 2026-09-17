@@ -43,6 +43,7 @@ For the current architecture and module responsibilities, see [`AGENTS.md`](../A
 | 28 | Cognitive Phenomenon | DMN to task-positive network (TPN) handoff transition |
 | 29 | Cortical Dynamics | Cortical thickness atrophy and swelling visualization |
 | 30 | Neural Field Physics Contract | `docs/tensor-physics.md` as the normative spec; `src/physics/tensor-field.js` CPU reference driving the WebGL2 fallback; C++ engine ported to the full model behind a generated `BrainTensorParams` ABI; golden 32³ fixture + `npm run test:golden`; SIMD/LTO/ESM WASM build |
+| 31 | Live Input Bus | `LiveInputBus`: one shared, user-editable mapping table (source/feature -> renderer-param sink, with scale + attack/release smoothing) driving mic, BCI band-power, and Training Mode metrics without a new per-source integration file; "Live" tab mapping matrix UI with JSON import/export; `if: "live.…"` routine condition sugar |
 
 ## Open Items
 
@@ -60,15 +61,16 @@ Deduplicated from the historical "Dream Log" entries across the archived plans �
 - **AI Narrative Generation** — use an LLM to generate routine scripts from themes (e.g. "Anxiety Spike", "Eureka Moment"); related to the multimodal ideas in [`docs/DOUBLE_MIRROR_VISION.md`](DOUBLE_MIRROR_VISION.md).
 - **Fractal Recursive Zoom** — procedurally generate infinite detail when zooming into a soma or fiber. *Phase A (runtime `voxelDim`) is done — see [`docs/field-resolution.md`](field-resolution.md); the clipmap field (B) and the recursive-zoom render path (C) are the remaining work.*
 - **Collaborative Brain Storming** — multi-user session injecting stimuli into a shared visualization via WebSockets.
-- **Adaptive Routines** — routines that adapt based on real-time emotion detection via webcam.
-- **Neuromodulation External API** — connect external live data feeds to drive neuromodulator profiles directly.
-- **Custom Audio-Feature Mapping Matrix** — a GUI for users to map arbitrary audio features to arbitrary visual parameters.
+- **Adaptive Routines** — *`if: "live.…"` condition sugar (Phase 31) covers gating a single event on a live feature; routines that branch on real-time webcam emotion detection specifically are still open.*
+- **Neuromodulation External API** — *Phase 31's `LiveInputBus.registerSource()` is the extension point (see [`docs/live-input-bus.md`](live-input-bus.md)); an actual external WebSocket/OSC ingest source is not yet implemented.*
+- **Custom Audio-Feature Mapping Matrix** — *done, generalized past audio — see Phase 31 and [`docs/live-input-bus.md`](live-input-bus.md). The audio-only `ReactivityRouter` "Brain DJ" panel (Phase 3) remains as its own preset-driven panel.*
 - **Procedural Binaural Generation** — automatically generate binaural beat frequencies for a desired brainwave target instead of manual frequency entry.
-- **Biofeedback Adaptive Audio** — modulate generative audio pitch/volume/tempo from heart-rate or other biofeedback metrics.
+- **Biofeedback Adaptive Audio** — *Phase 31 makes any bus source (including a future heart-rate source) able to drive a renderer param; a `hrv_sync`-style continuous audio-pitch/volume/tempo sink is not yet implemented.*
 - **External Data Sonification** — map external real-time feeds (e.g. stock market data, social-media sentiment) to connectome signal pulses, as a novelty/art mode.
 
 ## Related Specs & Vision Docs
 
+- [`docs/live-input-bus.md`](live-input-bus.md) — Live Input Bus: source/sink mapping table, built-in sources, routine `if:` condition sugar
 - [`docs/training-mode.md`](training-mode.md) — Neurofeedback Training Mode (courses, metrics, scoring, routine events)
 - [`docs/bci-device.md`](bci-device.md) — Muse/OpenBCI setup, live tensor mapping, recording, and routine events
 - [`docs/webxr.md`](webxr.md) — immersive VR/AR setup, controls, routine integration, and verification

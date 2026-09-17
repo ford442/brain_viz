@@ -1,7 +1,8 @@
 // main-update-loop.js — RAF loop syncing UI, SynaptiX, audio reactivity, and routine transport
-export function startMainUpdateLoop(renderer, player, inputs, labels, tensorPlayer, synaptixEngine, inferenceEngine, audioReactor, transport, directorLabels, modeSelector, aiPromptRef, trainingEngine, sessionController, sonificationEngine, reactivityRouter) {
+export function startMainUpdateLoop(renderer, player, inputs, labels, tensorPlayer, synaptixEngine, inferenceEngine, audioReactor, transport, directorLabels, modeSelector, aiPromptRef, trainingEngine, sessionController, sonificationEngine, reactivityRouter, liveInputBus) {
     let lastAIStep = 0;
     let lastTrainingTime = 0;
+    let lastBusTime = 0;
     const liveSourceStatus = document.getElementById('live-source-status');
 
     const updateLoop = (timestamp) => {
@@ -59,6 +60,15 @@ export function startMainUpdateLoop(renderer, player, inputs, labels, tensorPlay
 
         if (sonificationEngine?.isActive) {
             sonificationEngine.update(renderer, player, synaptixEngine, timestamp);
+        }
+
+        if (liveInputBus) {
+            // Live Input Bus mapping matrix (src/live-input-bus.js): one shared
+            // tick for every registered source (audio/BCI/training), instead of
+            // each live-data panel sampling and applying its own mapping.
+            const dt = lastBusTime > 0 ? Math.min(0.5, (timestamp - lastBusTime) / 1000) : 0;
+            lastBusTime = timestamp;
+            liveInputBus.tick(dt, timestamp);
         }
 
         if (inputs.amplitude) inputs.amplitude.value = renderer.params.amplitude;

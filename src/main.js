@@ -11,7 +11,7 @@
  */
 
 import { FilterUIOverlay, initUIControls, initDirectorTools, initTooltips, initRangeTooltips } from './ui-utils.js';
-import { mountControlsShell, initTabSwitching, setupLegendPanel, setupOverlays, setupRoutineTransport, setupBciPanel, setupXrPanel, setupNeuromodulatorPanel, setupSessionPanel, setupPathwayPanel } from './ui-panels.js';
+import { mountControlsShell, initTabSwitching, setupLegendPanel, setupOverlays, setupRoutineTransport, setupBciPanel, setupXrPanel, setupNeuromodulatorPanel, setupSessionPanel, setupPathwayPanel, setupLiveInputPanel } from './ui-panels.js';
 import { setupModeSelector } from './ui-mode-selector.js';
 import { collectInputsAndLabels } from './main-dom.js';
 import { setupRendererBackend } from './main-renderer-setup.js';
@@ -21,6 +21,7 @@ import { setupSonificationIntegration } from './main-sonification-integration.js
 import { setupReactivityIntegration } from './main-reactivity-integration.js';
 import { setupSynaptiXIntegration } from './main-synaptix-integration.js';
 import { setupTrainingIntegration } from './main-training-integration.js';
+import { setupLiveInputIntegration } from './main-live-input-integration.js';
 import { startMainUpdateLoop } from './main-update-loop.js';
 
 let isInitialized = false;
@@ -88,6 +89,8 @@ async function init() {
         setupNeuromodulatorPanel(renderer, controls);
         setupPathwayPanel(renderer, player, modeSelector);
         const trainingEngine = setupTrainingIntegration(renderer, player, audioReactor, synaptixEngine, bciSession);
+        const liveInputBus = setupLiveInputIntegration(renderer, player, audioReactor, bciSession, trainingEngine, synaptixEngine);
+        setupLiveInputPanel(liveInputBus);
 
         initUIControls(renderer, inputs, labels, paintController);
 
@@ -164,7 +167,7 @@ window.addEventListener('keydown', (e) => {
 
         startMainUpdateLoop(renderer
 , player, inputs, labels, tensorPlayer, synaptixEngine,
-            inferenceEngine, audioReactor, transport, directorLabels, modeSelector, aiPromptRef, trainingEngine, sessionController, sonificationEngine, reactivityRouter);
+            inferenceEngine, audioReactor, transport, directorLabels, modeSelector, aiPromptRef, trainingEngine, sessionController, sonificationEngine, reactivityRouter, liveInputBus);
 
         // Ensure InferenceEngine is valid before initialization
         if (inferenceEngine) {

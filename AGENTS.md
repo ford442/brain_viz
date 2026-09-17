@@ -124,8 +124,9 @@ brain_viz/
 │   ├── verify_branching.py        # Choice/branching routine logic
 │   ├── verify_glitch.py           # Glitch storm corruption simulation
 │   ├── verify_training.py         # Neurofeedback Training Mode courses + keyboard demo baseline
-│   ├── *.png                      # Screenshots generated on each run (gitignored)
-│   └── verify_session.py           # Double Mirror round-trip/lifecycle verification
+│   ├── verify_session.py           # Double Mirror round-trip/lifecycle verification
+│   ├── verify_live_input_bus.py    # Live tab mapping matrix UI + one mocked-feature bus tick
+│   └── *.png                      # Screenshots generated on each run (gitignored)
 ├── docs/                   # Architecture, roadmap, and mode-specific docs (see docs/ROADMAP.md, docs/archive/)
 ├── .github/
 │   └── copilot-instructions.md  # GitHub Copilot context instructions
@@ -150,6 +151,7 @@ brain_viz/
 - **`main.js`** — Wires the DOM UI to the renderer, sets up keyboard shortcuts, initializes `RoutinePlayer`, `AudioReactor`, `TensorPlayer`, and `InferenceEngine`, and runs the main update loop. Also wires the WASM engine toggle UI.
 - **`icosahedron.js`** — Static icosahedron vertex and index arrays exported as constants. Used by `brain-renderer.js` for instanced soma geometry.
 - **`training-engine.js`** — Neurofeedback Training Mode: `TrainingEngine` class, simulated 0..1 metric samplers (`calm`, `occipitalAlpha`, `flowResonance`), the `BUILTIN_COURSES` catalog (Calm Focus / Panic Recovery / Flow Sustain), streak/drift-penalty/star scoring, and `localStorage` session history. See `docs/training-mode.md`.
+- **`live-input-bus.js`** — `LiveInputBus`: registers live sources (mic, BCI band power, training metrics, ...) and a user-editable source/feature -> renderer-param mapping table with per-mapping scale + attack/release smoothing, applied once per frame via `tick(dt)`. `src/main-live-input-integration.js` / `src/ui-live-input-panel.js` wire it to the "Live" tab. See `docs/live-input-bus.md`.
 - **`session-recorder.js` / `session-player.js`** — Double Mirror capture and replay ownership. Recording samples the current human tensor without mutating it; playback exclusively owns the human tensor until stopped and never modifies the SynaptiX partner tensor. See `docs/session-format.md`.
 
 ---
@@ -401,6 +403,7 @@ python verification/verify_glitch.py            # Glitch storm corruption simula
 python verification/verify_bci_device.py        # Mocked Muse GATT + OpenBCI UDP/WebSocket bridge
 python verification/verify_webxr.py             # Mocked stereo XR + routine rig/raycast/fallback
 python verification/verify_session.py           # NWS1 capture/replay/analysis/lifecycle checks
+python verification/verify_live_input_bus.py    # Live tab mapping matrix UI + one mocked-feature bus tick
 ```
 
 `verification/` is the single canonical verification tree (tracked in git; only generated screenshots/`__pycache__` are gitignored). There is no separate `tests/verification/` tree — it was removed as part of consolidating the two parallel suites that used to exist.
