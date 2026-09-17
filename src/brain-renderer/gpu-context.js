@@ -1,3 +1,4 @@
+// @ts-check
 // src/brain-renderer/gpu-context.js
 // [Neuro-Weaver] Single owner of WebGPU adapter / device / canvas configuration.
 //
@@ -21,11 +22,13 @@ import { RENDER_UNIFORM_BUFFER_SIZE, COMPUTE_UNIFORM_BUFFER_SIZE } from './const
  * 'timestamp-query' is handled separately below: it is opportunistic
  * instrumentation, not a rendering requirement, so it must never fail device
  * creation.
- * @type {string[]}
+ * @type {GPUFeatureName[]}
  */
 export const REQUIRED_GPU_FEATURES = [];
 
-/** Opportunistic features: requested only when the adapter advertises them. */
+/** Opportunistic features: requested only when the adapter advertises them.
+ * @type {GPUFeatureName[]}
+ */
 export const OPTIONAL_GPU_FEATURES = ['timestamp-query'];
 
 /**
@@ -249,8 +252,13 @@ export class GPUTimer {
     /** Queue the resolve + copy for this frame. Call before encoder.finish(). */
     resolve(encoder) {
         if (!this.enabled || this._reading) return;
-        encoder.resolveQuerySet(this.querySet, 0, 2, this.resolveBuffer, 0);
-        encoder.copyBufferToBuffer(this.resolveBuffer, 0, this.readbackBuffer, 0, 16);
+        // Only reachable when `enabled` is true, which is the same branch that
+        // populates these buffers in the constructor.
+        const querySet = /** @type {GPUQuerySet} */ (this.querySet);
+        const resolveBuffer = /** @type {GPUBuffer} */ (this.resolveBuffer);
+        const readbackBuffer = /** @type {GPUBuffer} */ (this.readbackBuffer);
+        encoder.resolveQuerySet(querySet, 0, 2, resolveBuffer, 0);
+        encoder.copyBufferToBuffer(resolveBuffer, 0, readbackBuffer, 0, 16);
         this._pendingRead = true;
     }
 
@@ -259,9 +267,10 @@ export class GPUTimer {
         if (!this.enabled || !this._pendingRead || this._reading) return;
         this._pendingRead = false;
         this._reading = true;
-        this.readbackBuffer.mapAsync(GPUMapMode.READ).then(() => {
-            const times = new BigUint64Array(this.readbackBuffer.getMappedRange().slice(0));
-            this.readbackBuffer.unmap();
+        const readbackBuffer = /** @type {GPUBuffer} */ (this.readbackBuffer);
+        readbackBuffer.mapAsync(GPUMapMode.READ).then(() => {
+            const times = new BigUint64Array(readbackBuffer.getMappedRange().slice(0));
+            readbackBuffer.unmap();
             // Timestamps are nanoseconds.
             this.lastFrameMs = Number(times[1] - times[0]) / 1e6;
             this._reading = false;
@@ -272,9 +281,9 @@ export class GPUTimer {
 
     destroy() {
         if (!this.enabled) return;
-        this.querySet.destroy();
-        this.resolveBuffer.destroy();
-        this.readbackBuffer.destroy();
+        /** @type {GPUQuerySet} */ (this.querySet).destroy();
+        /** @type {GPUBuffer} */ (this.resolveBuffer).destroy();
+        /** @type {GPUBuffer} */ (this.readbackBuffer).destroy();
         this.enabled = false;
     }
 }

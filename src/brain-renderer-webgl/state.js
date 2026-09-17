@@ -96,6 +96,25 @@ export function applyStateMethods(Klass) {
             this.params.lesionRadius = Math.max(0, radius);
         },
 
+        // Mirrors the WebGPU renderer's triggerTMS() (src/brain-renderer/stimulus.js):
+        // same `this.tms` pulse state, decayed by _updateTms() in lifecycle.js each
+        // frame. Routine `tms` events (src/routine-handlers/core.js) call this on
+        // whichever backend is active, so a missing method here throws mid-routine.
+        triggerTMS(center, strength = 1.2, radius = 0.28, durationMs = 650) {
+            this.tms = {
+                center,
+                strength,
+                radius,
+                duration: durationMs,
+                startTime: performance.now()
+            };
+            this.params.tmsCenterX = center[0];
+            this.params.tmsCenterY = center[1];
+            this.params.tmsCenterZ = center[2];
+            this.params.tmsActive = strength;
+            this.params.tmsRadius = radius;
+        },
+
         calmState() {
             this.params.frequency = 2.0;
             this.params.amplitude = 0.5;

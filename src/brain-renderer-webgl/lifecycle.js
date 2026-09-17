@@ -1,9 +1,30 @@
 export function applyLifecycleMethods(Klass) {
     Object.assign(Klass.prototype, {
+        // Decays the pulse started by triggerTMS() and re-injects a shrinking
+        // stimulus each frame, same shape as the WebGPU render loop's inline
+        // handling in src/brain-renderer/render-loop.js.
+        _updateTms() {
+            if (!this.tms) return;
+            const elapsed = performance.now() - this.tms.startTime;
+            if (elapsed > this.tms.duration) {
+                this.tms = null;
+                this.params.tmsActive = 0.0;
+                this.params.tmsPulse = 0.0;
+                return;
+            }
+            const rawProgress = elapsed / this.tms.duration;
+            this.params.tmsPulse = Math.sin(rawProgress * Math.PI) * this.tms.strength;
+            const pulseIntensity = this.params.tmsPulse * 0.1;
+            if (pulseIntensity > 0.01) {
+                this.injectStimulus(this.params.tmsCenterX, this.params.tmsCenterY, this.params.tmsCenterZ, pulseIntensity, 0.0);
+            }
+        },
+
         beginXRFrame(timestamp) {
             if (this.geometryDirty && (!this.lastGeometryRebuildTime || timestamp - this.lastGeometryRebuildTime >= this.geometryRebuildIntervalMs)) {
                 this.buildAndUploadGeometry();
             }
+            this._updateTms();
             this.updateAltitudeState();
             this.time += 0.016;
             if (!this.tensorPlaybackMode) this.updateTensorSimulation();
@@ -24,6 +45,7 @@ export function applyLifecycleMethods(Klass) {
             }
 
             this.resize();
+            this._updateTms();
             this.updateAltitudeState();
             this.time += 0.016;
             if (!this.tensorPlaybackMode) {
@@ -48,7 +70,9 @@ export function applyLifecycleMethods(Klass) {
             this._lastHumanTensor.set(float32Array);
         },
 
-        getVoxelDataSnapshot() {
+        // Async to match the facade (BrainRenderer's WebGPU implementation awaits
+        // a GPU buffer readback) — a caller using .then() must work on either backend.
+        async getVoxelDataSnapshot() {
             return new Float32Array(this._lastHumanTensor);
         },
 

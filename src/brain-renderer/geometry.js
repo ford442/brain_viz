@@ -1,3 +1,4 @@
+// @ts-check
 import { BrainGeometry } from '../brain-geometry.js';
 
 export function applyGeometryMethods(Target) {
@@ -13,6 +14,9 @@ export function applyGeometryMethods(Target) {
     fiberSymmetry: this.params.fiberSymmetry,
     bundleCoherence: this.params.bundleCoherence
         });
+        // @ts-expect-error generate() is attached to BrainGeometry.prototype by
+        // applyMeshMethods() in brain-geometry.js — not visible to TS across
+        // the mixin boundary (same pattern as setupInputHandlers() below).
         geometry.generate(this.geometryRows, this.geometryCols);
         return geometry;
     };

@@ -11,6 +11,20 @@ import { applyCoreMethods } from './brain-renderer/core-methods.js';
 import { applySynaptiXBridgeMethods } from './brain-renderer/synaptix-bridges.js';
 import { applyPathwayMethods, createPathwayState } from './pathway-renderer.js';
 
+/**
+ * WebGPU renderer. Implements the shared `BrainRendererFacade` documented in
+ * `src/renderer-contract.js` — the app-facing surface `main.js`, `RoutinePlayer`,
+ * the BCI bridge, WebXR, Double Mirror sessions, and SynaptiX call on either
+ * backend interchangeably. See `docs/webgl-fallback.md` for the capability
+ * matrix against `BrainRendererWebGL`.
+ *
+ * Not declared with `@implements`: most facade methods are attached to
+ * `BrainRenderer.prototype` by the `applyXMethods()` mixins below, and
+ * TypeScript's structural check for `@implements` cannot see across that
+ * module boundary — it would just report every mixin method as "missing".
+ * `scripts/check-renderer-facade.mjs` (`npm run check:facade`) enforces the
+ * contract instead, by name, against both backends' source files.
+ */
 export class BrainRenderer {
     /**
      * @param {HTMLCanvasElement} canvas
@@ -112,14 +126,6 @@ export class BrainRenderer {
             apoptosis: 0.0,
             particleSpeed: 1.0,
             edgeDetection: 0.0, // Visual Cortex Edge Detection
-            pulseSaturation: 1.0,
-            trailLength: 1.0,
-            lesionCenterX: 0.0,
-            lesionCenterY: 0.0,
-            lesionCenterZ: 0.0,
-            lesionActive: 0.0,
-            lesionRadius: 0.0,
-            decimation: 0.0,
             psychedelic: 0.0,
             // Altitude/Hypoxia Simulation Parameters
             altitude: 0.0, // Altitude in meters (0-8000)

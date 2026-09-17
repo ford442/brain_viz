@@ -24,9 +24,18 @@ python3 scripts/test_run.py
 
 # Full visual verification suite (WebGL fallback, Playwright-based)
 python3 verification/verify_suite.py
+
+# Headless Node assertions: uniform layout, shaders, tensor physics, renderer facade
+npm test
+
+# tsc --noEmit over the files that opt into `// @ts-check` (see §5 below)
+npm run typecheck
+
+# Standalone: both renderer backends implement src/renderer-contract.js
+npm run check:facade
 ```
 
-**Note:** There is no automated unit test suite. Testing is manual and visual, plus the Playwright-based `verification/` suite described above. Verify the brain renders, animates smoothly (~60 FPS), and UI controls function correctly.
+**Note:** Automated coverage is narrow (`npm test`/`npm run typecheck`/`npm run test:golden`, all headless, no browser) — everything visual is still manual, plus the Playwright-based `verification/` suite described above. Verify the brain renders, animates smoothly (~60 FPS), and UI controls function correctly.
 
 ## Key Architecture & Design Patterns
 
@@ -83,7 +92,14 @@ The volumetric field exists as the WGSL compute shader, the CPU reference in `sr
 - A parameter the field reads must be in `COMPUTE_UNIFORM_LAYOUT`. The C ABI struct is generated from it by `scripts/gen_wasm_params.mjs`, and `npm test` fails if the checked-in header is stale.
 - After a deliberate physics change: `node scripts/gen_tensor_fixture.mjs`, then `npm run test:all`.
 
-#### 4. **WGSL Buffer Alignment & Padding**
+#### 4. **One Renderer Facade, Two Backends**
+
+`BrainRenderer` (WebGPU) and `BrainRendererWebGL` each assemble their methods from `applyXMethods(Target)` mixins spread across `src/brain-renderer/*.js` / `src/brain-renderer-webgl/*.js`, with no shared interface — a method can silently exist on one backend and not the other (`setCameraParams` once shipped as a no-op this way; a missing `triggerTMS` on WebGL threw mid-routine). `src/renderer-contract.js` is a JSDoc-only `BrainRendererFacade` typedef for the app-facing method surface both backends must implement; `scripts/check-renderer-facade.mjs` (`npm run check:facade`, part of `npm test`) greps for each facade method name across both backends' source files and fails if either is missing one. See `docs/webgl-fallback.md` for the human-readable capability matrix.
+
+- A method that app code (`main.js`, `RoutinePlayer`, BCI, WebXR, sessions, SynaptiX) should be able to call on either backend gets a `@property` entry in `BrainRendererFacade` **and** an implementation on both classes before it ships.
+- A backend-specific extension stays out of the facade and is called behind a capability check (`renderer.method?.(...)`).
+
+#### 5. **WGSL Buffer Alignment & Padding**
 
 Uniform structs require strict memory alignment (16-byte for `vec4`/`mat4`), so they are **generated, not hand-written**. `src/shaders/uniform-layout.js` declares `RENDER_UNIFORM_LAYOUT` / `COMPUTE_UNIFORM_LAYOUT` once and emits the WGSL structs (`UNIFORMS_STRUCT_WGSL`, `TENSOR_PARAMS_STRUCT_WGSL`), the JS write offsets (`RENDER_UNIFORM_OFFSETS`, `COMPUTE_UNIFORM_OFFSETS`), and the buffer sizes.
 

@@ -51,15 +51,30 @@ If the requested backend fails during initialization, `brain-renderer-factory.js
 
 ## Shared Contracts
 
-Both renderers consume the same high-level app contract from `main.js`:
+Both renderers implement the same app-facing method surface, documented as a
+single JSDoc contract in
+[`src/renderer-contract.js`](../src/renderer-contract.js)
+(`BrainRendererFacade`) — `main.js`, `RoutinePlayer`, the BCI bridge, WebXR,
+Double Mirror sessions, and SynaptiX all call these without checking which
+backend is active:
 
-- `setParams()`
-- `setSynaptiXParams()`
-- `setCameraParams()`
-- `injectStimulus()`
-- `setVoxelData()`
+- `setParams()` / `setSynaptiXParams()` / `setCameraParams()`
+- `injectStimulus()` / `injectElectrical()` / `injectMercury()`
+- `triggerLesion()` / `triggerTMS()`
+- `setVoxelData()` / `getVoxelDataSnapshot()`
 - `setPartnerTensorData()` (`setAITensorData()` remains an alias)
-- `start()` / `stop()`
+- `setSynaptiXCoupling()` / `benchmarkSynaptiX()`
+- `enableWasmMode()` / `disableWasmMode()` / `runWasmBenchmark()`
+- `selectPathway()` / `setPathwayBlocked()` / `pulsePathway()` / `getPathwayState()` / `getPathwayRenderState()`
+- `spawnImmuneParticles()` / `clearImmuneParticles()`
+- `calmState()` / `resetActivity()` / `updateAltitudeState()`
+- `start()` / `stop()` / `render()` / `initialize()`
+
+`scripts/check-renderer-facade.mjs` (`npm run check:facade`, part of `npm
+test`) enforces this list statically against both backends' source files —
+see [CLAUDE.md](../CLAUDE.md) §3b for why a JSDoc `@implements` on the
+classes themselves can't do this (the methods above are attached by mixins
+that TypeScript can't see across a module boundary).
 
 Both renderers also share:
 
@@ -67,6 +82,24 @@ Both renderers also share:
 - two independent 32x32x32 avatar/partner tensor buffers
 - camera orbit / zoom state
 - style selection and SynaptiX controls
+
+## Capability Matrix
+
+Backend-specific extensions — not part of the shared facade, called behind a
+capability check (`renderer.method?.(...)`, `renderer.backendType`). A new PR
+must add a row here (or extend an existing one) when it adds a feature to
+only one backend, and say why the other doesn't need it.
+
+| Feature | WebGPU (`BrainRenderer`) | WebGL2 (`BrainRendererWebGL`) | WASM engine |
+|---|---|---|---|
+| Tensor field evolution | Compute shader (`src/shaders/volumetric-compute.js`), authoritative | CPU reference stepper (`src/physics/tensor-field.js`) | Optional drop-in for either backend's stepper via `enableWasmMode()`; WebGPU only today — WebGL's `enableWasmMode()` warns and returns `false` |
+| 5 visualization styles (Organic/Cyber/Connectome/Heatmap/SynaptiX) | Full WGSL pipelines | Supported, simplified shading | — |
+| Post-processing (aberration, grain, DoF, fog) | Dedicated post pipeline | Not implemented | — |
+| Camera controls, TMS/lesion/stimulus injection, pathways, immune particles | Full | Full (same facade methods, see above) | — |
+| Device-loss recovery (`dispose()`, `reinitialize()`, `handleDeviceLost()`, `reconfigure()`) | Yes (GPU device loss is a real WebGPU event) | Not applicable — no equivalent context-loss model | — |
+| Debug visualization (`setDebugOptions()`/`getDebugOptions()`: wireframe, tensor-point visibility, layer isolation) | Not implemented | Yes | — |
+| WebXR (`beginXRFrame()`, `drawXRView()`) | Not implemented | Yes — `webxr-manager.js` requires the WebGL2 backend and throws if WebGPU is active | — |
+| SynaptiX performance stats (`getSynaptiXPerformanceStats()`) | Frame-time based | Work-unit based (different stat shape — see `synaptixPerformance` on each class) | — |
 
 ## Differences
 

@@ -1,3 +1,4 @@
+// @ts-check
 import { synaptixBridgeVertexShader, synaptixBridgeFragmentShader } from '../shaders/synaptix-bridge.js';
 
 const REGION_ANCHORS = {

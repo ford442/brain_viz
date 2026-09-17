@@ -1,3 +1,4 @@
+// @ts-check
 import { meshVertexSource, meshFragmentSource, pointVertexSource, pointFragmentSource } from './webgl-shaders.js';
 import { createDefaultParams, createProgram } from './webgl-gl-utils.js';
 import { applyPathwayMethods, createPathwayState } from './pathway-renderer.js';
@@ -10,6 +11,13 @@ import { applyDynamicBufferMethods } from './brain-renderer-webgl/dynamic-buffer
 import { applyDrawMethods } from './brain-renderer-webgl/draw.js';
 import { applyLifecycleMethods } from './brain-renderer-webgl/lifecycle.js';
 
+/**
+ * WebGL2 fallback/debug renderer. Implements the shared `BrainRendererFacade`
+ * documented in `src/renderer-contract.js` — see `BrainRenderer`'s class
+ * comment in `brain-renderer.js` for why this isn't declared with
+ * `@implements`, and `docs/webgl-fallback.md` for the capability matrix
+ * against the WebGPU backend.
+ */
 export class BrainRendererWebGL {
     constructor(canvas) {
         this.canvas = canvas;
@@ -147,7 +155,8 @@ export class BrainRendererWebGL {
         });
     }
 
-    setCameraParams({ rotation, zoom, fov }) {
+    /** @type {import('./renderer-contract.js').BrainRendererFacade['setCameraParams']} */
+    setCameraParams({ rotation, zoom, fov } = {}) {
         if (rotation) {
             if (rotation.x !== undefined) this.targetRotation.x = rotation.x;
             if (rotation.y !== undefined) this.targetRotation.y = rotation.y;
@@ -175,9 +184,18 @@ export class BrainRendererWebGL {
         this.meshProgram = createProgram(gl, meshVertexSource, meshFragmentSource);
         this.pointProgram = createProgram(gl, pointVertexSource, pointFragmentSource);
 
+        // buildAndUploadGeometry/buildTensorDebugGrid/buildImmuneResources/resize
+        // are attached to BrainRendererWebGL.prototype by the applyXMethods()
+        // mixins below (applyGeometryMethods, applyTensorSimMethods,
+        // applyImmuneMethods, applyDrawMethods) — not visible to TS across that
+        // module boundary, same as setupInputHandlers()/generate() elsewhere.
+        // @ts-expect-error
         this.buildAndUploadGeometry();
+        // @ts-expect-error
         this.buildTensorDebugGrid();
+        // @ts-expect-error
         this.buildImmuneResources();
+        // @ts-expect-error
         this.resize();
     }
 }

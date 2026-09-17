@@ -62,6 +62,7 @@ brain_viz/
 │   ├── brain-renderer.js       # Core WebGPU engine: device, pipelines, render loop
 │   ├── brain-renderer-webgl.js # WebGL2 fallback/debug renderer
 │   ├── brain-renderer-factory.js # Backend selection + fallback bootstrap
+│   ├── renderer-contract.js    # JSDoc-only BrainRendererFacade both backends implement (see CLAUDE.md, docs/webgl-fallback.md)
 │   ├── brain-geometry.js       # Procedural brain mesh + circuit grid + soma positions
 │   ├── shaders.js              # WGSL shader strings (vertex, fragment, compute, post-process)
 │   ├── math-utils.js           # Mat4 operations + easing/spline utilities
@@ -92,9 +93,11 @@ brain_viz/
 │   ├── fix_main.py         # One-off main.js repair script
 │   ├── test_compile.py     # Stub for build verification
 │   └── test_run.py         # Dev-server smoke test (see §4, §7)
-├── tests/                  # Ad hoc test stubs (no automated suite — see §7)
-│   ├── patch_render_test.js    # Render pipeline patch/test stub
-│   └── test_shader.js          # Shader-related test stub
+├── tests/                  # Headless Node assertions run by `npm test` (see §7)
+│   ├── test_uniform_layout.js  # Uniform-struct alignment/drift against src/shaders/uniform-layout.js
+│   ├── test_shader.js          # Shader/fiber-geometry contract checks
+│   ├── test_tensor_physics.js  # Neural-field fixture (see docs/tensor-physics.md, golden-scenario.js)
+│   └── patch_render_test.js    # Older render-pipeline patch/test stub, not run by `npm test`
 ├── routines/               # JSON/CSV routine data
 │   ├── deep_thought.json
 │   ├── altitude_simulation.json
@@ -326,9 +329,11 @@ Automated coverage is deliberately narrow and headless — no Jest/Vitest, no
 browser:
 
 ```bash
-npm test             # uniform layout, shaders, and the neural-field fixture
+npm test             # uniform layout, shaders, neural-field fixture, renderer facade check
 npm run test:golden  # the C++ engine against the same fixture (host C++ compiler)
 npm run test:all     # both
+npm run typecheck    # tsc --noEmit over the JSDoc-checked files (see §3 and CLAUDE.md)
+npm run check:facade # standalone: both backends implement src/renderer-contract.js
 ```
 
 Everything else is manual and visual:
@@ -380,12 +385,13 @@ python verification/verify_session.py           # NWS1 capture/replay/analysis/l
 `.github/workflows/ci.yml` runs on every push/PR to `main` and gates on:
 
 1. `npm ci`
-2. `npm test` — headless Node assertions: uniform layout, shaders, and the neural-field golden fixture
-3. `npm run test:golden` — compiles `wasm/brain_tensor_engine.cpp` with the runner's own C++17 compiler (no Emscripten) and checks it against the same fixture
-4. `npm run build` — frontend-only vite build; the `prebuild` WASM check is advisory and never fails
-5. `python3 scripts/test_run.py` — dev server smoke test
-6. `pip install playwright && playwright install chromium`
-7. `python3 verification/verify_suite.py` — the WebGL-fallback (`?renderer=webgl`) Playwright suite described above
+2. `npm test` — headless Node assertions: uniform layout, shaders, the neural-field golden fixture, and `scripts/check-renderer-facade.mjs` (both renderer backends implement `src/renderer-contract.js`)
+3. `npm run typecheck` — `tsc -p jsconfig.json --noEmit` over the files that opt into `// @ts-check`
+4. `npm run test:golden` — compiles `wasm/brain_tensor_engine.cpp` with the runner's own C++17 compiler (no Emscripten) and checks it against the same fixture
+5. `npm run build` — frontend-only vite build; the `prebuild` WASM check is advisory and never fails
+6. `python3 scripts/test_run.py` — dev server smoke test
+7. `pip install playwright && playwright install chromium`
+8. `python3 verification/verify_suite.py` — the WebGL-fallback (`?renderer=webgl`) Playwright suite described above
 
 `node_modules` and the Playwright browser cache are cached across runs. Verification screenshots are uploaded as a build artifact when the job fails. The WASM build (`npm run build:wasm`) stays a local/manual step and is **not** a CI gate unless an Emscripten toolchain is added to the workflow later.
 
@@ -462,5 +468,5 @@ Dependencies are refreshed automatically on startup by the update script (`npm i
 
 - **Use the WebGL renderer for all headless/automated/manual testing in this VM.** WebGPU is not available in the automation browser, so open `http://localhost:5173/?renderer=webgl`. The default `?renderer=webgpu` will show an error overlay or blank canvas here.
 - **The verification suite uses Python Playwright, not the npm `playwright` dependency.** It needs `pip install playwright` and `python3 -m playwright install chromium` (both handled by the update script). Run it with `python3 verification/verify_suite.py`. Each script spawns its *own* dev server on port `5181` (`--strictPort`), so it is independent of any `npm run dev` you have running on `5173`.
-- **`npm run build` is not runnable as-is** because it first runs `npm run build:wasm`, which `source`s Emscripten from `/root/emsdk/emsdk_env.sh` (not installed). The WASM engine is optional with a graceful runtime fallback — to build just the frontend bundle, run `npx vite build`. Only install/activate emsdk if you specifically need WASM hybrid mode.
+- **`npm run build` is runnable as-is** — it is `vite build` plus an advisory `prebuild` check (`scripts/check_wasm.sh`) that only warns, never fails, when no WASM build is present. It does **not** run `npm run build:wasm` or need Emscripten. Only `npm run build:full` (or `npm run build:wasm` directly) sources Emscripten from `/root/emsdk/emsdk_env.sh` (not installed here) — the WASM engine is optional with a graceful runtime fallback, so only install/activate emsdk if you specifically need WASM hybrid mode.
 - **`verification/` and `dist/` are gitignored**, so screenshots produced by the verify scripts and the Vite build output never dirty the working tree.

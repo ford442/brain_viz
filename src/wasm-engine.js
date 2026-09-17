@@ -1,3 +1,4 @@
+// @ts-check
 // src/wasm-engine.js
 // [Tensor Physics] JavaScript loader and bridge for the C++ BrainTensorEngine.
 //
@@ -53,7 +54,8 @@ function resolveModuleUrls() {
     try {
         // import.meta.env exists under Vite; guard so this module still loads
         // in plain Node (tests) and in non-Vite bundlers.
-        base = (import.meta.env && import.meta.env.BASE_URL) || '/';
+        const env = /** @type {any} */ (import.meta).env;
+        base = (env && env.BASE_URL) || '/';
     } catch {
         base = '/';
     }
@@ -67,6 +69,7 @@ function resolveModuleUrls() {
  * @returns {Promise<{factory: Function, url: string}>}
  */
 async function importModuleFactory(urls) {
+    /** @type {unknown} */
     let lastError = null;
     for (const url of urls) {
         try {
@@ -79,7 +82,7 @@ async function importModuleFactory(urls) {
     }
     throw new Error(
         `no loadable WASM glue at ${urls.join(' or ')} — did you run npm run build:wasm? ` +
-        `(${lastError?.message ?? 'unknown error'})`
+        `(${/** @type {Error} */ (lastError)?.message ?? 'unknown error'})`
     );
 }
 
@@ -151,7 +154,7 @@ export class WasmTensorEngine {
             console.log('[WasmTensorEngine] Initialised — voxelDim:', this.voxelDim, 'from', url);
             return true;
         } catch (err) {
-            console.warn('[WasmTensorEngine] Unavailable — falling back to WebGPU compute:', err.message);
+            console.warn('[WasmTensorEngine] Unavailable — falling back to WebGPU compute:', /** @type {Error} */ (err).message);
             this.available = false;
             return false;
         }
@@ -192,7 +195,7 @@ export class WasmTensorEngine {
      * @param {number} time
      * @param {Object<string, any>} params  the renderer's params object
      * @param {{pos: number[], active: number, radius: number, erase: boolean,
-     *          electricalActive: number, mercuryActive: number}} [stimulus]
+     *          electricalActive: number, mercuryActive: number} | null} [stimulus]
      */
     setParams(time, params, stimulus = null) {
         if (!this.available) return;
