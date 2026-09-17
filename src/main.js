@@ -126,6 +126,13 @@ async function init() {
             cogLegendPanelInflam.appendChild(newEntry);
         }
 
+        const cogLegendPanelBio = document.getElementById('legend-panel');
+        if (cogLegendPanelBio) {
+            const newEntry = document.createElement('div');
+            newEntry.innerHTML = '<b>B</b> : Trigger Biofeedback Adaptive Audio';
+            cogLegendPanelBio.appendChild(newEntry);
+        }
+
         window.addEventListener('keydown', (e) => {
             if (e.key === 'i' || e.key === 'I') {
                 if (player) {
@@ -135,6 +142,14 @@ async function init() {
                         { time: 5, type: 'glial_cleanup', duration: 3 },
                     ]);
                     player.play();
+                }
+            }
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'b' || e.key === 'B') {
+                if (player) {
+                    player.executeEvent({ type: 'biofeedback_audio', intensity: 1.5, duration: 3.0 });
                 }
             }
         });
