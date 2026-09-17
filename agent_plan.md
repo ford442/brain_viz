@@ -524,6 +524,7 @@
 - [x] **Biofeedback Adaptive Audio:** Modulate generative audio pitch/volume/tempo from heart-rate or other biofeedback metrics.
 
 *Idea:* "What if we map external real-time feeds (e.g. stock market data, social-media sentiment) to connectome signal pulses, as a novelty/art mode?"
+*Idea:* "What if we visualized cellular senescence as accumulating dark spots and rigid fiber pathways?"
 *Idea:* "What if we visualize microglia pruning synapses dynamically?"
 *Idea:* "What if we visualized glial cells repairing damaged neurons after a stroke simulation?"
 
