@@ -4,6 +4,7 @@
 // neuromodulator retention bias, style, flowSpeed) into an ambient,
 // continuously-generated soundscape. Requires no microphone permission.
 import { computeLobeStats } from './tensor-utils.js';
+import { inferVoxelDim, normalizeVoxelDim } from './voxel-dim.js';
 
 export const SONIFICATION_PRESETS = {
     meditation: {
@@ -257,7 +258,7 @@ export class SonificationEngine {
         this._pendingSnapshot = true;
         try {
             const snapshot = await renderer.getVoxelDataSnapshot();
-            if (snapshot) this.lobeStats = computeLobeStats(snapshot, renderer.voxelDim || 32);
+            if (snapshot) this.lobeStats = computeLobeStats(snapshot, normalizeVoxelDim(renderer.voxelDim, inferVoxelDim(snapshot)));
         } catch (e) {
             // GPU readback can fail transiently (e.g. context loss) — skip this poll.
         } finally {

@@ -6,6 +6,7 @@ import { applyMeshMethods } from './geometry/mesh.js';
 import { applyInstancesMethods } from './geometry/instances.js';
 import { applyFibersMethods } from './geometry/fibers.js';
 import { applyAccessorsMethods } from './geometry/accessors.js';
+import { normalizeVoxelDim } from './voxel-dim.js';
 
 export class BrainGeometry {
     constructor(options = {}) {
@@ -23,6 +24,11 @@ export class BrainGeometry {
         this.sparkSources = [];
         this.fiberCenterlines = [];
         this.seed = options.seed ?? 1337;
+        // [Field Resolution] The grid the per-voxel fiber affinity map is baked
+        // at. It has to match the field the renderer is stepping, or the
+        // anisotropic diffusion term reads tract directions from the wrong
+        // voxels. buildFiberAffinityMap() bakes at exactly this dim.
+        this.voxelDim = normalizeVoxelDim(options.voxelDim);
         this.randomState = this.seed >>> 0;
         this.options = {
             baseRadius: 1.5,

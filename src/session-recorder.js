@@ -2,6 +2,7 @@ import {
     NWS_MAGIC, SESSION_CHUNK_TYPES, encodeAudioPayload, encodeNotePayload,
     encodeTensorPayload, serializeSession,
 } from './session-format.js';
+import { normalizeVoxelDim } from './voxel-dim.js';
 
 const SAMPLE_INTERVAL_MS = 100;
 const MAX_DURATION_MS = 5 * 60 * 1000;
@@ -186,9 +187,19 @@ export class SessionRecorder {
         if (this.captureContext) this.captureVisual(relativeTimestamp);
     }
 
+    /**
+     * [Field Resolution] The resolution this recording is being captured at —
+     * read from the renderer so a `setVoxelDim()` mid-session is reflected in
+     * the manifest rather than silently mislabelling the chunks.
+     * @returns {number}
+     */
+    get voxelDim() {
+        return normalizeVoxelDim(this.renderer?.voxelDim);
+    }
+
     captureTensor(timestamp) {
         const task = Promise.resolve(this.renderer.getVoxelDataSnapshot()).then((tensor) =>
-            this.persist({ type: SESSION_CHUNK_TYPES.tensor, timestamp, payload: encodeTensorPayload(tensor) }, 'tensor')
+            this.persist({ type: SESSION_CHUNK_TYPES.tensor, timestamp, payload: encodeTensorPayload(tensor, this.voxelDim) }, 'tensor')
         ).catch((error) => {
             this.captureError = error;
             throw error;
@@ -275,7 +286,8 @@ export class SessionRecorder {
                 app: { name: 'Neuro-Weaver', version: '2.8' },
                 createdAt: new Date().toISOString(),
                 durationMs,
-                tensor: { shape: [32, 32, 32], dtype: 'float32-le' },
+                // [Field Resolution] The grid the tensor chunks were captured at.
+                tensor: { shape: [this.voxelDim, this.voxelDim, this.voxelDim], dtype: 'float32-le' },
                 streams: { tensorHz: 10, cameraHz: this.consent.camera ? 10 : 0, audioHz: this.consent.audio ? 10 : 0, visualMimeType: this.visualMimeType },
                 consent: this.consent,
                 droppedFrames: { visual: this.droppedFrames },

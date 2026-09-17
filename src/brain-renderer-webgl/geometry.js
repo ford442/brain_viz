@@ -13,7 +13,9 @@ export function applyGeometryMethods(Klass) {
                 corticalThickness: this.params.corticalThickness,
                 growth: this.params.growth,
                 fiberSymmetry: this.params.fiberSymmetry,
-                bundleCoherence: this.params.bundleCoherence
+                bundleCoherence: this.params.bundleCoherence,
+                // [Field Resolution] Bakes the fiber affinity map at the field's dim.
+                voxelDim: this.voxelDim
             });
             geometry.generate(this.geometryRows, this.geometryCols);
             return geometry;

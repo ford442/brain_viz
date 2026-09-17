@@ -92,6 +92,21 @@ The volumetric field exists as the WGSL compute shader, the CPU reference in `sr
 - A parameter the field reads must be in `COMPUTE_UNIFORM_LAYOUT`. The C ABI struct is generated from it by `scripts/gen_wasm_params.mjs`, and `npm test` fails if the checked-in header is stale.
 - After a deliberate physics change: `node scripts/gen_tensor_fixture.mjs`, then `npm run test:all`.
 
+#### 3c. **One Field Resolution, Nine Consumers**
+
+The grid size was the literal `32`, retyped independently in both renderer
+constructors, in WGSL as `const VOXEL_DIM: u32 = 32u`, in the C++ engine, in
+SynaptiX, in the BCI resampler, in the NWS1 manifest, in the coupling model's
+region indices, and in the sonification lobe stats — so it could never be
+changed. `src/voxel-dim.js` is now the single source of truth
+(`DEFAULT_VOXEL_DIM` is still 32), `renderer.setVoxelDim(dim)` is on the shared
+facade and implemented on both backends, and WGSL reads
+`uniforms.voxelDim` / `params.voxelDim` through `voxel_dim()`. Never write a
+bare `32` / `32 ** 3` for a grid size — use `voxelCountFor()`,
+`tensorByteLengthFor()`, `fiberAffinityByteLengthFor()` or `inferVoxelDim()`.
+`npm test` fails the build if a shader re-declares `VOXEL_DIM`. See
+`docs/field-resolution.md`.
+
 #### 4. **One Renderer Facade, Two Backends**
 
 `BrainRenderer` (WebGPU) and `BrainRendererWebGL` each assemble their methods from `applyXMethods(Target)` mixins spread across `src/brain-renderer/*.js` / `src/brain-renderer-webgl/*.js`, with no shared interface — a method can silently exist on one backend and not the other (`setCameraParams` once shipped as a no-op this way; a missing `triggerTMS` on WebGL threw mid-routine). `src/renderer-contract.js` is a JSDoc-only `BrainRendererFacade` typedef for the app-facing method surface both backends must implement; `scripts/check-renderer-facade.mjs` (`npm run check:facade`, part of `npm test`) greps for each facade method name across both backends' source files and fails if either is missing one. See `docs/webgl-fallback.md` for the human-readable capability matrix.

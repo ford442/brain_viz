@@ -15,7 +15,7 @@ Key capabilities:
 - **Routine engine**: Scripted, timed sequences of parameters, camera moves, audio, and stimuli (`RoutinePlayer`).
 - **BCI playback and live devices**: Stream pre-recorded/synthetic tensors or calibrated Muse/OpenBCI EEG through the human 32×32×32 field.
 - **WebXR immersive mode**: WebGL2-backed stereo VR walkthrough and tabletop AR with controller/hand tensor stimulation.
-- **Double Mirror sessions**: Local-only synchronized 32³ tensor, webcam-thumbnail, microphone-feature, and note capture with strict `.nwsession` replay/scrubbing, descriptive analysis, and CSV export.
+- **Double Mirror sessions**: Local-only synchronized tensor (at the session's recorded `voxelDim`, 32³ by default), webcam-thumbnail, microphone-feature, and note capture with strict `.nwsession` replay/scrubbing, descriptive analysis, and CSV export.
 - **AI "dreaming" mode**: ONNX Runtime integration that runs SqueezeNet inference to drive stimulus injection (`InferenceEngine`).
 - **Audio reactivity**: Web Audio API microphone input that modulates amplitude and flow speed (`AudioReactor`).
 - **Altitude/hypoxia simulation**: Physiological modeling of oxygen deprivation effects on neural signaling.
@@ -309,6 +309,31 @@ See [`docs/wasm-engine.md`](docs/wasm-engine.md) for the full specification.  Ke
   `npm run test:golden` proves it (host C++17 compiler only; no Emscripten).
 - Heap views are re-derived after every call: `ALLOW_MEMORY_GROWTH=1` detaches
   the old `HEAPF32.buffer` on growth, so a cached view silently becomes empty.
+
+### 5.6 One Field Resolution, Nine Consumers
+
+See [`docs/field-resolution.md`](docs/field-resolution.md) for the full picture.
+
+The grid size used to be the literal `32`, retyped independently in both
+renderer constructors, in WGSL (`const VOXEL_DIM: u32 = 32u`), in the C++
+engine, in SynaptiX, in the BCI resampler, in the NWS1 manifest, in the
+coupling model's region index lists, and in the sonification lobe stats. It was
+never a value, so it could never be changed — which blocked every "more detail"
+ambition (fractal soma zoom, gyrus-scale resonance, XR walkthrough) behind it.
+
+- `src/voxel-dim.js` is the single source of truth. `DEFAULT_VOXEL_DIM` is still
+  32, so nothing about the default behaviour moved.
+- **Never write a bare `32`, `32 ** 3` or `32*32*32` for a grid size.** Use
+  `voxelCountFor()`, `tensorByteLengthFor()`, `fiberAffinityByteLengthFor()`, or
+  `inferVoxelDim()` for a buffer you were handed.
+- `setVoxelDim(dim)` is on the shared facade and implemented on both backends.
+  It resamples the live field rather than resetting it, and rebuilds every
+  dim-sized buffer *and the bind groups that captured them*.
+- WGSL reads `uniforms.voxelDim` / `params.voxelDim` through `voxel_dim()`.
+  `npm test` fails if a shader re-declares a compile-time `VOXEL_DIM`, or calls
+  `voxel_dim()` without defining it from a binding it declares.
+- NWS1 sessions carry their dimension in `tensor.shape`; old 32³ files load
+  unchanged, and `SessionPlayer` resamples into the renderer's current grid.
 
 ---
 

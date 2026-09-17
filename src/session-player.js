@@ -1,4 +1,5 @@
 import { SESSION_CHUNK_TYPES, decodeAudioPayload, decodeNotePayload, decodeTensorPayload, parseSession } from './session-format.js';
+import { DEFAULT_VOXEL_DIM, normalizeVoxelDim, resampleField } from './voxel-dim.js';
 
 function latestIndexAtOrBefore(items, timestamp) {
     let low = 0, high = items.length - 1, result = -1;
@@ -39,6 +40,8 @@ export class SessionPlayer {
         this.synaptixEngine?.pauseFrames?.();
         if (this.bciSession?.adapter || this.bciSession?.source === 'bci') await this.bciSession.disconnect();
         this.manifest = parsed.manifest;
+        // [Field Resolution] Chunks decode at the grid the manifest declares.
+        this.voxelDim = parsed.voxelDim;
         this.chunks = parsed.chunks;
         this.streams = {
             tensor: parsed.chunks.filter((chunk) => chunk.type === SESSION_CHUNK_TYPES.tensor),
@@ -104,13 +107,29 @@ export class SessionPlayer {
         }
     }
 
+    /**
+     * [Field Resolution] Decodes tensor chunk `index` at the manifest's grid,
+     * resampling it if the renderer is running at a different resolution — a
+     * 32³ recording replayed into a 64³ field would otherwise be rejected by
+     * `setVoxelData()` as an eightfold size mismatch.
+     *
+     * @param {number} index
+     * @returns {Float32Array}
+     */
+    tensorAt(index) {
+        const sourceDim = this.voxelDim ?? DEFAULT_VOXEL_DIM;
+        const tensor = decodeTensorPayload(this.streams.tensor[index].payload, sourceDim);
+        const targetDim = normalizeVoxelDim(this.renderer?.voxelDim, sourceDim);
+        return resampleField(tensor, sourceDim, targetDim);
+    }
+
     resolve() {
         const tensorIndex = latestIndexAtOrBefore(this.streams.tensor, this.playheadMs);
         const visualIndex = latestIndexAtOrBefore(this.streams.visual, this.playheadMs);
         const audioIndex = latestIndexAtOrBefore(this.streams.audio, this.playheadMs);
         const noteIndex = latestIndexAtOrBefore(this.streams.note, this.playheadMs);
         if (tensorIndex >= 0 && tensorIndex !== this.lastResolved.tensorIndex) {
-            this.renderer.setVoxelData(decodeTensorPayload(this.streams.tensor[tensorIndex].payload));
+            this.renderer.setVoxelData(this.tensorAt(tensorIndex));
         }
         this.lastResolved = { tensorIndex, visualIndex, audioIndex, noteIndex };
         this.onFrame?.({

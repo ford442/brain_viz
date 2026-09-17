@@ -99,6 +99,7 @@ only one backend, and say why the other doesn't need it.
 | Device-loss recovery (`dispose()`, `reinitialize()`, `handleDeviceLost()`, `reconfigure()`) | Yes (GPU device loss is a real WebGPU event) | Not applicable — no equivalent context-loss model | — |
 | Debug visualization (`setDebugOptions()`/`getDebugOptions()`: wireframe, tensor-point visibility, layer isolation) | Not implemented | Yes | — |
 | WebXR (`beginXRFrame()`, `drawXRView()`) | Not implemented | Yes — `webxr-manager.js` requires the WebGL2 backend and throws if WebGPU is active | — |
+| Field resolution (`setVoxelDim()`, `docs/field-resolution.md`) | 32³/48³/64³. Device limits are provisioned for 64³ up front; the compute shader reads `params.voxelDim`, so the cost is GPU-side and scales with dim³ | Same API and same supported dims, but the field is stepped on the **CPU** every frame — 64³ is 8× the per-frame work of 32³. Treat above-32³ as a debug/verification capability, not a shipping mode | `bte_create(dim)` has always taken a dim; without `-msimd128` do not expect a frame budget above 32³ |
 | SynaptiX performance stats (`getSynaptiXPerformanceStats()`) | Frame-time based | Work-unit based (different stat shape — see `synaptixPerformance` on each class) | — |
 
 ## Differences

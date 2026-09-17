@@ -1,8 +1,9 @@
-import { CONSTANTS, HELPERS } from './render-shared.js';
+import { CONSTANTS, HELPERS, VOXEL_DIM_FROM_UNIFORMS } from './render-shared.js';
 import { UNIFORMS_STRUCT_WGSL } from './uniform-layout.js';
 
 export const fiberVertexShader = `
 ${CONSTANTS}
+${VOXEL_DIM_FROM_UNIFORMS}
 ${HELPERS}
 
 ${UNIFORMS_STRUCT_WGSL}
@@ -69,15 +70,15 @@ fn getPathwayEmission(pathwayMeta: vec4<f32>, position: vec3<f32>) -> f32 {
 fn getAIVoxelValue(worldPos: vec3<f32>) -> f32 {
     let normPos = (worldPos / BRAIN_RANGE) * 0.5 + 0.5;
     if (any(normPos < vec3<f32>(0.0)) || any(normPos > vec3<f32>(1.0))) { return 0.0; }
-    let x = u32(normPos.x * f32(VOXEL_DIM));
-    let y = u32(normPos.y * f32(VOXEL_DIM));
-    let z = u32(normPos.z * f32(VOXEL_DIM));
-    let index = min(z, VOXEL_DIM-1u) * VOXEL_DIM * VOXEL_DIM + min(y, VOXEL_DIM-1u) * VOXEL_DIM + min(x, VOXEL_DIM-1u);
+    let x = u32(normPos.x * f32(voxel_dim()));
+    let y = u32(normPos.y * f32(voxel_dim()));
+    let z = u32(normPos.z * f32(voxel_dim()));
+    let index = min(z, voxel_dim()-1u) * voxel_dim() * voxel_dim() + min(y, voxel_dim()-1u) * voxel_dim() + min(x, voxel_dim()-1u);
     return aiTensor[index];
 }
 
 fn sampleSmoothedAIVoxelValue(worldPos: vec3<f32>) -> f32 {
-    let step = (BRAIN_RANGE / f32(VOXEL_DIM)) * 0.45;
+    let step = (BRAIN_RANGE / f32(voxel_dim())) * 0.45;
     let center = getAIVoxelValue(worldPos);
     let neighbors =
         getAIVoxelValue(worldPos + vec3<f32>( step, 0.0, 0.0)) +
@@ -95,15 +96,15 @@ fn getFiberAffinity(index: u32, slot: u32) -> vec4<f32> {
 
 fn worldToIndex(worldPosition: vec3<f32>) -> u32 {
     let normalized = clamp((worldPosition / BRAIN_RANGE) * 0.5 + 0.5, vec3<f32>(0.0), vec3<f32>(0.99999));
-    let x = u32(normalized.x * f32(VOXEL_DIM));
-    let y = u32(normalized.y * f32(VOXEL_DIM));
-    let z = u32(normalized.z * f32(VOXEL_DIM));
-    return z * VOXEL_DIM * VOXEL_DIM + y * VOXEL_DIM + x;
+    let x = u32(normalized.x * f32(voxel_dim()));
+    let y = u32(normalized.y * f32(voxel_dim()));
+    let z = u32(normalized.z * f32(voxel_dim()));
+    return z * voxel_dim() * voxel_dim() + y * voxel_dim() + x;
 }
 
 fn sampleFiberCoupledSignal(worldPos: vec3<f32>, tangent: vec3<f32>, isAI: bool) -> vec3<f32> {
     let idx = worldToIndex(worldPos);
-    let step = (BRAIN_RANGE / f32(VOXEL_DIM)) * 0.95;
+    let step = (BRAIN_RANGE / f32(voxel_dim())) * 0.95;
     var directional = 0.0;
     var coverage = 0.0;
     var alignment = 0.0;
@@ -256,6 +257,7 @@ fn main(input: FiberVertexInput) -> FiberVertexOutput {
 
 export const fiberFragmentShader = `
 ${CONSTANTS}
+${VOXEL_DIM_FROM_UNIFORMS}
 ${HELPERS}
 
 ${UNIFORMS_STRUCT_WGSL}

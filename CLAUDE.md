@@ -158,6 +158,34 @@ class-level comments in `brain-renderer.js` / `brain-renderer-webgl.js`).
    do. This project has no `.ts` files and no TypeScript syntax — checking is
    JSDoc-only, same as `RendererParams` in `src/types.js`.
 
+### 3c. One Field Resolution, Nine Consumers
+**The Issue:** the grid size was the literal `32`, retyped independently in both
+renderer constructors, in WGSL as `const VOXEL_DIM: u32 = 32u`, in the C++
+engine, in SynaptiX, in the BCI resampler, in the NWS1 manifest, in the
+coupling model's region index lists, and in the sonification lobe stats. It
+could not be changed — only retyped everywhere and hoped for — which blocked
+every "more detail" ambition behind it.
+
+**How it is handled:** `src/voxel-dim.js` is the single source of truth
+(`DEFAULT_VOXEL_DIM` is still 32, so nothing about the default moved).
+`renderer.setVoxelDim(dim)` is on the shared facade and implemented on both
+backends; WGSL reads `uniforms.voxelDim` / `params.voxelDim` through
+`voxel_dim()`. `docs/field-resolution.md` has the full picture, including what
+is still 32³ and the unstarted clipmap/recursive-zoom phases.
+
+**Action:**
+1. **Never write a bare `32`, `32 ** 3`, or `32*32*32` for a grid size.** Use
+   `DEFAULT_VOXEL_DIM`, `voxelCountFor()`, `tensorByteLengthFor()`,
+   `fiberAffinityByteLengthFor()`, or `inferVoxelDim()` for a buffer you were
+   handed. `npm test` fails the build if a shader re-declares `VOXEL_DIM`.
+2. A new GPU resource whose size is a function of `voxelCount` must be created
+   in `createTensorStorageBuffers()` and rebuilt by `setVoxelDim()` — and any
+   bind group holding it recreated, or the pipelines read the freed buffer.
+3. A dimension arriving from outside the engine (file header, UI, API) goes
+   through `assertVoxelDim()` (hard boundary) or `normalizeVoxelDim()` (soft).
+4. `SUPPORTED_VOXEL_DIMS` entries must satisfy `dim³ % 64 === 0` (the compute
+   workgroup size) and fit the limits `deriveRequiredLimits()` asks for.
+
 ### 4. Minimal Automated Tests
 `npm test` runs headless Node assertions (`tests/test_uniform_layout.js`,
 `tests/test_shader.js`, `tests/test_tensor_physics.js`) — no WebGPU, no browser
@@ -174,7 +202,7 @@ Run `npm run dev` and test in Chrome 113+/Edge 113+ (requires WebGPU support).
 ### 5. SynaptiX Comparative Path
 SynaptiX is enabled by `style >= 4.0` and adds:
 
-- `aiTensorBuffer` as a second 32x32x32 storage buffer
+- `aiTensorBuffer` as a second `voxelDim`³ storage buffer (32³ by default — see §3c)
 - render uniforms `aiInfluence`, `resonanceThreshold`, and `aiLayer`
 - built-in phantom activations from `src/synaptix-engine.js`
 - default projector mapping:
@@ -205,6 +233,13 @@ Routine files can drive SynaptiX through the custom `synaptix` event type. First
 1. Add shader code to `shaders.js` (vertex, fragment, compute as needed)
 2. Add style constant and logic to `brain-renderer.js`
 3. Add UI control to `index.html` and wire in `main.js`
+
+### Changing the Field Resolution
+1. `renderer.setVoxelDim(48)` — or the "Field Resolution" selector in the
+   Activity tab. Both backends implement it; the live field is resampled, not reset.
+2. To add a new supported resolution, extend `SUPPORTED_VOXEL_DIMS` in
+   `src/voxel-dim.js` and check `deriveRequiredLimits()` still asks for enough.
+3. Run `npm test` (`tests/test_voxel_dim.js` exercises every listed dim).
 
 ### Adding a Uniform Parameter
 1. Add one entry to `RENDER_UNIFORM_LAYOUT` in `src/shaders/uniform-layout.js`
@@ -247,5 +282,6 @@ npm run dev
 - **docs/ARCHITECTURE.md** — Detailed module breakdown
 - **docs/SCIENTIFIC_ACCURACY_REPORT.md** — Physiological models verification
 - **docs/tensor-physics.md** — The neural-field specification (normative; read before changing any field code)
+- **docs/field-resolution.md** — How the field's grid resolution is carried and changed (`voxelDim`), and the unstarted clipmap/recursive-zoom phases
 - **docs/webgl-fallback.md** / **docs/wasm-engine.md** — WebGL2 fallback and WASM hybrid engine details
 - **.github/copilot-instructions.md** — Comprehensive guide for AI agents

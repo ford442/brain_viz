@@ -1,4 +1,5 @@
 import { handleCamera } from '../routine-camera.js';
+import { DEFAULT_VOXEL_DIM, normalizeVoxelDim, voxelCountFor } from '../voxel-dim.js';
 
 export function registerSynaptixHandlers(handlers, player) {
     handlers.set('synaptiXLoad', (evt) => {
@@ -43,12 +44,15 @@ export function registerSynaptixHandlers(handlers, player) {
         const intensity = evt.intensity || 1.0;
         // Write directly to AI tensor via a temporary Gaussian blob
         if (renderer.synaptixEngine) {
-            const blob = new Float32Array(32 * 32 * 32);
-            const dim = 32;
+            // [Field Resolution] Built at the renderer's live grid, not 32³.
+            const dim = normalizeVoxelDim(renderer.voxelDim);
+            const blob = new Float32Array(voxelCountFor(dim));
             const cx = Math.floor((coords[0] / 1.6 + 0.5) * dim);
             const cy = Math.floor((coords[1] / 1.6 + 0.5) * dim);
             const cz = Math.floor((coords[2] / 1.6 + 0.5) * dim);
-            const radius = evt.radius || 4;
+            // `radius` is authored in voxels at 32³, so scale it with the grid
+            // to keep the blob the same physical size at any resolution.
+            const radius = (evt.radius || 4) * (dim / DEFAULT_VOXEL_DIM);
             for (let z = 0; z < dim; z++) {
                 for (let y = 0; y < dim; y++) {
                     for (let x = 0; x < dim; x++) {

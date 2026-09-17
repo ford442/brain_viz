@@ -13,10 +13,38 @@
 // These are interpolated into the shader strings.
 export const CONSTANTS = `
     const BRAIN_RANGE: f32 = 1.6;
-    const VOXEL_DIM: u32 = 32u;
     // FLOW_SPEED moved to uniforms in V2.3
     const FLOW_SCALE: f32 = 0.001;
     const CLIP_PLANE_NORMAL: vec3<f32> = vec3<f32>(0.0, 0.0, -1.0);
+`;
+
+// --- FIELD RESOLUTION ---
+// [Field Resolution] `VOXEL_DIM` used to be `const VOXEL_DIM: u32 = 32u` in
+// CONSTANTS above, which is why the engine could never run at any other
+// resolution: the grid size was compiled into every pipeline.
+//
+// HELPERS below (and the shaders that interpolate it) now call `voxel_dim()`
+// instead. That function is *not* defined in HELPERS, because the two shader
+// families read the dimension from different bind groups — the render
+// pipelines from `uniforms`, the compute pipeline from `params`. Each shader
+// interpolates exactly one of the snippets below alongside HELPERS; a shader
+// that forgets fails to compile rather than silently indexing at 32.
+//
+// (WGSL allows out-of-order module-scope declarations, so these can be
+// interpolated before or after the binding they read.)
+
+/** `voxel_dim()` for render pipelines, reading the shared render uniform block. */
+export const VOXEL_DIM_FROM_UNIFORMS = `
+    fn voxel_dim() -> u32 {
+        return max(1u, u32(uniforms.voxelDim));
+    }
+`;
+
+/** `voxel_dim()` for the compute pipeline, reading `TensorParams`. */
+export const VOXEL_DIM_FROM_PARAMS = `
+    fn voxel_dim() -> u32 {
+        return max(1u, params.voxelDim);
+    }
 `;
 
 // --- HELPER FUNCTIONS ---
@@ -116,16 +144,16 @@ export const HELPERS = `
         let normPos = (worldPos / BRAIN_RANGE) * 0.5 + 0.5;
         if (any(normPos < vec3<f32>(0.0)) || any(normPos > vec3<f32>(1.0))) { return 0.0; }
 
-        let x = u32(normPos.x * f32(VOXEL_DIM));
-        let y = u32(normPos.y * f32(VOXEL_DIM));
-        let z = u32(normPos.z * f32(VOXEL_DIM));
+        let x = u32(normPos.x * f32(voxel_dim()));
+        let y = u32(normPos.y * f32(voxel_dim()));
+        let z = u32(normPos.z * f32(voxel_dim()));
 
-        let index = min(z, VOXEL_DIM-1u) * VOXEL_DIM * VOXEL_DIM + min(y, VOXEL_DIM-1u) * VOXEL_DIM + min(x, VOXEL_DIM-1u);
+        let index = min(z, voxel_dim()-1u) * voxel_dim() * voxel_dim() + min(y, voxel_dim()-1u) * voxel_dim() + min(x, voxel_dim()-1u);
         return activityTensor[index];
     }
 
     fn sampleSmoothedVoxelValue(worldPos: vec3<f32>) -> f32 {
-        let step = (BRAIN_RANGE / f32(VOXEL_DIM)) * 0.45;
+        let step = (BRAIN_RANGE / f32(voxel_dim())) * 0.45;
         let center = getVoxelValue(worldPos);
         let neighbors =
             getVoxelValue(worldPos + vec3<f32>( step, 0.0, 0.0)) +

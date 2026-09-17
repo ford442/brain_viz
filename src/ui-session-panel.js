@@ -157,7 +157,8 @@ export function setupSessionPanel(renderer, tensorPlayer, bciSession, routinePla
         if (!file) return;
         try {
             const parsed = await player.load(file);
-            analysis = analyzeSession(parsed.chunks);
+            // [Field Resolution] Analyse at the grid the session was recorded at.
+            analysis = analyzeSession(parsed.chunks, undefined, parsed.voxelDim);
             drawHeatmap(byId('session-heatmap'), analysis);
             byId('session-analysis-summary').textContent = `${analysis.sampleCount} aligned samples · Pearson r (RMS) ${analysis.pearsonRms.toFixed(3)} · r (energy) ${analysis.pearsonEnergy.toFixed(3)}`;
             byId('btn-session-csv').disabled = analysis.sampleCount === 0;
@@ -199,7 +200,7 @@ export function setupSessionPanel(renderer, tensorPlayer, bciSession, routinePla
         updateRecording: (timestamp) => recorder.update(timestamp),
         getState: () => ({ recorderState: recorder.state, playerActive: player.active, isPlaying: player.isPlaying,
             playheadMs: player.playheadMs, durationMs: player.durationMs, counts: { ...recorder.counts }, liveObjectUrls: liveUrls.size }),
-        analyze: (chunks) => analyzeSession(chunks),
+        analyze: (chunks, voxelDim) => analyzeSession(chunks, undefined, voxelDim),
     };
     window.__sessionDebug = controller;
     return controller;

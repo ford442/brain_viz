@@ -1,5 +1,6 @@
-const VOXEL_DIM = 32;
-const VOXEL_COUNT = VOXEL_DIM ** 3;
+// [Field Resolution] Region membership is a function of the grid, so the index
+// lists are built per dimension and memoised rather than baked once at 32³.
+import { DEFAULT_VOXEL_DIM, inferVoxelDim, voxelCountFor } from './voxel-dim.js';
 
 export const SYNAPTIX_REGIONS = ['frontal', 'occipital', 'parietal', 'temporal', 'deep'];
 
@@ -7,7 +8,7 @@ function clamp01(value) {
     return Math.max(0, Math.min(1, value));
 }
 
-function buildRegionIndices() {
+function buildRegionIndices(VOXEL_DIM) {
     const regions = Object.fromEntries(SYNAPTIX_REGIONS.map((name) => [name, []]));
     for (let z = 0; z < VOXEL_DIM; z++) {
         const wz = (z / (VOXEL_DIM - 1)) * 2 - 1;
@@ -27,15 +28,34 @@ function buildRegionIndices() {
     return regions;
 }
 
-const REGION_INDICES = buildRegionIndices();
+/** @type {Map<number, Record<string, number[]>>} */
+const REGION_INDEX_CACHE = new Map();
 
-export function getAnatomicalRegionMeans(tensor) {
-    if (!tensor || tensor.length !== VOXEL_COUNT) {
+/**
+ * Region -> voxel index lists for a given grid, built once per dimension.
+ * @param {number} voxelDim
+ */
+function regionIndicesFor(voxelDim) {
+    let cached = REGION_INDEX_CACHE.get(voxelDim);
+    if (!cached) {
+        cached = buildRegionIndices(voxelDim);
+        REGION_INDEX_CACHE.set(voxelDim, cached);
+    }
+    return cached;
+}
+
+/**
+ * @param {Float32Array} tensor
+ * @param {number} [voxelDim] - Defaults to the grid implied by `tensor.length`.
+ */
+export function getAnatomicalRegionMeans(tensor, voxelDim = inferVoxelDim(tensor)) {
+    if (!tensor || tensor.length !== voxelCountFor(voxelDim)) {
         return Object.fromEntries(SYNAPTIX_REGIONS.map((name) => [name, 0]));
     }
+    const regionIndices = regionIndicesFor(voxelDim);
     const means = {};
     for (const name of SYNAPTIX_REGIONS) {
-        const indices = REGION_INDICES[name];
+        const indices = regionIndices[name];
         let sum = 0;
         for (let i = 0; i < indices.length; i++) sum += tensor[indices[i]];
         means[name] = indices.length ? sum / indices.length : 0;
@@ -108,13 +128,17 @@ export class SynaptiXCouplingModel {
     }
 
     update(timestamp, avatarA, partner) {
-        if (!avatarA || !partner || avatarA.length !== VOXEL_COUNT || partner.length !== VOXEL_COUNT) {
+        // [Field Resolution] Both fields must be the same supported grid; the
+        // dimension comes from their length rather than a hardcoded 32³.
+        const voxelDim = inferVoxelDim(avatarA, 0);
+        if (!avatarA || !partner || !voxelDim
+            || avatarA.length !== voxelCountFor(voxelDim) || partner.length !== voxelCountFor(voxelDim)) {
             return this.stats;
         }
         if (timestamp - this.lastSampleTime < 1000 / this.sampleRate) return this.stats;
         this.lastSampleTime = timestamp;
-        const avatarAMeans = getAnatomicalRegionMeans(avatarA);
-        const partnerMeans = getAnatomicalRegionMeans(partner);
+        const avatarAMeans = getAnatomicalRegionMeans(avatarA, voxelDim);
+        const partnerMeans = getAnatomicalRegionMeans(partner, voxelDim);
         this.samples.push({ timestamp, avatarA: avatarAMeans, partner: partnerMeans });
         this.trim(timestamp);
 

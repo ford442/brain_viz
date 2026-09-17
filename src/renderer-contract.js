@@ -28,7 +28,7 @@
  * @property {HTMLCanvasElement} canvas
  * @property {boolean} isRunning
  * @property {import('./types.js').RendererParams} params
- * @property {number} voxelDim
+ * @property {number} voxelDim - [Field Resolution] Current grid resolution; runtime, not a constant. Change it with `setVoxelDim()`.
  * @property {number} voxelCount
  * @property {boolean} wasmMode
  * @property {number} zoom
@@ -56,10 +56,12 @@
  * @property {() => void} resetActivity - Zero the cached human/AI tensor snapshots.
  * @property {() => void} updateAltitudeState - Advance the altitude/hypoxia physiology model by one frame from `params.altitude`.
  *
- * @property {(float32Array: Float32Array) => void} setVoxelData - Upload a full 32x32x32 human tensor frame (BCI/session playback/TensorPlayer).
+ * @property {(float32Array: Float32Array) => void} setVoxelData - Upload a full `voxelDim`³ human tensor frame (BCI/session playback/TensorPlayer). The array length must equal `voxelCount`.
  * @property {() => Promise<Float32Array>} getVoxelDataSnapshot - Read back the current human tensor. Always returns a Promise: WebGPU awaits a GPU buffer copy; WebGL resolves immediately from its cached tensor.
- * @property {(float32Array: Float32Array) => boolean} setPartnerTensorData - Upload a full 32x32x32 SynaptiX partner/AI tensor frame.
+ * @property {(float32Array: Float32Array) => boolean} setPartnerTensorData - Upload a full `voxelDim`³ SynaptiX partner/AI tensor frame.
  * @property {(float32Array: Float32Array) => boolean} setAITensorData - Deprecated alias of `setPartnerTensorData()`.
+ * @property {(dim: number) => boolean} setVoxelDim - [Field Resolution] Change the neural field's grid resolution at runtime to a member of `SUPPORTED_VOXEL_DIMS` (src/voxel-dim.js). Rebuilds every dim-sized buffer, bind group and the geometry's fiber-affinity map, trilinearly resampling the live field so the simulation continues rather than resetting. Returns false if already at `dim`; throws on an unsupported dimension, or (WebGPU) on a device whose limits cannot hold the larger field. Both backends implement it — the WebGL2 fallback steps the field on the CPU, so the cost scales with dim³ there (see docs/webgl-fallback.md).
+ * @property {() => number} getVoxelDim - [Field Resolution] The field's current grid resolution. Equivalent to reading `voxelDim`.
  * @property {(state: Object) => void} setSynaptiXCoupling - Record the latest human/AI regional coupling snapshot for resonance-driven visuals.
  * @property {(opts?: {warmupFrames?: number, sampleFrames?: number}) => Promise<{singleMedianMs: number, dualMedianMs: number, frameTimeRatio: number}>} benchmarkSynaptiX - Measure single- vs dual-avatar frame cost.
  *

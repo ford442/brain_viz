@@ -12,7 +12,9 @@ export function applyGeometryMethods(Target) {
     growth: this.params.growth,
     networkTopology: this.params.networkTopology,
     fiberSymmetry: this.params.fiberSymmetry,
-    bundleCoherence: this.params.bundleCoherence
+    bundleCoherence: this.params.bundleCoherence,
+    // [Field Resolution] Bakes the fiber affinity map at the field's dim.
+    voxelDim: this.voxelDim
         });
         // @ts-expect-error generate() is attached to BrainGeometry.prototype by
         // applyMeshMethods() in brain-geometry.js — not visible to TS across

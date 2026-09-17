@@ -165,6 +165,32 @@ export function setupSynaptiXIntegration(renderer, player, controls, inputs, lab
         });
     }
 
+    // [Field Resolution] Runtime neural-field resolution selector. The renderer
+    // resamples the live field across the change, so this is a quality knob
+    // mid-session rather than a restart.
+    const voxelDimSelect = document.getElementById('select-voxel-dim');
+    const voxelDimStatus = document.getElementById('voxel-dim-status');
+    if (voxelDimSelect) {
+        voxelDimSelect.value = String(renderer.voxelDim);
+        voxelDimSelect.addEventListener('change', () => {
+            const dim = Number(voxelDimSelect.value);
+            const previous = renderer.voxelDim;
+            try {
+                renderer.setVoxelDim(dim);
+                if (voxelDimStatus) {
+                    voxelDimStatus.textContent = rendererInfo.usingWebGL
+                        ? `Field at ${dim}³. The WebGL2 fallback steps the field on the CPU — expect a frame-rate cost above 32³.`
+                        : `Field at ${dim}³ (${renderer.voxelCount.toLocaleString()} voxels).`;
+                }
+            } catch (err) {
+                // An unsupported dim, or a device whose limits cannot hold it.
+                voxelDimSelect.value = String(previous);
+                if (voxelDimStatus) voxelDimStatus.textContent = err.message;
+                console.warn('[Field Resolution] setVoxelDim failed:', err);
+            }
+        });
+    }
+
     if (wasmBenchmarkBtn) {
         wasmBenchmarkBtn.addEventListener('click', () => {
             const result = renderer.runWasmBenchmark(100);

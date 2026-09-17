@@ -1,6 +1,8 @@
+import { DEFAULT_VOXEL_DIM, fiberAffinityByteLengthFor } from '../voxel-dim.js';
 export function applyAccessorsMethods(Target) {
     Target.prototype.getFiberAffinityData = function() {
-        return this.fiberAffinityData || new Float32Array(32*32*32*12);
+        return this.fiberAffinityData
+            || new Float32Array(fiberAffinityByteLengthFor(this.voxelDim ?? DEFAULT_VOXEL_DIM) / 4);
     };
 
     Target.prototype.getVertexData = function() {

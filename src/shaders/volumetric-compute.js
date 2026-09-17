@@ -1,12 +1,13 @@
 // src/shaders/volumetric-compute.js
 // [Neuro-Weaver] Compute shader updating the volumetric tensor buffer (signal propagation/diffusion).
 // Split out of the former monolithic shaders.js.
-import { CONSTANTS, HELPERS } from './render-shared.js';
+import { CONSTANTS, HELPERS, VOXEL_DIM_FROM_PARAMS } from './render-shared.js';
 import { TENSOR_PARAMS_STRUCT_WGSL } from './uniform-layout.js';
 
 export const computeShader = `
 // V3.2 Compute Logic: Multi-direction fiber-coupled diffusion
 ${CONSTANTS}
+${VOXEL_DIM_FROM_PARAMS}
 ${HELPERS}
 
 ${TENSOR_PARAMS_STRUCT_WGSL}
