@@ -36,8 +36,9 @@ export function applyPipelineMethods(Target) {
         });
         this.updatePathwayStateBuffer();
 
-        // Render uniforms: RENDER_UNIFORM_FLOAT_COUNT (100) floats = 400 bytes,
-        // padded up to the 256-byte uniform binding alignment by constants.js.
+        // Render uniforms. The size comes from the generated layout in
+        // src/shaders/uniform-layout.js via constants.js (struct size rounded
+        // up to the 256-byte uniform binding alignment) — never hardcode it.
         this.uniformBuffer = this.device.createBuffer({
     size: RENDER_UNIFORM_BUFFER_SIZE,
     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST

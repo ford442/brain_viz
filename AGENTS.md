@@ -224,17 +224,36 @@ When `tensorPlaybackMode` is `true` (driven by `TensorPlayer`), the compute pass
 
 ### 5.3 Buffer Alignment & Padding
 
-WGSL structs require strict memory alignment. The `Uniforms` struct in `shaders.js` has explicit scalar/padding layout, and the JavaScript side writes a `Float32Array` with hardcoded offsets.
+WGSL structs require strict memory alignment, so neither the struct nor the
+JavaScript offsets are hand-written any more. `src/shaders/uniform-layout.js`
+is the **single source of truth**: it declares the field list once and
+*generates* everything downstream.
 
-- **Render uniform buffer**: `RENDER_UNIFORM_FLOAT_COUNT = 100` floats written per frame (400 bytes). `RENDER_UNIFORM_BUFFER_SIZE` in `src/brain-renderer/constants.js` rounds that up to the 256-byte uniform binding alignment, i.e. 512 bytes allocated.
-- **Compute uniform buffer**: 80 bytes fixed size (`COMPUTE_UNIFORM_BUFFER_SIZE = 80`). The active data spans offsets 0–71 (time, voxelDim, frequency, amplitude, spikeThreshold, smoothing, style, padding, stimulusPos, stimulusActive, hypoxiaStress, metabolicRate, mitochondrialFunction, fluidActive, electricalActive, mercuryActive), with trailing padding to reach 80 bytes.
+| Generated export | What consumes it |
+| --- | --- |
+| `UNIFORMS_STRUCT_WGSL` | Interpolated by every render shader in `src/shaders/*.js` in place of a handwritten `struct Uniforms { … }` |
+| `TENSOR_PARAMS_STRUCT_WGSL` | Interpolated by `volumetric-compute.js` in place of `struct TensorParams { … }` |
+| `RENDER_UNIFORM_OFFSETS` / `COMPUTE_UNIFORM_OFFSETS` | The `Float32Array`/`DataView` offsets in `src/brain-renderer/uniforms.js` |
+| `RENDER_UNIFORM_FLOAT_COUNT`, `RENDER_UNIFORM_BYTE_SIZE`, `COMPUTE_UNIFORM_BYTE_SIZE` | The GPU buffer sizes in `src/brain-renderer/constants.js` |
 
-**When adding new uniforms, you MUST manually calculate and respect WGSL alignment rules in both the shader struct and the JavaScript `Float32Array`/`DataView` writing to it.** Failure results in silent data corruption or validation errors.
+Padding is *computed* from WGSL uniform-address-space AlignOf/SizeOf rules —
+do not add `padN` fields to force alignment, and do not write down a byte
+count anywhere else. The current render struct happens to be 100 floats
+(400 bytes, allocated as 512 after the 256-byte binding alignment) and
+`TensorParams` 176 bytes, but treat those as outputs of the layout, not as
+constants to maintain: they change the moment a field is added.
+
+**To add a uniform: add one entry to `RENDER_UNIFORM_LAYOUT` (or
+`COMPUTE_UNIFORM_LAYOUT`) and nothing else.** The WGSL struct, the JS write
+offset, and the buffer size all follow. `tests/test_uniform_layout.js` (run by
+`npm test` in CI, no WebGPU or browser needed) fails the build if a shader
+re-introduces a handwritten struct, if a struct's field order drifts, or if
+any offset violates WGSL alignment.
 
 ### 5.3a SynaptiX Uniform / Buffer Notes
 
 - SynaptiX uses a second 32×32×32 storage buffer, `aiTensorBuffer`, alongside the human `tensorBuffer`.
-- The render uniform path includes `aiInfluence`, `resonanceThreshold`, and `aiLayer`; these are mirrored from `brain-renderer.js` into the WGSL structs in `shaders.js`.
+- The render uniform path includes `aiInfluence`, `resonanceThreshold`, and `aiLayer`; they are declared once in `RENDER_UNIFORM_LAYOUT` (`src/shaders/uniform-layout.js`) and reach every WGSL struct through the generated `UNIFORMS_STRUCT_WGSL`.
 - SynaptiX rendering is enabled when `style >= 4.0`.
 - Non-32³ tensors are projected in `synaptix-engine.js` using the default mapping:
   - early activations → occipital

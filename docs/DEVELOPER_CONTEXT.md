@@ -63,8 +63,9 @@
 
 ### C. Buffer Alignment & Padding
 *   **The Issue:** WGSL Structs require specific memory alignment (16-byte alignment for `vec4`/`mat4`, etc.).
-*   **Why:** `Uniforms` structs in `shaders.js` have explicit padding (`padding1`, `padding2`).
-*   **Agent Note:** When adding new uniforms, you **must** manually calculate and respect WGSL alignment rules in both the shader struct and the JavaScript `Float32Array` writing to it. Failure to do so results in silent data corruption or validation errors.
+*   **Why:** An `f32` followed by a `vec4` gets invisible padding, so a hand-maintained struct and a hand-maintained `Float32Array` offset map drift apart without any error — the GPU just reads the wrong field.
+*   **Mechanism:** `src/shaders/uniform-layout.js` declares the field list once and *generates* the WGSL structs every shader interpolates (`UNIFORMS_STRUCT_WGSL`, `TENSOR_PARAMS_STRUCT_WGSL`), the JS offsets (`RENDER_UNIFORM_OFFSETS`, `COMPUTE_UNIFORM_OFFSETS`), and the buffer sizes in `src/brain-renderer/constants.js`.
+*   **Agent Note:** Add a uniform by adding one entry to `RENDER_UNIFORM_LAYOUT` / `COMPUTE_UNIFORM_LAYOUT` — nothing else. Never hand-write a `struct Uniforms`, an `OFFSET_*` constant, a `padN` field, or a buffer byte count. `npm test` (`tests/test_uniform_layout.js`, headless Node) fails the build on drift, a re-introduced handwritten struct, or a misaligned offset.
 
 ## 4. Inherent Limitations & "Here be Dragons"
 

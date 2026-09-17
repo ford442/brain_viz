@@ -1,65 +1,11 @@
-import { CONSTANTS, HELPERS } from './shared.js';
+import { CONSTANTS, HELPERS } from './render-shared.js';
+import { UNIFORMS_STRUCT_WGSL } from './uniform-layout.js';
 
 export const fiberVertexShader = `
 ${CONSTANTS}
 ${HELPERS}
 
-struct Uniforms {
-    mvpMatrix: mat4x4<f32>,
-    modelMatrix: mat4x4<f32>,
-    time: f32,
-    style: f32,
-    flowSpeed: f32,
-    colorShift: f32,
-    dopamineTrails: f32,
-    slicePlane: vec4<f32>,
-    sparkle: f32,
-    growth: f32,
-    aberration: f32,
-    grain: f32,
-    focus: f32,
-    aperture: f32,
-    lightDir: vec3<f32>,
-    ambientLight: f32,
-    dirIntensity: f32,
-    stress: f32,
-    cortisol: f32,
-    altitude: f32,
-    oxygenLevel: f32,
-    hypoxiaStress: f32,
-    metabolicRate: f32,
-    mitochondrialFunction: f32,
-    fogDensity: f32,
-    zoom: f32,
-    heavyMetal: f32,
-    fluidActive: f32,
-    aiInfluence: f32,
-    resonanceThreshold: f32,
-    synaptiXActive: f32,
-    aiLayer: f32,
-    pointCloudDensity: f32,
-    fiberCoupling: f32,
-    connectomeVariant: f32,
-    tmsActive: f32,
-    tmsCenter: vec3<f32>,
-    tmsPulse: f32,
-    tmsRadius: f32,
-    edgeDetection: f32,
-    pulseSaturation: f32,
-    trailLength: f32,
-    lesionCenter: vec3<f32>,
-    lesionActive: f32,
-    lesionRadius: f32,
-    decimation: f32,
-    psychedelic: f32,
-    immuneActivity: f32,
-    plasticityDecay: f32,
-    visualFatigue: f32,
-    sensoryDeprivation: f32,
-    spatialMemory: f32,
-    apoptosis: f32,
-    particleSpeed: f32,
-}
+${UNIFORMS_STRUCT_WGSL}
 
 struct FiberVertexInput {
     @location(0) position: vec3<f32>,
@@ -184,7 +130,7 @@ fn sampleFiberCoupledSignal(worldPos: vec3<f32>, tangent: vec3<f32>, isAI: bool)
 
 fn calculateSignalFlow(startPos: vec3<f32>, endPos: vec3<f32>, time: f32, speed: f32, segmentPhase: f32, flowBias: f32, myelin: f32, radius: f32, bundleId: f32) -> f32 {
     let midpoint = mix(startPos, endPos, 0.5);
-    let region = getRegionPhysics(midpoint, uniforms.style, vec4<f32>(0.96, 0.1, 0.0, 0.0), vec4<f32>(1.0, 1.0, 1.0, 1.0));
+    let region = getRegionPhysics(midpoint, uniforms.style);
     let diffusionNorm = clamp(region.y / 0.15, 0.0, 1.0);
     var travel = fract(time * speed + segmentPhase + bundleId * 0.031);
     if (flowBias < -0.1) {
@@ -256,7 +202,7 @@ fn main(input: FiberVertexInput) -> FiberVertexOutput {
     let tractCoverage = coupledSignal.y;
     let tractAlignment = coupledSignal.z;
     let midpoint = mix(input.fiberStart, input.fiberEnd, 0.5);
-    let flowBias = getRegionPhysics(midpoint, uniforms.style, vec4<f32>(0.96, 0.1, 0.0, 0.0), vec4<f32>(1.0, 1.0, 1.0, 1.0)).z;
+    let flowBias = getRegionPhysics(midpoint, uniforms.style).z;
     let conductionBoost = 1.0 + uniforms.fiberCoupling * (0.25 + tractCoverage * 0.45 + tractAlignment * 0.35);
     let conductionSpeed = uniforms.flowSpeed * select(1.0, 2.35, isAI) * (0.45 + effectiveMyelin * 1.65 + radius * 18.0) * conductionBoost;
     let signalStrength = calculateSignalFlow(input.fiberStart, input.fiberEnd, uniforms.time, conductionSpeed, segmentPhase, flowBias, effectiveMyelin, radius, bundleId);
@@ -312,62 +258,7 @@ export const fiberFragmentShader = `
 ${CONSTANTS}
 ${HELPERS}
 
-struct Uniforms {
-    mvpMatrix: mat4x4<f32>,
-    modelMatrix: mat4x4<f32>,
-    time: f32,
-    style: f32,
-    flowSpeed: f32,
-    colorShift: f32,
-    dopamineTrails: f32,
-    slicePlane: vec4<f32>,
-    sparkle: f32,
-    growth: f32,
-    aberration: f32,
-    grain: f32,
-    focus: f32,
-    aperture: f32,
-    lightDir: vec3<f32>,
-    ambientLight: f32,
-    dirIntensity: f32,
-    stress: f32,
-    cortisol: f32,
-    altitude: f32,
-    oxygenLevel: f32,
-    hypoxiaStress: f32,
-    metabolicRate: f32,
-    mitochondrialFunction: f32,
-    fogDensity: f32,
-    zoom: f32,
-    heavyMetal: f32,
-    fluidActive: f32,
-    aiInfluence: f32,
-    resonanceThreshold: f32,
-    synaptiXActive: f32,
-    aiLayer: f32,
-    pointCloudDensity: f32,
-    fiberCoupling: f32,
-    connectomeVariant: f32,
-    tmsActive: f32,
-    tmsCenter: vec3<f32>,
-    tmsPulse: f32,
-    tmsRadius: f32,
-    edgeDetection: f32,
-    pulseSaturation: f32,
-    trailLength: f32,
-    lesionCenter: vec3<f32>,
-    lesionActive: f32,
-    lesionRadius: f32,
-    decimation: f32,
-    psychedelic: f32,
-    immuneActivity: f32,
-    plasticityDecay: f32,
-    visualFatigue: f32,
-    sensoryDeprivation: f32,
-    spatialMemory: f32,
-    apoptosis: f32,
-    particleSpeed: f32,
-}
+${UNIFORMS_STRUCT_WGSL}
 
 struct FiberFragmentInput {
     @location(0) worldPos: vec3<f32>,

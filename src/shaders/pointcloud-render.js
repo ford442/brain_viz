@@ -2,61 +2,12 @@
 // [Neuro-Weaver] Dense point-cloud (billboard bouton/varicosity) shaders.
 // Split out of the former monolithic shaders.js.
 import { CONSTANTS } from './render-shared.js';
+import { UNIFORMS_STRUCT_WGSL } from './uniform-layout.js';
 
 export const pointCloudVertexShader = `
 ${CONSTANTS}
 
-struct Uniforms {
-    mvpMatrix: mat4x4<f32>,
-    modelMatrix: mat4x4<f32>,
-    time: f32,
-    style: f32,
-    flowSpeed: f32,
-    colorShift: f32,
-    dopamineTrails: f32,
-    slicePlane: vec4<f32>,
-    sparkle: f32,
-    growth: f32,
-    aberration: f32,
-    grain: f32,
-    lightDir: vec3<f32>,
-    ambientLight: f32,
-    dirIntensity: f32,
-    stress: f32,
-    cortisol: f32,
-    focus: f32,
-    aperture: f32,
-    fogDensity: f32,
-    zoom: f32,
-    heavyMetal: f32,
-    fluidActive: f32,
-    aiInfluence: f32,
-    resonanceThreshold: f32,
-    synaptiXActive: f32,
-    aiLayer: f32,
-    pointCloudDensity: f32,
-    fiberCoupling: f32,
-    connectomeVariant: f32,
-    tmsActive: f32,
-    tmsCenter: vec3<f32>,
-    tmsPulse: f32,
-    tmsRadius: f32,
-    edgeDetection: f32,
-    pulseSaturation: f32,
-    trailLength: f32,
-    lesionCenter: vec3<f32>,
-    lesionActive: f32,
-    lesionRadius: f32,
-    decimation: f32,
-    psychedelic: f32,
-    immuneActivity: f32,
-    plasticityDecay: f32,
-    visualFatigue: f32,
-    sensoryDeprivation: f32,
-    spatialMemory: f32,
-    apoptosis: f32,
-    particleSpeed: f32,
-}
+${UNIFORMS_STRUCT_WGSL}
 
 struct VertexInput {
     @location(0) corner: vec2<f32>,
@@ -226,57 +177,7 @@ fn main(input: VertexInput) -> VertexOutput {
 `;
 
 export const pointCloudFragmentShader = `
-struct Uniforms {
-    mvpMatrix: mat4x4<f32>,
-    modelMatrix: mat4x4<f32>,
-    time: f32,
-    style: f32,
-    flowSpeed: f32,
-    colorShift: f32,
-    dopamineTrails: f32,
-    slicePlane: vec4<f32>,
-    sparkle: f32,
-    growth: f32,
-    aberration: f32,
-    grain: f32,
-    lightDir: vec3<f32>,
-    ambientLight: f32,
-    dirIntensity: f32,
-    stress: f32,
-    cortisol: f32,
-    focus: f32,
-    aperture: f32,
-    fogDensity: f32,
-    zoom: f32,
-    heavyMetal: f32,
-    fluidActive: f32,
-    aiInfluence: f32,
-    resonanceThreshold: f32,
-    synaptiXActive: f32,
-    aiLayer: f32,
-    pointCloudDensity: f32,
-    fiberCoupling: f32,
-    connectomeVariant: f32,
-    tmsActive: f32,
-    tmsCenter: vec3<f32>,
-    tmsPulse: f32,
-    tmsRadius: f32,
-    edgeDetection: f32,
-    pulseSaturation: f32,
-    trailLength: f32,
-    lesionCenter: vec3<f32>,
-    lesionActive: f32,
-    lesionRadius: f32,
-    decimation: f32,
-    psychedelic: f32,
-    immuneActivity: f32,
-    plasticityDecay: f32,
-    visualFatigue: f32,
-    sensoryDeprivation: f32,
-    spatialMemory: f32,
-    apoptosis: f32,
-    particleSpeed: f32,
-}
+${UNIFORMS_STRUCT_WGSL}
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
 struct FragmentInput {

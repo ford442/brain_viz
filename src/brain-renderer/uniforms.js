@@ -1,20 +1,10 @@
 // @ts-check
 import { Mat4 } from '../math-utils.js';
 import { COMPUTE_UNIFORM_BUFFER_SIZE, RENDER_UNIFORM_FLOAT_COUNT } from './constants.js';
-import { assertUniformLayout, assertShaderUniformsMatch, assertComputeUniformLayout } from '../shaders/uniform-layout.js';
-import {
-    vertexShader, fragmentShader,
-    somaVertexShader, somaFragmentShader,
-    sparkVertexShader, sparkFragmentShader,
-    postFragmentShader,
-    pointCloudVertexShader, pointCloudFragmentShader,
-} from '../shaders.js';
-import { fiberVertexShader, fiberFragmentShader } from '../shaders/fiber.js';
-import { immuneVertexShader, immuneFragmentShader } from '../shaders/immune.js';
+import { RENDER_UNIFORM_OFFSETS as R, COMPUTE_UNIFORM_OFFSETS } from '../shaders/uniform-layout.js';
 
-// Dev-only: the layout assertions below only need to run once, not every frame.
-let uniformLayoutChecked = false;
-let computeUniformLayoutChecked = false;
+// Byte offset of a compute (`TensorParams`) field, for the DataView writes below.
+const cOff = (name) => COMPUTE_UNIFORM_OFFSETS[name] * 4;
 
 export function applyUniformsMethods(Target) {
     Target.prototype.updateUniforms = function() {
@@ -41,64 +31,65 @@ export function applyUniformsMethods(Target) {
         const mvp = Mat4.multiply(model, pv);
         
         // Uniform Buffer Layout
-        // The canonical field-by-field layout (and the WGSL alignment rules that
-        // derive it) lives in src/shaders/uniform-layout.js — RENDER_UNIFORM_LAYOUT.
-        // The OFFSET_* constants below must match it exactly; assertUniformLayout()
-        // at the bottom of this function verifies that in dev builds.
+        // Every offset below is generated from RENDER_UNIFORM_LAYOUT in
+        // src/shaders/uniform-layout.js, which also emits the WGSL `struct
+        // Uniforms` the shaders interpolate. The two can no longer drift:
+        // there is one declaration and these are its WGSL-aligned offsets.
 
-        const OFFSET_MVP = 0;
-        const OFFSET_MODEL = 16;
-        const OFFSET_TIME = 32;
-        const OFFSET_STYLE = 33;
-        const OFFSET_FLOW = 34;
-        const OFFSET_COLOR = 35;
-        const OFFSET_SLICE = 36;
-        const OFFSET_SPARKLE = 40;
-        const OFFSET_GROWTH = 41;
-        const OFFSET_ABERRATION = 42;
-        const OFFSET_GRAIN = 43;
-        const OFFSET_FOCUS = 44;
-        const OFFSET_APERTURE = 45;
-        const OFFSET_LIGHT_DIR = 48;
-        const OFFSET_AMBIENT = 51;
-        const OFFSET_DIR_INTENSITY = 52;
-        const OFFSET_STRESS = 53;
-        const OFFSET_CORTISOL = 54;
-        const OFFSET_ALTITUDE = 55;
-        const OFFSET_OXYGEN = 56;
-        const OFFSET_HYPOXIA_STRESS = 57;
-        const OFFSET_METABOLIC_RATE = 58;
-        const OFFSET_MITOCHONDRIAL = 59;
-        const OFFSET_FOG_DENSITY = 60;
-        const OFFSET_ZOOM = 61;
-        const OFFSET_HEAVY_METAL = 62;
-        const OFFSET_FLUID_ACTIVE = 63;
-        const OFFSET_AI_INFLUENCE = 64;
-        const OFFSET_RESONANCE_THRESHOLD = 65;
-        const OFFSET_SYNAPTIX_ACTIVE = 66;
-        const OFFSET_AI_LAYER = 67;
-        const OFFSET_POINT_CLOUD_DENSITY = 68;
-        const OFFSET_FIBER_COUPLING = 69;
-        const OFFSET_CONNECTOME_VARIANT = 70; // [V3.3] formerly pad5
-        const OFFSET_TMS_ACTIVE = 71;
-        const OFFSET_TMS_CENTER = 72; // vec3 takes 3
-        const OFFSET_TMS_PULSE = 75;
-        const OFFSET_PAD3 = 76;
-        const OFFSET_EDGE_DETECTION = 77;
-        const OFFSET_PULSE_SATURATION = 78;
-        const OFFSET_TRAIL_LENGTH = 79;
-        const OFFSET_LESION_CENTER = 80;
-        const OFFSET_LESION_ACTIVE = 83;
-        const OFFSET_LESION_RADIUS = 84;
-        const OFFSET_DECIMATION = 85;
-        const OFFSET_PSYCHEDELIC = 86;
-        const OFFSET_IMMUNE_ACTIVITY = 87;
-        const OFFSET_PLASTICITY_DECAY = 88;
-        const OFFSET_VISUAL_FATIGUE = 89;
-        const OFFSET_SENSORY_DEPRIVATION = 90;
-        const OFFSET_SPATIAL_MEMORY = 91;
-        const OFFSET_APOPTOSIS = 96;
-        const OFFSET_PARTICLE_SPEED = 97;
+        const OFFSET_MVP = R.mvpMatrix;
+        const OFFSET_MODEL = R.modelMatrix;
+        const OFFSET_TIME = R.time;
+        const OFFSET_STYLE = R.style;
+        const OFFSET_FLOW = R.flowSpeed;
+        const OFFSET_COLOR = R.colorShift;
+        const OFFSET_DOPAMINE = R.dopamineTrails;
+        const OFFSET_SLICE = R.slicePlane;
+        const OFFSET_SPARKLE = R.sparkle;
+        const OFFSET_GROWTH = R.growth;
+        const OFFSET_ABERRATION = R.aberration;
+        const OFFSET_GRAIN = R.grain;
+        const OFFSET_FOCUS = R.focus;
+        const OFFSET_APERTURE = R.aperture;
+        const OFFSET_LIGHT_DIR = R.lightDir;
+        const OFFSET_AMBIENT = R.ambientLight;
+        const OFFSET_DIR_INTENSITY = R.dirIntensity;
+        const OFFSET_STRESS = R.stress;
+        const OFFSET_CORTISOL = R.cortisol;
+        const OFFSET_ALTITUDE = R.altitude;
+        const OFFSET_OXYGEN = R.oxygenLevel;
+        const OFFSET_HYPOXIA_STRESS = R.hypoxiaStress;
+        const OFFSET_METABOLIC_RATE = R.metabolicRate;
+        const OFFSET_MITOCHONDRIAL = R.mitochondrialFunction;
+        const OFFSET_FOG_DENSITY = R.fogDensity;
+        const OFFSET_ZOOM = R.zoom;
+        const OFFSET_HEAVY_METAL = R.heavyMetal;
+        const OFFSET_FLUID_ACTIVE = R.fluidActive;
+        const OFFSET_AI_INFLUENCE = R.aiInfluence;
+        const OFFSET_RESONANCE_THRESHOLD = R.resonanceThreshold;
+        const OFFSET_SYNAPTIX_ACTIVE = R.synaptiXActive;
+        const OFFSET_AI_LAYER = R.aiLayer;
+        const OFFSET_POINT_CLOUD_DENSITY = R.pointCloudDensity;
+        const OFFSET_FIBER_COUPLING = R.fiberCoupling;
+        const OFFSET_CONNECTOME_VARIANT = R.connectomeVariant;
+        const OFFSET_TMS_ACTIVE = R.tmsActive;
+        const OFFSET_TMS_CENTER = R.tmsCenter;
+        const OFFSET_TMS_PULSE = R.tmsPulse;
+        const OFFSET_TMS_RADIUS = R.tmsRadius;
+        const OFFSET_EDGE_DETECTION = R.edgeDetection;
+        const OFFSET_PULSE_SATURATION = R.pulseSaturation;
+        const OFFSET_TRAIL_LENGTH = R.trailLength;
+        const OFFSET_LESION_CENTER = R.lesionCenter;
+        const OFFSET_LESION_ACTIVE = R.lesionActive;
+        const OFFSET_LESION_RADIUS = R.lesionRadius;
+        const OFFSET_DECIMATION = R.decimation;
+        const OFFSET_PSYCHEDELIC = R.psychedelic;
+        const OFFSET_IMMUNE_ACTIVITY = R.immuneActivity;
+        const OFFSET_PLASTICITY_DECAY = R.plasticityDecay;
+        const OFFSET_VISUAL_FATIGUE = R.visualFatigue;
+        const OFFSET_SENSORY_DEPRIVATION = R.sensoryDeprivation;
+        const OFFSET_SPATIAL_MEMORY = R.spatialMemory;
+        const OFFSET_APOPTOSIS = R.apoptosis;
+        const OFFSET_PARTICLE_SPEED = R.particleSpeed;
 
         // Shared with the buffer allocation in ./constants.js.
         const uData = new Float32Array(RENDER_UNIFORM_FLOAT_COUNT);
@@ -108,6 +99,7 @@ export function applyUniformsMethods(Target) {
         uData[OFFSET_STYLE] = this.params.style;
         uData[OFFSET_FLOW] = this.params.flowSpeed;
         uData[OFFSET_COLOR] = this.params.colorShift;
+        uData[OFFSET_DOPAMINE] = this.params.dopamineTrails || 0.0;
 
         // Slice Plane Logic
         uData[OFFSET_SLICE] = 0.0;      // Px
@@ -149,7 +141,7 @@ export function applyUniformsMethods(Target) {
         uData[OFFSET_TMS_CENTER + 1] = this.params.tmsCenterY;
         uData[OFFSET_TMS_CENTER + 2] = this.params.tmsCenterZ;
         uData[OFFSET_TMS_PULSE] = this.params.tmsPulse;
-        uData[OFFSET_PAD3] = this.params.tmsRadius; // OFFSET_PAD3 is offset 76
+        uData[OFFSET_TMS_RADIUS] = this.params.tmsRadius;
         uData[OFFSET_EDGE_DETECTION] = this.params.edgeDetection || 0.0;
         uData[OFFSET_PULSE_SATURATION] = this.params.pulseSaturation !== undefined ? this.params.pulseSaturation : 1.0;
         uData[OFFSET_TRAIL_LENGTH] = this.params.trailLength !== undefined ? this.params.trailLength : 1.0;
@@ -185,119 +177,74 @@ export function applyUniformsMethods(Target) {
         partnerData[OFFSET_AI_INFLUENCE] = 1.0; // palette selector: magenta
         partnerData[OFFSET_AI_LAYER] = this.params.partnerInfluence ?? 0.5;
 
-        if (!uniformLayoutChecked) {
-            uniformLayoutChecked = true;
-            assertUniformLayout({
-                mvpMatrix: OFFSET_MVP, modelMatrix: OFFSET_MODEL, time: OFFSET_TIME, style: OFFSET_STYLE,
-                flowSpeed: OFFSET_FLOW, colorShift: OFFSET_COLOR, slicePlane: OFFSET_SLICE, sparkle: OFFSET_SPARKLE,
-                growth: OFFSET_GROWTH, aberration: OFFSET_ABERRATION, grain: OFFSET_GRAIN, focus: OFFSET_FOCUS,
-                aperture: OFFSET_APERTURE, lightDir: OFFSET_LIGHT_DIR, ambientLight: OFFSET_AMBIENT,
-                dirIntensity: OFFSET_DIR_INTENSITY, stress: OFFSET_STRESS, cortisol: OFFSET_CORTISOL,
-                altitude: OFFSET_ALTITUDE, oxygenLevel: OFFSET_OXYGEN, hypoxiaStress: OFFSET_HYPOXIA_STRESS,
-                metabolicRate: OFFSET_METABOLIC_RATE, mitochondrialFunction: OFFSET_MITOCHONDRIAL,
-                fogDensity: OFFSET_FOG_DENSITY, zoom: OFFSET_ZOOM, heavyMetal: OFFSET_HEAVY_METAL,
-                fluidActive: OFFSET_FLUID_ACTIVE, aiInfluence: OFFSET_AI_INFLUENCE,
-                resonanceThreshold: OFFSET_RESONANCE_THRESHOLD, synaptiXActive: OFFSET_SYNAPTIX_ACTIVE,
-                aiLayer: OFFSET_AI_LAYER, pointCloudDensity: OFFSET_POINT_CLOUD_DENSITY,
-                fiberCoupling: OFFSET_FIBER_COUPLING, connectomeVariant: OFFSET_CONNECTOME_VARIANT,
-                tmsActive: OFFSET_TMS_ACTIVE, tmsCenter: OFFSET_TMS_CENTER, tmsPulse: OFFSET_TMS_PULSE,
-                tmsRadius: OFFSET_PAD3, edgeDetection: OFFSET_EDGE_DETECTION, pulseSaturation: OFFSET_PULSE_SATURATION,
-                trailLength: OFFSET_TRAIL_LENGTH, lesionCenter: OFFSET_LESION_CENTER, lesionActive: OFFSET_LESION_ACTIVE,
-                lesionRadius: OFFSET_LESION_RADIUS, decimation: OFFSET_DECIMATION, psychedelic: OFFSET_PSYCHEDELIC,
-                immuneActivity: OFFSET_IMMUNE_ACTIVITY, plasticityDecay: OFFSET_PLASTICITY_DECAY,
-                visualFatigue: OFFSET_VISUAL_FATIGUE, sensoryDeprivation: OFFSET_SENSORY_DEPRIVATION,
-                spatialMemory: OFFSET_SPATIAL_MEMORY, apoptosis: OFFSET_APOPTOSIS,
-                particleSpeed: OFFSET_PARTICLE_SPEED
-            }, RENDER_UNIFORM_FLOAT_COUNT);
-            assertShaderUniformsMatch({
-                vertexShader, fragmentShader, fiberVertexShader, fiberFragmentShader,
-                somaVertexShader, somaFragmentShader, sparkVertexShader, sparkFragmentShader,
-                postFragmentShader, pointCloudVertexShader, pointCloudFragmentShader,
-                immuneVertexShader, immuneFragmentShader,
-            });
-        }
-
         this.device.queue.writeBuffer(this.uniformBuffer, 0, uData);
         this.device.queue.writeBuffer(this.avatarAUniformBuffer, 0, avatarAData);
         this.device.queue.writeBuffer(this.partnerUniformBuffer, 0, partnerData);
         
-        // Compute Uniforms layout (112 bytes total):
-        // 32 bytes scalar block + 16 bytes stimulus block + 12 bytes hypoxia block
-        // + 20 bytes hazards + 16 bytes padding + 16 bytes SynaptiX params.
+        // Compute `TensorParams` upload. Every byte offset comes from
+        // COMPUTE_UNIFORM_LAYOUT in src/shaders/uniform-layout.js, which also
+        // emits the WGSL struct the compute shader declares, so the two
+        // cannot drift.
         const cBuf = new ArrayBuffer(COMPUTE_UNIFORM_BUFFER_SIZE);
         const dv = new DataView(cBuf);
-        dv.setFloat32(0, this.time, true);
-        dv.setUint32(4, this.voxelDim, true);
-        dv.setFloat32(8, this.params.frequency, true);
-        dv.setFloat32(12, this.params.amplitude, true);
-        dv.setFloat32(16, this.params.spikeThreshold, true);
-        dv.setFloat32(20, this.params.smoothing, true);
-        dv.setFloat32(24, this.params.style, true);
-        dv.setFloat32(28, 0.0, true);
+        dv.setFloat32(cOff('time'), this.time, true);
+        dv.setUint32(cOff('voxelDim'), this.voxelDim, true);
+        dv.setFloat32(cOff('frequency'), this.params.frequency, true);
+        dv.setFloat32(cOff('amplitude'), this.params.amplitude, true);
+        dv.setFloat32(cOff('spikeThreshold'), this.params.spikeThreshold, true);
+        dv.setFloat32(cOff('smoothing'), this.params.smoothing, true);
+        dv.setFloat32(cOff('style'), this.params.style, true);
 
-        // [Neuro-Weaver] Upload Stimulus Data
-        // Layout must match TensorParams struct in WGSL (std140)
-        // Offset 32: stimulusPos (vec3)
-        // Offset 44: stimulusActive (f32)
-        dv.setFloat32(32, this.stimulus.pos[0], true);
-        dv.setFloat32(36, this.stimulus.pos[1], true);
-        dv.setFloat32(40, this.stimulus.pos[2], true);
-
-        dv.setFloat32(44, this.stimulus.active, true);
+        // [Neuro-Weaver] Stimulus
+        dv.setFloat32(cOff('stimulusPos'), this.stimulus.pos[0], true);
+        dv.setFloat32(cOff('stimulusPos') + 4, this.stimulus.pos[1], true);
+        dv.setFloat32(cOff('stimulusPos') + 8, this.stimulus.pos[2], true);
+        dv.setFloat32(cOff('stimulusActive'), this.stimulus.active, true);
 
         // Altitude/Hypoxia parameters for compute shader
-        // Offset 48: hypoxiaStress
-        // Offset 52: metabolicRate
-        // Offset 56: mitochondrialFunction
-        dv.setFloat32(48, this.params.hypoxiaStress, true);
-        dv.setFloat32(52, this.params.metabolicRate, true);
-        dv.setFloat32(56, this.params.mitochondrialFunction, true);
+        dv.setFloat32(cOff('hypoxiaStress'), this.params.hypoxiaStress, true);
+        dv.setFloat32(cOff('metabolicRate'), this.params.metabolicRate, true);
+        dv.setFloat32(cOff('mitochondrialFunction'), this.params.mitochondrialFunction, true);
 
         // Fluid Dynamics and Environmental Hazard variables
-        dv.setFloat32(60, this.params.fluidActive, true);
-        dv.setFloat32(64, this.stimulus.electricalActive, true);
-        dv.setFloat32(68, this.stimulus.mercuryActive, true);
-        dv.setFloat32(72, this.params.cognitiveLoad, true);
-        dv.setFloat32(76, this.params.stress, true);
+        dv.setFloat32(cOff('fluidActive'), this.params.fluidActive, true);
+        dv.setFloat32(cOff('electricalActive'), this.stimulus.electricalActive, true);
+        dv.setFloat32(cOff('mercuryActive'), this.stimulus.mercuryActive, true);
+        dv.setFloat32(cOff('cognitiveLoad'), this.params.cognitiveLoad, true);
+        dv.setFloat32(cOff('stress'), this.params.stress, true);
 
-        // [SynaptiX] AI Tensor Mirror params (offset 88)
+        // [SynaptiX] AI Tensor Mirror params.
         // Multi-Brain coupling is visual-only. Never feed partner data back into tensor physics.
-        dv.setFloat32(88, 0.0, true);
-        dv.setFloat32(92, this.params.resonanceThreshold, true);
-        dv.setFloat32(96, 0.0, true);
+        dv.setFloat32(cOff('aiInfluence'), 0.0, true);
+        dv.setFloat32(cOff('resonanceThreshold'), this.params.resonanceThreshold, true);
+        dv.setFloat32(cOff('synaptiXActive'), 0.0, true);
 
-        // [V3.2] Fiber-volume coupling strength (offset 100)
-        dv.setFloat32(100, this.params.fiberCoupling ?? 0.5, true);
-        dv.setFloat32(104, this.params.cognitiveDissonance ?? 0.0, true);
+        // [V3.2] Fiber-volume coupling strength
+        dv.setFloat32(cOff('fiberCoupling'), this.params.fiberCoupling ?? 0.5, true);
+        dv.setFloat32(cOff('cognitiveDissonance'), this.params.cognitiveDissonance ?? 0.0, true);
 
-        // [Phase 21] Neuromodulator physics (offset 112 & 128)
-        dv.setFloat32(112, this.params.decayRate !== undefined ? this.params.decayRate : 0.96, true);
-        dv.setFloat32(116, this.params.diffusionRate !== undefined ? this.params.diffusionRate : 0.1, true);
-        dv.setFloat32(120, this.params.pulseSaturation !== undefined ? this.params.pulseSaturation : 1.0, true);
-        dv.setFloat32(124, this.params.trailLength !== undefined ? this.params.trailLength : 1.0, true);
+        // [Phase 21] Neuromodulator physics
+        dv.setFloat32(cOff('decayRate'), this.params.decayRate !== undefined ? this.params.decayRate : 0.96, true);
+        dv.setFloat32(cOff('diffusionRate'), this.params.diffusionRate !== undefined ? this.params.diffusionRate : 0.1, true);
+        dv.setFloat32(cOff('pulseSaturation'), this.params.pulseSaturation !== undefined ? this.params.pulseSaturation : 1.0, true);
+        dv.setFloat32(cOff('trailLength'), this.params.trailLength !== undefined ? this.params.trailLength : 1.0, true);
 
-        dv.setFloat32(128, this.params.retentionBiasX !== undefined ? this.params.retentionBiasX : 0.5, true); // frontal
-        dv.setFloat32(132, this.params.retentionBiasY !== undefined ? this.params.retentionBiasY : 0.0, true); // occipital
-        dv.setFloat32(136, this.params.retentionBiasZ !== undefined ? this.params.retentionBiasZ : 0.2, true); // temporal
-        dv.setFloat32(140, this.params.retentionBiasW !== undefined ? this.params.retentionBiasW : 0.2, true); // parietal
+        dv.setFloat32(cOff('retentionBias') + 0, this.params.retentionBiasX !== undefined ? this.params.retentionBiasX : 0.5, true); // frontal
+        dv.setFloat32(cOff('retentionBias') + 4, this.params.retentionBiasY !== undefined ? this.params.retentionBiasY : 0.0, true); // occipital
+        dv.setFloat32(cOff('retentionBias') + 8, this.params.retentionBiasZ !== undefined ? this.params.retentionBiasZ : 0.2, true); // temporal
+        dv.setFloat32(cOff('retentionBias') + 12, this.params.retentionBiasW !== undefined ? this.params.retentionBiasW : 0.2, true); // parietal
 
-        dv.setFloat32(144, this.params.lesionCenterX, true);
-        dv.setFloat32(148, this.params.lesionCenterY, true);
-        dv.setFloat32(152, this.params.lesionCenterZ, true);
-        dv.setFloat32(156, this.params.lesionActive, true);
-        dv.setFloat32(160, this.params.lesionRadius, true);
-        dv.setFloat32(164, this.params.decimation, true);
+        dv.setFloat32(cOff('lesionCenter') + 0, this.params.lesionCenterX, true);
+        dv.setFloat32(cOff('lesionCenter') + 4, this.params.lesionCenterY, true);
+        dv.setFloat32(cOff('lesionCenter') + 8, this.params.lesionCenterZ, true);
+        dv.setFloat32(cOff('lesionActive'), this.params.lesionActive, true);
+        dv.setFloat32(cOff('lesionRadius'), this.params.lesionRadius, true);
+        dv.setFloat32(cOff('decimation'), this.params.decimation, true);
 
-        // [Paint Energy] offset 168: brush radius (0 = legacy fixed sigma
-        // 0.5 for single-click/region-button callers). offset 172:
-        // erase/damping flag. See src/shaders.js TensorParams for the WGSL side.
-        dv.setFloat32(168, this.stimulus.radius ?? 0.0, true);
-        dv.setFloat32(172, this.stimulus.erase ? 1.0 : 0.0, true);
-
-        if (!computeUniformLayoutChecked) {
-            computeUniformLayoutChecked = true;
-            assertComputeUniformLayout({ stimulusRadius: 168 / 4, stimulusErase: 172 / 4 });
-        }
+        // [Paint Energy] brush radius (0 = legacy fixed sigma 0.5 for
+        // single-click/region-button callers) and erase/damping flag.
+        dv.setFloat32(cOff('stimulusRadius'), this.stimulus.radius ?? 0.0, true);
+        dv.setFloat32(cOff('stimulusErase'), this.stimulus.erase ? 1.0 : 0.0, true);
 
         // Upload to GPU
         this.device.queue.writeBuffer(this.computeUniformBuffer, 0, cBuf);

@@ -30,6 +30,12 @@ jobs:
       # Emscripten SDK. The WASM engine is an optional runtime feature
       # (wasm-engine.js falls back gracefully when the module is absent),
       # so it is not a build gate; `npm run build:full` opts into it locally.
+      # Headless layout/shader assertions — plain Node, no WebGPU or browser.
+      # These catch uniform-struct drift that the visual suite cannot see
+      # (a clip plane read four floats off still renders an image).
+      - name: Node unit tests (uniform layout, shaders)
+        run: npm test
+
       - name: Build frontend (vite, no WASM)
         run: npm run build
 

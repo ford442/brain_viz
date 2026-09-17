@@ -5,6 +5,8 @@
 
 // [Phase 7] Post-Processing Shaders
 
+import { UNIFORMS_STRUCT_WGSL } from './uniform-layout.js';
+
 export const postVertexShader = `
 @vertex
 fn main(@builtin(vertex_index) VertexIndex : u32) -> @builtin(position) vec4<f32> {
@@ -17,63 +19,7 @@ fn main(@builtin(vertex_index) VertexIndex : u32) -> @builtin(position) vec4<f32
 `;
 
 export const postFragmentShader = `
-struct Uniforms {
-    mvpMatrix: mat4x4<f32>,
-    modelMatrix: mat4x4<f32>,
-    time: f32,
-    style: f32,
-    flowSpeed: f32,
-    colorShift: f32,
-    dopamineTrails: f32,
-    slicePlane: vec4<f32>,
-    sparkle: f32,
-    growth: f32,
-    aberration: f32,
-    grain: f32,
-    focus: f32,
-    aperture: f32,
-    lightDir: vec3<f32>,
-    ambientLight: f32,
-    dirIntensity: f32,
-    stress: f32,
-    cortisol: f32,
-    // Altitude/Hypoxia Parameters
-    altitude: f32,
-    oxygenLevel: f32,
-    hypoxiaStress: f32,
-    metabolicRate: f32,
-    mitochondrialFunction: f32,
-    fogDensity: f32,
-    zoom: f32,
-    heavyMetal: f32,
-    fluidActive: f32,
-    aiInfluence: f32,
-    resonanceThreshold: f32,
-    synaptiXActive: f32,
-    aiLayer: f32,
-    pointCloudDensity: f32,
-    fiberCoupling: f32,
-    connectomeVariant: f32,
-    tmsActive: f32,
-    tmsCenter: vec3<f32>,
-    tmsPulse: f32,
-    tmsRadius: f32,
-    edgeDetection: f32,
-    pulseSaturation: f32,
-    trailLength: f32,
-    lesionCenter: vec3<f32>,
-    lesionActive: f32,
-    lesionRadius: f32,
-    decimation: f32,
-    psychedelic: f32,
-    immuneActivity: f32,
-    plasticityDecay: f32,
-    visualFatigue: f32,
-    sensoryDeprivation: f32,
-    spatialMemory: f32,
-    apoptosis: f32,
-    particleSpeed: f32,
-}
+${UNIFORMS_STRUCT_WGSL}
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var tDiffuse: texture_2d<f32>;
 @group(0) @binding(2) var sDiffuse: sampler;
