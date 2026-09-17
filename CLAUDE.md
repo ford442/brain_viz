@@ -6,6 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 npm install                    # Install dependencies
+npm test                       # Headless Node assertions (uniform layout, shaders)
 npm run dev                    # Start dev server (http://localhost:5173)
 npm run build                  # Build production bundle to dist/
 npm run preview                # Preview production build locally
@@ -73,15 +74,34 @@ beginComputePass() → writes tensorData → end() → beginRenderPass() → rea
 **Action:** Preserve this order. If `tensorData` is moved to a different bind group, verify both `STORAGE` and `VERTEX` (or `READ_ONLY_STORAGE`) flags are set.
 
 ### 3. WGSL Struct Alignment & Padding
-**The Issue:** WGSL structs require strict 16-byte alignment for `vec4`/`mat4` fields. The `Uniforms` struct in `shaders.js` has explicit padding fields (`padding1`, `padding2`).
+**The Issue:** WGSL structs require strict alignment (`vec3`/`vec4`/`mat4x4` are
+16-byte aligned), so an `f32` followed by a `vec4` gets invisible padding. Getting
+this wrong on either side corrupts data silently rather than erroring.
 
-**Action:** When adding uniforms:
-1. Calculate WGSL struct alignment manually
-2. Update the `Float32Array` offsets in `updateUniforms()` in `brain-renderer.js`
-3. Misalignment causes silent data corruption
+**How it is handled:** `src/shaders/uniform-layout.js` is the single source of
+truth and a *generator*. It declares `RENDER_UNIFORM_LAYOUT` and
+`COMPUTE_UNIFORM_LAYOUT` once, and emits:
 
-### 4. No Automated Tests
-Testing is **manual and visual only**. Verify:
+- `UNIFORMS_STRUCT_WGSL` / `TENSOR_PARAMS_STRUCT_WGSL` — the WGSL struct text that
+  every shader in `src/shaders/*.js` interpolates
+- `RENDER_UNIFORM_OFFSETS` / `COMPUTE_UNIFORM_OFFSETS` — the `Float32Array` /
+  `DataView` offsets used by `src/brain-renderer/uniforms.js`
+- `RENDER_UNIFORM_FLOAT_COUNT` / `*_BYTE_SIZE` — the GPU buffer sizes used by
+  `src/brain-renderer/constants.js`
+
+**Action:**
+1. **Never hand-write `struct Uniforms { … }` or `struct TensorParams { … }`** in a
+   shader file, and never hand-write an `OFFSET_*` number or a buffer byte count.
+   `npm test` fails the build if you do.
+2. To add a uniform, add one entry to the relevant layout array. Everything else
+   follows automatically.
+3. Do not add `padN` filler fields — padding is computed.
+
+### 4. Minimal Automated Tests
+`npm test` runs headless Node assertions (`tests/test_uniform_layout.js`,
+`tests/test_shader.js`) — no WebGPU, no browser — covering uniform-struct
+alignment/drift and fiber geometry. CI runs them before the build. Everything
+else is **manual and visual**. Verify:
 - Brain renders and animates smoothly (~60 FPS)
 - UI controls function correctly
 - Shader changes produce expected visuals in real-time
@@ -124,10 +144,14 @@ Routine files can drive SynaptiX through the custom `synaptix` event type. First
 3. Add UI control to `index.html` and wire in `main.js`
 
 ### Adding a Uniform Parameter
-1. Define field in `Uniforms` struct (`shaders.js`)
-2. **Calculate and add padding manually** to respect WGSL alignment
-3. Update `updateUniforms()` in `brain-renderer.js` with correct `Float32Array` offsets
+1. Add one entry to `RENDER_UNIFORM_LAYOUT` in `src/shaders/uniform-layout.js`
+   (or `COMPUTE_UNIFORM_LAYOUT` for a compute/sim param)
+2. **Do not** touch the WGSL struct, the JS offsets, or the buffer size — all three
+   are generated from that array. Padding is computed; never add `padN` fields.
+3. Read it in WGSL as `uniforms.<name>` / `params.<name>`, and write it in
+   `src/brain-renderer/uniforms.js` via `R.<name>` / `cOff('<name>')`
 4. Add UI slider to `index.html` and wire in `main.js`
+5. Run `npm test`
 
 ### Adding a Brain Region Stimulus
 1. Define region bounds in `brain-renderer.js` `injectStimulus()`
@@ -143,7 +167,7 @@ npm run dev
 
 ## Known Limitations
 
-- **No automated unit tests.** All testing is manual/visual, plus a Playwright-based `verification/` suite that runs against the WebGL2 fallback.
+- **Thin automated coverage.** `npm test` covers uniform-buffer layout and fiber geometry only; everything visual is manual, plus a Playwright-based `verification/` suite that runs against the WebGL2 fallback.
 - **WebGPU-primary, strict browser requirement for full fidelity.** The WebGL2 fallback trades visual/simulation fidelity for portability and automation.
 - **Memory fixed at startup.** Window resize recreates depth texture but not geometry buffers.
 - **Routine branching pauses.** `choice` and `wait` events pause the routine player.

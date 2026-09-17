@@ -1,29 +1,37 @@
 // src/shaders/uniform-layout.js
-// [Neuro-Weaver] Canonical description of the render `Uniforms` WGSL struct
-// (see CLAUDE.md "WGSL Struct Alignment & Padding") plus dev-only assertions
-// that catch the two ways this struct silently drifts:
-//   1. The JS-side Float32Array offsets in brain-renderer/uniforms.js no
-//      longer match the struct's WGSL-computed byte layout.
-//   2. One of the WGSL shader files (surface/fiber/soma/spark/point-cloud/
-//      post) redeclares `struct Uniforms` with a different field order than
-//      the others, so the same uniform buffer is read at the wrong offsets
-//      by that pipeline only.
-// Both checks are dev-only (see assert* below) and are no-ops in production
-// builds; they exist purely to fail loudly instead of corrupting data
-// silently.
+// [Neuro-Weaver] Single source of truth for the render `Uniforms` and compute
+// `TensorParams` WGSL structs (see CLAUDE.md "WGSL Struct Alignment &
+// Padding").
+//
+// This module is a *generator*, not just a description:
+//   - `UNIFORMS_STRUCT_WGSL` / `TENSOR_PARAMS_STRUCT_WGSL` are the WGSL struct
+//     declarations every shader in src/shaders/*.js interpolates. No shader
+//     hand-writes `struct Uniforms { ... }` any more, so the field order
+//     cannot drift between pipelines that share one uniform buffer.
+//   - `RENDER_UNIFORM_OFFSETS` / `COMPUTE_UNIFORM_OFFSETS` are the WGSL-aligned
+//     Float32Array offsets brain-renderer/uniforms.js writes at, so the JS
+//     side cannot drift from the struct it is filling.
+//   - `RENDER_UNIFORM_FLOAT_COUNT` / `*_BYTE_SIZE` size the GPU buffers, so
+//     there is no second "how big is this thing" constant to fall out of sync.
+//
+// Adding a uniform is therefore a one-line edit to the layout array below;
+// the WGSL struct, the JS offsets, and the buffer sizes all follow. Never
+// re-introduce a handwritten struct — tests/test_uniform_layout.js fails the
+// build if one appears.
 
 /** @typedef {import('../types.js').UniformLayoutField} UniformLayoutField */
 /** @typedef {import('../types.js').UniformLayout} UniformLayout */
 
-// WGSL "uniform" address-space AlignOf/SizeOf, in bytes, for the types this
-// struct actually uses. (WGSL spec ยง13.4.1 / ยง13.4.2 host-shareable layout.)
+// WGSL "uniform" address-space AlignOf/SizeOf, in bytes, for the types these
+// structs use, plus the spelling used when emitting WGSL.
+// (WGSL spec §13.4.1 / §13.4.2 host-shareable layout.)
 const WGSL_TYPE_INFO = {
-    f32: { size: 4, align: 4 },
-    u32: { size: 4, align: 4 },
-    vec2: { size: 8, align: 8 },
-    vec3: { size: 12, align: 16 },
-    vec4: { size: 16, align: 16 },
-    mat4x4: { size: 64, align: 16 },
+    f32: { size: 4, align: 4, wgsl: 'f32' },
+    u32: { size: 4, align: 4, wgsl: 'u32' },
+    vec2: { size: 8, align: 8, wgsl: 'vec2<f32>' },
+    vec3: { size: 12, align: 16, wgsl: 'vec3<f32>' },
+    vec4: { size: 16, align: 16, wgsl: 'vec4<f32>' },
+    mat4x4: { size: 64, align: 16, wgsl: 'mat4x4<f32>' },
 };
 
 function alignUp(offset, align) {
@@ -31,11 +39,13 @@ function alignUp(offset, align) {
 }
 
 /**
- * The render `Uniforms` struct, in the field order declared by
- * `src/shaders/surface.js` (the most fully-commented, and the layout the
- * JS-side offsets in brain-renderer/uniforms.js are written against). Every
- * other shader file that declares `struct Uniforms { ... }` against the
- * same buffer must match this order exactly — see `assertShaderUniformsMatch`.
+ * The render `Uniforms` struct. Field order here *is* the WGSL field order
+ * for every render/compute pipeline that binds the shared render uniform
+ * buffer (mesh, fiber, soma, spark, point-cloud, post, immune, bridges).
+ *
+ * WGSL inserts alignment padding between an `f32` and a following
+ * `vec3`/`vec4`/`mat4x4`; that padding is computed, never hand-written, so
+ * the comments below note where it lands rather than declaring pad fields.
  *
  * @type {UniformLayoutField[]}
  */
@@ -44,39 +54,39 @@ export const RENDER_UNIFORM_LAYOUT = [
     { name: 'modelMatrix', type: 'mat4x4' },
     { name: 'time', type: 'f32' },
     { name: 'style', type: 'f32' },
-    { name: 'flowSpeed', type: 'f32' },
-    { name: 'colorShift', type: 'f32' },
+    { name: 'flowSpeed', type: 'f32', comment: 'V2.3: pulse speed' },
+    { name: 'colorShift', type: 'f32', comment: '[Phase 5] Serotonin Color Shift' },
     { name: 'dopamineTrails', type: 'f32' },
-    { name: 'memoryBreadcrumbs', type: 'f32' },
-    { name: 'padDopamine', type: 'vec2' },
-    { name: 'slicePlane', type: 'vec4' },
-    { name: 'sparkle', type: 'f32' },
-    { name: 'growth', type: 'f32' },
-    { name: 'aberration', type: 'f32' },
-    { name: 'grain', type: 'f32' },
-    { name: 'focus', type: 'f32' },
-    { name: 'aperture', type: 'f32' },
-    { name: 'lightDir', type: 'vec3' },
-    { name: 'ambientLight', type: 'f32' },
-    { name: 'dirIntensity', type: 'f32' },
-    { name: 'stress', type: 'f32' },
-    { name: 'cortisol', type: 'f32' },
-    { name: 'altitude', type: 'f32' },
-    { name: 'oxygenLevel', type: 'f32' },
-    { name: 'hypoxiaStress', type: 'f32' },
-    { name: 'metabolicRate', type: 'f32' },
-    { name: 'mitochondrialFunction', type: 'f32' },
-    { name: 'fogDensity', type: 'f32' },
-    { name: 'zoom', type: 'f32' },
+    // 4 bytes of implicit padding here: slicePlane is a vec4 (16-byte align).
+    { name: 'slicePlane', type: 'vec4', comment: '[Neuro-Weaver] V2.6: renamed from clipPlane' },
+    { name: 'sparkle', type: 'f32', comment: '[Phase 5] Synaptic Sparkles' },
+    { name: 'growth', type: 'f32', comment: '[Phase 6] Dendritic Growth' },
+    { name: 'aberration', type: 'f32', comment: '[Phase 7] Chromatic Aberration' },
+    { name: 'grain', type: 'f32', comment: '[Phase 7] Film Grain' },
+    { name: 'focus', type: 'f32', comment: '[Phase 7] Focus Distance' },
+    { name: 'aperture', type: 'f32', comment: '[Phase 7] Aperture Size' },
+    // 8 bytes of implicit padding here: lightDir is a vec3 (16-byte align).
+    { name: 'lightDir', type: 'vec3', comment: '[Phase 2] Directional Light' },
+    { name: 'ambientLight', type: 'f32', comment: '[Phase 2] Ambient Light Intensity' },
+    { name: 'dirIntensity', type: 'f32', comment: '[Phase 2] Directional Light Intensity' },
+    { name: 'stress', type: 'f32', comment: 'Cognitive Stress Distortion' },
+    { name: 'cortisol', type: 'f32', comment: '[Phase 5] Cortisol Structural Decay' },
+    { name: 'altitude', type: 'f32', comment: 'Altitude in meters' },
+    { name: 'oxygenLevel', type: 'f32', comment: 'Oxygen saturation (1.0-0.3)' },
+    { name: 'hypoxiaStress', type: 'f32', comment: 'Cellular stress response' },
+    { name: 'metabolicRate', type: 'f32', comment: 'ATP consumption multiplier' },
+    { name: 'mitochondrialFunction', type: 'f32', comment: 'ATP synthesis efficiency' },
+    { name: 'fogDensity', type: 'f32', comment: 'Volumetric Fog' },
+    { name: 'zoom', type: 'f32', comment: 'Camera zoom for distance math' },
     { name: 'heavyMetal', type: 'f32' },
-    { name: 'fluidActive', type: 'f32' },
+    { name: 'fluidActive', type: 'f32', comment: 'Procedural Volumetric Fluid Dynamics' },
     { name: 'aiInfluence', type: 'f32' },
     { name: 'resonanceThreshold', type: 'f32' },
     { name: 'synaptiXActive', type: 'f32' },
     { name: 'aiLayer', type: 'f32' },
     { name: 'pointCloudDensity', type: 'f32' },
     { name: 'fiberCoupling', type: 'f32' },
-    { name: 'connectomeVariant', type: 'f32' },
+    { name: 'connectomeVariant', type: 'f32', comment: '[V3.3] formerly pad5' },
     { name: 'tmsActive', type: 'f32' },
     { name: 'tmsCenter', type: 'vec3' },
     { name: 'tmsPulse', type: 'f32' },
@@ -99,13 +109,11 @@ export const RENDER_UNIFORM_LAYOUT = [
 ];
 
 /**
- * The compute `TensorParams` struct (src/shaders.js, computeShader export),
- * through the [Paint Energy] `stimulusRadius`/`stimulusErase` fields added at
- * the end. Fields from `_reserved0` on are scalar filler bridging pre-existing
- * drift where uniforms.js writes more neuromodulator/lesion floats than this
- * compute shader declares/consumes (see the comment in shaders.js) — they
- * keep stimulusRadius/stimulusErase's offsets correct without asserting
- * byte-for-byte parity with every JS-side write.
+ * The compute `TensorParams` struct (src/shaders/volumetric-compute.js).
+ * Every field is named and uploaded by brain-renderer/uniforms.js; the
+ * former `_reserved0.._reserved15` scalar filler is gone, so the neuromodulator
+ * and lesion params the CPU sends are now visible (and consumable) on the
+ * compute side instead of being anonymous padding.
  *
  * @type {UniformLayoutField[]}
  */
@@ -117,7 +125,8 @@ export const COMPUTE_UNIFORM_LAYOUT = [
     { name: 'spikeThreshold', type: 'f32' },
     { name: 'smoothing', type: 'f32' },
     { name: 'style', type: 'f32' },
-    { name: 'stimulusPos', type: 'vec3' },
+    // 4 bytes of implicit padding here: stimulusPos is a vec3 (16-byte align).
+    { name: 'stimulusPos', type: 'vec3', comment: 'V2.2 Stimulus Fields' },
     { name: 'stimulusActive', type: 'f32' },
     { name: 'hypoxiaStress', type: 'f32' },
     { name: 'metabolicRate', type: 'f32' },
@@ -129,20 +138,23 @@ export const COMPUTE_UNIFORM_LAYOUT = [
     { name: 'stress', type: 'f32' },
     { name: 'heavyMetal', type: 'f32' },
     { name: 'pad2', type: 'f32' },
-    { name: 'aiInfluence', type: 'f32' },
+    { name: 'aiInfluence', type: 'f32', comment: '[SynaptiX] AI Tensor Mirror params' },
     { name: 'resonanceThreshold', type: 'f32' },
     { name: 'synaptiXActive', type: 'f32' },
-    { name: 'fiberCoupling', type: 'f32' },
-    { name: '_reserved0', type: 'f32' }, { name: '_reserved1', type: 'f32' },
-    { name: '_reserved2', type: 'f32' }, { name: '_reserved3', type: 'f32' },
-    { name: '_reserved4', type: 'f32' }, { name: '_reserved5', type: 'f32' },
-    { name: '_reserved6', type: 'f32' }, { name: '_reserved7', type: 'f32' },
-    { name: '_reserved8', type: 'f32' }, { name: '_reserved9', type: 'f32' },
-    { name: '_reserved10', type: 'f32' }, { name: '_reserved11', type: 'f32' },
-    { name: '_reserved12', type: 'f32' }, { name: '_reserved13', type: 'f32' },
-    { name: '_reserved14', type: 'f32' }, { name: '_reserved15', type: 'f32' },
-    { name: 'stimulusRadius', type: 'f32' },
-    { name: 'stimulusErase', type: 'f32' },
+    { name: 'fiberCoupling', type: 'f32', comment: '[V3.2] Fiber-volume coupling' },
+    { name: 'cognitiveDissonance', type: 'f32' },
+    { name: 'pad3', type: 'f32' },
+    { name: 'decayRate', type: 'f32', comment: '[Phase 21] Neuromodulator physics' },
+    { name: 'diffusionRate', type: 'f32' },
+    { name: 'pulseSaturation', type: 'f32' },
+    { name: 'trailLength', type: 'f32' },
+    { name: 'retentionBias', type: 'vec4', comment: 'x=frontal, y=occipital, z=temporal, w=parietal' },
+    { name: 'lesionCenter', type: 'vec3' },
+    { name: 'lesionActive', type: 'f32' },
+    { name: 'lesionRadius', type: 'f32' },
+    { name: 'decimation', type: 'f32' },
+    { name: 'stimulusRadius', type: 'f32', comment: '[Paint Energy] brush radius (0 = legacy fixed sigma 0.5)' },
+    { name: 'stimulusErase', type: 'f32', comment: '[Paint Energy] erase/damping mode flag (>0.5 = erase)' },
 ];
 
 /**
@@ -163,6 +175,9 @@ export function computeStructOffsets(layout) {
         if (!info) {
             throw new Error(`[UniformLayout] Unknown WGSL type '${field.type}' for field '${field.name}'`);
         }
+        if (offsets[field.name] !== undefined) {
+            throw new Error(`[UniformLayout] Duplicate field name '${field.name}'`);
+        }
         byteOffset = alignUp(byteOffset, info.align);
         offsets[field.name] = byteOffset / 4;
         byteOffset += info.size;
@@ -172,99 +187,78 @@ export function computeStructOffsets(layout) {
     return { offsets, totalFloats: alignUp(byteOffset, maxAlign) / 4 };
 }
 
-const isDev = typeof import.meta !== 'undefined' && !!(import.meta.env && import.meta.env.DEV);
-
-function checkLayoutMatch(layout, layoutFileLabel, actualOffsets, actualFloatCount) {
-    const { offsets: expected, totalFloats } = computeStructOffsets(layout);
-    const mismatches = [];
-
-    for (const [name, expectedOffset] of Object.entries(expected)) {
-        const actual = actualOffsets[name];
-        if (actual === undefined) {
-            mismatches.push(`'${name}' is missing from actualOffsets (expected float offset ${expectedOffset})`);
-        } else if (actual !== expectedOffset) {
-            mismatches.push(`'${name}' is at float offset ${actual}, WGSL struct requires ${expectedOffset}`);
-        }
-    }
-
-    for (const name of Object.keys(actualOffsets)) {
-        if (!(name in expected)) {
-            mismatches.push(`'${name}' is written by JS but is not a field of ${layoutFileLabel}`);
-        }
-    }
-
-    if (actualFloatCount !== undefined && actualFloatCount !== totalFloats) {
-        mismatches.push(`total float count is ${actualFloatCount}, WGSL struct requires ${totalFloats}`);
-    }
-
-    if (mismatches.length > 0) {
-        throw new Error(
-            `[UniformLayout] JS uniform offsets no longer match the canonical WGSL struct ` +
-            `(src/shaders/uniform-layout.js). This causes silent data corruption on the GPU. Mismatches:\n  ` +
-            mismatches.join('\n  ')
-        );
-    }
-}
-
 /**
- * Dev-only guard: throws if the JS-side `Float32Array` offsets used to
- * populate the render uniform buffer (the OFFSET_* constants in
- * brain-renderer/uniforms.js) have drifted from the offsets the canonical
- * WGSL struct actually requires. No-op outside dev builds.
+ * Emits the WGSL `struct <name> { ... }` declaration for `layout`, with the
+ * WGSL-computed byte offset of each field in a trailing comment. This is the
+ * only place a Uniforms/TensorParams struct is written; shaders interpolate
+ * the result.
  *
- * @param {Object<string, number>} actualOffsets - Field name -> float offset, as currently written by updateUniforms().
- * @param {number} [actualFloatCount] - The JS-side RENDER_UNIFORM_FLOAT_COUNT, checked against the computed struct size.
+ * @param {string} name - WGSL struct name.
+ * @param {UniformLayoutField[]} layout
+ * @returns {string} WGSL source for the struct declaration.
  */
-export function assertUniformLayout(actualOffsets, actualFloatCount) {
-    if (!isDev) return;
-    checkLayoutMatch(RENDER_UNIFORM_LAYOUT, 'RENDER_UNIFORM_LAYOUT', actualOffsets, actualFloatCount);
+export function generateStructWGSL(name, layout) {
+    const { offsets } = computeStructOffsets(layout);
+    const lines = [
+        '// [Neuro-Weaver] GENERATED from src/shaders/uniform-layout.js — do not hand-edit.',
+        `struct ${name} {`,
+    ];
+    for (const field of layout) {
+        const byteOffset = offsets[field.name] * 4;
+        const note = field.comment ? ` ${field.comment} —` : '';
+        lines.push(`    ${field.name}: ${WGSL_TYPE_INFO[field.type].wgsl}, //${note} byte offset ${byteOffset}`);
+    }
+    lines.push('}');
+    return lines.join('\n');
 }
 
+const renderLayout = computeStructOffsets(RENDER_UNIFORM_LAYOUT);
+const computeLayout = computeStructOffsets(COMPUTE_UNIFORM_LAYOUT);
+
 /**
- * Dev-only guard: same as assertUniformLayout(), but for the compute
- * `TensorParams` struct (COMPUTE_UNIFORM_LAYOUT above) — specifically added
- * to verify the [Paint Energy] `stimulusRadius`/`stimulusErase` offsets
- * against CLAUDE.md's "WGSL Struct Alignment & Padding" hotspot. Only the
- * fields passed in `actualOffsets` are checked, so callers may check a
- * subset of COMPUTE_UNIFORM_LAYOUT without needing to model every
- * pre-existing offset (see the drift note on COMPUTE_UNIFORM_LAYOUT).
- *
- * @param {Object<string, number>} actualOffsets
+ * Float32Array index of every render-uniform field. brain-renderer/uniforms.js
+ * writes exclusively through this map — there are no handwritten OFFSET_*
+ * constants left to drift.
+ * @type {Object<string, number>}
  */
-export function assertComputeUniformLayout(actualOffsets) {
-    if (!isDev) return;
-    const { offsets: expected } = computeStructOffsets(COMPUTE_UNIFORM_LAYOUT);
-    const mismatches = [];
-    for (const [name, actual] of Object.entries(actualOffsets)) {
-        const expectedOffset = expected[name];
-        if (expectedOffset === undefined) {
-            mismatches.push(`'${name}' is not a field of COMPUTE_UNIFORM_LAYOUT`);
-        } else if (actual !== expectedOffset) {
-            mismatches.push(`'${name}' is at float offset ${actual}, WGSL struct requires ${expectedOffset}`);
-        }
-    }
-    if (mismatches.length > 0) {
-        throw new Error(
-            `[UniformLayout] JS compute-uniform offsets no longer match the canonical WGSL TensorParams struct ` +
-            `(src/shaders/uniform-layout.js). This causes silent data corruption on the GPU. Mismatches:\n  ` +
-            mismatches.join('\n  ')
-        );
-    }
-}
+export const RENDER_UNIFORM_OFFSETS = Object.freeze(renderLayout.offsets);
 
-const FIELD_LINE_RE = /^\s*(\w+)\s*:\s*(f32|vec2<f32>|vec3<f32>|vec4<f32>|mat4x4<f32>)\s*,/gm;
+/** Total size of the render `Uniforms` struct, in Float32Array elements. */
+export const RENDER_UNIFORM_FLOAT_COUNT = renderLayout.totalFloats;
+
+/** Total size of the render `Uniforms` struct, in bytes (before GPU binding alignment). */
+export const RENDER_UNIFORM_BYTE_SIZE = RENDER_UNIFORM_FLOAT_COUNT * 4;
 
 /**
- * Extracts the ordered field-name list of the first `struct Uniforms { ... }`
- * block in a WGSL source string. Used to detect a shader whose Uniforms
- * struct has drifted from the canonical field order — see
- * `assertShaderUniformsMatch`.
+ * Float32Array index of every compute (`TensorParams`) field.
+ * @type {Object<string, number>}
+ */
+export const COMPUTE_UNIFORM_OFFSETS = Object.freeze(computeLayout.offsets);
+
+/** Total size of `TensorParams`, in Float32Array elements. */
+export const COMPUTE_UNIFORM_FLOAT_COUNT = computeLayout.totalFloats;
+
+/** Total size of `TensorParams`, in bytes. */
+export const COMPUTE_UNIFORM_BYTE_SIZE = COMPUTE_UNIFORM_FLOAT_COUNT * 4;
+
+/** The generated `struct Uniforms { ... }` WGSL, interpolated by every render shader. */
+export const UNIFORMS_STRUCT_WGSL = generateStructWGSL('Uniforms', RENDER_UNIFORM_LAYOUT);
+
+/** The generated `struct TensorParams { ... }` WGSL, interpolated by the compute shader. */
+export const TENSOR_PARAMS_STRUCT_WGSL = generateStructWGSL('TensorParams', COMPUTE_UNIFORM_LAYOUT);
+
+const FIELD_LINE_RE = /^\s*(\w+)\s*:\s*(f32|u32|vec2<f32>|vec3<f32>|vec4<f32>|mat4x4<f32>)\s*,/gm;
+
+/**
+ * Extracts the ordered field-name list of the first `struct <name> { ... }`
+ * block in a WGSL source string.
  *
  * @param {string} source - WGSL shader source (a template string from src/shaders/*.js).
+ * @param {string} [structName='Uniforms'] - Struct to look for.
  * @returns {string[]} Field names in declaration order.
  */
-export function extractUniformFieldOrder(source) {
-    const start = source.indexOf('struct Uniforms');
+export function extractUniformFieldOrder(source, structName = 'Uniforms') {
+    const start = source.indexOf(`struct ${structName}`);
     if (start === -1) return [];
     const bodyStart = source.indexOf('{', start);
     const bodyEnd = source.indexOf('}', bodyStart);
@@ -281,18 +275,19 @@ export function extractUniformFieldOrder(source) {
 }
 
 /**
- * Dev-only guard: throws if any named WGSL shader source's `struct Uniforms`
- * field order doesn't exactly match `RENDER_UNIFORM_LAYOUT`. Every pipeline
- * (surface, fiber, soma, spark, point-cloud, post) binds the *same*
- * `uniformBuffer` (see brain-renderer/pipelines.js), so a shader that
- * redeclares the struct with a different order silently reads the wrong
- * field values. No-op outside dev builds.
+ * Throws if any named WGSL shader source's `struct Uniforms` field order
+ * doesn't exactly match `RENDER_UNIFORM_LAYOUT`. Every pipeline binds the
+ * *same* uniform buffer (see brain-renderer/pipelines.js), so a shader that
+ * declares the struct with a different order silently reads the wrong field
+ * values.
+ *
+ * With the generated struct this can only fail if a shader re-introduces a
+ * handwritten declaration; tests/test_uniform_layout.js calls it over every
+ * live shader source in CI.
  *
  * @param {Object<string, string>} shaderSources - Shader name -> WGSL source string.
  */
 export function assertShaderUniformsMatch(shaderSources) {
-    if (!isDev) return;
-
     const canonical = RENDER_UNIFORM_LAYOUT.map((f) => f.name);
     const problems = [];
 

@@ -172,8 +172,9 @@
  * CLAUDE.md's "WGSL Struct Alignment & Padding" hotspot.
  *
  * @typedef {Object} UniformLayoutField
- * @property {string} name - Field name, matching the WGSL struct member and (for render uniforms) the OFFSET_* constant / `this.params` key in brain-renderer/uniforms.js.
- * @property {'f32'|'vec3'|'vec4'|'mat4x4'} type - WGSL scalar/vector/matrix type; determines WGSL uniform-address-space alignment (f32=4, vec3=16, vec4=16, mat4x4=16) and size in bytes.
+ * @property {string} name - Field name, emitted verbatim into the generated WGSL struct and used as the key in RENDER_UNIFORM_OFFSETS / COMPUTE_UNIFORM_OFFSETS.
+ * @property {'f32'|'u32'|'vec2'|'vec3'|'vec4'|'mat4x4'} type - WGSL scalar/vector/matrix type; determines WGSL uniform-address-space alignment (f32/u32=4, vec2=8, vec3/vec4/mat4x4=16) and size in bytes.
+ * @property {string} [comment] - Optional note emitted as a trailing comment on the generated WGSL field.
  */
 
 /**

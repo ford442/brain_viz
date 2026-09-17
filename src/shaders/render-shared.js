@@ -4,9 +4,10 @@
 // soma, spark, volumetric-compute, point-cloud, post-fx). Split out of the
 // former monolithic shaders.js.
 //
-// NOTE: this is distinct from ./shared.js, which backs the separately
-// maintained shaders/fiber.js pipeline and has a different (4-arg)
-// getRegionPhysics signature. Do not conflate the two.
+// This is the ONLY shared WGSL helper module. The former ./shared.js twin —
+// which backed a parallel shader tree with a different 4-arg
+// getRegionPhysics signature — has been deleted; every pipeline, fiber
+// included, now uses the 2-arg getRegionPhysics below. Do not re-fork it.
 
 // --- SHARED CONSTANTS ---
 // These are interpolated into the shader strings.

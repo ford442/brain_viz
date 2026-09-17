@@ -2,58 +2,14 @@
 // [Neuro-Weaver] Compute shader updating the volumetric tensor buffer (signal propagation/diffusion).
 // Split out of the former monolithic shaders.js.
 import { CONSTANTS, HELPERS } from './render-shared.js';
+import { TENSOR_PARAMS_STRUCT_WGSL } from './uniform-layout.js';
 
 export const computeShader = `
 // V3.2 Compute Logic: Multi-direction fiber-coupled diffusion
 ${CONSTANTS}
 ${HELPERS}
 
-struct TensorParams {
-    time: f32,
-    voxelDim: u32,
-    frequency: f32,
-    amplitude: f32,
-    spikeThreshold: f32,
-    smoothing: f32,
-    style: f32,
-    // Implicit padding (28 -> 32) aligns stimulusPos to 16 bytes.
-    // V2.2 Stimulus Fields (offset 32)
-    stimulusPos: vec3<f32>,
-    stimulusActive: f32,
-    // Altitude/Hypoxia parameters for compute shader physics
-    hypoxiaStress: f32,
-    metabolicRate: f32,
-    mitochondrialFunction: f32,
-    // Environmental hazards + cognitive state (matches JS layout)
-    fluidActive: f32,        // offset 60
-    electricalActive: f32,   // offset 64
-    mercuryActive: f32,      // offset 68
-    cognitiveLoad: f32,      // offset 72
-    stress: f32,             // offset 76
-    heavyMetal: f32,         // offset 80
-    pad2: f32,               // offset 84
-    // [SynaptiX] AI Tensor Mirror params (offset 88)
-    aiInfluence: f32,
-    resonanceThreshold: f32,
-    synaptiXActive: f32,
-    // [V3.2] Fiber-volume coupling (offset 100)
-    fiberCoupling: f32,
-    // Offsets 104-167 are written by JS (uniforms.js) for neuromodulator/
-    // lesion params this compute shader does not consume (pre-existing
-    // drift, out of scope for Paint Energy). Scalar filler keeps every
-    // subsequent field's byte offset correct — do NOT collapse into an
-    // array<f32,N>, which would force 16-byte stride in the uniform address
-    // space and silently shift stimulusRadius/stimulusErase below.
-    _reserved0: f32, _reserved1: f32, _reserved2: f32, _reserved3: f32,
-    _reserved4: f32, _reserved5: f32, _reserved6: f32, _reserved7: f32,
-    _reserved8: f32, _reserved9: f32, _reserved10: f32, _reserved11: f32,
-    _reserved12: f32, _reserved13: f32, _reserved14: f32, _reserved15: f32,
-    // [Paint Energy] offset 168: brush radius (0 = legacy fixed sigma 0.5,
-    // used by single-click/region-button callers that don't pass a radius).
-    // offset 172: erase/damping mode flag (>0.5 = erase).
-    stimulusRadius: f32,
-    stimulusErase: f32,
-}
+${TENSOR_PARAMS_STRUCT_WGSL}
 
 @group(0) @binding(0) var<storage, read_write> activityTensor: array<f32>;
 @group(0) @binding(1) var<uniform> params: TensorParams;

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "test": "node tests/test_uniform_layout.js && node tests/test_shader.js",
     "prebuild": "bash scripts/check_wasm.sh",
     "build": "npm run build:web",
     "build:web": "vite build",

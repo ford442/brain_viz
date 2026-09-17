@@ -43,7 +43,7 @@ The bind group entries array becomes:
 ```
 
 ### 2.3 Uniform Buffer Expansion
-- Change `RENDER_UNIFORM_FLOAT_COUNT` from `64` to `68`
+- Add the new fields to `RENDER_UNIFORM_LAYOUT` in `src/shaders/uniform-layout.js`. `RENDER_UNIFORM_FLOAT_COUNT`, the WGSL `Uniforms` struct, and the JS write offsets are all generated from it — there is no float count to bump by hand.
 - New fields at end of `Uniforms` struct (all WGSL shaders):
   - `aiInfluence: f32` — blend weight (0 = all human, 1 = all AI)
   - `resonanceThreshold: f32` — threshold for resonance bursts
@@ -111,7 +111,7 @@ Add `aiTensor` binding after `activityTensor`:
 @group(0) @binding(2) var<storage, read> aiTensor: array<f32>;
 ```
 
-Add to `Uniforms` struct at the end:
+Add to `RENDER_UNIFORM_LAYOUT` (`src/shaders/uniform-layout.js`) at the end; the generated `Uniforms` struct picks it up in every shader:
 ```wgsl
 aiInfluence: f32,
 resonanceThreshold: f32,
@@ -157,7 +157,7 @@ Add `aiTensor` binding:
 @group(0) @binding(2) var<storage, read> aiTensor: array<f32>;
 ```
 
-Add to `Uniforms` struct at the end:
+Add to `RENDER_UNIFORM_LAYOUT` (`src/shaders/uniform-layout.js`) at the end; the generated `Uniforms` struct picks it up in every shader:
 ```wgsl
 aiInfluence: f32,
 resonanceThreshold: f32,
@@ -207,7 +207,7 @@ Add `aiTensor` binding:
 @group(0) @binding(2) var<storage, read> aiTensor: array<f32>;
 ```
 
-Add to `Uniforms` struct at the end:
+Add to `RENDER_UNIFORM_LAYOUT` (`src/shaders/uniform-layout.js`) at the end; the generated `Uniforms` struct picks it up in every shader:
 ```wgsl
 aiInfluence: f32,
 resonanceThreshold: f32,
@@ -235,7 +235,7 @@ if (uniforms.style >= 4.0) {
 
 ### 3.5 Soma Fragment Shader (`somaFragmentShader`)
 
-Add to `Uniforms` struct at the end:
+Add to `RENDER_UNIFORM_LAYOUT` (`src/shaders/uniform-layout.js`) at the end; the generated `Uniforms` struct picks it up in every shader:
 ```wgsl
 aiInfluence: f32,
 resonanceThreshold: f32,
@@ -250,7 +250,7 @@ Add `aiTensor` binding:
 @group(0) @binding(2) var<storage, read> aiTensor: array<f32>;
 ```
 
-Add to `Uniforms` struct at the end:
+Add to `RENDER_UNIFORM_LAYOUT` (`src/shaders/uniform-layout.js`) at the end; the generated `Uniforms` struct picks it up in every shader:
 ```wgsl
 aiInfluence: f32,
 resonanceThreshold: f32,
@@ -273,7 +273,7 @@ if (uniforms.style >= 4.0) {
 
 ### 3.7 Spark Fragment Shader (`sparkFragmentShader`)
 
-Add to `Uniforms` struct at the end:
+Add to `RENDER_UNIFORM_LAYOUT` (`src/shaders/uniform-layout.js`) at the end; the generated `Uniforms` struct picks it up in every shader:
 ```wgsl
 aiInfluence: f32,
 resonanceThreshold: f32,
@@ -283,7 +283,7 @@ pad3: f32,
 
 ### 3.8 Post Fragment Shader (`postFragmentShader`)
 
-Add to `Uniforms` struct at the end:
+Add to `RENDER_UNIFORM_LAYOUT` (`src/shaders/uniform-layout.js`) at the end; the generated `Uniforms` struct picks it up in every shader:
 ```wgsl
 aiInfluence: f32,
 resonanceThreshold: f32,

@@ -9,7 +9,7 @@
 // those files for the actual shader code.
 
 export { vertexShader, fragmentShader } from './shaders/mesh.js';
-export { fiberVertexShader, fiberFragmentShader } from './shaders/mesh-fiber.js';
+export { fiberVertexShader, fiberFragmentShader } from './shaders/fiber.js';
 export { somaVertexShader, somaFragmentShader } from './shaders/soma-render.js';
 export { sparkVertexShader, sparkFragmentShader } from './shaders/spark-render.js';
 export { computeShader } from './shaders/volumetric-compute.js';

@@ -2,68 +2,13 @@
 // [Neuro-Weaver] Primary brain-surface mesh shaders (Organic/Cyber/Heatmap/SynaptiX styles).
 // Split out of the former monolithic shaders.js.
 import { CONSTANTS, HELPERS } from './render-shared.js';
+import { UNIFORMS_STRUCT_WGSL } from './uniform-layout.js';
 
 export const vertexShader = `
 ${CONSTANTS}
 ${HELPERS}
 
-struct Uniforms {
-    mvpMatrix: mat4x4<f32>,
-    modelMatrix: mat4x4<f32>,
-    time: f32,
-    style: f32,
-    flowSpeed: f32, // V2.3: Controls pulse speed
-    colorShift: f32, // [Phase 5] Serotonin Color Shift
-    dopamineTrails: f32,
-    slicePlane: vec4<f32>, // [Neuro-Weaver] V2.6: Renamed from clipPlane
-    sparkle: f32, // [Phase 5] Synaptic Sparkles
-    growth: f32, // [Phase 6] Dendritic Growth
-    aberration: f32, // [Phase 7] Chromatic Aberration
-    grain: f32, // [Phase 7] Film Grain
-    focus: f32, // [Phase 7] Focus Distance
-    aperture: f32, // [Phase 7] Aperture Size,
-    lightDir: vec3<f32>, // [Phase 2] Directional Light
-    ambientLight: f32, // [Phase 2] Ambient Light Intensity
-    dirIntensity: f32, // [Phase 2] Directional Light Intensity
-    stress: f32, // Cognitive Stress Distortion
-    cortisol: f32, // [Phase 5] Cortisol Structural Decay
-    // Altitude/Hypoxia Parameters
-    altitude: f32, // Altitude in meters
-    oxygenLevel: f32, // Oxygen saturation (1.0-0.3)
-    hypoxiaStress: f32, // Cellular stress response
-    metabolicRate: f32, // ATP consumption multiplier
-    mitochondrialFunction: f32, // ATP synthesis efficiency
-    fogDensity: f32, // Volumetric Fog
-    zoom: f32, // Camera zoom for distance math
-    heavyMetal: f32,
-    fluidActive: f32, // Procedural Volumetric Fluid Dynamics
-    aiInfluence: f32,
-    resonanceThreshold: f32,
-    synaptiXActive: f32,
-    aiLayer: f32,
-    pointCloudDensity: f32,
-    fiberCoupling: f32,
-    connectomeVariant: f32,
-    tmsActive: f32,
-    tmsCenter: vec3<f32>,
-    tmsPulse: f32,
-    tmsRadius: f32,
-    edgeDetection: f32,
-    pulseSaturation: f32,
-    trailLength: f32,
-    lesionCenter: vec3<f32>,
-    lesionActive: f32,
-    lesionRadius: f32,
-    decimation: f32,
-    psychedelic: f32,
-    immuneActivity: f32,
-    plasticityDecay: f32,
-    visualFatigue: f32,
-    sensoryDeprivation: f32,
-    spatialMemory: f32,
-    apoptosis: f32,
-    particleSpeed: f32,
-}
+${UNIFORMS_STRUCT_WGSL}
 
 struct VertexInput {
     @location(0) position: vec3<f32>,
@@ -290,61 +235,7 @@ export const fragmentShader = `
 ${CONSTANTS}
 ${HELPERS}
 
-struct Uniforms {
-    mvpMatrix: mat4x4<f32>,
-    modelMatrix: mat4x4<f32>,
-    time: f32,
-    style: f32,
-    flowSpeed: f32,
-    colorShift: f32, // [Phase 5]
-    dopamineTrails: f32,
-    slicePlane: vec4<f32>, // [Neuro-Weaver] V2.6: Renamed from clipPlane
-    sparkle: f32, // [Phase 5] Synaptic Sparkles
-    growth: f32, // [Phase 6]
-    aberration: f32, // [Phase 7]
-    grain: f32, // [Phase 7],
-    lightDir: vec3<f32>, // [Phase 2]
-    ambientLight: f32, // [Phase 2]
-    dirIntensity: f32, // [Phase 2]
-    stress: f32,
-    cortisol: f32,
-    // Altitude/Hypoxia Parameters
-    altitude: f32,
-    oxygenLevel: f32,
-    hypoxiaStress: f32,
-    metabolicRate: f32,
-    mitochondrialFunction: f32,
-    fogDensity: f32,
-    zoom: f32,
-    heavyMetal: f32,
-    fluidActive: f32,
-    aiInfluence: f32,
-    resonanceThreshold: f32,
-    synaptiXActive: f32,
-    aiLayer: f32,
-    pointCloudDensity: f32,
-    fiberCoupling: f32,
-    connectomeVariant: f32,
-    tmsActive: f32,
-    tmsCenter: vec3<f32>,
-    tmsPulse: f32,
-    tmsRadius: f32,
-    edgeDetection: f32,
-    pulseSaturation: f32,
-    trailLength: f32,
-    lesionCenter: vec3<f32>,
-    lesionActive: f32,
-    lesionRadius: f32,
-    decimation: f32,
-    psychedelic: f32,
-    immuneActivity: f32,
-    plasticityDecay: f32,
-    visualFatigue: f32,
-    sensoryDeprivation: f32,
-    spatialMemory: f32,
-    apoptosis: f32,
-    particleSpeed: f32,
-}
+${UNIFORMS_STRUCT_WGSL}
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var<storage, read> activityTensor: array<f32>;
 @group(0) @binding(2) var<storage, read> aiTensor: array<f32>;
