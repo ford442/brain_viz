@@ -3,21 +3,28 @@ import { vertexShader, fragmentShader, computeShader, somaVertexShader, somaFrag
 import { RENDER_UNIFORM_BUFFER_SIZE, COMPUTE_UNIFORM_BUFFER_SIZE } from './constants.js';
 import { immuneVertexShader, immuneFragmentShader } from '../shaders/immune.js';
 import { createImmunePool, IMMUNE_STRIDE } from '../immune-particles.js';
+import { fiberAffinityByteLengthFor, tensorByteLengthFor } from '../voxel-dim.js';
 
 export function applyPipelineMethods(Target) {
-    Target.prototype.initVolumetricResources = function() {
+    /**
+     * [Field Resolution] Creates the three buffers whose size is a function of
+     * `voxelCount`. Split out of initVolumetricResources() so setVoxelDim()
+     * can rebuild exactly these — the uniform buffers below are dim-independent
+     * and must survive a resolution change.
+     */
+    Target.prototype.createTensorStorageBuffers = function() {
         // VOXEL DATA
         // [Neuro-Weaver] 3D Texture Evolution: Flattened storage buffer for volumetric data
         this.voxelBufferSize = this.voxelCount;
 
         // Create Storage Buffer for Tensor Data (Read/Write in Compute, Read-Only in Vertex)
         this.tensorBuffer = this.device.createBuffer({
-    size: this.voxelBufferSize * 4, // 32x32x32 floats
+    size: tensorByteLengthFor(this.voxelDim),
     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC
         });
 
         this.aiTensorBuffer = this.device.createBuffer({
-    size: this.voxelBufferSize * 4,
+    size: tensorByteLengthFor(this.voxelDim),
     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
         });
         // Initialize with zeros
@@ -25,9 +32,13 @@ export function applyPipelineMethods(Target) {
 
         // [V3.2] Fiber Affinity Buffer: 3 vec4s per voxel (xyz=dir, w=weight) from actual bundles
         this.fiberDirectionBuffer = this.device.createBuffer({
-    size: this.voxelCount * 12 * 4, // 3 vec4<f32> per voxel
+    size: fiberAffinityByteLengthFor(this.voxelDim),
     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
         });
+    };
+
+    Target.prototype.initVolumetricResources = function() {
+        this.createTensorStorageBuffers();
 
         // Named-pathway state is deliberately separate from the shared render
         // uniform contract: two aligned vec4 blocks (control + transmitter color).
@@ -62,7 +73,7 @@ export function applyPipelineMethods(Target) {
 
     Target.prototype.uploadFiberDirections = function(geometry) {
         const data = geometry.getFiberAffinityData();
-        if (data && data.byteLength === this.voxelCount * 12 * 4) {
+        if (data && data.byteLength === fiberAffinityByteLengthFor(this.voxelDim)) {
     this.device.queue.writeBuffer(this.fiberDirectionBuffer, 0, data);
     // [Tensor Physics] Kept so the WASM engine can be given the same tract
     // geometry the compute shader reads. Without it the C++ field diffuses
@@ -302,21 +313,28 @@ export function applyPipelineMethods(Target) {
         });
     };
 
-    Target.prototype.initComputePipeline = function() {
-        // Compute Pipeline with Fiber Direction Buffer for Anisotropic Diffusion
-        const computeLayout = this.device.createBindGroupLayout({
-     entries: [{ binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
-               { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
-               { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
-               { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } }]
-        });
+    /** [Field Resolution] (Re)creates the compute bind group; see createRenderBindGroups(). */
+    Target.prototype.createComputeBindGroup = function() {
         this.computeBindGroup = this.device.createBindGroup({
-    layout: computeLayout,
+    layout: this.computeBindGroupLayout,
     entries: [{ binding: 0, resource: { buffer: this.tensorBuffer } },
               { binding: 1, resource: { buffer: this.computeUniformBuffer } },
               { binding: 2, resource: { buffer: this.fiberDirectionBuffer } },
               { binding: 3, resource: { buffer: this.aiTensorBuffer } }]
         });
+    };
+
+    Target.prototype.initComputePipeline = function() {
+        // Compute Pipeline with Fiber Direction Buffer for Anisotropic Diffusion
+        // [Field Resolution] Layout kept on `this` so setVoxelDim() can rebuild
+        // the bind group against resized buffers without rebuilding the pipeline.
+        const computeLayout = this.computeBindGroupLayout = this.device.createBindGroupLayout({
+     entries: [{ binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+               { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
+               { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
+               { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } }]
+        });
+        this.createComputeBindGroup();
         this.computePipeline = this.device.createComputePipeline({
     layout: this.device.createPipelineLayout({ bindGroupLayouts: [computeLayout] }),
     compute: { module: this.device.createShaderModule({ code: computeShader }), entryPoint: 'main' }

@@ -1,3 +1,4 @@
+import { inferVoxelDim } from './voxel-dim.js';
 export class Tensor {
     constructor(data, shape) {
         if (!(data instanceof Float32Array)) {
@@ -78,7 +79,7 @@ function classifyVoxelLobe(wx, wy, wz) {
  * @param {number} voxelDim
  * @returns {Object<string, {mean: number, variance: number, count: number}>}
  */
-export function computeLobeStats(tensorData, voxelDim = 32) {
+export function computeLobeStats(tensorData, voxelDim = inferVoxelDim(tensorData)) {
     const sums = {};
     const sumSquares = {};
     const counts = {};

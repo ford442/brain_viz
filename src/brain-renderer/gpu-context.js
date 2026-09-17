@@ -8,6 +8,7 @@
 // module only creates, configures, and tears it down.
 
 import { RENDER_UNIFORM_BUFFER_SIZE, COMPUTE_UNIFORM_BUFFER_SIZE } from './constants.js';
+import { MAX_VOXEL_DIM, voxelCountFor } from '../voxel-dim.js';
 
 /**
  * Device features we actually consume.
@@ -38,11 +39,21 @@ export const OPTIONAL_GPU_FEATURES = ['timestamp-query'];
  * WebGPU default is harmless too — maximum limits are clamped up to the default
  * — so these values document what the renderer needs rather than capping it.
  *
+ * [Field Resolution] The limits are derived from the *largest* resolution this
+ * build supports, not from the resolution the renderer happens to boot at.
+ * Device limits are fixed for the device's lifetime, so sizing them to the
+ * 32³ default would make `setVoxelDim(64)` impossible without tearing down and
+ * recreating the device (and with it every pipeline, buffer and canvas
+ * configuration). Headroom for 64³ costs nothing on any adapter that can
+ * already run 32³ — the values are maximums, not reservations.
+ *
  * @param {GPUAdapter} adapter
- * @param {{ voxelCount: number }} opts
+ * @param {{ voxelCount?: number }} [opts] - Ignored for sizing; accepted so
+ *   callers that still pass the boot-time voxel count keep working.
  */
-export function deriveRequiredLimits(adapter, { voxelCount }) {
+export function deriveRequiredLimits(adapter, opts = {}) {
     const adapterLimits = adapter.limits;
+    const voxelCount = voxelCountFor(MAX_VOXEL_DIM);
     // Largest storage binding: the fiber-direction buffer is 3 vec4<f32> per voxel.
     const maxStorageBytes = voxelCount * 12 * 4;
     // Largest uniform binding across the render / compute contracts.

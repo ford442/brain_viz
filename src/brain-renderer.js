@@ -10,6 +10,8 @@ import { applyRenderLoopMethods } from './brain-renderer/render-loop.js';
 import { applyCoreMethods } from './brain-renderer/core-methods.js';
 import { applySynaptiXBridgeMethods } from './brain-renderer/synaptix-bridges.js';
 import { applyPathwayMethods, createPathwayState } from './pathway-renderer.js';
+import { applyResolutionMethods } from './brain-renderer/resolution.js';
+import { DEFAULT_VOXEL_DIM, voxelCountFor } from './voxel-dim.js';
 
 /**
  * WebGPU renderer. Implements the shared `BrainRendererFacade` documented in
@@ -71,7 +73,7 @@ export class BrainRenderer {
         // instead of the WebGPU compute shader.  Falls back to WebGPU automatically
         // if the WASM build has not been run or the browser does not support it.
         this.wasmMode   = false;
-        this.wasmEngine = new WasmTensorEngine(32); // lazy-initialised on first enable
+        this.wasmEngine = new WasmTensorEngine(DEFAULT_VOXEL_DIM); // lazy-initialised on first enable
 
         this.params = {
             cognitiveLoad: 0.0, // [Phase 9] Visual Cortex Fatigue (Dynamic LoD)
@@ -155,9 +157,12 @@ export class BrainRenderer {
         };
 
         // Voxel Grid Settings
-        // 32x32x32 flattened buffer
-        this.voxelDim = 32;
-        this.voxelCount = this.voxelDim * this.voxelDim * this.voxelDim;
+        // [Field Resolution] Runtime, not a constant: setVoxelDim() rebuilds
+        // every dim-sized GPU buffer, bind group and WASM engine. The device
+        // is provisioned for MAX_VOXEL_DIM up front (see gpu-context.js) so a
+        // switch never needs a new device. Default is unchanged at 32³.
+        this.voxelDim = DEFAULT_VOXEL_DIM;
+        this.voxelCount = voxelCountFor(this.voxelDim);
         this._lastHumanTensor = new Float32Array(this.voxelCount);
         this._lastAITensor = new Float32Array(this.voxelCount);
         this.synaptixCouplingState = null;
@@ -203,3 +208,4 @@ applyRenderLoopMethods(BrainRenderer);
 applyCoreMethods(BrainRenderer);
 applySynaptiXBridgeMethods(BrainRenderer);
 applyPathwayMethods(BrainRenderer);
+applyResolutionMethods(BrainRenderer);

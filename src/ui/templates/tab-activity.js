@@ -152,6 +152,21 @@ export function renderActivityTab() {
                         </button>
                         <div id="wasm-status" style="font-size:10px;color:#556677;margin-top:4px;"></div>
                     </div>
+
+                    <!-- [Field Resolution] Runtime neural-field grid resolution -->
+                    <div class="control-group">
+                        <label data-tooltip="Grid resolution of the neural field. Higher is finer but costs dim³: 64³ is 8× the voxels of 32³. Switching resamples the live field rather than resetting it.">
+                            Field Resolution
+                        </label>
+                        <select id="select-voxel-dim"
+                            style="width:100%;padding:8px;background:#0a1a2a;border:1px solid rgba(0,200,180,0.3);
+                                   border-radius:6px;color:#99aabb;font-size:12px;cursor:pointer;">
+                            <option value="32">32³ — 32,768 voxels (default)</option>
+                            <option value="48">48³ — 110,592 voxels</option>
+                            <option value="64">64³ — 262,144 voxels</option>
+                        </select>
+                        <div id="voxel-dim-status" style="font-size:10px;color:#556677;margin-top:4px;"></div>
+                    </div>
                 </div>
             </div>`;
 }

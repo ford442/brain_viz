@@ -1,12 +1,13 @@
 // src/shaders/soma-render.js
 // [Neuro-Weaver] Instanced soma (cell body) shaders.
 // Split out of the former monolithic shaders.js.
-import { CONSTANTS } from './render-shared.js';
+import { CONSTANTS, VOXEL_DIM_FROM_UNIFORMS } from './render-shared.js';
 import { UNIFORMS_STRUCT_WGSL } from './uniform-layout.js';
 
 export const somaVertexShader = `
 // [V3.1] Instanced Soma Logic with hierarchical types, elongation, and firing spikes
 ${CONSTANTS}
+${VOXEL_DIM_FROM_UNIFORMS}
 
 ${UNIFORMS_STRUCT_WGSL}
 
@@ -33,15 +34,15 @@ struct VertexOutput {
 fn getVoxelValue(worldPos: vec3<f32>) -> f32 {
     let normPos = (worldPos / BRAIN_RANGE) * 0.5 + 0.5;
     if (any(normPos < vec3<f32>(0.0)) || any(normPos > vec3<f32>(1.0))) { return 0.0; }
-    let x = u32(normPos.x * f32(VOXEL_DIM));
-    let y = u32(normPos.y * f32(VOXEL_DIM));
-    let z = u32(normPos.z * f32(VOXEL_DIM));
-    let index = min(z, VOXEL_DIM-1u) * VOXEL_DIM * VOXEL_DIM + min(y, VOXEL_DIM-1u) * VOXEL_DIM + min(x, VOXEL_DIM-1u);
+    let x = u32(normPos.x * f32(voxel_dim()));
+    let y = u32(normPos.y * f32(voxel_dim()));
+    let z = u32(normPos.z * f32(voxel_dim()));
+    let index = min(z, voxel_dim()-1u) * voxel_dim() * voxel_dim() + min(y, voxel_dim()-1u) * voxel_dim() + min(x, voxel_dim()-1u);
     return activityTensor[index];
 }
 
 fn sampleSmoothedVoxelValue(worldPos: vec3<f32>) -> f32 {
-    let step = (BRAIN_RANGE / f32(VOXEL_DIM)) * 0.45;
+    let step = (BRAIN_RANGE / f32(voxel_dim())) * 0.45;
     let center = getVoxelValue(worldPos);
     let neighbors =
         getVoxelValue(worldPos + vec3<f32>( step, 0.0, 0.0)) +
@@ -56,15 +57,15 @@ fn sampleSmoothedVoxelValue(worldPos: vec3<f32>) -> f32 {
 fn getAIVoxelValue(worldPos: vec3<f32>) -> f32 {
     let normPos = (worldPos / BRAIN_RANGE) * 0.5 + 0.5;
     if (any(normPos < vec3<f32>(0.0)) || any(normPos > vec3<f32>(1.0))) { return 0.0; }
-    let x = u32(normPos.x * f32(VOXEL_DIM));
-    let y = u32(normPos.y * f32(VOXEL_DIM));
-    let z = u32(normPos.z * f32(VOXEL_DIM));
-    let index = min(z, VOXEL_DIM-1u) * VOXEL_DIM * VOXEL_DIM + min(y, VOXEL_DIM-1u) * VOXEL_DIM + min(x, VOXEL_DIM-1u);
+    let x = u32(normPos.x * f32(voxel_dim()));
+    let y = u32(normPos.y * f32(voxel_dim()));
+    let z = u32(normPos.z * f32(voxel_dim()));
+    let index = min(z, voxel_dim()-1u) * voxel_dim() * voxel_dim() + min(y, voxel_dim()-1u) * voxel_dim() + min(x, voxel_dim()-1u);
     return aiTensor[index];
 }
 
 fn sampleSmoothedAIVoxelValue(worldPos: vec3<f32>) -> f32 {
-    let step = (BRAIN_RANGE / f32(VOXEL_DIM)) * 0.45;
+    let step = (BRAIN_RANGE / f32(voxel_dim())) * 0.45;
     let center = getAIVoxelValue(worldPos);
     let neighbors =
         getAIVoxelValue(worldPos + vec3<f32>( step, 0.0, 0.0)) +

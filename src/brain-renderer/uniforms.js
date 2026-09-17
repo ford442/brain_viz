@@ -159,6 +159,10 @@ export function applyUniformsMethods(Target) {
         uData[OFFSET_SPATIAL_MEMORY] = this.params.spatialMemory || 0.0;
         uData[OFFSET_APOPTOSIS] = this.params.apoptosis || 0.0;
         uData[OFFSET_PARTICLE_SPEED] = this.params.particleSpeed !== undefined ? this.params.particleSpeed : 1.0;
+        // [Field Resolution] The grid resolution the render pipelines index
+        // `activityTensor` at. Uploaded every frame rather than baked into the
+        // shader, so setVoxelDim() takes effect on the next frame.
+        uData[R.voxelDim] = this.voxelDim;
 
         // [SynaptiX Multi-Brain] Each avatar gets the same camera rotation but a
         // distinct local transform and tensor-only bind group.

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "test": "node tests/test_uniform_layout.js && node tests/test_shader.js && node tests/test_tensor_physics.js && npm run check:facade",
+    "test": "node tests/test_uniform_layout.js && node tests/test_shader.js && node tests/test_tensor_physics.js && node tests/test_voxel_dim.js && npm run check:facade",
     "test:golden": "bash scripts/test_golden.sh",
     "test:all": "npm test && npm run test:golden",
     "check:facade": "node scripts/check-renderer-facade.mjs",

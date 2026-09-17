@@ -1,7 +1,6 @@
 import { SynaptiXCouplingModel, SYNAPTIX_REGIONS } from './synaptix-coupling.js';
+import { DEFAULT_VOXEL_DIM, normalizeVoxelDim, voxelCountFor } from './voxel-dim.js';
 
-const VOXEL_DIM = 32;
-const VOXEL_COUNT = VOXEL_DIM ** 3;
 const BRAIN_RANGE = 1.6;
 
 /**
@@ -16,8 +15,13 @@ const BRAIN_RANGE = 1.6;
  * Extension point: pass a custom `projectorFn(activation, layerIdx, totalLayers)` to `setProjector()`.
  */
 export class AITensorProjector {
-    constructor() {
+    /**
+     * @param {number} [voxelDim] - Grid the projector emits into. Defaults to
+     *   32³; `SynaptiXEngine` keeps it in step with the renderer's field.
+     */
+    constructor(voxelDim = DEFAULT_VOXEL_DIM) {
         this.customProjector = null;
+        this.voxelDim = normalizeVoxelDim(voxelDim);
     }
 
     setProjector(fn) {
@@ -32,6 +36,8 @@ export class AITensorProjector {
     }
 
     defaultProject(activation, layerIndex, totalLayers) {
+        const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
+        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         // Normalize activation to Float32Array
         let flat;
         if (activation instanceof Float32Array) {
@@ -108,7 +114,11 @@ export class SynaptiXEngine {
     constructor(renderer) {
         this.renderer = renderer;
         this.currentPattern = null;
-        this.projector = new AITensorProjector();
+        // [Field Resolution] Phantoms and projections are generated at the
+        // renderer's live resolution, not a hardcoded 32³. `voxelDim` is a
+        // getter so a setVoxelDim() on the renderer is picked up without the
+        // engine having to be told about it.
+        this.projector = new AITensorProjector(this.voxelDim);
         this.fusionParticlesEnabled = true;
         this.frameSequence = [];       // Partner Float32Array frames
         this.avatarFrameSequence = []; // Optional paired avatar-A phantom frames
@@ -134,7 +144,26 @@ export class SynaptiXEngine {
         };
     }
 
+    /**
+     * [Field Resolution] The resolution every phantom, projection and incoming
+     * partner frame is validated against — the renderer's live `voxelDim`,
+     * read through rather than copied, so `renderer.setVoxelDim()` needs no
+     * corresponding call here.
+     * @returns {number}
+     */
+    get voxelDim() {
+        const dim = this.renderer?.voxelDim;
+        const resolved = normalizeVoxelDim(dim);
+        // Keep the projector in step; it is constructed before the first read.
+        if (this.projector && this.projector.voxelDim !== resolved) {
+            this.projector.voxelDim = resolved;
+        }
+        return resolved;
+    }
+
     setPartnerTensorData(data, sourceType = this.partnerSourceType || 'external') {
+        const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
+        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         if (data.length !== VOXEL_COUNT) {
             console.warn(`[SynaptiX] Tensor size mismatch: expected ${VOXEL_COUNT}, got ${data.length}`);
             return false;
@@ -220,6 +249,8 @@ export class SynaptiXEngine {
     // ── Frame Sequence Playback (token-level LLM trace) ──
 
     loadFrameSequence(frames) {
+        const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
+        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         // frames: Array<Float32Array> or Array<Array<number>>
         this.frameSequence = frames.map(f => {
             if (f instanceof Float32Array) return f;
@@ -327,6 +358,8 @@ export class SynaptiXEngine {
     }
 
     connectPartnerWebSocket(url, { WebSocketImpl = globalThis.WebSocket } = {}) {
+        const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
+        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         this.disconnectPartnerWebSocket();
         if (!WebSocketImpl) throw new Error('WebSocket is unavailable');
         const socket = new WebSocketImpl(url);
@@ -371,6 +404,8 @@ export class SynaptiXEngine {
     // ── Resonance Stats ──
 
     computeResonanceStats(humanTensor) {
+        const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
+        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         if ((this.renderer?.params?.style || 0) < 4.0) return this.resonanceStats;
         if (humanTensor && this.renderer?._lastAITensor) {
             const stats = this.couplingModel.update(performance.now(), humanTensor, this.renderer._lastAITensor);
@@ -462,6 +497,8 @@ export class SynaptiXEngine {
     }
 
     createPatternData(patternId) {
+        const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
+        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         const data = new Float32Array(VOXEL_COUNT);
         switch (patternId) {
             case 'attention-frontal':
@@ -555,6 +592,8 @@ export class SynaptiXEngine {
     }
 
     _parseTensorPayload(floatArray) {
+        const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
+        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         if (floatArray.length === VOXEL_COUNT) {
             return { tensor: floatArray, layerCount: 1, projected: false, sourceLength: floatArray.length };
         }
@@ -582,6 +621,8 @@ export class SynaptiXEngine {
     // ── Original Patterns ──
 
     _fillAttentionFrontal(data) {
+        const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
+        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         let idx = 0;
         for (let z = 0; z < VOXEL_DIM; z++) {
             for (let y = 0; y < VOXEL_DIM; y++) {
@@ -601,6 +642,8 @@ export class SynaptiXEngine {
     }
 
     _fillAttentionOccipital(data) {
+        const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
+        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         let idx = 0;
         for (let z = 0; z < VOXEL_DIM; z++) {
             for (let y = 0; y < VOXEL_DIM; y++) {
@@ -620,6 +663,8 @@ export class SynaptiXEngine {
     }
 
     _fillAttentionTemporal(data) {
+        const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
+        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         let idx = 0;
         for (let z = 0; z < VOXEL_DIM; z++) {
             for (let y = 0; y < VOXEL_DIM; y++) {
@@ -639,6 +684,8 @@ export class SynaptiXEngine {
     }
 
     _fillGradientExplode(data) {
+        const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
+        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         let idx = 0;
         for (let z = 0; z < VOXEL_DIM; z++) {
             for (let y = 0; y < VOXEL_DIM; y++) {
@@ -656,6 +703,8 @@ export class SynaptiXEngine {
     }
 
     _fillEmbeddingSpace(data) {
+        const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
+        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         let idx = 0;
         for (let z = 0; z < VOXEL_DIM; z++) {
             for (let y = 0; y < VOXEL_DIM; y++) {
@@ -673,6 +722,8 @@ export class SynaptiXEngine {
     // ── [NEW] Narrative Presets ──
 
     _fillAlignedPrefrontal(data) {
+        const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
+        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         // Human and AI agree: strong, clean frontal lobe activation
         let idx = 0;
         for (let z = 0; z < VOXEL_DIM; z++) {
@@ -693,6 +744,8 @@ export class SynaptiXEngine {
     }
 
     _fillHallucinationSpike(data) {
+        const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
+        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         // Chaotic high-frequency spikes = confabulation signature
         let idx = 0;
         for (let z = 0; z < VOXEL_DIM; z++) {
@@ -711,6 +764,8 @@ export class SynaptiXEngine {
     }
 
     _fillVisualMismatch(data) {
+        const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
+        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         // Occipital strong, but with phase-inverted interference pattern
         let idx = 0;
         for (let z = 0; z < VOXEL_DIM; z++) {
@@ -733,6 +788,8 @@ export class SynaptiXEngine {
     }
 
     _fillFullResonance(data) {
+        const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
+        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         // Broad, smooth activation across the whole brain = perfect alignment
         let idx = 0;
         for (let z = 0; z < VOXEL_DIM; z++) {

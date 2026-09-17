@@ -10,6 +10,8 @@ import { applyTensorSimMethods } from './brain-renderer-webgl/tensor-sim.js';
 import { applyDynamicBufferMethods } from './brain-renderer-webgl/dynamic-buffers.js';
 import { applyDrawMethods } from './brain-renderer-webgl/draw.js';
 import { applyLifecycleMethods } from './brain-renderer-webgl/lifecycle.js';
+import { applyResolutionMethods } from './brain-renderer-webgl/resolution.js';
+import { DEFAULT_VOXEL_DIM, voxelCountFor } from './voxel-dim.js';
 
 /**
  * WebGL2 fallback/debug renderer. Implements the shared `BrainRendererFacade`
@@ -49,8 +51,10 @@ export class BrainRendererWebGL {
         this.lastGeometryGenerationMs = 0;
         this.wasmMode = false;
         this.params = createDefaultParams();
-        this.voxelDim = 32;
-        this.voxelCount = this.voxelDim * this.voxelDim * this.voxelDim;
+        // [Field Resolution] Runtime, not a constant — see setVoxelDim() in
+        // ./brain-renderer-webgl/resolution.js. Default unchanged at 32³.
+        this.voxelDim = DEFAULT_VOXEL_DIM;
+        this.voxelCount = voxelCountFor(this.voxelDim);
         this._lastHumanTensor = new Float32Array(this.voxelCount);
         this._lastAITensor = new Float32Array(this.voxelCount);
         this.synaptixCouplingState = null;
@@ -208,3 +212,4 @@ applyDynamicBufferMethods(BrainRendererWebGL);
 applyDrawMethods(BrainRendererWebGL);
 applyLifecycleMethods(BrainRendererWebGL);
 applyPathwayMethods(BrainRendererWebGL);
+applyResolutionMethods(BrainRendererWebGL);

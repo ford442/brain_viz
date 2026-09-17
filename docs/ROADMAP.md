@@ -58,7 +58,7 @@ Deduplicated from the historical "Dream Log" entries across the archived plans �
 - **Neuro-Script Exchange** — a shared platform to publish, fork, and remix visualization routines.
 - **Multi-Brain Mode** — visualize two brains interacting (mirror-neuron storytelling).
 - **AI Narrative Generation** — use an LLM to generate routine scripts from themes (e.g. "Anxiety Spike", "Eureka Moment"); related to the multimodal ideas in [`docs/DOUBLE_MIRROR_VISION.md`](DOUBLE_MIRROR_VISION.md).
-- **Fractal Recursive Zoom** — procedurally generate infinite detail when zooming into a soma or fiber.
+- **Fractal Recursive Zoom** — procedurally generate infinite detail when zooming into a soma or fiber. *Phase A (runtime `voxelDim`) is done — see [`docs/field-resolution.md`](field-resolution.md); the clipmap field (B) and the recursive-zoom render path (C) are the remaining work.*
 - **Collaborative Brain Storming** — multi-user session injecting stimuli into a shared visualization via WebSockets.
 - **Adaptive Routines** — routines that adapt based on real-time emotion detection via webcam.
 - **Neuromodulation External API** — connect external live data feeds to drive neuromodulator profiles directly.

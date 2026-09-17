@@ -89,7 +89,10 @@ export function applyCoreMethods(Target) {
         this.uploadFiberDirections(geometry);
         
         // Bind Groups Layouts
-        const renderBindGroupLayout = this.device.createBindGroupLayout({
+        // [Field Resolution] Kept on `this` so setVoxelDim() can rebuild the
+        // bind groups against freshly-sized storage buffers without rebuilding
+        // every pipeline (the layout itself is dim-independent).
+        const renderBindGroupLayout = this.renderBindGroupLayout = this.device.createBindGroupLayout({
     entries: [
         { binding: 0, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
         { binding: 1, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } },
@@ -102,28 +105,7 @@ export function applyCoreMethods(Target) {
         // Create Bind Group for Rendering
         // Binding 0: Uniforms (MVP, Time, Style, etc.)
         // Binding 1: Volumetric Data (Read-Only Storage)
-        this.bindGroup = this.device.createBindGroup({
-    layout: renderBindGroupLayout,
-    entries: [
-        { binding: 0, resource: { buffer: this.uniformBuffer } },
-        { binding: 1, resource: { buffer: this.tensorBuffer } },
-        { binding: 2, resource: { buffer: this.aiTensorBuffer } },
-        { binding: 3, resource: { buffer: this.fiberDirectionBuffer } },
-        { binding: 4, resource: { buffer: this.pathwayStateBuffer } }
-    ]
-        });
-        const makeAvatarBindGroup = (uniformBuffer, tensorBuffer) => this.device.createBindGroup({
-    layout: renderBindGroupLayout,
-    entries: [
-        { binding: 0, resource: { buffer: uniformBuffer } },
-        { binding: 1, resource: { buffer: tensorBuffer } },
-        { binding: 2, resource: { buffer: tensorBuffer } },
-        { binding: 3, resource: { buffer: this.fiberDirectionBuffer } },
-        { binding: 4, resource: { buffer: this.pathwayStateBuffer } }
-    ]
-        });
-        this.avatarABindGroup = makeAvatarBindGroup(this.avatarAUniformBuffer, this.tensorBuffer);
-        this.partnerBindGroup = makeAvatarBindGroup(this.partnerUniformBuffer, this.aiTensorBuffer);
+        this.createRenderBindGroups();
         
         // --- PIPELINE 1: SOLID MESH ---
         this.pipeline = this.device.createRenderPipeline({
@@ -271,6 +253,39 @@ export function applyCoreMethods(Target) {
 
     Target.prototype.setSynaptiXParams = function(newParams) {
         this.setParams(newParams);
+    };
+
+    /**
+     * [Field Resolution] (Re)creates every bind group that references a
+     * dim-sized storage buffer. Called once from initialize() and again from
+     * setVoxelDim() after the buffers have been rebuilt — a bind group holds
+     * the buffer it was created with, so a resized buffer is invisible until
+     * the group is recreated.
+     */
+    Target.prototype.createRenderBindGroups = function() {
+        const layout = this.renderBindGroupLayout;
+        this.bindGroup = this.device.createBindGroup({
+    layout,
+    entries: [
+        { binding: 0, resource: { buffer: this.uniformBuffer } },
+        { binding: 1, resource: { buffer: this.tensorBuffer } },
+        { binding: 2, resource: { buffer: this.aiTensorBuffer } },
+        { binding: 3, resource: { buffer: this.fiberDirectionBuffer } },
+        { binding: 4, resource: { buffer: this.pathwayStateBuffer } }
+    ]
+        });
+        const makeAvatarBindGroup = (uniformBuffer, tensorBuffer) => this.device.createBindGroup({
+    layout,
+    entries: [
+        { binding: 0, resource: { buffer: uniformBuffer } },
+        { binding: 1, resource: { buffer: tensorBuffer } },
+        { binding: 2, resource: { buffer: tensorBuffer } },
+        { binding: 3, resource: { buffer: this.fiberDirectionBuffer } },
+        { binding: 4, resource: { buffer: this.pathwayStateBuffer } }
+    ]
+        });
+        this.avatarABindGroup = makeAvatarBindGroup(this.avatarAUniformBuffer, this.tensorBuffer);
+        this.partnerBindGroup = makeAvatarBindGroup(this.partnerUniformBuffer, this.aiTensorBuffer);
     };
 
     Target.prototype.setVoxelData = function(float32Array) {

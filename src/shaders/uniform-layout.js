@@ -106,6 +106,12 @@ export const RENDER_UNIFORM_LAYOUT = [
     { name: 'spatialMemory', type: 'f32' },
     { name: 'apoptosis', type: 'f32' },
     { name: 'particleSpeed', type: 'f32' },
+    // [Field Resolution] The field's grid resolution, so render shaders index
+    // `activityTensor` at the dim the engine is actually running rather than
+    // the `const VOXEL_DIM: u32 = 32u` that used to be pasted into every
+    // shader. Carried as f32 because the render uniform block is uploaded as a
+    // Float32Array; WGSL reads it back through `voxel_dim()` in render-shared.js.
+    { name: 'voxelDim', type: 'f32', comment: '[Field Resolution] runtime grid resolution' },
 ];
 
 /**

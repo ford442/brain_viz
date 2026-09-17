@@ -1,3 +1,4 @@
+import { DEFAULT_VOXEL_DIM } from '../voxel-dim.js';
 export function applyFibersMethods(Target) {
     Target.prototype.generateOrganicConnectomeFibers = function() {
         // [V3.3] Bilateral connectome: midline-symmetric commissural bundles plus
@@ -417,8 +418,16 @@ export function applyFibersMethods(Target) {
         }
     };
 
-    Target.prototype.buildFiberAffinityMap = function() {
-        const dim = 32;
+    /**
+     * [Field Resolution] Bakes the per-voxel tract-direction map at the
+     * geometry's own `voxelDim` rather than a hardcoded 32. The buffer this
+     * writes is bound as `fiberDirections` by both the compute shader and the
+     * render pipelines, so its dim must equal the field's; `setVoxelDim()`
+     * rebuilds the geometry for exactly this reason.
+     *
+     * @param {number} [dim] - Grid resolution; defaults to the geometry's.
+     */
+    Target.prototype.buildFiberAffinityMap = function(dim = this.voxelDim ?? DEFAULT_VOXEL_DIM) {
         const brainRange = 1.6;
         const voxelCount = dim * dim * dim;
         const voxelAccumulators = new Array(voxelCount).fill(null).map(() => []);
@@ -558,6 +567,7 @@ export function applyFibersMethods(Target) {
     }
         }
         this.fiberAffinityData = data;
+        this.fiberAffinityDim = dim;
     };
 
 }

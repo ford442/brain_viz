@@ -1,9 +1,51 @@
 // [Neuro-Weaver] Dependency-free Double Mirror session envelope (NWS1).
+//
+// [Field Resolution] Tensor chunks are dim-specific: a 32³ chunk read as 64³
+// is not a coarse session, it is 8× short. The dimension therefore travels in
+// the manifest (`tensor.shape`, which NWS1 has always carried) and every
+// codec entry point takes it explicitly. Files written before the field was
+// resolution-aware declare `[32, 32, 32]` and keep loading unchanged — the
+// magic does not need a bump, because the old shape is still a valid one.
+import { DEFAULT_VOXEL_DIM, assertVoxelDim, voxelCountFor } from './voxel-dim.js';
+
 export const NWS_MAGIC = 'NWS1';
 export const MAX_SESSION_BYTES = 512 * 1024 * 1024;
 export const MAX_MANIFEST_BYTES = 1024 * 1024;
 export const MAX_CHUNK_BYTES = 16 * 1024 * 1024;
-export const TENSOR_VALUE_COUNT = 32 ** 3;
+/**
+ * Values in a default-resolution (32³) tensor chunk. Retained as a named
+ * export for callers that only ever deal with the default grid; anything that
+ * can see more than one resolution should use `tensorValueCountFor(dim)`.
+ */
+export const TENSOR_VALUE_COUNT = voxelCountFor(DEFAULT_VOXEL_DIM);
+
+/**
+ * Values in a `dim³` tensor chunk.
+ * @param {number} dim
+ * @returns {number}
+ */
+export function tensorValueCountFor(dim) {
+    return voxelCountFor(assertVoxelDim(dim, 'NWS1 tensor dimension'));
+}
+
+/**
+ * Reads the voxel dimension out of a parsed NWS1 manifest, rejecting anything
+ * that is not a supported cubic grid.
+ *
+ * @param {any} manifest
+ * @returns {number}
+ */
+export function manifestVoxelDim(manifest) {
+    const shape = manifest?.tensor?.shape;
+    if (!Array.isArray(shape) || shape.length !== 3) {
+        throw new Error('Unsupported session manifest: tensor.shape must be [d, d, d]');
+    }
+    const [dx, dy, dz] = shape;
+    if (dx !== dy || dy !== dz) {
+        throw new Error(`Unsupported session manifest: non-cubic tensor shape ${shape.join('x')}`);
+    }
+    return assertVoxelDim(dx, 'NWS1 manifest tensor.shape');
+}
 
 export const SESSION_CHUNK_TYPES = Object.freeze({
     tensor: 1,
@@ -24,9 +66,14 @@ function asBytes(payload) {
     throw new TypeError('Session chunk payload must be binary');
 }
 
-export function encodeTensorPayload(tensor) {
-    if (!(tensor instanceof Float32Array) || tensor.length !== TENSOR_VALUE_COUNT) {
-        throw new Error(`Tensor chunks require ${TENSOR_VALUE_COUNT} float32 values`);
+/**
+ * @param {Float32Array} tensor
+ * @param {number} [voxelDim] - Grid the tensor was captured at.
+ */
+export function encodeTensorPayload(tensor, voxelDim = DEFAULT_VOXEL_DIM) {
+    const expected = tensorValueCountFor(voxelDim);
+    if (!(tensor instanceof Float32Array) || tensor.length !== expected) {
+        throw new Error(`Tensor chunks require ${expected} float32 values at ${voxelDim}³`);
     }
     const bytes = new Uint8Array(tensor.byteLength);
     const view = new DataView(bytes.buffer);
@@ -34,10 +81,15 @@ export function encodeTensorPayload(tensor) {
     return bytes;
 }
 
-export function decodeTensorPayload(payload) {
+/**
+ * @param {ArrayBufferView|ArrayBuffer} payload
+ * @param {number} [voxelDim] - Grid the chunk was written at (from the manifest).
+ */
+export function decodeTensorPayload(payload, voxelDim = DEFAULT_VOXEL_DIM) {
+    const expected = tensorValueCountFor(voxelDim);
     const bytes = asBytes(payload);
-    if (bytes.byteLength !== TENSOR_VALUE_COUNT * 4) throw new Error('Invalid tensor payload length');
-    const tensor = new Float32Array(TENSOR_VALUE_COUNT);
+    if (bytes.byteLength !== expected * 4) throw new Error('Invalid tensor payload length');
+    const tensor = new Float32Array(expected);
     const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
     for (let i = 0; i < tensor.length; i++) tensor[i] = view.getFloat32(i * 4, true);
     return tensor;
@@ -118,10 +170,13 @@ export async function parseSession(input) {
     let manifest;
     try { manifest = JSON.parse(decoder.decode(bytes.subarray(HEADER_BYTES, HEADER_BYTES + manifestLength))); }
     catch { throw new Error('Invalid session manifest'); }
-    if (manifest?.format !== NWS_MAGIC || !Array.isArray(manifest?.tensor?.shape)
-        || manifest.tensor.shape.join('x') !== '32x32x32' || manifest.tensor.dtype !== 'float32-le') {
+    if (manifest?.format !== NWS_MAGIC || manifest?.tensor?.dtype !== 'float32-le') {
         throw new Error('Unsupported session manifest');
     }
+    // [Field Resolution] Throws on a shape this build cannot step. Old 32³
+    // sessions land here unchanged.
+    const voxelDim = manifestVoxelDim(manifest);
+    const tensorPayloadBytes = voxelCountFor(voxelDim) * 4;
     if (!Number.isFinite(manifest.durationMs) || manifest.durationMs < 0 || manifest.durationMs > 5 * 60 * 1000) {
         throw new Error('Invalid session duration');
     }
@@ -139,7 +194,7 @@ export async function parseSession(input) {
         const payloadStart = offset + CHUNK_HEADER_BYTES;
         if (payloadStart + payloadLength > bytes.byteLength) throw new Error('Truncated session chunk payload');
         const payload = bytes.slice(payloadStart, payloadStart + payloadLength);
-        if (type === SESSION_CHUNK_TYPES.tensor && payloadLength !== TENSOR_VALUE_COUNT * 4) throw new Error('Invalid tensor payload length');
+        if (type === SESSION_CHUNK_TYPES.tensor && payloadLength !== tensorPayloadBytes) throw new Error('Invalid tensor payload length');
         if (type === SESSION_CHUNK_TYPES.audio && payloadLength !== 20) throw new Error('Invalid audio feature payload length');
         if (type === SESSION_CHUNK_TYPES.note) decodeNotePayload(payload);
         chunks.push({ type, timestamp, payload });
@@ -154,5 +209,5 @@ export async function parseSession(input) {
             if (Number(manifest.chunkCounts[name] || 0) !== actual[name]) throw new Error('Session chunk counts do not match manifest');
         }
     }
-    return { manifest, chunks };
+    return { manifest, chunks, voxelDim };
 }

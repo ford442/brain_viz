@@ -1,12 +1,12 @@
 // tensor-player.js
 // BCI Tensor Data Playback Engine for Neuro-Weaver
 //
-// Streams sequences of 32x32x32 activity tensors to the renderer.
+// Streams sequences of `voxelDim`³ activity tensors to the renderer.
 // Supports: built-in synthetic patterns, binary files (.bin), numpy (.npy), CSV series.
 // Future: WebSocket for real-time BCI devices.
 
-const VOXEL_DIM = 32;
-const VOXEL_COUNT = VOXEL_DIM ** 3; // 32768 floats per frame
+import { normalizeVoxelDim, voxelCountFor } from './voxel-dim.js';
+
 const BRAIN_RANGE = 1.6; // World-space brain radius
 
 export class TensorPlayer {
@@ -29,7 +29,23 @@ export class TensorPlayer {
     // ─── Synthetic Pattern Generators ─────────────────────────────────────────
 
     // Alpha Waves: 8-12 Hz posterior oscillation (occipital-parietal dominance)
+    /**
+     * [Field Resolution] The grid frames are synthesised at — read from the
+     * renderer, so a `setVoxelDim()` is picked up without the player being told.
+     * @returns {number}
+     */
+    get voxelDim() {
+        return normalizeVoxelDim(this.renderer?.voxelDim);
+    }
+
+    /** @returns {number} Floats in one frame at the current resolution. */
+    get voxelCount() {
+        return voxelCountFor(this.voxelDim);
+    }
+
     generateAlphaWaves(numFrames = 300) {
+        const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
+        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         const dim = VOXEL_DIM;
         const frames = [];
         for (let f = 0; f < numFrames; f++) {
@@ -55,6 +71,8 @@ export class TensorPlayer {
 
     // Working Memory: Sustained frontal + parietal co-activation with retrieval bursts
     generateWorkingMemory(numFrames = 300) {
+        const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
+        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         const dim = VOXEL_DIM;
         const frames = [];
         for (let f = 0; f < numFrames; f++) {
@@ -95,6 +113,8 @@ export class TensorPlayer {
 
     // Visual Burst: Occipital spike spreading forward (visual processing cascade)
     generateVisualBurst(numFrames = 180) {
+        const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
+        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         const dim = VOXEL_DIM;
         const frames = [];
         for (let f = 0; f < numFrames; f++) {
@@ -130,6 +150,8 @@ export class TensorPlayer {
 
     // Seizure Spread: Radially expanding wave from a deep-brain epicenter
     generateSeizureSpread(numFrames = 240) {
+        const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
+        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         const dim = VOXEL_DIM;
         const frames = [];
         // Epicenter: deep thalamic-like position (slightly anterior)
@@ -168,6 +190,8 @@ export class TensorPlayer {
 
     // Meditation / Slow-Wave: Synchronized low-frequency whole-brain rhythm
     generateMeditation(numFrames = 360) {
+        const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
+        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         const dim = VOXEL_DIM;
         const frames = [];
         for (let f = 0; f < numFrames; f++) {
@@ -201,6 +225,8 @@ export class TensorPlayer {
     // Load raw binary: sequence of Float32Arrays packed contiguously
     // Format: [frame0: 32768 floats][frame1: 32768 floats]...
     async loadBinary(file) {
+        const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
+        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         const buffer = await file.arrayBuffer();
         const all = new Float32Array(buffer);
         const numFrames = Math.floor(all.length / VOXEL_COUNT);
@@ -213,6 +239,8 @@ export class TensorPlayer {
 
     // Load NumPy .npy file (float32, shape [N, 32, 32, 32] or [N, 32768])
     async loadNPY(file) {
+        const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
+        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         const buffer = await file.arrayBuffer();
         const view = new DataView(buffer);
         // NPY magic: \x93NUMPY
@@ -235,6 +263,8 @@ export class TensorPlayer {
     // Load the existing fmri.csv format: time, frontal, parietal, occipital, temporal, deep
     // Interpolates into smooth tensor frames at this.fps
     async loadCSVSeries(file) {
+        const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
+        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         const text = await file.text();
         const lines = text.trim().split('\n');
         const headers = lines[0].split(',').map(h => h.trim());
@@ -352,6 +382,8 @@ export class TensorPlayer {
     // ─── Real-time WebSocket BCI (future hookup) ───────────────────────────────
 
     connectWebSocket(url) {
+        const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
+        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         this._ws = new WebSocket(url);
         this._ws.binaryType = 'arraybuffer';
         this._ws.onopen = () => console.log('[TensorPlayer] WebSocket connected:', url);

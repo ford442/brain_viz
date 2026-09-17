@@ -1,5 +1,7 @@
-const VOXEL_DIM = 32;
-const VOXEL_COUNT = VOXEL_DIM ** 3;
+import { DEFAULT_VOXEL_DIM, normalizeVoxelDim, voxelCountFor } from '../voxel-dim.js';
+
+/** Voxels in the default 32³ field. Kept as a named export for existing callers. */
+const VOXEL_COUNT = voxelCountFor(DEFAULT_VOXEL_DIM);
 
 export const MUSE_CHANNEL_MAP = Object.freeze({
     TP9: 'temporalLeft',
@@ -38,8 +40,17 @@ const CENTERS = {
 };
 
 export class TensorResampler {
-    constructor(mapping = MUSE_CHANNEL_MAP) {
+    /**
+     * @param {Object} [mapping] - Electrode -> region map.
+     * @param {number} [voxelDim] - Grid the projected tensors are emitted at.
+     *   [Field Resolution] Was hardcoded 32; masks are now baked at whatever
+     *   resolution the renderer is running, because a projected tensor is fed
+     *   straight into `setVoxelData()` and has to match its buffer.
+     */
+    constructor(mapping = MUSE_CHANNEL_MAP, voxelDim = DEFAULT_VOXEL_DIM) {
         this.mapping = { ...mapping };
+        this.voxelDim = normalizeVoxelDim(voxelDim);
+        this.voxelCount = voxelCountFor(this.voxelDim);
         this.masks = new Map();
         for (const region of REGION_NAMES) this.masks.set(region, this._makeMask(region));
         this.posteriorMask = this._combineMasks(['occipitalLeft', 'occipitalRight', 'parietalLeft', 'parietalRight']);
@@ -52,6 +63,8 @@ export class TensorResampler {
     }
 
     project(features) {
+        const VOXEL_DIM = this.voxelDim;
+        const VOXEL_COUNT = this.voxelCount;
         const output = new Float32Array(VOXEL_COUNT);
         const quality = Math.max(0.1, features.quality || 0);
         this._accumulate(output, this.posteriorMask, (features.bands.alpha || 0) * 0.48 * quality);
@@ -70,6 +83,8 @@ export class TensorResampler {
     }
 
     _makeMask(region) {
+        const VOXEL_DIM = this.voxelDim;
+        const VOXEL_COUNT = this.voxelCount;
         const [cx, cy, cz] = CENTERS[region];
         const sigma = region === 'deep' ? 0.42 : 0.34;
         const mask = new Float32Array(VOXEL_COUNT);
@@ -90,6 +105,8 @@ export class TensorResampler {
     }
 
     _combineMasks(regions) {
+        const VOXEL_DIM = this.voxelDim;
+        const VOXEL_COUNT = this.voxelCount;
         const result = new Float32Array(VOXEL_COUNT);
         for (const region of regions) {
             const mask = this.masks.get(region);

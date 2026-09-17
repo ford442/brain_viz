@@ -1,5 +1,6 @@
 import { SESSION_CHUNK_TYPES, decodeAudioPayload, decodeNotePayload, decodeTensorPayload } from './session-format.js';
 import { getAnatomicalRegionMeans } from './synaptix-coupling.js';
+import { DEFAULT_VOXEL_DIM } from './voxel-dim.js';
 
 export function pearsonCorrelation(xs, ys) {
     if (xs.length !== ys.length || xs.length < 2) return 0;
@@ -25,12 +26,19 @@ function latestAtOrBefore(items, timestamp) {
     return result;
 }
 
-export function analyzeSession(chunks, maxAlignmentMs = 50) {
+/**
+ * @param {Array} chunks
+ * @param {number} [maxAlignmentMs]
+ * @param {number} [voxelDim] - [Field Resolution] Grid the tensor chunks were
+ *   written at, from `parseSession()`'s `voxelDim`. Defaults to 32³ for
+ *   callers that predate resolution-aware sessions.
+ */
+export function analyzeSession(chunks, maxAlignmentMs = 50, voxelDim = DEFAULT_VOXEL_DIM) {
     const tensors = chunks.filter((chunk) => chunk.type === SESSION_CHUNK_TYPES.tensor);
     const audio = chunks.filter((chunk) => chunk.type === SESSION_CHUNK_TYPES.audio);
     const notes = chunks.filter((chunk) => chunk.type === SESSION_CHUNK_TYPES.note);
     const visuals = chunks.filter((chunk) => chunk.type === SESSION_CHUNK_TYPES.visual);
-    const tensorValues = tensors.map((chunk) => ({ ...chunk, occipital: getAnatomicalRegionMeans(decodeTensorPayload(chunk.payload)).occipital }));
+    const tensorValues = tensors.map((chunk) => ({ ...chunk, occipital: getAnatomicalRegionMeans(decodeTensorPayload(chunk.payload, voxelDim), voxelDim).occipital }));
     const pairs = [];
     for (const sample of audio) {
         let nearest = null;

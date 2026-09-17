@@ -20,7 +20,7 @@
 //     current heap on each use; see `_heap()`.
 //
 // Usage (hybrid mode):
-//   const engine = new WasmTensorEngine(32);
+//   const engine = new WasmTensorEngine(DEFAULT_VOXEL_DIM);
 //   await engine.init();
 //   engine.setFiberAffinities(geometry.getFiberAffinityData());
 //   engine.update(time, params);
@@ -33,6 +33,7 @@ import {
     COMPUTE_UNIFORM_OFFSETS,
     COMPUTE_UNIFORM_BYTE_SIZE,
 } from './shaders/uniform-layout.js';
+import { DEFAULT_VOXEL_DIM, assertVoxelDim, voxelCountFor } from './voxel-dim.js';
 
 /** Byte offset of a `TensorParams` field inside the params block. */
 const cOff = (name) => COMPUTE_UNIFORM_OFFSETS[name] * 4;
@@ -87,9 +88,10 @@ async function importModuleFactory(urls) {
 }
 
 export class WasmTensorEngine {
-    constructor(voxelDim = 32) {
+    constructor(voxelDim = DEFAULT_VOXEL_DIM) {
+        assertVoxelDim(voxelDim, 'WasmTensorEngine');
         this.voxelDim = voxelDim;
-        this.voxelCount = voxelDim ** 3;
+        this.voxelCount = voxelCountFor(voxelDim);
         this.available = false;
         this._module = null;
         this._handle = null;

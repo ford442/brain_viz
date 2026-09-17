@@ -20,6 +20,7 @@
 - **Performance**: EEG data can be high-frequency — optimize for smooth real-time rendering.
 - **Interactivity**: Allow users to explore different brain regions, time ranges, or visualization modes.
 - **Future Potential**: Multi-user, live BCI integration, or exportable art pieces.
+- **One field resolution**: the grid size lives in [`src/voxel-dim.js`](../src/voxel-dim.js), not as the literal `32` in nine files. `DEFAULT_VOXEL_DIM` is still 32; `renderer.setVoxelDim(dim)` changes it at runtime on either backend, resampling the live field. Never write a bare `32`/`32 ** 3` for a grid size. See [`docs/field-resolution.md`](field-resolution.md).
 - **One neural field**: the volumetric physics is specified in [`docs/tensor-physics.md`](tensor-physics.md) and implemented by the WGSL compute shader, `src/physics/tensor-field.js` (CPU reference, drives the WebGL2 fallback) and `wasm/brain_tensor_engine.cpp`. Never add a field effect to one of them only — spec first, then all three, then `npm run test:all`.
 - **One renderer facade, two backends**: `BrainRenderer` (WebGPU) and `BrainRendererWebGL` must both implement the app-facing method contract documented in [`src/renderer-contract.js`](../src/renderer-contract.js) — `npm run check:facade` fails the build if a new method lands on only one.
 
