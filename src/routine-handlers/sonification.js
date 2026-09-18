@@ -39,4 +39,53 @@ export function registerSonificationHandlers(handlers, player) {
             player.executeEvent({ type: 'text', message: evt.message, duration: duration });
         }
     });
+
+    handlers.set('external_data_sonification', (evt) => {
+        const duration = evt.duration || 10.0;
+        const feedType = evt.feedType || 'stock_market';
+
+        let currentValue = feedType === 'stock_market' ? 100 : 0;
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+
+        if (player.sonificationEngine) {
+            player.sonificationEngine.setPreset('meditation');
+        }
+
+        const tickIntervalSeconds = 0.5; // seconds
+        const totalTicks = Math.floor(duration / tickIntervalSeconds);
+
+        for (let i = 0; i < totalTicks; i++) {
+            player.activeTasks.push({
+                delay: i * tickIntervalSeconds,
+                execute: () => {
+                    // Generate next mock value
+                    if (feedType === 'stock_market') {
+                        currentValue += (Math.random() - 0.45) * 5; // Slight upward trend
+                    } else {
+                        currentValue += (Math.random() - 0.5) * 2;
+                    }
+
+                    // Trigger visual pulse on connectome
+                    player.executeEvent({
+                        type: 'pathway_pulse',
+                        pathway: 'mesocorticolimbic-dopamine',
+                        duration: 0.5,
+                        intensity: Math.min(3.0, Math.abs(currentValue) / 50)
+                    });
+
+                    // Sonify the value
+                    if (player.sonificationEngine) {
+                        const cutoff = Math.max(100, Math.min(2000, 200 + currentValue * 10));
+                        player.sonificationEngine.setParam('filterCutoff', cutoff, 0.2);
+
+                        const beat = Math.max(1, Math.min(100, 10 + currentValue * 0.5));
+                        player.sonificationEngine.setParam('beatFreq', beat, 0.2);
+                    }
+                }
+            });
+        }
+    });
 }

@@ -136,6 +136,13 @@ async function init() {
             cogLegendPanelBio.appendChild(newEntry);
         }
 
+        // Global hook for external data sonification (satisfies manual testing and integration points)
+        window.triggerExternalData = (feedType = 'stock_market') => {
+            if (player) {
+                player.executeEvent({ type: 'external_data', feedType: feedType, duration: 10.0 });
+            }
+        };
+
         window.addEventListener('keydown', (e) => {
             if (e.key === 'i' || e.key === 'I') {
                 if (player) {
