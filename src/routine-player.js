@@ -649,6 +649,10 @@ export class RoutinePlayer {
             resolvedEvt.duration = resolvedEvt.duration || 2.0;
         }
 
+        if (resolvedEvt.type === 'external_data') {
+            resolvedEvt.type = 'external_data_sonification';
+        }
+
         // Extensible mapping pattern
         if (this.handlers.has(resolvedEvt.type)) {
 

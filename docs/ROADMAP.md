@@ -66,7 +66,6 @@ Deduplicated from the historical "Dream Log" entries across the archived plans �
 - **Custom Audio-Feature Mapping Matrix** — *done, generalized past audio — see Phase 31 and [`docs/live-input-bus.md`](live-input-bus.md). The audio-only `ReactivityRouter` "Brain DJ" panel (Phase 3) remains as its own preset-driven panel.*
 - **Procedural Binaural Generation** — automatically generate binaural beat frequencies for a desired brainwave target instead of manual frequency entry.
 - **Biofeedback Adaptive Audio** — *Phase 31 makes any bus source (including a future heart-rate source) able to drive a renderer param; a `hrv_sync`-style continuous audio-pitch/volume/tempo sink is not yet implemented.*
-- **External Data Sonification** — map external real-time feeds (e.g. stock market data, social-media sentiment) to connectome signal pulses, as a novelty/art mode.
 
 ## Related Specs & Vision Docs
 

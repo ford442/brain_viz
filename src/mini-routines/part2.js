@@ -699,3 +699,13 @@ MINI_ROUTINES_PART2['T'] = [ // [Phase 28] DMN to TPN Handoff
     { time: 14.0, type: 'calm' },
     { time: 14.0, type: 'style', value: 0 }
 ];
+
+MINI_ROUTINES_PART2['.'] = [ // External Data Sonification
+    { time: 0.0, type: 'style', value: 2.0 }, // Connectome view
+    { time: 0.0, type: 'text', message: 'Connecting to External Data Feed...', duration: 2.0 },
+    { time: 0.0, type: 'sonify_enable', preset: 'meditation' },
+    { time: 2.0, type: 'external_data_sonification', feedType: 'stock_market', duration: 10.0, message: 'Stock Market Data Stream Active' },
+    { time: 14.0, type: 'sonify_disable' },
+    { time: 14.0, type: 'calm' },
+    { time: 14.0, type: 'style', value: 0 }
+];
