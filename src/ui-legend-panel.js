@@ -128,6 +128,7 @@ export function setupLegendPanel() {
                 <div class="legend-item"><span class="legend-key">o</span><span>Orbit Avoid</span></div>
                 <div class="legend-item"><span class="legend-key">c</span><span>Custom Audio</span></div>
                 <div class="legend-item"><span class="legend-key">k</span><span>Binaural</span></div>
+                <div class="legend-item"><span class="legend-key">f</span><span>Focus</span></div>
                 <div class="legend-item"><span class="legend-key">n</span><span>Neuro-Cinema</span></div>
                 <div class="legend-item"><span class="legend-key">z</span><span>Default Mode</span></div>
                 <div class="legend-item"><span class="legend-key">Y</span><span>Smooth Easing</span></div>
