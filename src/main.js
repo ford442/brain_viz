@@ -53,9 +53,26 @@ async function init() {
         // Initialize Routine Engine subsystems (RoutinePlayer, AudioReactor).
         // Safely injected without breaking existing renderer initialization flow.
         const { player, audioReactor } = setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo);
+
         if (player) {
              console.log('[Routine Engine] RoutinePlayer sequencer initialized successfully.');
+
+             // [Phase 31] Procedural Binaural Generation
+             player.registerHandler('binaural', (evt) => {
+                 if (audioReactor) {
+                     const waveMap = { alpha: 10, beta: 20, theta: 6, delta: 2 };
+                     const targetFreq = waveMap[evt.targetWave] || 10;
+                     audioReactor.setBinauralBeat(targetFreq);
+                     console.log(`[Audio] Binaural beat shifted to ${evt.targetWave} (${targetFreq}Hz)`);
+                 }
+             });
+
+             player.registerHandler('focus', (evt) => {
+                 renderer.setParams({ focus: evt.value });
+                 console.log(`[Visual] Focus state updated to ${evt.value}`);
+             });
         } else {
+
              console.warn('[Routine Engine] RoutinePlayer failed to initialize.');
         }
         const paintController = setupPaintIntegration(renderer, canvas, player);
@@ -63,6 +80,17 @@ async function init() {
         setupLegendPanel();
         const legendPanel = document.getElementById('legend-panel');
         if (legendPanel) {
+            if (!legendPanel.innerHTML.includes('<span>Focus</span>')) {
+                const newItemsHTML = `
+                <div class="legend-item"><span class="legend-key">k</span><span>Binaural</span></div>
+                <div class="legend-item"><span class="legend-key">f</span><span>Focus</span></div>`;
+
+                const rows = legendPanel.querySelectorAll('.legend-row');
+                if (rows.length >= 3) {
+                    rows[2].insertAdjacentHTML('beforeend', newItemsHTML);
+                }
+            }
+
             const newEntry = document.createElement('div');
             newEntry.innerHTML = '<b>1-5</b> : Switch Mode (Organic/Cyber/Connectome/Heatmap/SynaptiX)<br><b>M</b> : Memory Fragmentation<br><b>S</b> : Frontal Tour (Spline)<br><b>D</b> : Dynamic Topology Shift<br><b>X</b> : SynaptiX Mode<br><b>6/7/8</b> : Training Demo (Calm Focus/Panic Recovery/Flow Sustain)';
             legendPanel.appendChild(newEntry);
