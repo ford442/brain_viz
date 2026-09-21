@@ -355,7 +355,11 @@ export class RoutinePlayer {
              return;
         }
         if (this.routine.length === 0) return; // Safety guard
-        if (!this.renderer) { this.stop(); return; }
+        if (!this.renderer || (this.renderer.backendType !== 'webgl' && (!this.renderer.device || this.renderer.device.lost))) {
+            console.warn("[Routine Engine] WebGPU context lost or renderer unavailable. Halting tick loop.");
+            this.stop();
+            return;
+        }
 
 
 

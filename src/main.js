@@ -53,33 +53,39 @@ async function init() {
         // Initialize Routine Engine subsystems (RoutinePlayer, AudioReactor).
         // Safely injected without breaking existing renderer initialization flow.
         const { player, audioReactor } = setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo);
-        if (player) {
+
+if (player) {
              console.log('[Routine Engine] RoutinePlayer sequencer initialized successfully.');
 
              // [Dream Backlog] Procedural Binaural Generation
+             // Event names: binaural_target → procedural_binaural (see routine-player.js).
+             // Do not register 'binaural' here — effects-audio.js already owns that type.
              player.registerHandler('procedural_binaural', (evt) => {
                  if (!player.sonificationEngine) return;
-                 const target = evt.target || 'alpha';
+                 const target = evt.target || evt.targetWave || 'alpha';
                  const duration = evt.duration || 5.0;
-
                  let beatFreq = 10;
                  let filterCutoff = 800;
-                 switch(target) {
+                 switch (target) {
                      case 'delta': beatFreq = 2.0; filterCutoff = 400; break;
                      case 'theta': beatFreq = 6.0; filterCutoff = 600; break;
                      case 'alpha': beatFreq = 10.0; filterCutoff = 800; break;
-                     case 'beta': beatFreq = 20.0; filterCutoff = 1200; break;
+                     case 'beta':  beatFreq = 20.0; filterCutoff = 1200; break;
                      case 'gamma': beatFreq = 40.0; filterCutoff = 2000; break;
                  }
-
                  player.sonificationEngine.setParam('beatFreq', beatFreq, duration);
                  player.sonificationEngine.setParam('filterCutoff', filterCutoff, duration);
-
                  if (evt.message) {
                      player.executeEvent({ type: 'text', message: evt.message, duration: duration });
                  }
              });
+
+             player.registerHandler('focus', (evt) => {
+                 renderer.setParams({ focus: evt.value });
+                 console.log(`[Visual] Focus state updated to ${evt.value}`);
+             });
         } else {
+
              console.warn('[Routine Engine] RoutinePlayer failed to initialize.');
         }
         const paintController = setupPaintIntegration(renderer, canvas, player);
@@ -225,3 +231,5 @@ window.addEventListener('keydown', (e) => {
 }
 
 init();
+
+export { MINI_ROUTINES } from './mini-routines.js';
