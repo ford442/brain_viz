@@ -80,17 +80,6 @@ async function init() {
         setupLegendPanel();
         const legendPanel = document.getElementById('legend-panel');
         if (legendPanel) {
-            if (!legendPanel.innerHTML.includes('<span>Focus</span>')) {
-                const newItemsHTML = `
-                <div class="legend-item"><span class="legend-key">k</span><span>Binaural</span></div>
-                <div class="legend-item"><span class="legend-key">f</span><span>Focus</span></div>`;
-
-                const rows = legendPanel.querySelectorAll('.legend-row');
-                if (rows.length >= 3) {
-                    rows[2].insertAdjacentHTML('beforeend', newItemsHTML);
-                }
-            }
-
             const newEntry = document.createElement('div');
             newEntry.innerHTML = '<b>1-5</b> : Switch Mode (Organic/Cyber/Connectome/Heatmap/SynaptiX)<br><b>M</b> : Memory Fragmentation<br><b>S</b> : Frontal Tour (Spline)<br><b>D</b> : Dynamic Topology Shift<br><b>X</b> : SynaptiX Mode<br><b>6/7/8</b> : Training Demo (Calm Focus/Panic Recovery/Flow Sustain)';
             legendPanel.appendChild(newEntry);
@@ -222,3 +211,5 @@ window.addEventListener('keydown', (e) => {
 }
 
 init();
+
+export { MINI_ROUTINES } from './mini-routines.js';
