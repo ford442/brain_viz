@@ -88,7 +88,24 @@ export function registerEffectsAudioHandlers(handlers, player) {
         if (!player.audioContext) return;
 
         const baseFreq = evt.baseFrequency || 440;
-        const beatFreq = evt.beatFrequency || 40;
+        let beatFreq = evt.beatFrequency || 40;
+
+        if (evt.targetBrainwave) {
+            const waveMap = {
+                'delta': 2,
+                'theta': 6,
+                'alpha': 10,
+                'beta': 20,
+                'gamma': 40
+            };
+            const mapped = waveMap[evt.targetBrainwave.toLowerCase()];
+            if (mapped !== undefined) {
+                beatFreq = mapped;
+            } else {
+                console.warn(`[Routine Engine] Unknown targetBrainwave '${evt.targetBrainwave}'. Using default/provided beatFrequency.`);
+            }
+        }
+
         const duration = evt.duration || 5.0;
         const vol = evt.volume !== undefined ? evt.volume : 0.5;
 
