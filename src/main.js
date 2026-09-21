@@ -55,6 +55,30 @@ async function init() {
         const { player, audioReactor } = setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo);
         if (player) {
              console.log('[Routine Engine] RoutinePlayer sequencer initialized successfully.');
+
+             // [Dream Backlog] Procedural Binaural Generation
+             player.registerHandler('procedural_binaural', (evt) => {
+                 if (!player.sonificationEngine) return;
+                 const target = evt.target || 'alpha';
+                 const duration = evt.duration || 5.0;
+
+                 let beatFreq = 10;
+                 let filterCutoff = 800;
+                 switch(target) {
+                     case 'delta': beatFreq = 2.0; filterCutoff = 400; break;
+                     case 'theta': beatFreq = 6.0; filterCutoff = 600; break;
+                     case 'alpha': beatFreq = 10.0; filterCutoff = 800; break;
+                     case 'beta': beatFreq = 20.0; filterCutoff = 1200; break;
+                     case 'gamma': beatFreq = 40.0; filterCutoff = 2000; break;
+                 }
+
+                 player.sonificationEngine.setParam('beatFreq', beatFreq, duration);
+                 player.sonificationEngine.setParam('filterCutoff', filterCutoff, duration);
+
+                 if (evt.message) {
+                     player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+                 }
+             });
         } else {
              console.warn('[Routine Engine] RoutinePlayer failed to initialize.');
         }
@@ -134,6 +158,13 @@ async function init() {
             const newEntry = document.createElement('div');
             newEntry.innerHTML = '<b>B</b> : Trigger Biofeedback Adaptive Audio';
             cogLegendPanelBio.appendChild(newEntry);
+        }
+
+        const cogLegendPanelBinaural = document.getElementById('legend-panel');
+        if (cogLegendPanelBinaural) {
+            const newEntry = document.createElement('div');
+            newEntry.innerHTML = '<b>G</b> : Trigger Procedural Binaural Generation';
+            cogLegendPanelBinaural.appendChild(newEntry);
         }
 
         // Global hook for external data sonification (satisfies manual testing and integration points)

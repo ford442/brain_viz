@@ -148,6 +148,11 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
     });
     player.registerSubRoutines({ ...MINI_ROUTINES, 'dopamine-pathway-demo': DOPAMINE_PATHWAY_DEMO });
 
+    MINI_ROUTINES['G'] = [
+        { time: 0.0, type: 'binaural_target', target: 'gamma', message: 'Generating Gamma Binaural Beats (40Hz)', duration: 4.0 },
+        { time: 5.0, type: 'binaural_target', target: 'alpha', message: 'Generating Alpha Binaural Beats (10Hz)', duration: 4.0 }
+    ];
+
     MINI_ROUTINES['Z'] = [
         { time: 0.0, type: 'text', message: 'Synaptic Pruning Activated', duration: 2.0 },
         { time: 0.0, type: 'camera', target: 'close-up', duration: 2.0, ease: 'sineInOut' },

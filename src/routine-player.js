@@ -653,6 +653,10 @@ export class RoutinePlayer {
             resolvedEvt.type = 'external_data_sonification';
         }
 
+        if (resolvedEvt.type === 'binaural_target') {
+            resolvedEvt.type = 'procedural_binaural';
+        }
+
         // Extensible mapping pattern
         if (this.handlers.has(resolvedEvt.type)) {
 
