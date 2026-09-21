@@ -4,3 +4,11 @@
 *Idea:* "What if we map external real-time feeds (e.g. stock market data, social-media sentiment) to connectome signal pulses, as a novelty/art mode?"
 *Idea:* "What if we visualized cellular senescence as accumulating dark spots and rigid fiber pathways?"
 *Idea:* "What if we visualize neuro-inflammation as localized redness and swelling?"
+### Phase 2: Advanced Choreography
+- [x] **External Data Sonification:** Map external data to connectome signal pulses.
+- [x] **Procedural Binaural Generation:** Automatically generate binaural beat frequencies for a desired brainwave target.
+- [ ] **Binaural Easing:** Add smooth interpolation support when transitioning between different binaural beat frequencies instead of instant snapping.
+- [ ] **Endorphin Simulation:** What if we visualized endorphins as a temporary suppression of stress parameters and an increase in harmonic wave synchronization?
+
+*Idea:* "What if we map local weather conditions to global ambient lighting and particle turbulence?"
+*Idea:* "What if we visualize real-time web traffic as synaptic activity across the lobes?"
