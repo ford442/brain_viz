@@ -173,6 +173,13 @@ if (player) {
             cogLegendPanelBinaural.appendChild(newEntry);
         }
 
+        const cogLegendPanelEndorphin = document.getElementById('legend-panel');
+        if (cogLegendPanelEndorphin) {
+            const newEntry = document.createElement('div');
+            newEntry.innerHTML = '<b>E</b> : Trigger Endorphin Rush Simulation';
+            cogLegendPanelEndorphin.appendChild(newEntry);
+        }
+
         // Global hook for external data sonification (satisfies manual testing and integration points)
         window.triggerExternalData = (feedType = 'stock_market') => {
             if (player) {
@@ -232,4 +239,8 @@ window.addEventListener('keydown', (e) => {
 
 init();
 
-export { MINI_ROUTINES } from './mini-routines.js';
+import { MINI_ROUTINES } from './mini-routines.js';
+
+MINI_ROUTINES['e'] = [{ time: 0, type: 'endorphin_rush', duration: 4.0 }];
+
+export { MINI_ROUTINES };
