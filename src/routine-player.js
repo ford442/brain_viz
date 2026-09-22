@@ -70,6 +70,9 @@ export class RoutinePlayer {
         this.audioContext = null;
         this.audioBuffers = {}; // Cache for external audio files
 
+        /** @type {import('./sonification-engine.js').SonificationEngine|null} Set externally by main-sonification-integration.js */
+        this.sonificationEngine = null;
+
         // Extensible Event System
         this.handlers = new Map();
         this.setupDefaultHandlers();
