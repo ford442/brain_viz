@@ -630,6 +630,10 @@ export class RoutinePlayer {
 
         const resolvedEvt = this.resolveEventVariables(event);
 
+        if (resolvedEvt.type === 'endorphin_rush') {
+            resolvedEvt.type = 'endorphin';
+        }
+
         // Live Input Bus condition sugar: `if: "live.alpha > 0.6"` gates any
         // event on a live feature (src/live-input-bus.js), mirroring the
         // existing wait/signal pause pattern but evaluated immediately instead
