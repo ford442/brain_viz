@@ -70,6 +70,9 @@ export class RoutinePlayer {
         this.audioContext = null;
         this.audioBuffers = {}; // Cache for external audio files
 
+        /** @type {import('./sonification-engine.js').SonificationEngine|null} Set externally by main-sonification-integration.js */
+        this.sonificationEngine = null;
+
         // Extensible Event System
         this.handlers = new Map();
         this.setupDefaultHandlers();
@@ -595,6 +598,9 @@ export class RoutinePlayer {
             } else if (lerp.key === 'playbackSpeed') {
                 this.setPlaybackSpeed(currentVal);
                 this.emitEvent({ type: 'speed', value: currentVal });
+            } else if (lerp.targetObj && lerp.targetObj !== this.renderer.params) {
+                lerp.targetObj[lerp.key] = currentVal;
+                this.emitEvent({ type: 'param', key: lerp.key, value: currentVal });
             } else {
                 this.renderer.setParams({ [lerp.key]: currentVal });
                 this.emitEvent({ type: 'param', key: lerp.key, value: currentVal });
@@ -753,8 +759,15 @@ export class RoutinePlayer {
         }
 
         let currentVal;
+        let targetObj = this.renderer.params;
         if (event.key === 'playbackSpeed') {
             currentVal = this.playbackSpeed;
+            targetObj = this;
+        } else if (event.target === 'sonification' && this.sonificationEngine) {
+            currentVal = this.sonificationEngine.overrides[event.key] !== undefined ?
+                         this.sonificationEngine.overrides[event.key] :
+                         (event.key === 'beatFreq' ? 40 : 1000); // defaults
+            targetObj = this.sonificationEngine.overrides;
         } else {
             currentVal = this.renderer.params[event.key];
             if (currentVal === undefined) {
@@ -767,6 +780,7 @@ export class RoutinePlayer {
 
         const lerpObj = {
             key: event.key,
+            targetObj: targetObj,
             startVal: currentVal,
             elapsed: 0,
             duration: event.duration || 1.0,

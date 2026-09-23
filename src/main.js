@@ -73,8 +73,8 @@ if (player) {
                      case 'beta':  beatFreq = 20.0; filterCutoff = 1200; break;
                      case 'gamma': beatFreq = 40.0; filterCutoff = 2000; break;
                  }
-                 player.sonificationEngine.setParam('beatFreq', beatFreq, duration);
-                 player.sonificationEngine.setParam('filterCutoff', filterCutoff, duration);
+                 player.startLerp({ key: 'beatFreq', target: 'sonification', value: beatFreq, duration: duration, ease: 'sineInOut' });
+                 player.startLerp({ key: 'filterCutoff', target: 'sonification', value: filterCutoff, duration: duration, ease: 'sineInOut' });
                  if (evt.message) {
                      player.executeEvent({ type: 'text', message: evt.message, duration: duration });
                  }

@@ -7,9 +7,11 @@
 ### Phase 2: Advanced Choreography
 - [x] **External Data Sonification:** Map external data to connectome signal pulses.
 - [x] **Procedural Binaural Generation:** Automatically generate binaural beat frequencies for a desired brainwave target.
-- [ ] **Binaural Easing:** Add smooth interpolation support when transitioning between different binaural beat frequencies instead of instant snapping.
+- [x] **Binaural Easing:** Add smooth interpolation support when transitioning between different binaural beat frequencies instead of instant snapping.
 - [x] **Endorphin Simulation:** What if we visualized endorphins as a temporary suppression of stress parameters and an increase in harmonic wave synchronization?
 
 *Idea:* "What if we map local weather conditions to global ambient lighting and particle turbulence?"
 *Idea:* "What if we visualize real-time web traffic as synaptic activity across the lobes?"
 *Idea:* "What if we visualize neuroplasticity as real-time growth of new synaptic pathways between active regions?"
+
+*Idea:* "What if we visualized melatonin release as a gradual darkening of ambient light and slowing of particle flow?"
