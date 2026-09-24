@@ -84,6 +84,26 @@ if (player) {
                  renderer.setParams({ focus: evt.value });
                  console.log(`[Visual] Focus state updated to ${evt.value}`);
              });
+
+             player.registerHandler('serotonin', (evt) => {
+                 const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+                 const duration = evt.duration || 3.0;
+
+                 // Gradually shift color toward serotonin representation, speed up flow, and activate fluid dynamics
+                 player.startLerp({ key: 'colorShift', value: 0.5 * intensity, duration: 2.0, ease: 'sineInOut' });
+                 player.startLerp({ key: 'flowSpeed', value: 8.0 * intensity, duration: 2.0, ease: 'cubicIn' });
+                 player.startLerp({ key: 'fluidActive', value: 1.5 * intensity, duration: 2.0, ease: 'sineInOut' });
+
+                 // Smoothly fade back after full surge is reached
+                 if (duration > 0) {
+                     const ease = evt.ease || 'sineInOut';
+                     const delay = 2.0; // Wait for the initial surge to complete before fading out
+
+                     player.startLerp({ key: 'colorShift', value: 0.0, duration: duration, ease: ease, delay: delay });
+                     player.startLerp({ key: 'flowSpeed', value: 4.0, duration: duration, ease: 'quadOut', delay: delay });
+                     player.startLerp({ key: 'fluidActive', value: 0.0, duration: duration, ease: ease, delay: delay });
+                 }
+             });
         } else {
 
              console.warn('[Routine Engine] RoutinePlayer failed to initialize.');
@@ -180,6 +200,13 @@ if (player) {
             cogLegendPanelEndorphin.appendChild(newEntry);
         }
 
+        const cogLegendPanelSerotonin = document.getElementById('legend-panel');
+        if (cogLegendPanelSerotonin) {
+            const newEntry = document.createElement('div');
+            newEntry.innerHTML = '<b>4</b> : Trigger Serotonin Surge Simulation';
+            cogLegendPanelSerotonin.appendChild(newEntry);
+        }
+
         // Global hook for external data sonification (satisfies manual testing and integration points)
         window.triggerExternalData = (feedType = 'stock_market') => {
             if (player) {
@@ -242,5 +269,6 @@ init();
 import { MINI_ROUTINES } from './mini-routines.js';
 
 MINI_ROUTINES['e'] = [{ time: 0, type: 'endorphin_rush', duration: 4.0 }];
+MINI_ROUTINES['4'] = [{ time: 0, type: 'text', message: 'Serotonin Surge', duration: 2.0 }, { time: 0, type: 'serotonin', intensity: 1.5, duration: 5.0 }];
 
 export { MINI_ROUTINES };
