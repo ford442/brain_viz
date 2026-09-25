@@ -85,6 +85,10 @@ if (player) {
                  console.log(`[Visual] Focus state updated to ${evt.value}`);
              });
 
+             player.registerHandler('acetylcholine', (evt) => {
+                 player.startLerp({ key: 'focus', value: 1.0, duration: evt.duration || 3.0 });
+             });
+
              player.registerHandler('serotonin', (evt) => {
                  const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
                  const duration = evt.duration || 3.0;
@@ -270,5 +274,6 @@ import { MINI_ROUTINES } from './mini-routines.js';
 
 MINI_ROUTINES['e'] = [{ time: 0, type: 'endorphin_rush', duration: 4.0 }];
 MINI_ROUTINES['4'] = [{ time: 0, type: 'text', message: 'Serotonin Surge', duration: 2.0 }, { time: 0, type: 'serotonin', intensity: 1.5, duration: 5.0 }];
+MINI_ROUTINES['Q'] = [{ time: 0, type: 'acetylcholine', duration: 4.0 }];
 
 export { MINI_ROUTINES };

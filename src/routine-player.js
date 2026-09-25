@@ -648,12 +648,12 @@ export class RoutinePlayer {
             return;
         }
 
-        // [Phase 33] Microglia Pruning Alias
+        // Microglia Pruning Simulation: Alias for synaptic pruning handler
         if (resolvedEvt.type === 'synaptic_pruning') {
             resolvedEvt.type = 'microglia_pruning';
         }
 
-        // [Phase 34] Biofeedback Adaptive Audio
+        // Biofeedback Adaptive Audio: Maps physiological parameters (like respirationRate) to sonification properties
         if (resolvedEvt.type === 'biofeedback_audio') {
             resolvedEvt.type = 'sonify_param';
             // Map the event parameters (e.g. state.respirationRate) to the sonification handler parameters
