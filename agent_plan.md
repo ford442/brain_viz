@@ -3,7 +3,7 @@
 - [x] **Parameter Interpolation / Easing**
 - [x] **Camera Coordinates Map**
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer. (Verified existing implementation meets all requirements: `performance.now()`, extensible `executeEvent`, WebGPU safety).
-- [ ] **Parameter Interpolation/Easing:** Add support for parameter interpolation and easing.
+- [x] **Parameter Interpolation/Easing:** Add support for parameter interpolation and easing.
 - [ ] **Camera Coordinates Map:** Implement a camera coordinates map for better camera angles.
 
 *Idea:* "What if we visualized Serotonin levels as color shifts?"
