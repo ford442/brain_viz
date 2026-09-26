@@ -1,6 +1,7 @@
 // @ts-check
 /**
  * @fileoverview Orchestrates timed sequences of brain activity.
+ * Neuro-Script Implementation Cycle: verified sequencer
  *
  * Architectural Features:
  * - Sequencer: Uses performance.now() and delta-time compensation to ensure drift-free sequencing.

@@ -57,6 +57,17 @@ async function init() {
 if (player) {
              console.log('[Routine Engine] RoutinePlayer sequencer initialized successfully.');
 
+             player.registerHandler('parameter_interpolation', (evt) => {
+                 if (evt.targetParam && evt.targetValue !== undefined) {
+                     player.startLerp({
+                         key: evt.targetParam,
+                         value: evt.targetValue,
+                         duration: evt.duration || 1.0,
+                         ease: evt.ease || 'sineInOut'
+                     });
+                 }
+             });
+
              // [Dream Backlog] Procedural Binaural Generation
              // Event names: binaural_target → procedural_binaural (see routine-player.js).
              // Do not register 'binaural' here — effects-audio.js already owns that type.
@@ -274,6 +285,7 @@ import { MINI_ROUTINES } from './mini-routines.js';
 
 MINI_ROUTINES['e'] = [{ time: 0, type: 'endorphin_rush', duration: 4.0 }];
 MINI_ROUTINES['4'] = [{ time: 0, type: 'text', message: 'Serotonin Surge', duration: 2.0 }, { time: 0, type: 'serotonin', intensity: 1.5, duration: 5.0 }];
+MINI_ROUTINES['p'] = [{ time: 0, type: 'parameter_interpolation', targetParam: 'sparkle', targetValue: 1.0, duration: 2.0, ease: 'sineInOut' }];
 MINI_ROUTINES['Q'] = [{ time: 0, type: 'acetylcholine', duration: 4.0 }];
 
 export { MINI_ROUTINES };
