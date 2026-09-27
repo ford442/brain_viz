@@ -1,7 +1,6 @@
 // @ts-check
 /**
  * @fileoverview Orchestrates timed sequences of brain activity.
- * Neuro-Script Implementation Cycle: verified sequencer
  *
  * Architectural Features:
  * - Sequencer: Uses performance.now() and delta-time compensation to ensure drift-free sequencing.
@@ -669,6 +668,10 @@ export class RoutinePlayer {
 
         if (resolvedEvt.type === 'binaural_target') {
             resolvedEvt.type = 'procedural_binaural';
+        }
+
+        if (resolvedEvt.type === 'timeline_sequence') {
+            resolvedEvt.type = 'routine';
         }
 
         // Extensible mapping pattern
