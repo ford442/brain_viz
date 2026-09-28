@@ -7,7 +7,6 @@
  * - Interactive Timeline Controls
  * - Camera Coordinates Mapping
  * - WebGPU Graceful Fallback Checks
- * - Neuro-Script Implementation Cycle: Verified integration.
  */
 
 import { FilterUIOverlay, initUIControls, initDirectorTools, initTooltips, initRangeTooltips } from './ui-utils.js';
@@ -117,6 +116,26 @@ if (player) {
                      player.startLerp({ key: 'colorShift', value: 0.0, duration: duration, ease: ease, delay: delay });
                      player.startLerp({ key: 'flowSpeed', value: 4.0, duration: duration, ease: 'quadOut', delay: delay });
                      player.startLerp({ key: 'fluidActive', value: 0.0, duration: duration, ease: ease, delay: delay });
+                 }
+             });
+
+             player.registerHandler('oxytocin', (evt) => {
+                 const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+                 const duration = evt.duration || 3.0;
+
+                 // Visualize increased connectivity and soft glowing pathways
+                 player.startLerp({ key: 'synapticDensity', value: 2.0 * intensity, duration: 1.5, ease: 'sineInOut' });
+                 player.startLerp({ key: 'glowIntensity', value: 1.8 * intensity, duration: 1.5, ease: 'sineInOut' });
+                 player.startLerp({ key: 'pathwayWidth', value: 1.5 * intensity, duration: 1.5, ease: 'sineInOut' });
+
+                 // Fade back
+                 if (duration > 0) {
+                     const ease = evt.ease || 'sineInOut';
+                     const delay = 1.5;
+
+                     player.startLerp({ key: 'synapticDensity', value: 1.0, duration: duration, ease: ease, delay: delay });
+                     player.startLerp({ key: 'glowIntensity', value: 1.0, duration: duration, ease: ease, delay: delay });
+                     player.startLerp({ key: 'pathwayWidth', value: 1.0, duration: duration, ease: ease, delay: delay });
                  }
              });
         } else {
@@ -287,5 +306,6 @@ MINI_ROUTINES['e'] = [{ time: 0, type: 'endorphin_rush', duration: 4.0 }];
 MINI_ROUTINES['4'] = [{ time: 0, type: 'text', message: 'Serotonin Surge', duration: 2.0 }, { time: 0, type: 'serotonin', intensity: 1.5, duration: 5.0 }];
 MINI_ROUTINES['p'] = [{ time: 0, type: 'parameter_interpolation', targetParam: 'sparkle', targetValue: 1.0, duration: 2.0, ease: 'sineInOut' }];
 MINI_ROUTINES['Q'] = [{ time: 0, type: 'acetylcholine', duration: 4.0 }];
+MINI_ROUTINES['O'] = [{ time: 0, type: 'text', message: 'Oxytocin Release', duration: 2.0 }, { time: 0, type: 'oxytocin', intensity: 1.5, duration: 5.0 }];
 
 export { MINI_ROUTINES };
