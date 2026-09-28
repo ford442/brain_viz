@@ -67,9 +67,11 @@ if (player) {
                  }
              });
 
-             // [Dream Backlog] Procedural Binaural Generation
-             // Event names: binaural_target → procedural_binaural (see routine-player.js).
-             // Do not register 'binaural' here — effects-audio.js already owns that type.
+             /**
+              * Procedural Binaural Generation Handler
+              * Translates brainwave targets (alpha, beta, etc.) into smooth interpolations
+              * for beat frequency and filter cutoff parameters in the sonification engine.
+              */
              player.registerHandler('procedural_binaural', (evt) => {
                  if (!player.sonificationEngine) return;
                  const target = evt.target || evt.targetWave || 'alpha';
