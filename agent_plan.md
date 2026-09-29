@@ -29,3 +29,4 @@
 *Idea:* "What if we visualize neuroplasticity as real-time growth of new synaptic pathways between active regions?"
 
 *Idea:* "What if we visualized melatonin release as a gradual darkening of ambient light and slowing of particle flow?"
+*Idea:* "What if we visualize cognitive load as dynamic variations in global flow speed and fiber thickness?"
