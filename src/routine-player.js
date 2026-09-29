@@ -344,68 +344,54 @@ export class RoutinePlayer {
     }
 
     /**
-     * The main execution loop for the timeline sequencer.
-     * Utilizes performance.now() and delta-time compensation to ensure drift-free sequencing.
-     * Safely halts execution if the WebGPU context is lost or the renderer is destroyed.
+     * Checks if the WebGPU context is lost or renderer is invalid.
+     * Implementing graceful degradation logic.
+     * @returns {boolean} True if the context is invalid and execution should halt.
      */
-    tick() {
-        if (!this.isPlaying) return;
-        // Ensure we don't tick if the renderer is destroyed
-        if (this.renderer && this.renderer.isDestroyed) {
+    checkGracefulDegradation() {
+        if (!this.renderer) return true;
+
+        if (this.renderer.isDestroyed) {
              console.warn("[Routine Engine] WebGPU Renderer is destroyed. Stopping tick loop safely.");
-             this.stop();
-             return;
-        }
-        if (this.routine.length === 0) return; // Safety guard
-        if (!this.renderer || (this.renderer.backendType !== 'webgl' && (!this.renderer.device || this.renderer.device.lost))) {
-            console.warn("[Routine Engine] WebGPU context lost or renderer unavailable. Halting tick loop.");
-            this.stop();
-            return;
+             return true;
         }
 
-
-
-        // Gracefully stop if device is lost fallback
-        // The WebGL2 fallback renderer has no `device` concept (backendType === 'webgl'),
-        // so the device-loss check only applies to the WebGPU backend; WebGL health is
-        // covered by the isRunning check below.
-        const isWebGPUBackend = this.renderer && this.renderer.backendType !== 'webgl';
+        const isWebGPUBackend = this.renderer.backendType !== 'webgl';
         const isDeviceLost = this._deviceLost;
-        // GPUDevice.lost is a Promise, not a boolean — the renderer surfaces the
-        // resolved state as `isContextLost` (set by BrainRenderer.handleDeviceLost).
         const isDeviceLostNow = isWebGPUBackend && this.renderer.isContextLost === true;
-        const rendererMissing = !this.renderer || (isWebGPUBackend && !this.renderer.device) || isDeviceLostNow;
+        const rendererMissing = (isWebGPUBackend && !this.renderer.device) || isDeviceLostNow;
+
         if (isWebGPUBackend && this.renderer.device && this.renderer.isContextLost) {
             console.warn('[Routine Engine] WebGPU Context lost detected dynamically. Degrading gracefully by stopping tick.');
-            this.stop();
-            return;
+            return true;
         }
 
         if (rendererMissing || isDeviceLost) {
              console.warn("[Routine Engine] WebGPU Context is permanently invalid or lost. Halting execution gracefully.");
              if (rendererMissing) this._deviceLost = true;
-             this.stop();
-             return;
+             return true;
         }
 
         if (typeof this.renderer.isRunning !== 'undefined' && !this.renderer.isRunning && !this.renderer.xrPresenting) {
              console.warn("[Routine Engine] WebGPU Renderer is not running. Pausing tick loop safely.");
-             this.stop();
-             return;
+             return true;
         }
 
-        const now = performance.now();
+        return false;
+    }
 
+    /**
+     * Calculates the delta time for the current frame, using a debt system
+     * to compensate for frame stalls.
+     * @param {number} now - The current performance.now() timestamp
+     * @returns {number} The drift-free delta time
+     */
+    calculateDriftFreeDeltaTime(now) {
         let deltaTime = (now - this.lastFrameTime) / 1000.0;
         if (isNaN(deltaTime) || deltaTime < 0) deltaTime = 0; // Safety: ensure deltaTime is always a valid number
         if (deltaTime > 1.0) deltaTime = 1.0; // Prevent huge jumps
-        this.lastFrameTime = now;
 
         // Timeline Compensation & Catch-up Logic
-        // If the frame stalls (e.g., ONNX inference block, tab backgrounded),
-        // cap the maximum deltaTime so we don't jump too far ahead in a single frame.
-        // We accumulate the "debt" and slowly burn it off over subsequent frames
-        // to smoothly catch up without destroying visual intent.
         if (!this.timeDebt) this.timeDebt = 0;
         const MAX_FRAME_DT = 0.1; // 100ms cap
         if (deltaTime > MAX_FRAME_DT) {
@@ -418,6 +404,27 @@ export class RoutinePlayer {
             deltaTime += catchup;
             this.timeDebt -= catchup;
         }
+
+        return deltaTime;
+    }
+
+    /**
+     * The main execution loop for the timeline sequencer.
+     * Utilizes performance.now() and delta-time compensation to ensure drift-free sequencing.
+     * Safely halts execution if the WebGPU context is lost or the renderer is destroyed.
+     */
+    tick() {
+        if (!this.isPlaying) return;
+        if (this.routine.length === 0) return; // Safety guard
+
+        if (this.checkGracefulDegradation()) {
+            this.stop();
+            return;
+        }
+
+        const now = performance.now();
+        let deltaTime = this.calculateDriftFreeDeltaTime(now);
+        this.lastFrameTime = now;
 
         // Continuous Audio-Driven Respiration
         if (this.respirationActive) {
@@ -877,10 +884,3 @@ export class RoutinePlayer {
         };
     }
 }
-// Flow state added
-// Dynamic weather added
-// GSR Sync logic extended
-
-// Stroke Lesion
-// Neurotransmitter Depletion
-// Added Pupillary Dilation Support
