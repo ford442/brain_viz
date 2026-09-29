@@ -14,8 +14,8 @@
 *Idea:* "What if we visualize neuro-inflammation as localized redness and swelling?"
 ### Phase 2: Advanced Choreography
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
-- [ ] **Parameter Interpolation / Easing**
-- [ ] **Camera Camera Coordinates Map**
+- [x] **Parameter Interpolation / Easing**
+- [x] **Camera Camera Coordinates Map**
 - [x] **External Data Sonification:** Map external data to connectome signal pulses.
 - [x] **Procedural Binaural Generation:** Automatically generate binaural beat frequencies for a desired brainwave target.
 - [x] **Binaural Easing:** Add smooth interpolation support when transitioning between different binaural beat frequencies instead of instant snapping.
@@ -27,3 +27,4 @@
 *Idea:* "What if we visualize neuroplasticity as real-time growth of new synaptic pathways between active regions?"
 
 *Idea:* "What if we visualized melatonin release as a gradual darkening of ambient light and slowing of particle flow?"
+*Idea:* "What if we visualize cognitive load as dynamic variations in global flow speed and fiber thickness?"
