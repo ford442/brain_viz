@@ -15,12 +15,14 @@
 ### Phase 2: Advanced Choreography
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
 - [x] **Parameter Interpolation / Easing**
-- [x] **Camera Camera Coordinates Map**
+- [ ] **Camera Camera Coordinates Map**
+- [ ] **Dynamic Brainwave Resonance**
 - [x] **External Data Sonification:** Map external data to connectome signal pulses.
 - [x] **Procedural Binaural Generation:** Automatically generate binaural beat frequencies for a desired brainwave target.
 - [x] **Binaural Easing:** Add smooth interpolation support when transitioning between different binaural beat frequencies instead of instant snapping.
 - [x] **Endorphin Simulation:** What if we visualized endorphins as a temporary suppression of stress parameters and an increase in harmonic wave synchronization?
 
+*Idea:* "What if we synchronized the neural pulse rate with live heart rate data from a wearable?"
 *Idea:* "What if we visualized Oxytocin levels as increased connectivity and soft glowing pathways?"
 *Idea:* "What if we map local weather conditions to global ambient lighting and particle turbulence?"
 *Idea:* "What if we visualize real-time web traffic as synaptic activity across the lobes?"
