@@ -140,6 +140,12 @@ if (player) {
                      player.startLerp({ key: 'pathwayWidth', value: 1.0, duration: duration, ease: ease, delay: delay });
                  }
              });
+
+             player.registerHandler('camera_coordinates_map', (evt) => {
+                 if (evt.targetRegion && player.cameraRegions.has(evt.targetRegion)) {
+                     player.executeEvent({ type: 'camera', target: evt.targetRegion, duration: evt.duration || 2.0 });
+                 }
+             });
         } else {
 
              console.warn('[Routine Engine] RoutinePlayer failed to initialize.');
