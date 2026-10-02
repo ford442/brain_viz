@@ -15,8 +15,9 @@
 ### Phase 2: Advanced Choreography
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
 - [x] **Parameter Interpolation / Easing**
-- [x] **Camera Camera Coordinates Map**
-- [ ] **Dynamic Brainwave Resonance**
+- [ ] **Camera Camera Coordinates Map**
+- [x] **Dynamic Brainwave Resonance**
+- [ ] **Parameter Interpolation/Easing Refinement: Add spline-based easing transitions for smoother parameter interpolation.**
 - [x] **External Data Sonification:** Map external data to connectome signal pulses.
 - [x] **Procedural Binaural Generation:** Automatically generate binaural beat frequencies for a desired brainwave target.
 - [x] **Binaural Easing:** Add smooth interpolation support when transitioning between different binaural beat frequencies instead of instant snapping.
@@ -36,3 +37,4 @@
 - [ ] **Camera Camera Coordinates Map**
 
 *Idea:* "What if we visualized Serotonin levels as color shifts?"
+*Idea:* "What if we visualized Acetylcholine release as enhanced cognitive focus and neural synchronization?"
