@@ -15,7 +15,7 @@
 ### Phase 2: Advanced Choreography
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
 - [x] **Parameter Interpolation / Easing**
-- [ ] **Camera Camera Coordinates Map**
+- [x] **Camera Camera Coordinates Map**
 - [ ] **Dynamic Brainwave Resonance**
 - [x] **External Data Sonification:** Map external data to connectome signal pulses.
 - [x] **Procedural Binaural Generation:** Automatically generate binaural beat frequencies for a desired brainwave target.
@@ -30,3 +30,9 @@
 
 *Idea:* "What if we visualized melatonin release as a gradual darkening of ambient light and slowing of particle flow?"
 *Idea:* "What if we visualize cognitive load as dynamic variations in global flow speed and fiber thickness?"
+
+### Roadmap Refinements
+- [ ] **Parameter Interpolation/Easing**
+- [ ] **Camera Camera Coordinates Map**
+
+*Idea:* "What if we visualized Serotonin levels as color shifts?"

@@ -244,8 +244,12 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
             const tag = (e.target && e.target.tagName) || '';
             const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (e.target && e.target.isContentEditable);
             if (!typing) {
-                audioReactor.playTone(synthKeyMap[upperKey]);
-                synthPlayed = true;
+                try {
+                    audioReactor.playTone(synthKeyMap[upperKey]);
+                    synthPlayed = true;
+                } catch (err) {
+                    console.warn('[synth] playTone failed', err);
+                }
             }
         }
 
@@ -269,12 +273,12 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
         let matchedKey = e.key;
 
         // Advanced Trigger System implementation for multi-key chords
-        if (!typing) {
-            if (activeKeys.has('Shift') && activeKeys.has('a')) {
+        if (!typing && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            if (e.shiftKey && e.key.toLowerCase() === 'a') {
                 matchedRoutine = MINI_ROUTINES['A'];
                 matchedKey = 'Shift+A';
             } else {
-                matchedRoutine = MINI_ROUTINES[e.key] || MINI_ROUTINES[e.key.toLowerCase()] || MINI_ROUTINES[e.key.toUpperCase()];
+                matchedRoutine = MINI_ROUTINES[e.key];
             }
         }
 
@@ -296,7 +300,11 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
 
         const upperKey = e.key.toUpperCase();
         if (synthKeyMap[upperKey]) {
-            audioReactor.stopTone(synthKeyMap[upperKey]);
+            try {
+                audioReactor.stopTone(synthKeyMap[upperKey]);
+            } catch (err) {
+                console.warn('[synth] stopTone failed', err);
+            }
         }
     });
 

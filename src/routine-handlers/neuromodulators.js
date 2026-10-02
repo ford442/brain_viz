@@ -524,6 +524,16 @@ export function registerNeuromodulatorsHandlers(handlers, player) {
         }
     });
 
+    handlers.set('neuromod_noradrenaline', (evt) => {
+        player.executeEvent({ type: 'noradrenaline', intensity: evt.intensity, duration: evt.duration });
+        if (evt.message) player.executeEvent({ type: 'text', message: evt.message, duration: evt.duration });
+    });
+
+    handlers.set('neuromod_oxytocin', (evt) => {
+        player.executeEvent({ type: 'oxytocin', intensity: evt.intensity, duration: evt.duration });
+        if (evt.message) player.executeEvent({ type: 'text', message: evt.message, duration: evt.duration });
+    });
+
     // [Phase 2] Sensory Overload Simulation
     handlers.set('sensory_overload', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;

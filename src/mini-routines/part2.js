@@ -155,7 +155,7 @@ export const MINI_ROUTINES_PART2 = {
         { time: 0.0, type: 'text', message: 'Noradrenaline Spike: Global Alertness!', duration: 2.0 },
         { time: 0.0, type: 'style', value: 2 }, // Connectome
         { time: 0.0, type: 'sound', frequency: 1200, oscType: 'square', duration: 0.3, volume: 0.6 },
-        { time: 0.0, type: 'noradrenaline', intensity: 1.5, duration: 3.0 },
+        { time: 0.0, type: 'neuromod_noradrenaline', intensity: 1.5, duration: 3.0 },
         { time: 3.0, type: 'text', message: 'Alertness returning to baseline.', duration: 2.0 },
         { time: 4.0, type: 'calm' }
     ],
@@ -163,7 +163,7 @@ export const MINI_ROUTINES_PART2 = {
         { time: 0.0, type: 'text', message: 'Adrenaline Surge!', duration: 2.0 },
         { time: 0.0, type: 'style', value: 2 }, // Connectome
         { time: 0.0, type: 'sound', frequency: 800, oscType: 'sawtooth', duration: 0.5, volume: 0.8 },
-        { time: 0.0, type: 'adrenaline', intensity: 1.5, duration: 4.0 },
+        { time: 0.0, type: 'neuromod_adrenaline', intensity: 1.5, duration: 4.0 },
         { time: 4.0, type: 'text', message: 'Stabilized.', duration: 2.0 },
         { time: 5.0, type: 'calm' }
     ],
@@ -368,7 +368,7 @@ export const MINI_ROUTINES_PART2 = {
         { time: 0.0, type: 'text', message: 'Oxytocin Release: Bonding & Trust', duration: 3.0 },
         { time: 0.0, type: 'style', value: 2 }, // Connectome
         { time: 0.0, type: 'sound', frequency: 528, oscType: 'sine', duration: 3.0, volume: 0.4 }, // 528Hz Love Frequency
-        { time: 0.0, type: 'oxytocin', intensity: 1.5, duration: 4.0 },
+        { time: 0.0, type: 'neuromod_oxytocin', intensity: 1.5, duration: 4.0 },
         { time: 4.0, type: 'text', message: 'Connection established.', duration: 2.0 },
         { time: 5.0, type: 'calm' }
     ],

@@ -140,6 +140,12 @@ if (player) {
                      player.startLerp({ key: 'pathwayWidth', value: 1.0, duration: duration, ease: ease, delay: delay });
                  }
              });
+
+             player.registerHandler('camera_coordinates_map', (evt) => {
+                 if (evt.targetRegion && player.cameraRegions.has(evt.targetRegion)) {
+                     player.executeEvent({ type: 'camera', target: evt.targetRegion, duration: evt.duration || 2.0 });
+                 }
+             });
         } else {
 
              console.warn('[Routine Engine] RoutinePlayer failed to initialize.');
@@ -307,7 +313,7 @@ import { MINI_ROUTINES } from './mini-routines.js';
 MINI_ROUTINES['e'] = [{ time: 0, type: 'endorphin_rush', duration: 4.0 }];
 MINI_ROUTINES['4'] = [{ time: 0, type: 'text', message: 'Serotonin Surge', duration: 2.0 }, { time: 0, type: 'serotonin', intensity: 1.5, duration: 5.0 }];
 MINI_ROUTINES['p'] = [{ time: 0, type: 'parameter_interpolation', targetParam: 'sparkle', targetValue: 1.0, duration: 2.0, ease: 'sineInOut' }];
-MINI_ROUTINES['Q'] = [{ time: 0, type: 'acetylcholine', duration: 4.0 }];
+MINI_ROUTINES['r'] = [{ time: 0, type: 'acetylcholine', duration: 4.0 }];
 MINI_ROUTINES['O'] = [{ time: 0, type: 'text', message: 'Oxytocin Release', duration: 2.0 }, { time: 0, type: 'oxytocin', intensity: 1.5, duration: 5.0 }];
 
 export { MINI_ROUTINES };
