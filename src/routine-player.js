@@ -417,6 +417,12 @@ export class RoutinePlayer {
         if (!this.isPlaying) return;
         if (this.routine.length === 0) return; // Safety guard
 
+        if (!this.renderer || !this.renderer.device || this.renderer.device.lost) {
+            console.warn("[Routine Engine] WebGPU Context lost or invalid. Halting execution gracefully.");
+            this.stop();
+            return;
+        }
+
         if (this.checkGracefulDegradation()) {
             this.stop();
             return;
