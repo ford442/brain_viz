@@ -44,6 +44,7 @@ For the current architecture and module responsibilities, see [`AGENTS.md`](../A
 | 29 | Cortical Dynamics | Cortical thickness atrophy and swelling visualization |
 | 30 | Neural Field Physics Contract | `docs/tensor-physics.md` as the normative spec; `src/physics/tensor-field.js` CPU reference driving the WebGL2 fallback; C++ engine ported to the full model behind a generated `BrainTensorParams` ABI; golden 32³ fixture + `npm run test:golden`; SIMD/LTO/ESM WASM build |
 | 31 | Live Input Bus | `LiveInputBus`: one shared, user-editable mapping table (source/feature -> renderer-param sink, with scale + attack/release smoothing) driving mic, BCI band-power, and Training Mode metrics without a new per-source integration file; "Live" tab mapping matrix UI with JSON import/export; `if: "live.…"` routine condition sugar |
+| 32 | Cellular Senescence | `cellular_senescence` event handler for interpolating `decimation`, `ambientLight`, `flowSpeed`, and `amplitude` and mapping to Key `c` with UI legend update. |
 
 ## Open Items
 
@@ -82,3 +83,4 @@ Deduplicated from the historical "Dream Log" entries across the archived plans �
 - [`docs/DOUBLE_MIRROR_VISION.md`](DOUBLE_MIRROR_VISION.md) — shipped V1 boundary and longer-term multimodal ideas
 - **Neuro-Visual Endorphin Release Simulation** — What if we visualized the effects of endorphins as a temporary suppression of stress parameters and an increase in harmonic wave synchronization?
 - **Neuro-Inflammation Simulation** — What if we visualize neuro-inflammation as localized redness and swelling?
+- **Dopamine Reward Prediction Errors** — What if we visualized Dopamine reward prediction errors as rapid pulse flashes along specific pathways?

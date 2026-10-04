@@ -315,5 +315,6 @@ MINI_ROUTINES['4'] = [{ time: 0, type: 'text', message: 'Serotonin Surge', durat
 MINI_ROUTINES['p'] = [{ time: 0, type: 'parameter_interpolation', targetParam: 'sparkle', targetValue: 1.0, duration: 2.0, ease: 'sineInOut' }];
 MINI_ROUTINES['Q'] = [{ time: 0, type: 'acetylcholine', duration: 4.0 }];
 MINI_ROUTINES['O'] = [{ time: 0, type: 'text', message: 'Oxytocin Release', duration: 2.0 }, { time: 0, type: 'oxytocin', intensity: 1.5, duration: 5.0 }];
+MINI_ROUTINES['c'] = [{ time: 0, type: 'text', message: 'Cellular Senescence', duration: 2.0 }, { time: 0, type: 'cellular_senescence', intensity: 1.2, duration: 5.0 }];
 
 export { MINI_ROUTINES };

@@ -101,9 +101,16 @@ export class RoutinePlayer {
     setupDefaultHandlers() {
         const handlers = createDefaultHandlers(this);
         handlers.set('neuro_inflammation', (evt) => {
-            const histamine = handlers.get('histamine');
-            if (typeof histamine === 'function') {
-                histamine({ ...evt, type: 'histamine', intensity: evt.intensity ?? 1.2 });
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.2;
+            const duration = evt.duration || 4.0;
+            const ease = evt.ease || 'sineInOut';
+
+            this.startLerp({ key: 'colorShift', value: 0.8 * intensity, duration: duration, ease: ease });
+            this.startLerp({ key: 'corticalThickness', value: 0.11 + (intensity * 0.08), duration: duration, ease: ease });
+            this.startLerp({ key: 'ambientLight', value: 0.2 + (0.1 * intensity), duration: duration, ease: ease });
+
+            if (evt.message) {
+                this.executeEvent({ type: 'text', message: evt.message, duration: duration });
             }
         });
 
