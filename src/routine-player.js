@@ -101,16 +101,9 @@ export class RoutinePlayer {
     setupDefaultHandlers() {
         const handlers = createDefaultHandlers(this);
         handlers.set('neuro_inflammation', (evt) => {
-            const intensity = evt.intensity !== undefined ? evt.intensity : 1.2;
-            const duration = evt.duration || 4.0;
-            const ease = evt.ease || 'sineInOut';
-
-            this.startLerp({ key: 'colorShift', value: 0.8 * intensity, duration: duration, ease: ease });
-            this.startLerp({ key: 'corticalThickness', value: 0.11 + (intensity * 0.08), duration: duration, ease: ease });
-            this.startLerp({ key: 'ambientLight', value: 0.2 + (0.1 * intensity), duration: duration, ease: ease });
-
-            if (evt.message) {
-                this.executeEvent({ type: 'text', message: evt.message, duration: duration });
+            const histamine = handlers.get('histamine');
+            if (typeof histamine === 'function') {
+                histamine({ ...evt, type: 'histamine', intensity: evt.intensity ?? 1.2 });
             }
         });
 
@@ -424,7 +417,8 @@ export class RoutinePlayer {
         if (!this.isPlaying) return;
         if (this.routine.length === 0) return; // Safety guard
 
-        if (!this.renderer || !this.renderer.device || this.renderer.device.lost) {
+        const isWebGPUBackend = this.renderer?.backendType !== 'webgl';
+        if (!this.renderer || (isWebGPUBackend && (!this.renderer.device || this.renderer.device.lost))) {
             console.warn("[Routine Engine] WebGPU Context lost or invalid. Halting execution gracefully.");
             this.stop();
             return;
