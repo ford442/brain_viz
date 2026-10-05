@@ -32,7 +32,16 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
         'temporal-lobe-right': { rotation: { x: 0.2, y: -1.57 }, zoom: 2.5 },
         'cerebellum': { rotation: { x: -0.8, y: 3.14 }, zoom: 2.5 },
         'amygdala': { rotation: { x: 0.0, y: 1.57 }, zoom: 1.2 },
-        'hippocampus': { rotation: { x: 0.2, y: -1.57 }, zoom: 1.4 }
+        'hippocampus': { rotation: { x: 0.2, y: -1.57 }, zoom: 1.4 },
+        'frontal': { rotation: { x: 0.1, y: 0 }, zoom: 3.0 },     // Face on
+        'occipital': { rotation: { x: 0.2, y: Math.PI }, zoom: 3.0 }, // Back
+        'temporal': { rotation: { x: 0, y: -Math.PI / 2 }, zoom: 3.5 }, // Right Side
+        'parietal': { rotation: { x: 1.0, y: 0 }, zoom: 3.5 },    // Top-ish
+        'deep': { rotation: { x: 0.3, y: 0.3 }, zoom: 2.5 },      // Close up angle
+        'global': { rotation: { x: 0.3, y: 0 }, zoom: 3.5 },      // Standard view
+        'top': { rotation: { x: 1.57, y: 0 }, zoom: 3.5 },        // Direct Top-down
+        'bottom': { rotation: { x: -1.57, y: 0 }, zoom: 3.5 },    // Bottom-up
+        'iso': { rotation: { x: 0.5, y: 0.5 }, zoom: 3.0 }        // Isometric-like
     };
 
     const explicitSplineMap = {

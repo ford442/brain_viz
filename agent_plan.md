@@ -15,7 +15,7 @@
 ### Phase 2: Advanced Choreography
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
 - [x] **Parameter Interpolation / Easing**
-- [ ] **Camera Camera Coordinates Map**
+- [x] **Camera Camera Coordinates Map**
 - [ ] **Dynamic Brainwave Resonance**
 - [x] **External Data Sonification:** Map external data to connectome signal pulses.
 - [x] **Procedural Binaural Generation:** Automatically generate binaural beat frequencies for a desired brainwave target.

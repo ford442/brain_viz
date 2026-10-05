@@ -359,9 +359,9 @@ export class RoutinePlayer {
         const isWebGPUBackend = this.renderer.backendType !== 'webgl';
         const isDeviceLost = this._deviceLost;
         const isDeviceLostNow = isWebGPUBackend && this.renderer.isContextLost === true;
-        const rendererMissing = (isWebGPUBackend && !this.renderer.device) || isDeviceLostNow;
+        const rendererMissing = (isWebGPUBackend && (!this.renderer.device || this.renderer.device.lost)) || isDeviceLostNow;
 
-        if (isWebGPUBackend && this.renderer.device && this.renderer.isContextLost) {
+        if (isWebGPUBackend && this.renderer.device && (this.renderer.isContextLost || this.renderer.device.lost)) {
             console.warn('[Routine Engine] WebGPU Context lost detected dynamically. Degrading gracefully by stopping tick.');
             return true;
         }
@@ -414,8 +414,23 @@ export class RoutinePlayer {
      * Safely halts execution if the WebGPU context is lost or the renderer is destroyed.
      */
     tick() {
-        if (!this.isPlaying) return;
-        if (this.routine.length === 0) return; // Safety guard
+        if (!this.isPlaying || this.routine.length === 0) return;
+        if (!this.renderer || this.renderer.isDestroyed) {
+            this.stop();
+            return;
+        }
+
+        const isWebGPU = this.renderer.backendType !== 'webgl';
+        if (isWebGPU && (
+            !this.renderer.device ||
+            this.renderer.device.lost ||
+            this.renderer.isContextLost === true ||
+            this._deviceLost
+        )) {
+            this._deviceLost = true;
+            this.stop();
+            return;
+        }
 
         if (this.checkGracefulDegradation()) {
             this.stop();
