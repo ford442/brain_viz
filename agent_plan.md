@@ -16,7 +16,8 @@
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
 - [x] **Parameter Interpolation / Easing**
 - [x] **Camera Camera Coordinates Map**
-- [ ] **Dynamic Brainwave Resonance**
+- [x] **Dynamic Brainwave Resonance**
+- [x] **Parameter Interpolation/Easing Refinement: Add spline-based easing transitions for smoother parameter interpolation.**
 - [x] **External Data Sonification:** Map external data to connectome signal pulses.
 - [x] **Procedural Binaural Generation:** Automatically generate binaural beat frequencies for a desired brainwave target.
 - [x] **Binaural Easing:** Add smooth interpolation support when transitioning between different binaural beat frequencies instead of instant snapping.
@@ -30,3 +31,11 @@
 
 *Idea:* "What if we visualized melatonin release as a gradual darkening of ambient light and slowing of particle flow?"
 *Idea:* "What if we visualize cognitive load as dynamic variations in global flow speed and fiber thickness?"
+*Idea:* "What if we visualize memory fragmentation as erratic spline paths and flickering opacities?"
+
+### Roadmap Refinements
+- [x] **Parameter Interpolation/Easing**
+- [x] **Camera Camera Coordinates Map**
+
+*Idea:* "What if we visualized Serotonin levels as color shifts?"
+*Idea:* "What if we visualized Acetylcholine release as enhanced cognitive focus and neural synchronization?"

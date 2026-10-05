@@ -198,4 +198,46 @@ export function registerCoreHandlers(handlers, player) {
         }
     });
 
+    handlers.set('brainwave_resonance', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const duration = evt.duration || 1.5;
+        const band = evt.band || 'alpha';
+
+        let flowSpeed = 4.0;
+        let amplitude = 1.0;
+        let colorShift = 0.0;
+
+        switch (band) {
+            case 'delta':
+                flowSpeed = 1.0 * intensity;
+                amplitude = 2.0 * intensity;
+                colorShift = 0.8 * intensity;
+                break;
+            case 'theta':
+                flowSpeed = 2.0 * intensity;
+                amplitude = 1.5 * intensity;
+                colorShift = 0.6 * intensity;
+                break;
+            case 'alpha':
+                flowSpeed = 4.0 * intensity;
+                amplitude = 1.0 * intensity;
+                colorShift = 0.4 * intensity;
+                break;
+            case 'beta':
+                flowSpeed = 8.0 * intensity;
+                amplitude = 0.8 * intensity;
+                colorShift = 0.2 * intensity;
+                break;
+            case 'gamma':
+                flowSpeed = 16.0 * intensity;
+                amplitude = 0.5 * intensity;
+                colorShift = 0.0 * intensity;
+                break;
+        }
+
+        player.startLerp({ key: 'flowSpeed', value: flowSpeed, duration: duration, ease: 'sineInOut' });
+        player.startLerp({ key: 'amplitude', value: amplitude, duration: duration, ease: 'sineInOut' });
+        player.startLerp({ key: 'colorShift', value: colorShift, duration: duration, ease: 'sineInOut' });
+    });
+
 }
