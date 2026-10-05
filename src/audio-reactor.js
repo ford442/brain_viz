@@ -84,56 +84,64 @@ export class AudioReactor {
 
     // --- Interactive Synthesis Control Layout ---
     playTone(frequency) {
-        if (!this.audioContext) {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            this.audioContext = new AudioContext();
+        try {
+            if (!this.audioContext) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.audioContext = new AudioContext();
+            }
+
+            // Ensure analyser exists for visual reaction
+            if (!this.analyser) {
+                this.analyser = this.audioContext.createAnalyser();
+                this.analyser.fftSize = this.fftSize;
+                this.analyser.smoothingTimeConstant = this.smoothingTimeConstant;
+                const bufferLength = this.analyser.frequencyBinCount;
+                this.dataArray = new Uint8Array(bufferLength);
+                // In synth mode, we might not have a microphone stream, so mark active
+                this.isActive = true;
+            }
+
+            if (this.audioContext.state === 'suspended') {
+                this.audioContext.resume();
+            }
+
+            if (this.activeOscillators.has(frequency)) return;
+
+            const osc = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+
+            gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, this.audioContext.currentTime + 0.05);
+
+            osc.connect(gainNode);
+            gainNode.connect(this.analyser);
+            gainNode.connect(this.audioContext.destination);
+
+            osc.start();
+            this.activeOscillators.set(frequency, { osc, gainNode });
+        } catch (e) {
+            console.warn('[AudioReactor] Failed to play tone:', e);
         }
-
-        // Ensure analyser exists for visual reaction
-        if (!this.analyser) {
-            this.analyser = this.audioContext.createAnalyser();
-            this.analyser.fftSize = this.fftSize;
-            this.analyser.smoothingTimeConstant = this.smoothingTimeConstant;
-            const bufferLength = this.analyser.frequencyBinCount;
-            this.dataArray = new Uint8Array(bufferLength);
-            // In synth mode, we might not have a microphone stream, so mark active
-            this.isActive = true;
-        }
-
-        if (this.audioContext.state === 'suspended') {
-            this.audioContext.resume();
-        }
-
-        if (this.activeOscillators.has(frequency)) return;
-
-        const osc = this.audioContext.createOscillator();
-        const gainNode = this.audioContext.createGain();
-
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
-
-        gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.3, this.audioContext.currentTime + 0.05);
-
-        osc.connect(gainNode);
-        gainNode.connect(this.analyser);
-        gainNode.connect(this.audioContext.destination);
-
-        osc.start();
-        this.activeOscillators.set(frequency, { osc, gainNode });
     }
 
     stopTone(frequency) {
-        if (!this.activeOscillators.has(frequency)) return;
+        try {
+            if (!this.activeOscillators.has(frequency)) return;
 
-        const { osc, gainNode } = this.activeOscillators.get(frequency);
+            const { osc, gainNode } = this.activeOscillators.get(frequency);
 
-        gainNode.gain.cancelScheduledValues(this.audioContext.currentTime);
-        gainNode.gain.setValueAtTime(gainNode.gain.value, this.audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 0.1);
+            gainNode.gain.cancelScheduledValues(this.audioContext.currentTime);
+            gainNode.gain.setValueAtTime(gainNode.gain.value, this.audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 0.1);
 
-        osc.stop(this.audioContext.currentTime + 0.1);
-        this.activeOscillators.delete(frequency);
+            osc.stop(this.audioContext.currentTime + 0.1);
+            this.activeOscillators.delete(frequency);
+        } catch (e) {
+            console.warn('[AudioReactor] Failed to stop tone:', e);
+        }
     }
 
     getFeatures() {

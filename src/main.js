@@ -160,7 +160,9 @@ if (player) {
             legendPanel.appendChild(newEntry);
         }
 
-        setupOverlays(player, filterOverlay, inputs, labels);
+        if (player) {
+            setupOverlays(player, filterOverlay, inputs, labels);
+        }
         const controls = document.getElementById('controls');
         const sonificationEngine = setupSonificationIntegration(renderer, player, audioReactor, controls);
         const reactivityRouter = setupReactivityIntegration(renderer, player, audioReactor, controls);

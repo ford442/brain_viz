@@ -357,6 +357,8 @@ export class RoutinePlayer {
         }
 
         const isWebGPUBackend = this.renderer.backendType !== 'webgl';
+        if (!isWebGPUBackend) return false;
+
         const isDeviceLost = this._deviceLost;
         const isDeviceLostNow = isWebGPUBackend && this.renderer.isContextLost === true;
         const rendererMissing = (isWebGPUBackend && !this.renderer.device) || isDeviceLostNow;
@@ -417,7 +419,9 @@ export class RoutinePlayer {
         if (!this.isPlaying) return;
         if (this.routine.length === 0) return; // Safety guard
 
-        if (!this.renderer || !this.renderer.device || this.renderer.device.lost) {
+        const isWebGPUBackend = this.renderer && this.renderer.backendType !== 'webgl';
+
+        if (isWebGPUBackend && (!this.renderer || !this.renderer.device || this.renderer.device.lost)) {
             console.warn("[Routine Engine] WebGPU Context lost or invalid. Halting execution gracefully.");
             this.stop();
             return;

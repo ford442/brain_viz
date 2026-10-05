@@ -43,7 +43,7 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
     // Initialize RoutinePlayer, ensuring it expects the BrainRenderer instance
     if (!renderer) {
         console.error("BrainRenderer instance missing. Cannot initialize RoutinePlayer.");
-        return;
+        return {};
     }
     const player = new RoutinePlayer(renderer, regionCoordinatesMap, cameraCoordinatesMap);
 
