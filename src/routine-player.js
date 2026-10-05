@@ -107,6 +107,22 @@ export class RoutinePlayer {
             }
         });
 
+        handlers.set('cellular_senescence', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 6.0;
+            const ease = evt.ease || 'quadIn';
+
+            // Interpolate decimation for structural rigidness, and flow/amplitude for slowing down
+            this.startLerp({ key: 'decimation', value: intensity * 0.8, duration: duration, ease: ease });
+            this.startLerp({ key: 'ambientLight', value: Math.max(0.05, 0.2 - (0.1 * intensity)), duration: duration, ease: ease });
+            this.startLerp({ key: 'flowSpeed', value: Math.max(0.5, 4.0 - (3.0 * intensity)), duration: duration, ease: ease });
+            this.startLerp({ key: 'amplitude', value: Math.max(0.1, 0.5 - (0.4 * intensity)), duration: duration, ease: ease });
+
+            if (evt.message) {
+                this.executeEvent({ type: 'text', message: evt.message, duration: duration });
+            }
+        });
+
         for (const [type, handler] of handlers) {
             this.handlers.set(type, handler);
         }
