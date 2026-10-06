@@ -2,6 +2,7 @@
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
 - [x] **Parameter Interpolation / Easing**
 - [x] **Camera Coordinates Map**
+- [x] **Neuroplasticity Simulation:** Implement neuroplasticity event handler and mini-routine.
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer. (Verified existing implementation meets all requirements: `performance.now()`, extensible `executeEvent`, WebGPU safety).
 - [x] **Parameter Interpolation/Easing:** Add support for parameter interpolation and easing.
 - [x] **Camera Coordinates Map:** Implement a camera coordinates map for better camera angles.
@@ -39,3 +40,4 @@
 
 *Idea:* "What if we visualized Serotonin levels as color shifts?"
 *Idea:* "What if we visualized Acetylcholine release as enhanced cognitive focus and neural synchronization?"
+*Idea:* "What if we map spatial audio sources to individual neural clusters, so that hearing sounds from the left triggers left-hemisphere visual activity?"
