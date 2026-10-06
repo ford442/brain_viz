@@ -123,6 +123,21 @@ export class RoutinePlayer {
             }
         });
 
+        handlers.set('neuroplasticity', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 5.0;
+            const ease = evt.ease || 'sineInOut';
+
+            this.startLerp({ key: 'synapticDensity', value: 1.5 * intensity, duration: duration, ease: ease });
+            this.startLerp({ key: 'growth', value: 2.0 * intensity, duration: duration, ease: ease });
+            this.startLerp({ key: 'pathwayWidth', value: 1.2 * intensity, duration: duration, ease: ease });
+            this.startLerp({ key: 'sparkle', value: 1.5 * intensity, duration: duration, ease: ease });
+
+            if (evt.message) {
+                this.executeEvent({ type: 'text', message: evt.message, duration: duration });
+            }
+        });
+
         for (const [type, handler] of handlers) {
             this.handlers.set(type, handler);
         }
