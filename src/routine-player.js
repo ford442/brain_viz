@@ -138,6 +138,20 @@ export class RoutinePlayer {
             }
         });
 
+        handlers.set('web_traffic', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 5.0;
+            const ease = evt.ease || 'sineInOut';
+
+            this.startLerp({ key: 'synapticDensity', value: 1.5 * intensity, duration: duration, ease: ease });
+            this.startLerp({ key: 'sparkle', value: 2.0 * intensity, duration: duration, ease: ease });
+            this.startLerp({ key: 'flowSpeed', value: 8.0 * intensity, duration: duration, ease: ease });
+
+            if (evt.message) {
+                this.executeEvent({ type: 'text', message: evt.message, duration: duration });
+            }
+        });
+
         for (const [type, handler] of handlers) {
             this.handlers.set(type, handler);
         }
