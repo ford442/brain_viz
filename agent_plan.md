@@ -6,6 +6,7 @@
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer. (Verified existing implementation meets all requirements: `performance.now()`, extensible `executeEvent`, WebGPU safety).
 - [x] **Parameter Interpolation/Easing:** Add support for parameter interpolation and easing.
 - [x] **Camera Coordinates Map:** Implement a camera coordinates map for better camera angles.
+- [x] **Web Traffic:** Visualize real-time web traffic as synaptic activity across the lobes.
 
 *Idea:* "What if we visualized Acetylcholine release as enhanced cognitive focus and neural synchronization?"
 *Idea:* "What if we visualized Serotonin levels as color shifts?"
@@ -27,7 +28,6 @@
 *Idea:* "What if we synchronized the neural pulse rate with live heart rate data from a wearable?"
 *Idea:* "What if we visualized Oxytocin levels as increased connectivity and soft glowing pathways?"
 *Idea:* "What if we map local weather conditions to global ambient lighting and particle turbulence?"
-*Idea:* "What if we visualize real-time web traffic as synaptic activity across the lobes?"
 *Idea:* "What if we visualize neuroplasticity as real-time growth of new synaptic pathways between active regions?"
 
 *Idea:* "What if we visualized melatonin release as a gradual darkening of ambient light and slowing of particle flow?"
@@ -41,3 +41,4 @@
 *Idea:* "What if we visualized Serotonin levels as color shifts?"
 *Idea:* "What if we visualized Acetylcholine release as enhanced cognitive focus and neural synchronization?"
 *Idea:* "What if we map spatial audio sources to individual neural clusters, so that hearing sounds from the left triggers left-hemisphere visual activity?"
+*Idea:* "What if we visualized circadian rhythms by dynamically mapping the local time to global brain illumination?"
