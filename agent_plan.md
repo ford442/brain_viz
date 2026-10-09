@@ -24,6 +24,7 @@
 - [x] **Procedural Binaural Generation:** Automatically generate binaural beat frequencies for a desired brainwave target.
 - [x] **Binaural Easing:** Add smooth interpolation support when transitioning between different binaural beat frequencies instead of instant snapping.
 - [x] **Endorphin Simulation:** What if we visualized endorphins as a temporary suppression of stress parameters and an increase in harmonic wave synchronization?
+- [x] **Melatonin Release Simulation:** Visualize melatonin release as a gradual darkening of ambient light and slowing of particle flow.
 
 *Idea:* "What if we synchronized the neural pulse rate with live heart rate data from a wearable?"
 *Idea:* "What if we visualized Oxytocin levels as increased connectivity and soft glowing pathways?"
@@ -42,3 +43,4 @@
 *Idea:* "What if we visualized Acetylcholine release as enhanced cognitive focus and neural synchronization?"
 *Idea:* "What if we map spatial audio sources to individual neural clusters, so that hearing sounds from the left triggers left-hemisphere visual activity?"
 *Idea:* "What if we visualized circadian rhythms by dynamically mapping the local time to global brain illumination?"
+*Idea:* "What if we visualize neuro-genesis as a slow increase in structural complexity?"
