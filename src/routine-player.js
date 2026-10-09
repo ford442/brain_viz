@@ -1,4 +1,5 @@
 // @ts-check
+// Neuro-Script Implementation Cycle: timeline-based sequencer implemented.
 /**
  * @fileoverview Orchestrates timed sequences of brain activity.
  *
@@ -738,6 +739,10 @@ export class RoutinePlayer {
 
         if (resolvedEvt.type === 'external_data') {
             resolvedEvt.type = 'external_data_sonification';
+        }
+
+        if (resolvedEvt.type === 'dynamic_brainwave_resonance') {
+            resolvedEvt.type = 'brainwave_resonance';
         }
 
         if (resolvedEvt.type === 'binaural_target') {

@@ -1,6 +1,20 @@
 import { handleCamera } from '../routine-camera.js';
 
 export function registerNeuromodulatorsHandlers(handlers, player) {
+    handlers.set('melatonin', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const duration = evt.duration || 3.0;
+        const ease = evt.ease || 'sineInOut';
+
+        // Darken ambient light and slow down particle flow
+        player.startLerp({ key: 'ambientLight', value: Math.max(0.01, 0.2 - (0.15 * intensity)), duration: duration, ease: ease });
+        player.startLerp({ key: 'flowSpeed', value: Math.max(0.5, 4.0 - (3.0 * intensity)), duration: duration, ease: ease });
+
+        if (evt.message) {
+             player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
+
     handlers.set('serotonin', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
         const duration = evt.duration || 3.0;

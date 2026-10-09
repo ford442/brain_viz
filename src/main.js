@@ -326,5 +326,6 @@ MINI_ROUTINES['Q'] = [{ time: 0, type: 'acetylcholine', duration: 4.0 }];
 MINI_ROUTINES['O'] = [{ time: 0, type: 'text', message: 'Oxytocin Release', duration: 2.0 }, { time: 0, type: 'oxytocin', intensity: 1.5, duration: 5.0 }];
 MINI_ROUTINES['N'] = [{ time: 0, type: 'text', message: 'Neuroplasticity Triggered', duration: 2.0 }, { time: 0, type: 'neuroplasticity', intensity: 1.5, duration: 5.0 }];
 MINI_ROUTINES['W'] = [{ time: 0, type: 'text', message: 'Web Traffic Sync', duration: 2.0 }, { time: 0, type: 'web_traffic', intensity: 1.5, duration: 5.0 }];
+MINI_ROUTINES['j'] = [{ time: 0, type: 'text', message: 'Melatonin Release', duration: 2.0 }, { time: 0, type: 'melatonin', intensity: 1.0, duration: 5.0 }];
 
 export { MINI_ROUTINES };
