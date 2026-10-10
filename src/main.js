@@ -121,6 +121,20 @@ if (player) {
                  }
              });
 
+             player.registerHandler('neuro_genesis', (evt) => {
+                 const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+                 const duration = evt.duration || 5.0;
+                 const ease = evt.ease || 'sineInOut';
+
+                 // Slowly increase structural complexity
+                 player.startLerp({ key: 'growth', value: 2.0 * intensity, duration: duration, ease: ease });
+                 player.startLerp({ key: 'synapticDensity', value: 1.8 * intensity, duration: duration, ease: ease });
+
+                 if (evt.message) {
+                     player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+                 }
+             });
+
              player.registerHandler('oxytocin', (evt) => {
                  const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
                  const duration = evt.duration || 3.0;
@@ -327,5 +341,6 @@ MINI_ROUTINES['O'] = [{ time: 0, type: 'text', message: 'Oxytocin Release', dura
 MINI_ROUTINES['N'] = [{ time: 0, type: 'text', message: 'Neuroplasticity Triggered', duration: 2.0 }, { time: 0, type: 'neuroplasticity', intensity: 1.5, duration: 5.0 }];
 MINI_ROUTINES['W'] = [{ time: 0, type: 'text', message: 'Web Traffic Sync', duration: 2.0 }, { time: 0, type: 'web_traffic', intensity: 1.5, duration: 5.0 }];
 MINI_ROUTINES['j'] = [{ time: 0, type: 'text', message: 'Melatonin Release', duration: 2.0 }, { time: 0, type: 'melatonin', intensity: 1.0, duration: 5.0 }];
+MINI_ROUTINES['z'] = [{ time: 0, type: 'text', message: 'Neuro-Genesis: Structural Complexity', duration: 2.0 }, { time: 0, type: 'neuro_genesis', intensity: 1.5, duration: 8.0 }];
 
 export { MINI_ROUTINES };
