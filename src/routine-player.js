@@ -753,6 +753,10 @@ export class RoutinePlayer {
             resolvedEvt.type = 'routine';
         }
 
+        if (resolvedEvt.type === 'structural_complexity') {
+            resolvedEvt.type = 'neuro_genesis';
+        }
+
         // Extensible mapping pattern
         if (this.handlers.has(resolvedEvt.type)) {
 
