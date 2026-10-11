@@ -44,4 +44,5 @@
 *Idea:* "What if we map spatial audio sources to individual neural clusters, so that hearing sounds from the left triggers left-hemisphere visual activity?"
 *Idea:* "What if we visualized circadian rhythms by dynamically mapping the local time to global brain illumination?"
 - [x] **Neuro-genesis Simulation:** Implement a slow increase in structural complexity.
-*Idea:* "What if we visualize long-term potentiation as enduring thicker pathways that persist across routine changes?"
+- [x] **Long-Term Potentiation Simulation:** Visualize enduring thicker pathways that persist across routine changes.
+*Idea:* "What if we visualized dopamine pathways lighting up during reward-based interactions?"
