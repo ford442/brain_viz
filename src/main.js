@@ -263,6 +263,14 @@ if (player) {
             cogLegendPanelSerotonin.appendChild(newEntry);
         }
 
+
+        const cogLegendPanelLTP = document.getElementById('legend-panel');
+        if (cogLegendPanelLTP) {
+            const newEntry = document.createElement('div');
+            newEntry.innerHTML = '<b>k</b> : Trigger Long-Term Potentiation Simulation';
+            cogLegendPanelLTP.appendChild(newEntry);
+        }
+
         const cogLegendPanelSenescence = document.getElementById('legend-panel');
         if (cogLegendPanelSenescence) {
             const newEntry = document.createElement('div');
@@ -271,6 +279,20 @@ if (player) {
         }
 
         // Global hook for external data sonification (satisfies manual testing and integration points)
+
+        player.registerHandler('long_term_potentiation', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 5.0;
+            const ease = evt.ease || 'sineInOut';
+
+            player.startLerp({ key: 'pathwayWidth', value: 1.5 * intensity, duration: duration, ease: ease });
+            player.startLerp({ key: 'synapticDensity', value: 2.0 * intensity, duration: duration, ease: ease });
+
+            if (evt.message) {
+                player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+            }
+        });
+
         window.triggerExternalData = (feedType = 'stock_market') => {
             if (player) {
                 player.executeEvent({ type: 'external_data', feedType: feedType, duration: 10.0 });
@@ -342,5 +364,7 @@ MINI_ROUTINES['N'] = [{ time: 0, type: 'text', message: 'Neuroplasticity Trigger
 MINI_ROUTINES['W'] = [{ time: 0, type: 'text', message: 'Web Traffic Sync', duration: 2.0 }, { time: 0, type: 'web_traffic', intensity: 1.5, duration: 5.0 }];
 MINI_ROUTINES['j'] = [{ time: 0, type: 'text', message: 'Melatonin Release', duration: 2.0 }, { time: 0, type: 'melatonin', intensity: 1.0, duration: 5.0 }];
 MINI_ROUTINES['z'] = [{ time: 0, type: 'text', message: 'Neuro-Genesis: Structural Complexity', duration: 2.0 }, { time: 0, type: 'neuro_genesis', intensity: 1.5, duration: 8.0 }];
+
+MINI_ROUTINES['k'] = [{ time: 0, type: 'text', message: 'Long-Term Potentiation Activated', duration: 2.0 }, { time: 0, type: 'long_term_potentiation', intensity: 1.5, duration: 5.0 }];
 
 export { MINI_ROUTINES };
