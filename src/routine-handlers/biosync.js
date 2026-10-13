@@ -28,6 +28,22 @@ export function registerBiosyncHandlers(handlers, player) {
     });
 
     // Environmental Noise Simulation (background ambient lighting shifts)
+    handlers.set('environmental_turbulence', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const duration = evt.duration || 5.0;
+        const ease = evt.ease || 'sineInOut';
+
+        player.startLerp({ key: 'flowSpeed', value: 4.0 + (10.0 * intensity), duration: duration, ease: ease });
+        player.startLerp({ key: 'amplitude', value: 0.5 + (1.5 * intensity), duration: duration, ease: ease });
+        player.startLerp({ key: 'grain', value: 2.0 * intensity, duration: duration, ease: ease });
+        player.startLerp({ key: 'aberration', value: 2.0 * intensity, duration: duration, ease: ease });
+        player.startLerp({ key: 'shake', value: 0.1 * intensity, duration: duration, ease: ease });
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
+
     handlers.set('environmental_noise', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
         const duration = evt.duration || 5.0;

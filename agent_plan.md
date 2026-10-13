@@ -36,6 +36,7 @@
 *Idea:* "What if we visualize memory fragmentation as erratic spline paths and flickering opacities?"
 
 ### Roadmap Refinements
+- [x] **Environmental Turbulence:** Implement environmental turbulence modular event handler.
 - [x] **Parameter Interpolation/Easing**
 - [x] **Camera Camera Coordinates Map**
 
@@ -46,3 +47,4 @@
 - [x] **Neuro-genesis Simulation:** Implement a slow increase in structural complexity.
 - [x] **Long-Term Potentiation Simulation:** Visualize enduring thicker pathways that persist across routine changes.
 *Idea:* "What if we visualized dopamine pathways lighting up during reward-based interactions?"
+*Idea:* "What if we visualized a state of 'flow' by synchronizing neural pathways with musical tempo?"
