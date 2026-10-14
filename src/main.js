@@ -252,8 +252,15 @@ if (player) {
         const cogLegendPanelEndorphin = document.getElementById('legend-panel');
         if (cogLegendPanelEndorphin) {
             const newEntry = document.createElement('div');
-            newEntry.innerHTML = '<b>E</b> : Trigger Endorphin Rush Simulation';
+            newEntry.innerHTML = '<b>e</b> : Trigger Endorphin Rush Simulation';
             cogLegendPanelEndorphin.appendChild(newEntry);
+        }
+
+        const cogLegendPanelAdaptive = document.getElementById('legend-panel');
+        if (cogLegendPanelAdaptive) {
+            const newEntry = document.createElement('div');
+            newEntry.innerHTML = '<b>E</b> : Trigger Adaptive Emotion Routine (Live Input Bus Branching)';
+            cogLegendPanelAdaptive.appendChild(newEntry);
         }
 
         const cogLegendPanelSerotonin = document.getElementById('legend-panel');
