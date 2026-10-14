@@ -54,6 +54,21 @@ export function setupLiveInputIntegration(renderer, player, audioReactor, bciSes
         },
     });
 
+    // Source: Webcam emotion (mock). Provides real-time emotion features like 'stress' and 'calm'
+    // to allow for adaptive routines branching on these signals.
+    bus.registerSource('webcam', {
+        hz: 10,
+        features: ['stress', 'calm'],
+        sample: () => {
+            const time = performance.now() / 1000;
+            const stress = (Math.sin(time * 0.5) + 1.0) / 2.0;
+            return {
+                stress: stress,
+                calm: 1.0 - stress
+            };
+        }
+    });
+
     if (!bus.loadFromLocalStorage()) {
         bus.enabled = true;
     }

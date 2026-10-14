@@ -34,6 +34,7 @@ export function setupLegendPanel() {
                 <div class="legend-item"><span class="legend-key">W</span><span>Weather</span></div>
                 <div class="legend-item"><span class="legend-key">P</span><span>Panic</span></div>
                 <div class="legend-item"><span class="legend-key">6</span><span>Cortisol</span></div>
+                <div class="legend-item"><span class="legend-key">E</span><span>Adaptive Emotion Routine</span></div>
             </div>
         </div>
         <div class="legend-section">

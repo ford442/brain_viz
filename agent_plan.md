@@ -7,6 +7,7 @@
 - [x] **Parameter Interpolation/Easing:** Add support for parameter interpolation and easing.
 - [x] **Camera Coordinates Map:** Implement a camera coordinates map for better camera angles.
 - [x] **Web Traffic:** Visualize real-time web traffic as synaptic activity across the lobes.
+- [x] **Adaptive Routines:** Implement adaptive routines that branch based on real-time webcam emotion detection (`if: "live.webcam.stress > 0.5"`).
 
 *Idea:* "What if we visualized Acetylcholine release as enhanced cognitive focus and neural synchronization?"
 *Idea:* "What if we visualized Serotonin levels as color shifts?"
@@ -46,3 +47,4 @@
 - [x] **Neuro-genesis Simulation:** Implement a slow increase in structural complexity.
 - [x] **Long-Term Potentiation Simulation:** Visualize enduring thicker pathways that persist across routine changes.
 *Idea:* "What if we visualized dopamine pathways lighting up during reward-based interactions?"
+*Idea:* "What if we visualized cellular memory as lingering resonance patterns?"
