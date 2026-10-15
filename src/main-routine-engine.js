@@ -253,7 +253,11 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
             const tag = (e.target && e.target.tagName) || '';
             const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (e.target && e.target.isContentEditable);
             if (!typing) {
-                audioReactor.playTone(synthKeyMap[upperKey]);
+                try {
+                    audioReactor.playTone(synthKeyMap[upperKey]);
+                } catch (error) {
+                    console.warn('[Main] Error playing tone:', error);
+                }
                 synthPlayed = true;
             }
         }
@@ -305,7 +309,11 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
 
         const upperKey = e.key.toUpperCase();
         if (synthKeyMap[upperKey]) {
-            audioReactor.stopTone(synthKeyMap[upperKey]);
+            try {
+                audioReactor.stopTone(synthKeyMap[upperKey]);
+            } catch (error) {
+                console.warn('[Main] Error stopping tone:', error);
+            }
         }
     });
 
