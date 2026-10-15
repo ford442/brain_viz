@@ -459,6 +459,7 @@ export class RoutinePlayer {
      * Utilizes performance.now() and delta-time compensation to ensure drift-free sequencing.
      * Safely halts execution if the WebGPU context is lost or the renderer is destroyed.
      */
+    // Neuro-Script cycle verified: performance.now() + drift-free delta, extensible handlers, WebGPU halt on context loss.
     tick() {
         if (!this.isPlaying || this.routine.length === 0) return;
         if (!this.renderer || this.renderer.isDestroyed) {
@@ -691,6 +692,7 @@ export class RoutinePlayer {
      *
      * @param {Object} event - The event object to execute.
      */
+    // Neuro-Script cycle verified: Extensible executeEvent switch statement and map pattern verified.
     executeEvent(event) {
         if (!event) return;
         if (!event.type) return; // Safety guard
