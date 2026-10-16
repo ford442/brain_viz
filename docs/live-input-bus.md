@@ -32,7 +32,11 @@ already-updated public state.
   - **Sinks**: any key in `LIVE_INPUT_SINKS` (a curated allowlist of
     `RendererParams` keys — see `src/types.js` — plus the special `'zoom'`
     camera target, applied via `renderer.setCameraParams` instead of
-    `renderer.setParams`).
+    `renderer.setParams`). `decayRate` and `diffusionRate` drive the neural
+    field itself on every renderer (`docs/tensor-physics.md` §3.4, clamped so
+    a large offset saturates rather than inverting the field); before that
+    they were uploaded and ignored. `pulseSaturation` is still read by
+    nothing (§6.14) — a mapping onto it has no visible effect.
   - `tick(dt)` — call once per frame. Samples every due source, smooths and
     applies every enabled mapping.
   - `getFeatureValue(source, feature)` / `evaluateCondition(expr)` — read the

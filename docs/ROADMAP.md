@@ -49,8 +49,10 @@ For the current architecture and module responsibilities, see [`AGENTS.md`](../A
 
 - **Advanced Trigger System** (Phase 3) — allow complex multi-key combinations to trigger routines, instead of single-key bindings only. Implemented.
 - **WGSL-vs-CPU field comparison** (Phase 30 follow-up) — the golden fixture pins the JS and C++ implementations to each other; comparing the compute shader itself needs a software WGSL runner. `docs/tensor-physics.md` §8 records the intentional divergences in the meantime.
-- **Reserved field parameters** (Phase 30 follow-up) — `retentionBias`, `decayRate`, `diffusionRate` and `cognitiveDissonance` reach `TensorParams` but no implementation of the field reads them; see `docs/tensor-physics.md` §6.14 before wiring any of them up.
-- **WASM pthreads** (Phase 30 follow-up) — off until the production host sends COOP/COEP; `WASM_PTHREADS=1` opts in once it does.
+- ~~**Reserved field parameters**~~ — done: `decayRate`, `diffusionRate` and `retentionBias` are specified (`docs/tensor-physics.md` §3.4) and read by all three steppers; `cognitiveDissonance` was removed from the layout (§6.14). The WGSL path is now validated by naga in `npm test` and compared with the CPU reference by `npm run test:wgsl` (§9).
+- **GPU tract normalisation** — the WGSL step re-normalises tract directions every step instead of once at upload (`docs/tensor-physics.md` §8.6). Closing it needs the WebGPU upload and the clipmap affinity bake to emit unit directions.
+- **`pulseSaturation`** — a neuromodulator profile field and Live Input Bus sink that no shader or stepper reads (§6.14); the panel labels it "not wired". Give it a render meaning or retire it.
+- **WASM pthreads** (Phase 30 follow-up) — off until the production host is confirmed to send COOP/COEP (`crossOriginIsolated === true` on the deployed page); `WASM_PTHREADS=1` opts in, and the loader refuses a pthreads build on a non-isolated page. The step is single-threaded either way: threads only pay once `bte_update()` tiles z-slabs, which with SIMD fiber gathers is what a 64³ hybrid frame needs (measured ~85–98 ms today, `docs/wasm-engine.md` → *Performance*).
 
 ## Dream Backlog (Not Yet Implemented)
 
@@ -59,7 +61,7 @@ Deduplicated from the historical "Dream Log" entries across the archived plans �
 - **Neuro-Script Exchange** — a shared platform to publish, fork, and remix visualization routines.
 - **Multi-Brain Mode** — visualize two brains interacting (mirror-neuron storytelling).
 - **AI Narrative Generation** — use an LLM to generate routine scripts from themes (e.g. "Anxiety Spike", "Eureka Moment"); related to the multimodal ideas in [`docs/DOUBLE_MIRROR_VISION.md`](DOUBLE_MIRROR_VISION.md).
-- **Fractal Recursive Zoom** — procedurally generate infinite detail when zooming into a soma or fiber. *Phase A (runtime `voxelDim`) is done — see [`docs/field-resolution.md`](field-resolution.md); the clipmap field (B) and the recursive-zoom render path (C) are the remaining work.*
+- **Fractal Recursive Zoom** — procedurally generate infinite detail when zooming into a soma or fiber. *Phases A (runtime `voxelDim`), B (clipmap field: a 64³ fine brick nested in the coarse field) and C (cortical patch with laminar somas below the zoom threshold) are done on WebGPU — see [`docs/field-resolution.md`](field-resolution.md) §7–§8. Phase D (WASM SIMD kernels, a 128³ brick, dual SynaptiX clipmaps, a fine NWS1 chunk) is next.*
 - **Collaborative Brain Storming** — multi-user session injecting stimuli into a shared visualization via WebSockets.
 - **Adaptive Routines** — *`if: "live.…"` condition sugar (Phase 31) covers gating a single event on a live feature; routines that branch on real-time webcam emotion detection specifically are still open.*
 - **Neuromodulation External API** — *Phase 31's `LiveInputBus.registerSource()` is the extension point (see [`docs/live-input-bus.md`](live-input-bus.md)); an actual external WebSocket/OSC ingest source is not yet implemented.*

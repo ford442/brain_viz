@@ -3,6 +3,7 @@ export function applyRenderLoopMethods(Target) {
     Target.prototype.render = function() {
         // [V2.3] Main Render Loop
         if (!this.isRunning) return;
+        const frameStartedAt = performance.now();
 
         if (this.tms) {
     const elapsed = performance.now() - this.tms.startTime;
@@ -46,11 +47,15 @@ export function applyRenderLoopMethods(Target) {
 
         this.time += 0.016;
         this.updateAltitudeState(); // Update altitude/hypoxia parameters before uniforms
+        // [Clipmap] Decide the brick/patch work for this frame before the
+        // uniforms are written — updateUniforms() reads clipmapFrame.
+        this.updateClipmapFrame();
         this.updateUniforms();
         this.updatePathwayStateBuffer();
         if (this.params.style >= 4.0) this.updateSynaptiXBridges();
         
         const commandEncoder = this.device.createCommandEncoder();
+        if (this.gpuTimer) this.gpuTimer.beginFrame();
 
         // Skip physics simulation when tensor playback is driving the voxel buffer directly
         if (!this.tensorPlaybackMode) {
@@ -68,14 +73,25 @@ export function applyRenderLoopMethods(Target) {
         }
     } else {
         // Default path: WebGPU compute shader handles tensor physics on GPU.
-        const computePass = commandEncoder.beginComputePass();
+        const computePass = commandEncoder.beginComputePass({
+            // [Clipmap] Timed alongside the brick and render passes (GPU HUD + budget governor).
+            timestampWrites: this.gpuTimer ? this.gpuTimer.timestampWrites('field') : undefined
+        });
         computePass.setPipeline(this.computePipeline);
         computePass.setBindGroup(0, this.computeBindGroup);
         computePass.dispatchWorkgroups(Math.ceil(this.voxelBufferSize / 64));
         computePass.end();
+        // [Tensor Physics] The step wrote tensorScratchBuffer (§6: never in
+        // place); publish it before the brick and render passes read the field.
+        commandEncoder.copyBufferToBuffer(this.tensorScratchBuffer, 0, this.tensorBuffer, 0, this.voxelBufferSize * 4);
     }
         }
         
+        // [Clipmap] Fine brick step: after the coarse pass (it reads the coarse
+        // field that pass wrote — or, in WASM/playback mode, the upload above),
+        // before the scene pass (which samples the brick it writes).
+        this.encodeBrickPass(commandEncoder);
+
         // --- PASS 1: RENDER SCENE TO TEXTURE ---
         const renderPass = commandEncoder.beginRenderPass({
     colorAttachments: [{
@@ -85,7 +101,7 @@ export function applyRenderLoopMethods(Target) {
     }],
     depthStencilAttachment: { view: this.depthTexture.createView(), depthClearValue: 1.0, depthLoadOp: 'clear', depthStoreOp: 'store' },
     // undefined unless the adapter supports 'timestamp-query'.
-    timestampWrites: this.gpuTimer ? this.gpuTimer.timestampWrites() : undefined
+    timestampWrites: this.gpuTimer ? this.gpuTimer.timestampWrites('scene') : undefined
         });
         
         renderPass.setBindGroup(0, this.bindGroup);
@@ -176,6 +192,10 @@ export function applyRenderLoopMethods(Target) {
     renderPass.setVertexBuffer(1, this.normalBuffer);
     renderPass.setIndexBuffer(this.indexBuffer, 'uint32');
     renderPass.drawIndexed(this.indexCount);
+    // [Clipmap Phase C] Below the recursive-zoom threshold, the cortical
+    // patch draws the cortex inside the fine brick's footprint (the mesh
+    // fragment shader fades itself out there — patchFootprint()).
+    this.drawCorticalPatch(renderPass);
         }
         
         renderPass.end();
@@ -186,7 +206,8 @@ export function applyRenderLoopMethods(Target) {
         view: this.context.getCurrentTexture().createView(),
         loadOp: 'clear', storeOp: 'store',
         clearValue: { r: 0, g: 0, b: 0, a: 1 }
-    }]
+    }],
+    timestampWrites: this.gpuTimer ? this.gpuTimer.timestampWrites('post') : undefined
         });
 
         postPass.setPipeline(this.postPipeline);
@@ -197,6 +218,7 @@ export function applyRenderLoopMethods(Target) {
         if (this.gpuTimer) this.gpuTimer.resolve(commandEncoder);
         this.device.queue.submit([commandEncoder.finish()]);
         if (this.gpuTimer) this.gpuTimer.readback();
+        this.observeClipmapFrame(frameStartedAt);
         requestAnimationFrame(() => this.render());
     };
 

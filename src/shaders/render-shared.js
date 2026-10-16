@@ -56,6 +56,18 @@ export const HELPERS = `
         return exp(-k * dist * dist);
     }
 
+    // [Tensor Physics] §3.1 regionZone(): which anatomical zone a position is
+    // in — 0 default, 1 frontal, 2 occipital, 3 temporal, 4 parietal (1–4
+    // index TensorParams.retentionBias as zone - 1). The one place the zone
+    // tests are written; getRegionPhysics() and the §3.4 retention read it.
+    fn regionZone(worldPosition: vec3<f32>) -> u32 {
+        if (worldPosition.z > 0.5) { return 1u; }
+        if (worldPosition.z < -0.5) { return 2u; }
+        if (abs(worldPosition.x) > 0.8) { return 3u; }
+        if (worldPosition.y > 0.6) { return 4u; }
+        return 0u;
+    }
+
     // [Neuro-Weaver] Refactored: Region Physics Logic (Renamed for V2.7)
     // Returns vec3(decay, diffusion, flowBias)
     // [Neuro-Weaver] Defines anatomical zones: Frontal, Occipital, Temporal, Parietal
@@ -65,9 +77,10 @@ export const HELPERS = `
         var diffusion = 0.1;
         var flowBias = 0.0;
         var oxygenSensitivity = 1.0; // Regional vulnerability to hypoxia
+        let zone = regionZone(worldPosition);
 
         // Frontal Lobe: High retention for complex thought, MOST vulnerable to hypoxia
-        if (worldPosition.z > 0.5) {
+        if (zone == 1u) {
             decay = 0.998; // [Neuro-Weaver] V2.6: Hyper-retention for deep thought
             diffusion = 0.15;
             flowBias = -1.0;
@@ -76,18 +89,18 @@ export const HELPERS = `
         // Occipital Lobe: Fast processing, visual inputs
         // [Scientific Fix] Occipital is NOT particularly resistant - it's at terminal
         // PCA branches (watershed zone) and can be vulnerable to hypoxia
-        else if (worldPosition.z < -0.5) {
+        else if (zone == 2u) {
             decay = 0.92;
             diffusion = 0.04;
             oxygenSensitivity = 1.0; // Neutral - not resistant, at watershed zone
         }
         // Temporal Lobe: Auditory/Memory, memory centers vulnerable
-        else if (abs(worldPosition.x) > 0.8) {
+        else if (zone == 3u) {
             decay = 0.95;
             oxygenSensitivity = 1.2; // Memory vulnerable to hypoxia
         }
         // Parietal Lobe: Sensory integration, baseline sensitivity
-        else if (worldPosition.y > 0.6) {
+        else if (zone == 4u) {
             decay = 0.94;
             diffusion = 0.12;
             oxygenSensitivity = 1.0;
@@ -184,7 +197,97 @@ export const HELPERS = `
         let s = sqrt(h);
         return vec2<f32>(-b - s, -b + s);
     }
+`;
 
+
+// --- CLIPMAP FINE BRICK (render side) ---
+// [Clipmap] Bindings and helpers for the shaders that read the fine brick:
+// the mesh fragment shader (heatmap raymarch, organic/cyber shell) and the
+// cortical patch shaders. Kept out of HELPERS on purpose: HELPERS is
+// interpolated into every shader, compute included, and WGSL requires every
+// identifier a function references to be declared even if the function is
+// never called — a brick-aware helper in HELPERS would force every pipeline
+// to bind the brick texture.
+//
+// The brick texture is the rgba16float render copy written by the brick step
+// (src/shaders/brick-compute.js): r = fine activity, g = coarse field at that
+// texel, b = primary tract weight, a = 1 where populated. It is toroidally
+// addressed, so it is sampled through a *repeat* sampler at the lattice
+// coordinate itself; the only place hardware filtering would blend across the
+// wrap is the brick's outer face, which brickEdgeMask() fades to zero first.
+//
+// Positions are model space (the field's own space). Requires `uniforms`.
+export const BRICK_RENDER_HELPERS = `
+    @group(0) @binding(5) var brickTexture: texture_3d<f32>;
+    @group(0) @binding(6) var brickSampler: sampler;
+
+    // Continuous fine-lattice coordinate: voxel g's value sits at exactly g (§4.1).
+    fn brickLatticeCoord(p: vec3<f32>) -> vec3<f32> {
+        return ((p / BRAIN_RANGE) * 0.5 + 0.5) * uniforms.brickLatticeDim;
+    }
+
+    // 1 well inside the brick, 0 within a voxel of any face. The ramp spans
+    // ~1.5 coarse voxels so the hand-off to the coarse field has no edge.
+    fn brickEdgeMask(c: vec3<f32>) -> f32 {
+        let local = c - uniforms.brickLatticeOrigin;
+        let edge = min(local, vec3<f32>(uniforms.brickDim - 1.0) - local);
+        return smoothstep(1.0, 12.0, min(edge.x, min(edge.y, edge.z)));
+    }
+
+    fn brickBlendAt(p: vec3<f32>) -> f32 {
+        if (uniforms.brickWeight <= 0.0) { return 0.0; }
+        return uniforms.brickWeight * brickEdgeMask(brickLatticeCoord(p));
+    }
+
+    fn sampleBrickTexel(p: vec3<f32>) -> vec4<f32> {
+        let uvw = (brickLatticeCoord(p) + vec3<f32>(0.5)) / uniforms.brickDim;
+        return textureSampleLevel(brickTexture, brickSampler, uvw, 0.0);
+    }
+
+    // The field at p: the fine brick where it exists, blended over \`coarse\`.
+    fn detailedFieldValue(p: vec3<f32>, coarse: f32) -> f32 {
+        let w = brickBlendAt(p);
+        if (w <= 0.0) { return coarse; }
+        return mix(coarse, sampleBrickTexel(p).r, w);
+    }
+
+    // Entry/exit distances of a ray through the brick's box (exit < entry: miss).
+    fn rayBrickBounds(rayOrigin: vec3<f32>, rayDir: vec3<f32>) -> vec2<f32> {
+        let lo = ((uniforms.brickLatticeOrigin / uniforms.brickLatticeDim) * 2.0 - 1.0) * BRAIN_RANGE;
+        let hi = (((uniforms.brickLatticeOrigin + vec3<f32>(uniforms.brickDim - 1.0)) / uniforms.brickLatticeDim) * 2.0 - 1.0) * BRAIN_RANGE;
+        let inv = 1.0 / select(rayDir, vec3<f32>(1e-6), abs(rayDir) < vec3<f32>(1e-6));
+        let t0 = (lo - rayOrigin) * inv;
+        let t1 = (hi - rayOrigin) * inv;
+        let tNear = min(t0, t1);
+        let tFar = max(t0, t1);
+        return vec2<f32>(max(max(tNear.x, tNear.y), tNear.z), min(min(tFar.x, tFar.y), tFar.z));
+    }
+
+    // [Clipmap Phase C] How much of the global mesh the cortical patch has
+    // replaced at p (1 = the patch fully covers it).
+    fn patchFootprint(p: vec3<f32>) -> f32 {
+        if (uniforms.patchBlend <= 0.0) { return 0.0; }
+        let c = dot(normalize(p + vec3<f32>(1e-5)), uniforms.patchAxis);
+        return uniforms.patchBlend * smoothstep(uniforms.patchCosOuter, uniforms.patchCosInner, c);
+    }
+
+    fn raymarchSegmentSteps(length: f32, step: f32) -> u32 {
+        if (length <= 1e-5) { return 0u; }
+        return max(1u, u32(round(length / step)));
+    }
+
+    // Front-to-back thermal raymarch. Without a brick this is the original
+    // 28-step march. With one, the stretch of the ray inside the brick is
+    // marched with uniforms.brickFineSteps steps instead of its share of the
+    // 28, so fine structure is actually resolved rather than stepped over;
+    // opacity is Beer–Lambert in distance, so the extra steps do not darken it.
+    //
+    // Splitting the ray changes how many coarse steps precede the brick from
+    // one pixel to the next, and a 28-step march undersamples enough that each
+    // change shows as a terrace along the brick's faces. So with a brick, each
+    // sample sits at a per-pixel stratified offset within its step instead of
+    // the midpoint, which turns the terraces into fine noise. The offset fades
+    // in with brickWeight: with no brick every sample is at the midpoint, as before.
     fn raymarchHeatmapVolume(rayOrigin: vec3<f32>, rayDir: vec3<f32>, tMin: f32, tMax: f32, planeNormal: vec3<f32>, planeOffset: f32, time: f32) -> vec4<f32> {
         var startT = max(tMin, 0.0);
         var endT = tMax;
@@ -208,21 +311,49 @@ export const HELPERS = `
         }
 
         let span = endT - startT;
-        let stepCount: u32 = 28u;
-        let stepSize = span / f32(stepCount);
-        var t = startT;
+        let coarseStep = span / 28.0;
+        var b0 = endT;
+        var b1 = endT;
+        if (uniforms.brickWeight > 0.0 && uniforms.brickFineSteps > 0.5) {
+            let hit = rayBrickBounds(rayOrigin, rayDir);
+            let enter = clamp(hit.x, startT, endT);
+            let exit = clamp(hit.y, startT, endT);
+            if (exit > enter) {
+                b0 = enter;
+                b1 = exit;
+            }
+        }
+        let stepsBefore = raymarchSegmentSteps(b0 - startT, coarseStep);
+        let stepsInside = select(0u, u32(uniforms.brickFineSteps), b1 > b0);
+        let stepsAfter = raymarchSegmentSteps(endT - b1, coarseStep);
+        let stepCount = stepsBefore + stepsInside + stepsAfter;
+
         var transmittance = 1.0;
         var color = vec3<f32>(0.0);
+        let stratum = 0.5 + (hashNoise3(rayDir * 4096.0) - 0.5) * clamp(uniforms.brickWeight, 0.0, 1.0);
 
-        for (var i = 0u; i < 32u; i = i + 1u) {
+        for (var i = 0u; i < 128u; i = i + 1u) {
             if (i >= stepCount || transmittance < 0.03) {
                 break;
             }
 
-            let samplePos = rayOrigin + rayDir * (t + stepSize * 0.5);
-            let depthT = clamp((t + stepSize * 0.5 - startT) / span, 0.0, 1.0);
+            var t: f32;
+            var stepSize: f32;
+            if (i < stepsBefore) {
+                stepSize = (b0 - startT) / f32(stepsBefore);
+                t = startT + stepSize * f32(i);
+            } else if (i < stepsBefore + stepsInside) {
+                stepSize = (b1 - b0) / f32(stepsInside);
+                t = b0 + stepSize * f32(i - stepsBefore);
+            } else {
+                stepSize = (endT - b1) / f32(stepsAfter);
+                t = b1 + stepSize * f32(i - stepsBefore - stepsInside);
+            }
+
+            let samplePos = rayOrigin + rayDir * (t + stepSize * stratum);
+            let depthT = clamp((t + stepSize * stratum - startT) / span, 0.0, 1.0);
             let jitter = 0.86 + 0.14 * hashNoise3(samplePos * 2.75 + vec3<f32>(time * 0.08));
-            let density = clamp(getVoxelValue(samplePos) * jitter, 0.0, 1.0);
+            let density = clamp(detailedFieldValue(samplePos, getVoxelValue(samplePos)) * jitter, 0.0, 1.0);
 
             if (density > 0.0005) {
                 let thermal = getHeatmapColor(pow(density, 0.85));
@@ -233,13 +364,50 @@ export const HELPERS = `
                 color += transmittance * emission * alpha;
                 transmittance *= (1.0 - alpha * 0.9);
             } else {
-                transmittance *= 0.995;
+                transmittance *= pow(0.995, stepSize / coarseStep);
             }
-
-            t += stepSize;
         }
 
         return vec4<f32>(color, clamp(1.0 - transmittance, 0.0, 1.0));
     }
 `;
 
+// [Clipmap] Requires `uniforms`. Interpolated by the mesh vertex shader and
+// the cortical patch vertex shader.
+export const ORGANIC_SURFACE_DISPLACEMENT = `
+// [Clipmap] Organic/Cyber shell displacement, shared with the cortical patch
+// (src/shaders/cortical-patch.js) so the patch sits exactly where the mesh it
+// replaces would — a mismatch shows as a double surface in the crossfade band.
+fn organicSurfaceDisplace(base: vec3<f32>, activity: f32) -> vec3<f32> {
+    let displacement = normalize(base) * activity * 0.05;
+    var finalPos = base + displacement;
+
+    // [Phase 5] Cortisol Structural Decay
+    if (uniforms.cortisol > 0.0) {
+        let decayFactor = 1.0 - (uniforms.cortisol * 0.3);
+        finalPos *= max(0.0, decayFactor);
+    }
+
+    // [Phase 2] Cognitive Stress Distortion
+    if (uniforms.stress > 0.0) {
+        let noiseFreq = 15.0;
+        let stressDisp = sin(finalPos.x * noiseFreq + uniforms.time * 10.0) * cos(finalPos.y * noiseFreq + uniforms.time * 8.0) * sin(finalPos.z * noiseFreq);
+        finalPos += normalize(base) * stressDisp * uniforms.stress * 0.5;
+    }
+
+    // [Phase 5] Cortisol Structural Decay
+    if (uniforms.cortisol > 0.0) {
+        // Decay structural integrity based on cortisol level (shrinks vertices inward, especially higher activity areas)
+        let decayErosion = uniforms.cortisol * 0.2 * (1.0 - activity);
+        finalPos -= normalize(base) * decayErosion;
+    }
+
+    // [Phase 6] Heavy Metal Structural Alteration
+    if (uniforms.heavyMetal > 0.0) {
+        let lesionNoise = fract(sin(dot(finalPos.xyz, vec3(12.9898, 78.233, 45.164))) * 43758.5453);
+        let erosion = uniforms.heavyMetal * 0.3 * lesionNoise;
+        finalPos -= normalize(base) * erosion;
+    }
+    return finalPos;
+}
+`;

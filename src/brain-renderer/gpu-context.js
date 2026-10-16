@@ -9,6 +9,7 @@
 
 import { RENDER_UNIFORM_BUFFER_SIZE, COMPUTE_UNIFORM_BUFFER_SIZE } from './constants.js';
 import { MAX_VOXEL_DIM, voxelCountFor } from '../voxel-dim.js';
+import { AFFINITY_SLOTS, MAX_BRICK_DIM } from '../clipmap/brick-layout.js';
 
 /**
  * Device features we actually consume.
@@ -23,6 +24,13 @@ import { MAX_VOXEL_DIM, voxelCountFor } from '../voxel-dim.js';
  * 'timestamp-query' is handled separately below: it is opportunistic
  * instrumentation, not a rendering requirement, so it must never fail device
  * creation.
+ *
+ * [Clipmap] The fine brick deliberately needs nothing here either. Its
+ * simulation state is rg32float (storage-writable in core WebGPU, but only
+ * *filterable* with 'float32-filterable'); the render path instead samples an
+ * rgba16float copy the brick pass writes alongside, which core WebGPU can
+ * both store to and filter. So hardware trilinear filtering of the brick
+ * costs no optional feature, and no device is refused for lacking one.
  * @type {GPUFeatureName[]}
  */
 export const REQUIRED_GPU_FEATURES = [];
@@ -72,6 +80,16 @@ export function deriveRequiredLimits(adapter, opts = {}) {
         // Render bind group: 1 uniform + 3 read-only storage + 1 uniform.
         maxStorageBuffersPerShaderStage: 4,
         maxUniformBuffersPerShaderStage: 4,
+        // [Clipmap] The brick's affinity atlas stacks one brick-deep slab per
+        // tract slot along z — the tallest 3D texture. Sized for MAX_BRICK_DIM
+        // (128) so a larger brick never needs a new device, as storage limits
+        // are sized for MAX_VOXEL_DIM above; both are far below the WebGPU
+        // default of 2048.
+        maxTextureDimension3D: MAX_BRICK_DIM * AFFINITY_SLOTS,
+        // Brick correct pass: state + render copy (storage); stepped state,
+        // cell means and affinity atlas (sampled). Render pipelines sample one.
+        maxStorageTexturesPerShaderStage: 2,
+        maxSampledTexturesPerShaderStage: 3,
         // Fiber pipeline binds 5 vertex buffers / 6 attributes.
         maxVertexBuffers: 8,
         maxVertexAttributes: 8
@@ -180,16 +198,22 @@ export async function createGPUContext({ canvas, voxelCount, onDeviceLost, onUnc
 export const GPU_BUFFER_KEYS = [
     'vertexBuffer', 'normalBuffer', 'indexBuffer',
     'fiberBuffer', 'fiberNormalBuffer', 'fiberMetaBuffer', 'fiberPathBuffer', 'pathwayMetaBuffer',
-    'tensorBuffer', 'aiTensorBuffer', 'fiberDirectionBuffer', 'pathwayStateBuffer',
+    'tensorBuffer', 'tensorScratchBuffer', 'aiTensorBuffer', 'fiberDirectionBuffer', 'pathwayStateBuffer',
     'uniformBuffer', 'avatarAUniformBuffer', 'partnerUniformBuffer', 'computeUniformBuffer',
     'somaInstanceBuffer', 'somaVertexBuffer', 'somaIndexBuffer',
     'pointCloudInstanceBuffer', 'pointCloudQuadBuffer',
     'sparkInstanceBuffer', 'sparkQuadBuffer',
     'immuneInstanceBuffer', 'immuneQuadBuffer',
-    'synaptixBridgeBuffer'
+    'synaptixBridgeBuffer',
+    // [Clipmap] src/brain-renderer/clipmap.js
+    'brickUniformBuffer', 'patchVertexBuffer', 'patchIndexBuffer', 'patchSomaBuffer'
 ];
 
-export const GPU_TEXTURE_KEYS = ['depthTexture', 'renderTarget'];
+export const GPU_TEXTURE_KEYS = [
+    'depthTexture', 'renderTarget',
+    // [Clipmap] src/brain-renderer/clipmap.js
+    'brickStateTextureA', 'brickStateTextureB', 'brickRenderTexture', 'brickAffinityTexture', 'brickMeansTexture'
+];
 
 /**
  * Destroy every GPU object owned by `renderer` and null the handles so a stale
@@ -216,74 +240,159 @@ export function destroyGPUResources(renderer) {
         'pointCloudPipeline', 'postPipeline', 'computePipeline', 'synaptixBridgePipeline',
         'bindGroup', 'avatarABindGroup', 'partnerBindGroup', 'computeBindGroup', 'postBindGroup',
         'synaptixBridgeBindGroup',
-        'sampler'
+        'sampler',
+        // [Clipmap]
+        'brickComputePipeline', 'brickBindGroupLayout', 'brickBindGroup',
+        'brickRestrictPipeline', 'brickRestrictBindGroupLayout', 'brickRestrictBindGroup',
+        'brickCorrectPipeline', 'brickCorrectBindGroupLayout', 'brickCorrectBindGroup',
+        'patchPipeline', 'patchSomaPipeline', 'patchImpostorPipeline', 'brickSampler'
     ]) {
         if (key in renderer) renderer[key] = null;
     }
 }
 
 /**
- * Minimal GPU-time probe around the main render pass, gated on adapter support
- * for 'timestamp-query'. When the feature is absent every method is a no-op and
- * `lastFrameMs` stays null, so callers need no branching.
+ * [Clipmap] Passes the GPU timer can time, in encoder order. Two timestamp
+ * slots each (beginning / end of pass).
+ *   field — the coarse tensor compute pass
+ *   brick — the fine-brick compute pass
+ *   scene — the main render pass
+ *   post  — the post-processing pass to the swap chain
+ */
+export const GPU_TIMER_SPANS = Object.freeze(['field', 'brick', 'scene', 'post']);
+export const GPU_COMPUTE_SPANS = Object.freeze(['field', 'brick']);
+export const GPU_RENDER_SPANS = Object.freeze(['scene', 'post']);
+
+/**
+ * Per-span durations in ms from a resolved timestamp block. A span the frame
+ * did not encode (no compute pass in WASM mode, no brick when zoomed out)
+ * reads 0 — its query slots still hold some older frame's values, which is
+ * why the caller passes the set it actually wrote. Out-of-order timestamps
+ * (allowed by the spec under some power states) clamp to 0 rather than
+ * reporting a negative pass.
  *
- * Timestamps resolve asynchronously; only one readback is in flight at a time,
- * so this costs one small copy per frame and never blocks the loop.
+ * @param {BigUint64Array|bigint[]} times - Nanosecond timestamps, 2 per span.
+ * @param {readonly string[]} spans - Span names in slot order.
+ * @param {Set<string>|string[]} written - Spans encoded in the resolved frame.
+ * @returns {Record<string, number>}
+ */
+export function spanDurationsMs(times, spans, written) {
+    const wrote = written instanceof Set ? written : new Set(written);
+    /** @type {Record<string, number>} */
+    const out = {};
+    spans.forEach((span, i) => {
+        if (!wrote.has(span)) { out[span] = 0; return; }
+        const begin = times[i * 2];
+        const end = times[i * 2 + 1];
+        out[span] = end > begin ? Number(end - begin) / 1e6 : 0;
+    });
+    return out;
+}
+
+/**
+ * GPU-time probe, gated on adapter support for 'timestamp-query'. When the
+ * feature is absent every method is a no-op and every reading stays null, so
+ * callers need no branching.
+ *
+ * [Clipmap] It used to wrap only the scene render pass, and nothing read it.
+ * It now times every pass the frame encodes (GPU_TIMER_SPANS) and is read by
+ * the clipmap budget governor and the Activity tab's GPU HUD:
+ *   lastFrameMs   — render passes (scene + post). The name predates compute
+ *                   timing and is kept for what it always meant: draw time.
+ *   lastComputeMs — compute passes (coarse field + fine brick).
+ *   lastTotalMs   — both.
+ *   lastSpanMs    — each pass on its own.
+ *
+ * Timestamps resolve asynchronously; only one readback is in flight at a
+ * time, so this costs one small copy per frame and never blocks the loop.
+ * Readings therefore trail the frame they describe by a frame or two.
  */
 export class GPUTimer {
     /**
      * @param {GPUDevice} device
      * @param {boolean} enabled
+     * @param {readonly string[]} [spans]
      */
-    constructor(device, enabled) {
+    constructor(device, enabled, spans = GPU_TIMER_SPANS) {
         this.enabled = Boolean(enabled);
+        this.spans = spans;
+        /** @type {number|null} */
         this.lastFrameMs = null;
+        /** @type {number|null} */
+        this.lastComputeMs = null;
+        /** @type {number|null} */
+        this.lastTotalMs = null;
+        /** @type {Record<string, number>|null} */
+        this.lastSpanMs = null;
+        this.samples = 0;
         this._reading = false;
+        /** @type {Set<string>} */
+        this._written = new Set();
+        /** @type {Set<string>|null} */
+        this._pendingSpans = null;
         if (!this.enabled) return;
         this.device = device;
-        this.querySet = device.createQuerySet({ label: 'frame-timer', type: 'timestamp', count: 2 });
+        const count = spans.length * 2;
+        this.querySet = device.createQuerySet({ label: 'frame-timer', type: 'timestamp', count });
         this.resolveBuffer = device.createBuffer({
             label: 'frame-timer-resolve',
-            size: 16,
+            size: count * 8,
             usage: GPUBufferUsage.QUERY_RESOLVE | GPUBufferUsage.COPY_SRC
         });
         this.readbackBuffer = device.createBuffer({
             label: 'frame-timer-readback',
-            size: 16,
+            size: count * 8,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
         });
     }
 
-    /** Render-pass descriptor fragment, or undefined when disabled. */
-    timestampWrites() {
+    /** Start a frame: forget which spans the previous frame wrote. */
+    beginFrame() {
+        this._written = new Set();
+    }
+
+    /**
+     * Pass-descriptor `timestampWrites` for `span`, or undefined when disabled.
+     * @param {string} [span] - Defaults to 'scene' (the only pass timed before).
+     */
+    timestampWrites(span = 'scene') {
         if (!this.enabled) return undefined;
-        return { querySet: this.querySet, beginningOfPassWriteIndex: 0, endOfPassWriteIndex: 1 };
+        const index = this.spans.indexOf(span);
+        if (index < 0) return undefined;
+        this._written.add(span);
+        return { querySet: this.querySet, beginningOfPassWriteIndex: index * 2, endOfPassWriteIndex: index * 2 + 1 };
     }
 
     /** Queue the resolve + copy for this frame. Call before encoder.finish(). */
     resolve(encoder) {
-        if (!this.enabled || this._reading) return;
+        if (!this.enabled || this._reading || this._written.size === 0) return;
         // Only reachable when `enabled` is true, which is the same branch that
         // populates these buffers in the constructor.
         const querySet = /** @type {GPUQuerySet} */ (this.querySet);
         const resolveBuffer = /** @type {GPUBuffer} */ (this.resolveBuffer);
         const readbackBuffer = /** @type {GPUBuffer} */ (this.readbackBuffer);
-        encoder.resolveQuerySet(querySet, 0, 2, resolveBuffer, 0);
-        encoder.copyBufferToBuffer(resolveBuffer, 0, readbackBuffer, 0, 16);
-        this._pendingRead = true;
+        const count = this.spans.length * 2;
+        encoder.resolveQuerySet(querySet, 0, count, resolveBuffer, 0);
+        encoder.copyBufferToBuffer(resolveBuffer, 0, readbackBuffer, 0, count * 8);
+        this._pendingSpans = new Set(this._written);
     }
 
     /** Kick the async map for the frame just submitted. Call after submit(). */
     readback() {
-        if (!this.enabled || !this._pendingRead || this._reading) return;
-        this._pendingRead = false;
+        if (!this.enabled || !this._pendingSpans || this._reading) return;
+        const spansWritten = this._pendingSpans;
+        this._pendingSpans = null;
         this._reading = true;
         const readbackBuffer = /** @type {GPUBuffer} */ (this.readbackBuffer);
         readbackBuffer.mapAsync(GPUMapMode.READ).then(() => {
             const times = new BigUint64Array(readbackBuffer.getMappedRange().slice(0));
             readbackBuffer.unmap();
-            // Timestamps are nanoseconds.
-            this.lastFrameMs = Number(times[1] - times[0]) / 1e6;
+            const ms = spanDurationsMs(times, this.spans, spansWritten);
+            this.lastSpanMs = ms;
+            this.lastComputeMs = GPU_COMPUTE_SPANS.reduce((sum, span) => sum + (ms[span] || 0), 0);
+            this.lastFrameMs = GPU_RENDER_SPANS.reduce((sum, span) => sum + (ms[span] || 0), 0);
+            this.lastTotalMs = this.lastComputeMs + this.lastFrameMs;
+            this.samples++;
             this._reading = false;
         }).catch(() => {
             this._reading = false;

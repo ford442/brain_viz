@@ -136,7 +136,7 @@ export function renderActivityTab() {
                 <div class="section-header" data-section="activity-wasm">Simulation Engine</div>
                 <div class="section-content">
                     <div class="control-group">
-                        <label data-tooltip="Switch tensor physics between WebGPU compute shader (GPU) and native C++ WASM engine (CPU). Requires npm run build:wasm.">
+                        <label data-tooltip="Switch tensor physics between WebGPU compute shader (GPU) and native C++ WASM engine (CPU). Requires npm run build:wasm. Default builds are single-threaded and load anywhere; a WASM_PTHREADS=1 build also needs the host to send COOP/COEP headers (cross-origin isolation).">
                             Simulation Backend
                         </label>
                         <button id="btn-wasm-toggle" type="button"
@@ -166,6 +166,25 @@ export function renderActivityTab() {
                             <option value="64">64³ — 262,144 voxels</option>
                         </select>
                         <div id="voxel-dim-status" style="font-size:10px;color:#556677;margin-top:4px;"></div>
+                    </div>
+
+                    <!-- [Clipmap] Fine brick (Phase B), cortical patch (Phase C) and the GPU-time HUD -->
+                    <div class="control-group clipmap-panel">
+                        <label data-tooltip="A 64³ fine brick nested in the coarse field around where you look (or the last stimulus). It fades in as you zoom toward the cortex and steps the same field equations at ~8× the coarse resolution; pulling back drops it. WebGPU only.">
+                            Field Detail (Clipmap)
+                        </label>
+                        <label class="session-check"><input id="clipmap-enable" type="checkbox" checked> Fine brick when zoomed in</label>
+                        <label class="session-check"><input id="clipmap-patch" type="checkbox" checked> Cortical patch below the recursive-zoom threshold</label>
+                        <label class="session-check"><input id="clipmap-auto-quality" type="checkbox" checked> Lower detail when over the GPU budget</label>
+                        <select id="clipmap-focus" aria-label="Fine brick focus"
+                            style="width:100%;padding:6px;background:#0a1a2a;border:1px solid rgba(0,200,180,0.3);
+                                   border-radius:6px;color:#99aabb;font-size:11px;cursor:pointer;">
+                            <option value="auto">Focus: recent stimulus, else camera</option>
+                            <option value="camera">Focus: camera</option>
+                            <option value="stimulus">Focus: last stimulus</option>
+                        </select>
+                        <div class="gpu-budget-meter" aria-hidden="true"><div id="gpu-budget-fill" class="gpu-budget-fill"></div></div>
+                        <pre id="gpu-hud" class="gpu-hud" aria-live="off">GPU timing: waiting for the first frame…</pre>
                     </div>
                 </div>
             </div>`;

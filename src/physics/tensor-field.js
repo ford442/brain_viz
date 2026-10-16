@@ -7,13 +7,13 @@
 // Before this module there were three hand-written neural fields (WGSL compute,
 // C++ WASM, WebGL JS) that had drifted into three different feature sets. There
 // are now two implementations of one written contract — this file and
-// wasm/brain_tensor_engine.cpp — plus the WGSL shader, which stays the
+// the C++ engine in wasm/src/ — plus the WGSL shader, which stays the
 // authoritative *visual* path.
 //
 // ***Read docs/tensor-physics.md before changing anything here.*** It is the
 // spec: every step below cites a section of it, the C++ port cites the same
 // sections, and tests/test_tensor_physics.js pins the result. A change here
-// that is not mirrored in wasm/brain_tensor_engine.cpp fails
+// that is not mirrored in the C++ engine (wasm/src/) fails
 // `npm run test:golden`.
 //
 // Deliberate divergences from the WGSL shader (spec §8) exist only where WGSL
@@ -103,16 +103,40 @@ export function hashVoxel(x, y, z, salt) {
 
 // --- §3 Region and hypoxia physics -----------------------------------------
 
+/** §3.1 zone indices. 1–4 index `retentionBias` (x, y, z, w) as `zone - 1`. */
+export const ZONE_DEFAULT = 0;
+export const ZONE_FRONTAL = 1;
+export const ZONE_OCCIPITAL = 2;
+export const ZONE_TEMPORAL = 3;
+export const ZONE_PARIETAL = 4;
+
 /**
- * §3.1 `getRegionPhysics(worldPosition, style)` — the anatomical zone model.
- * Ported verbatim from render-shared.js (the 2-argument signature; the former
- * 4-argument neuromodulator fork in src/shaders/shared.js no longer exists).
+ * §3.1 `regionZone(worldPosition)` — which anatomical zone a voxel is in, the
+ * one place the zone tests are written. regionPhysics() reads it, and so does
+ * the §3.4 regional retention.
  *
- * The zone boundaries are compared against the *float32* value of each literal.
+ * The boundaries are compared against the *float32* value of each literal.
  * A voxel centre often lands exactly on a boundary (wy = 0.6 for y = 22 at
  * dim 32), and float32 0.6 is 0.6000000238…, so `wy > 0.6` is true in double
  * and false in float. Comparing in float32 is what puts that voxel in the same
  * lobe in JS as it is in C++/WGSL. See docs/tensor-physics.md §8.3.
+ *
+ * @returns {number} ZONE_DEFAULT … ZONE_PARIETAL
+ */
+export function regionZone(wx, wy, wz) {
+    if (wz > fr(0.5)) return ZONE_FRONTAL;
+    if (wz < fr(-0.5)) return ZONE_OCCIPITAL;
+    if (Math.abs(wx) > fr(0.8)) return ZONE_TEMPORAL;
+    if (wy > fr(0.6)) return ZONE_PARIETAL;
+    return ZONE_DEFAULT;
+}
+
+/**
+ * §3.1 `getRegionPhysics(worldPosition, style)` — the anatomical zone model.
+ * Ported verbatim from render-shared.js (the 2-argument signature; the former
+ * 4-argument neuromodulator fork in src/shaders/shared.js no longer exists —
+ * neuromodulation is §3.4, applied on top of this table). Zone tests live in
+ * regionZone().
  *
  * @returns {{decay: number, diffusion: number, flowBias: number}}
  */
@@ -121,16 +145,17 @@ export function regionPhysics(wx, wy, wz, style) {
     let diffusion = 0.1;
     let flowBias = 0.0;
 
-    if (wz > fr(0.5)) {                    // Frontal: hyper-retention
+    const zone = regionZone(wx, wy, wz);
+    if (zone === ZONE_FRONTAL) {           // Frontal: hyper-retention
         decay = 0.998;
         diffusion = 0.15;
         flowBias = -1.0;
-    } else if (wz < fr(-0.5)) {            // Occipital: fast visual processing
+    } else if (zone === ZONE_OCCIPITAL) {  // Occipital: fast visual processing
         decay = 0.92;
         diffusion = 0.04;
-    } else if (Math.abs(wx) > fr(0.8)) {   // Temporal: auditory / memory
+    } else if (zone === ZONE_TEMPORAL) {   // Temporal: auditory / memory
         decay = 0.95;
-    } else if (wy > fr(0.6)) {             // Parietal: sensory integration
+    } else if (zone === ZONE_PARIETAL) {   // Parietal: sensory integration
         decay = 0.94;
         diffusion = 0.12;
     }
@@ -155,6 +180,53 @@ export function hypoxiaPhysics(hypoxiaStress, metabolicRate, mitochondrialFuncti
 /** §3.3 `avalancheCriticality()`. */
 export function avalancheCriticality(cognitiveLoad, stress, fluidActive) {
     return clamp01(cognitiveLoad * 0.75 + stress * 0.9 + fluidActive * 0.35);
+}
+
+/** §3.4 `decayRate` at which `lossScale` is exactly 1 (the renderer default). */
+export const DECAY_RATE_BASELINE = 0.96;
+/** §3.4 `diffusionRate` at which `diffusionScale` is exactly 1 (the renderer default). */
+export const DIFFUSION_RATE_BASELINE = 0.1;
+/** §3.4 `retentionBias` at which every lobe's `regionalLoss` is exactly 1: frontal, occipital, temporal, parietal. */
+export const RETENTION_BASELINE = Object.freeze([0.5, 0.0, 0.2, 0.2]);
+
+/**
+ * §3.4 The global neuromodulator scales — everything but the per-lobe term,
+ * which depends on the voxel's zone (see retentionLossScale()).
+ *
+ * Exactly 1 at the baselines: `(1 - d) / (1 - d)` and `d / d` are exactly 1 in
+ * IEEE arithmetic, which is what lets the pre-§3.4 fixture still match.
+ *
+ * Computed in float32, like C++ and WGSL. In double, a decayRate that arrives
+ * already rounded to float32 (a recording, a Float32Array) is not equal to the
+ * double 0.96 baseline, and the "identity" would be 1.0000005 (§8.3).
+ *
+ * @returns {{lossScale: number, diffusionScale: number}}
+ */
+export function neuromodulation(decayRate, diffusionRate) {
+    return {
+        lossScale: clamp(fr(fr(1.0 - fr(decayRate)) / fr(1.0 - fr(DECAY_RATE_BASELINE))), 0.0, 8.0),
+        diffusionScale: clamp(fr(fr(diffusionRate) / fr(DIFFUSION_RATE_BASELINE)), 0.0, 4.0),
+    };
+}
+
+/**
+ * §3.4 `regionalLoss = exp2(-retention)` for a zone, given the four
+ * `retentionBias` components (frontal, occipital, temporal, parietal).
+ * The Default zone has no lobe and is never modulated.
+ */
+export function retentionLossScale(zone, retentionBias) {
+    if (zone === ZONE_DEFAULT) return 1.0;
+    // float32 for the same reason as neuromodulation(): 0.2 vs 0.2f must be 0.
+    const retention = clamp(fr(fr(retentionBias[zone - 1]) - fr(RETENTION_BASELINE[zone - 1])), -2.0, 2.0);
+    return 2 ** -retention;
+}
+
+/**
+ * §3.4 `spread(m, s)`: scales the odds of mix factor `m` by `s`. Exactly `m`
+ * at `s = 1` — `s - 1` is exactly 0, so the denominator is exactly 1.
+ */
+export function spread(m, s) {
+    return (m * s) / (1.0 + m * (s - 1.0));
 }
 
 // --- §4 Grid addressing -----------------------------------------------------
@@ -297,12 +369,20 @@ export const DEFAULT_FIELD_PARAMS = Object.freeze({
     resonanceThreshold: 0.2,
     synaptiXActive: 0.0,
     fiberCoupling: 0.5,
+    // §3.4 Neuromodulation. At these values every scale is exactly 1.
+    decayRate: DECAY_RATE_BASELINE,
+    diffusionRate: DIFFUSION_RATE_BASELINE,
+    retentionBiasX: RETENTION_BASELINE[0], // frontal   — retentionBias.x
+    retentionBiasY: RETENTION_BASELINE[1], // occipital — retentionBias.y
+    retentionBiasZ: RETENTION_BASELINE[2], // temporal  — retentionBias.z
+    retentionBiasW: RETENTION_BASELINE[3], // parietal  — retentionBias.w
 });
 
 /**
  * Builds a fully-populated parameter object: caller values win, everything else
  * falls back to DEFAULT_FIELD_PARAMS. Accepts the renderer's `params` shape
- * (flat `stimulusPosX`… or a `stimulusPos` array).
+ * (flat `stimulusPosX`… or a `stimulusPos` array, flat `retentionBiasX`… or a
+ * neuromodulator-profile `retentionBias: {frontal, occipital, temporal, parietal}`).
  *
  * @param {Object<string, any>} [partial]
  * @returns {Object<string, number>}
@@ -317,6 +397,13 @@ export function resolveFieldParams(partial = {}) {
         p.stimulusPosX = partial.stimulusPos[0];
         p.stimulusPosY = partial.stimulusPos[1];
         p.stimulusPosZ = partial.stimulusPos[2];
+    }
+    const rb = partial.retentionBias;
+    if (rb && typeof rb === 'object' && !ArrayBuffer.isView(rb)) {
+        for (const [key, lobe] of [['retentionBiasX', 'frontal'], ['retentionBiasY', 'occipital'],
+                                   ['retentionBiasZ', 'temporal'], ['retentionBiasW', 'parietal']]) {
+            if (typeof rb[lobe] === 'number' && Number.isFinite(rb[lobe])) p[key] = rb[lobe];
+        }
     }
     return p;
 }
@@ -367,7 +454,7 @@ export function makeReferenceFiberAffinities(dim) {
  * Advance the neural field by one step, writing into `next`.
  *
  * Section numbers in the comments are docs/tensor-physics.md sections, and
- * wasm/brain_tensor_engine.cpp carries the same markers on the same steps —
+ * wasm/src/step.cpp carries the same markers on the same steps —
  * that pairing is the contract.
  *
  * @param {Float32Array} field   current activity, dim³
@@ -395,6 +482,11 @@ export function stepTensorField(field, next, { params, fiberAffinity = null, aiF
     const slotDownPos = new Float64Array(FIBER_SLOTS * 3);
 
     const hyp = hypoxiaPhysics(p.hypoxiaStress, p.metabolicRate, p.mitochondrialFunction);
+    // §3.4 Neuromodulation: global scales here, the per-lobe term per voxel.
+    const nm = neuromodulation(p.decayRate, p.diffusionRate);
+    const retentionBias = [p.retentionBiasX, p.retentionBiasY, p.retentionBiasZ, p.retentionBiasW];
+    const isotropicMix = spread(0.7, nm.diffusionScale);
+    const couplingMix = Math.min(spread(clamp(0.45 + p.fiberCoupling * 0.35, 0.0, 0.92), nm.diffusionScale), 0.92);
     const criticality = avalancheCriticality(p.cognitiveLoad, p.stress, p.fluidActive);
     // §6.11 Ambient drive: the low-amplitude "heartbeat" that keeps the field
     // alive between stimuli. `amplitude`/`frequency` feed only this term.
@@ -415,10 +507,11 @@ export function stepTensorField(field, next, { params, fiberAffinity = null, aiF
 
         let val = field[index];
 
-        // §6.1 Region physics, modulated by hypoxia.
+        // §6.1 Region physics, neuromodulated (§3.4), then modulated by hypoxia.
         const region = regionPhysics(wx, wy, wz, p.style);
-        let decay = region.decay * hyp.decayMod;
-        let diffusion = region.diffusion * hyp.diffusionMod;
+        const lossScale = nm.lossScale * retentionLossScale(regionZone(wx, wy, wz), retentionBias);
+        let decay = clamp01(1.0 - (1.0 - region.decay) * lossScale) * hyp.decayMod;
+        let diffusion = region.diffusion * nm.diffusionScale * hyp.diffusionMod;
         const flowBias = region.flowBias;
 
         // §6.2 Clamped 6-neighbourhood.
@@ -490,10 +583,10 @@ export function stepTensorField(field, next, { params, fiberAffinity = null, aiF
             directionalTransport /= totalFiberWeight;
             const tractBias = clamp01(totalFiberWeight * (0.7 + crossingMix * 0.55));
             const diffused = mix(avg, directionalTransport, tractBias);
-            val = mix(val, diffused, clamp(0.45 + p.fiberCoupling * 0.35, 0.0, 0.92));
+            val = mix(val, diffused, couplingMix);
             val -= (avg - isotropicLeak) * clamp01(p.fiberCoupling) * 0.16;
         } else {
-            val = mix(val, avg, 0.7);
+            val = mix(val, avg, isotropicMix);
         }
 
         // §6.4 Highway bias: sustained transport along dominant tracts.

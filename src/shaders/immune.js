@@ -53,7 +53,7 @@ fn main(input: ImmuneInput) -> ImmuneOutput {
 
     let origin = input.originStagger.xyz;
     let stagger = input.originStagger.w;
-    let target = input.targetSpawn.xyz;
+    let targetPos = input.targetSpawn.xyz;
     let spawnTime = input.targetSpawn.w;
     let control = input.controlSeed.xyz;
     let seed = input.controlSeed.w;
@@ -70,7 +70,7 @@ fn main(input: ImmuneInput) -> ImmuneOutput {
 
     // Quadratic Bezier along the vessel-like arc toward the inflammation site.
     let inv = 1.0 - t;
-    let center = origin * (inv * inv) + control * (2.0 * inv * t) + target * (t * t);
+    let center = origin * (inv * inv) + control * (2.0 * inv * t) + targetPos * (t * t);
 
     // Phagocytosis burst on arrival, then fade.
     let burst = smoothstep(0.86, 1.0, t);

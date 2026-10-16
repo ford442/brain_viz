@@ -26,36 +26,148 @@ import {
     resolveFieldParams,
     stepTensorField,
     DEFAULT_FIELD_PARAMS,
+    neuromodulation,
+    retentionLossScale,
+    spread,
+    regionZone,
+    ZONE_DEFAULT,
+    ZONE_FRONTAL,
+    ZONE_OCCIPITAL,
+    ZONE_TEMPORAL,
+    ZONE_PARIETAL,
+    RETENTION_BASELINE,
 } from '../src/physics/tensor-field.js';
-import { GOLDEN_SCENARIO, GOLDEN_EPSILON, runGoldenScenario, summarizeField } from './golden-scenario.js';
+import { GOLDEN_FIXTURES, GOLDEN_EPSILON, runGoldenScenario, summarizeField } from './golden-scenario.js';
 import { COMPUTE_UNIFORM_LAYOUT } from '../src/shaders/uniform-layout.js';
 
 const fixtureDir = join(dirname(fileURLToPath(import.meta.url)), 'fixtures');
 
 // ---------------------------------------------------------------------------
-// 1. The reference stepper reproduces the committed fixture exactly.
+// 1. The reference stepper reproduces every committed fixture exactly.
 // ---------------------------------------------------------------------------
-const meta = JSON.parse(readFileSync(join(fixtureDir, 'tensor-field-golden.json'), 'utf8'));
-const raw = readFileSync(join(fixtureDir, 'tensor-field-golden.bin'));
-const expected = new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4);
+const fixtureHashes = [];
+for (const { stem, scenario } of GOLDEN_FIXTURES) {
+    const meta = JSON.parse(readFileSync(join(fixtureDir, `${stem}.json`), 'utf8'));
+    const raw = readFileSync(join(fixtureDir, `${stem}.bin`));
+    const expected = new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4);
 
-assert.equal(expected.length, GOLDEN_SCENARIO.voxelDim ** 3, 'fixture voxel count does not match the scenario');
+    assert.equal(expected.length, scenario.voxelDim ** 3, `${stem}: fixture voxel count does not match the scenario`);
+    assert.deepEqual(meta.scenario, JSON.parse(JSON.stringify(scenario)), `${stem}: fixture was generated from a different scenario`);
 
-const actual = runGoldenScenario();
-let maxDiff = 0;
-for (let i = 0; i < expected.length; i++) {
-    const d = Math.abs(actual[i] - expected[i]);
-    if (d > maxDiff) maxDiff = d;
+    const actual = runGoldenScenario(scenario);
+    let maxDiff = 0;
+    for (let i = 0; i < expected.length; i++) {
+        const d = Math.abs(actual[i] - expected[i]);
+        if (d > maxDiff) maxDiff = d;
+    }
+    assert.equal(
+        maxDiff, 0,
+        `The JS reference stepper no longer reproduces tests/fixtures/${stem}.bin ` +
+        `(max diff ${maxDiff}). If the physics changed on purpose, update ` +
+        `docs/tensor-physics.md, mirror the change in the C++ engine (wasm/src/), ` +
+        `regenerate with 'node scripts/gen_tensor_fixture.mjs', and re-run 'npm run test:golden'.`
+    );
+    assert.deepEqual(summarizeField(actual), meta.stats, `${stem}: fixture summary statistics drifted`);
+    assert.equal(meta.epsilon, GOLDEN_EPSILON, `${stem}: fixture epsilon drifted from tests/golden-scenario.js`);
+    fixtureHashes.push(`${stem} ${meta.sha256.slice(0, 16)}…`);
 }
-assert.equal(
-    maxDiff, 0,
-    `The JS reference stepper no longer reproduces tests/fixtures/tensor-field-golden.bin ` +
-    `(max diff ${maxDiff}). If the physics changed on purpose, update ` +
-    `docs/tensor-physics.md, mirror the change in wasm/brain_tensor_engine.cpp, ` +
-    `regenerate with 'node scripts/gen_tensor_fixture.mjs', and re-run 'npm run test:golden'.`
-);
-assert.deepEqual(summarizeField(actual), meta.stats, 'fixture summary statistics drifted');
-assert.equal(meta.epsilon, GOLDEN_EPSILON, 'fixture epsilon drifted from tests/golden-scenario.js');
+// The neuromod scenario only means something if §3.4 moved the field.
+{
+    const [baseline, neuromod] = GOLDEN_FIXTURES.map(({ stem }) => JSON.parse(readFileSync(join(fixtureDir, `${stem}.json`), 'utf8')));
+    assert.notEqual(baseline.sha256, neuromod.sha256, 'the neuromod fixture is identical to the baseline: §3.4 is not reaching the field');
+}
+
+// ---------------------------------------------------------------------------
+// 1b. §3.4 neuromodulation: exact identity at the defaults, bounded elsewhere.
+// ---------------------------------------------------------------------------
+{
+    const d = DEFAULT_FIELD_PARAMS;
+    const nm = neuromodulation(d.decayRate, d.diffusionRate);
+    assert.equal(nm.lossScale, 1, 'lossScale must be exactly 1 at the default decayRate');
+    assert.equal(nm.diffusionScale, 1, 'diffusionScale must be exactly 1 at the default diffusionRate');
+    // Same values in float32 (what C++ and WGSL see) must also be an identity.
+    const nm32 = neuromodulation(Math.fround(d.decayRate), Math.fround(d.diffusionRate));
+    assert.equal(Math.fround(nm32.lossScale), 1, 'the float32 default decayRate must also be an identity');
+    const defaultBias = [d.retentionBiasX, d.retentionBiasY, d.retentionBiasZ, d.retentionBiasW];
+    assert.deepEqual(defaultBias, [...RETENTION_BASELINE], 'retentionBias defaults drifted from RETENTION_BASELINE');
+    for (const zone of [ZONE_DEFAULT, ZONE_FRONTAL, ZONE_OCCIPITAL, ZONE_TEMPORAL, ZONE_PARIETAL]) {
+        assert.equal(retentionLossScale(zone, defaultBias), 1, `zone ${zone}: regionalLoss must be exactly 1 at the defaults`);
+    }
+    for (const m of [0.0, 0.3, 0.45, 0.625, 0.7, 0.795, 0.92]) {
+        assert.equal(spread(m, 1), m, `spread(${m}, 1) must be exactly ${m}`);
+        assert.equal(spread(m, 0), 0, `spread(${m}, 0) must be 0`);
+        assert.ok(spread(m, 4) < 1 && spread(m, 4) >= m, `spread(${m}, 4) must lie in [m, 1)`);
+    }
+    // Clamps: no setting may turn decay into gain or spread into overshoot.
+    assert.equal(neuromodulation(1.5, -1).lossScale, 0, 'decayRate above 1 must clamp lossScale to 0, not make it negative');
+    assert.equal(neuromodulation(1.5, -1).diffusionScale, 0, 'negative diffusionRate must clamp to 0');
+    assert.equal(neuromodulation(-10, 100).lossScale, 8, 'lossScale must clamp at 8');
+    assert.equal(neuromodulation(-10, 100).diffusionScale, 4, 'diffusionScale must clamp at 4');
+    // A lobe's bias moves only that lobe.
+    const frontalUp = [RETENTION_BASELINE[0] + 1, ...RETENTION_BASELINE.slice(1)];
+    assert.equal(retentionLossScale(ZONE_FRONTAL, frontalUp), 0.5, '+1 retention must halve the lobe loss');
+    assert.equal(retentionLossScale(ZONE_OCCIPITAL, frontalUp), 1, 'frontal retention leaked into occipital');
+    assert.equal(retentionLossScale(ZONE_DEFAULT, [9, 9, 9, 9]), 1, 'the Default zone has no lobe to modulate');
+    // Zone order is the §3.1 order: frontal wins over temporal and parietal.
+    assert.equal(regionZone(1.0, 1.0, 1.0), ZONE_FRONTAL);
+    assert.equal(regionZone(1.0, 1.0, -1.0), ZONE_OCCIPITAL);
+    assert.equal(regionZone(1.0, 1.0, 0.0), ZONE_TEMPORAL);
+    assert.equal(regionZone(0.0, 1.0, 0.0), ZONE_PARIETAL);
+    assert.equal(regionZone(0.0, 0.0, 0.0), ZONE_DEFAULT);
+
+    // Each slider moves the field on the CPU path (WebGL fallback). This is
+    // the acceptance check in miniature: one step from the same state, one
+    // parameter changed, the field must differ — in the expected direction.
+    const dim = 16;
+    const affinity = makeReferenceFiberAffinities(dim);
+    const seed = new Float32Array(dim ** 3);
+    for (let i = 0; i < seed.length; i++) seed[i] = hashVoxel(i, 3, 5, 7) * 0.6;
+    const meanAfter = (overrides, zone = null) => {
+        const next = new Float32Array(seed.length);
+        stepTensorField(seed, next, { params: resolveFieldParams({ voxelDim: dim, ...overrides }), fiberAffinity: affinity, frame: 0 });
+        let sum = 0, n = 0;
+        const w = [0, 0, 0];
+        for (let i = 0; i < next.length; i++) {
+            if (zone !== null) {
+                const x = i % dim, y = ((i / dim) | 0) % dim, z = (i / (dim * dim)) | 0;
+                w[0] = Math.fround(Math.fround(Math.fround(x / dim) * 2 - 1) * BRAIN_RANGE);
+                w[1] = Math.fround(Math.fround(Math.fround(y / dim) * 2 - 1) * BRAIN_RANGE);
+                w[2] = Math.fround(Math.fround(Math.fround(z / dim) * 2 - 1) * BRAIN_RANGE);
+                if (regionZone(w[0], w[1], w[2]) !== zone) continue;
+            }
+            sum += next[i]; n++;
+        }
+        return sum / n;
+    };
+    const base = meanAfter({});
+    assert.ok(meanAfter({ decayRate: 0.99 }) > base, 'raising decayRate must retain more activity');
+    assert.ok(meanAfter({ decayRate: 0.85 }) < base, 'lowering decayRate must retain less activity');
+    // diffusionRate: more spread = closer to the neighbourhood mean = lower variance.
+    const variance = (overrides) => {
+        const next = new Float32Array(seed.length);
+        stepTensorField(seed, next, { params: resolveFieldParams({ voxelDim: dim, ...overrides }), fiberAffinity: affinity, frame: 0 });
+        let s1 = 0, s2 = 0;
+        for (const v of next) { s1 += v; s2 += v * v; }
+        return s2 / next.length - (s1 / next.length) ** 2;
+    };
+    assert.ok(variance({ diffusionRate: 0.3 }) < variance({}), 'raising diffusionRate must smooth the field');
+    assert.ok(variance({ diffusionRate: 0.02 }) > variance({}), 'lowering diffusionRate must sharpen the field');
+    const occBase = meanAfter({}, ZONE_OCCIPITAL);
+    assert.ok(meanAfter({ retentionBiasY: 1.0 }, ZONE_OCCIPITAL) > occBase, 'occipital retention must raise occipital activity');
+    assert.equal(meanAfter({ retentionBiasY: 1.0 }, ZONE_DEFAULT), meanAfter({}, ZONE_DEFAULT),
+        'occipital retention must leave the Default zone untouched in a single step');
+    // The panel applies its first profile on load: that one must be the identity.
+    const { DEFAULT_PROFILES } = await import('../src/neuromodulators.js');
+    const [firstKey] = Object.keys(DEFAULT_PROFILES);
+    const first = resolveFieldParams(DEFAULT_PROFILES[firstKey]);
+    for (const key of ['decayRate', 'diffusionRate', 'retentionBiasX', 'retentionBiasY', 'retentionBiasZ', 'retentionBiasW']) {
+        assert.equal(first[key], DEFAULT_FIELD_PARAMS[key],
+            `the panel's initial profile '${firstKey}' must be the §3.4 identity, but its ${key} is ${first[key]}`);
+    }
+    // A neuromodulator profile object resolves to the flat params the stepper reads.
+    const fromProfile = resolveFieldParams({ retentionBias: { frontal: 1.0, occipital: -0.2, temporal: 0.5, parietal: 0.2 } });
+    assert.deepEqual([fromProfile.retentionBiasX, fromProfile.retentionBiasY, fromProfile.retentionBiasZ, fromProfile.retentionBiasW], [1.0, -0.2, 0.5, 0.2]);
+}
 
 // ---------------------------------------------------------------------------
 // 2. Every parameter the reference model reads exists in the shared layout.
@@ -63,7 +175,11 @@ assert.equal(meta.epsilon, GOLDEN_EPSILON, 'fixture epsilon drifted from tests/g
 //    consumes it, the WGSL struct and the WASM ABI must carry it too.
 // ---------------------------------------------------------------------------
 const layoutNames = new Set(COMPUTE_UNIFORM_LAYOUT.map((f) => f.name));
-const VECTOR_COMPONENTS = { stimulusPosX: 'stimulusPos', stimulusPosY: 'stimulusPos', stimulusPosZ: 'stimulusPos' };
+const VECTOR_COMPONENTS = {
+    stimulusPosX: 'stimulusPos', stimulusPosY: 'stimulusPos', stimulusPosZ: 'stimulusPos',
+    retentionBiasX: 'retentionBias', retentionBiasY: 'retentionBias',
+    retentionBiasZ: 'retentionBias', retentionBiasW: 'retentionBias',
+};
 for (const name of Object.keys(DEFAULT_FIELD_PARAMS)) {
     const layoutName = VECTOR_COMPONENTS[name] ?? name;
     assert.ok(
@@ -164,4 +280,4 @@ assert.ok(erasedNext[centre] < 0.2, `erase mode did not damp the brush centre ($
 
 assert.ok(BRAIN_RANGE === Math.fround(1.6), 'BRAIN_RANGE must be the float32 value of 1.6');
 
-console.log(`test_tensor_physics passed (fixture sha256 ${meta.sha256.slice(0, 16)}…)`);
+console.log(`test_tensor_physics passed (fixtures: ${fixtureHashes.join(", ")})`);

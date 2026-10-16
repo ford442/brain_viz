@@ -116,12 +116,14 @@ export function registerBiosyncHandlers(handlers, player) {
     });
 
     // Cognitive Dissonance Simulation
+    // The field effect is `stress`, which drives §3.3 criticality cascades
+    // (docs/tensor-physics.md). There is no separate `cognitiveDissonance`
+    // parameter: it used to be lerped here and read by no stepper (§6.14).
     handlers.set('cognitive_dissonance', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
         const duration = evt.duration || 5.0;
         const ease = evt.ease || 'sineInOut';
 
-        player.startLerp({ key: 'cognitiveDissonance', value: intensity, duration: duration, ease: ease });
         player.startLerp({ key: 'shake', value: intensity * 0.1, duration: duration, ease: ease });
         player.startLerp({ key: 'stress', value: intensity * 0.5, duration: duration, ease: ease });
 

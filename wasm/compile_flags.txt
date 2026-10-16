@@ -1,10 +1,14 @@
-# [Tensor Physics] clangd fallback flags for wasm/.
+# [Tensor Physics] clangd fallback flags for wasm/ — what a fresh clone gets.
 #
-# compile_commands.json (scripts/gen_compile_commands.mjs, or emitted by
-# scripts/build_wasm.sh) is preferred; this file makes the directory analysable
-# with no generation step at all. Emscripten's `-s` settings are link-time and
-# are deliberately absent — clangd does not understand them.
+# `npm run gen:compile-commands` (host graph, needs no emsdk) or
+# scripts/build_wasm.sh (Emscripten graph) writes wasm/compile_commands.json,
+# which clangd prefers over this file in the same directory. With neither,
+# these are the host golden-test flags (BTE_HOST_FLAGS in scripts/wasm_flags.sh)
+# minus -O2 — keep -ffp-contract=off in step with it. Emscripten's `-s`
+# settings are link-time and deliberately absent; clangd does not understand
+# them. Relative paths resolve against this directory.
 -std=c++17
+-I.
 -Wall
 -Wextra
--I.
+-ffp-contract=off

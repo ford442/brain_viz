@@ -25,6 +25,9 @@ python3 scripts/test_run.py
 # Full visual verification suite (WebGL fallback, Playwright-based)
 python3 verification/verify_suite.py
 
+# Optional WebGPU-only clipmap check (headless SwiftShader works)
+python3 verification/verify_clipmap_webgpu.py
+
 # Headless Node assertions: uniform layout, shaders, tensor physics, renderer facade
 npm test
 
@@ -35,7 +38,7 @@ npm run typecheck
 npm run check:facade
 ```
 
-**Note:** Automated coverage is narrow (`npm test`/`npm run typecheck`/`npm run test:golden`, all headless, no browser) — everything visual is still manual, plus the Playwright-based `verification/` suite described above. Verify the brain renders, animates smoothly (~60 FPS), and UI controls function correctly.
+**Note:** Automated coverage is narrow (`npm test` — including naga validation of every WGSL source —, `npm run typecheck`, `npm run test:golden`, all headless, no browser; plus `npm run test:wgsl`, which runs the compute shader on SwiftShader against the CPU reference) — everything visual is still manual, plus the Playwright-based `verification/` suite described above. Verify the brain renders, animates smoothly (~60 FPS), and UI controls function correctly.
 
 ## Key Architecture & Design Patterns
 
@@ -85,12 +88,12 @@ WebGPU orders these commands sequentially, making this safe. When `tensorPlaybac
 
 #### 3. **One Neural Field, Three Consumers**
 
-The volumetric field exists as the WGSL compute shader, the CPU reference in `src/physics/tensor-field.js`, and the C++ engine in `wasm/brain_tensor_engine.cpp`. They had drifted into three different feature sets. `docs/tensor-physics.md` is now the specification; the CPU reference and the C++ engine cite its section numbers step by step, and `npm run test:golden` compares them against a committed 32³ fixture.
+The volumetric field exists as the WGSL compute shader, the CPU reference in `src/physics/tensor-field.js`, and the C++ engine in `wasm/src/` (C ABI: `wasm/brain_tensor_engine.cpp`). They had drifted into three different feature sets. `docs/tensor-physics.md` is now the specification; the CPU reference and the C++ engine cite its section numbers step by step, and `npm run test:golden` compares them against committed 32³ fixtures, and `npm run test:wgsl` compares the compute shader with the CPU reference (§9.2). Never upload a parameter the field ignores: §6.14 lists the few that no stepper reads, and neuromodulation is §3.4.
 
 - Never add a field effect to one implementation only — spec first, then both CPU implementations, then the WGSL.
 - The WebGL2 fallback has no physics of its own; it calls the reference stepper.
 - A parameter the field reads must be in `COMPUTE_UNIFORM_LAYOUT`. The C ABI struct is generated from it by `scripts/gen_wasm_params.mjs`, and `npm test` fails if the checked-in header is stale.
-- After a deliberate physics change: `node scripts/gen_tensor_fixture.mjs`, then `npm run test:all`.
+- After a deliberate physics change: `node scripts/gen_tensor_fixture.mjs`, then `npm run test:all` and `npm run test:wgsl`.
 
 #### 3c. **One Field Resolution, Nine Consumers**
 
@@ -106,6 +109,16 @@ bare `32` / `32 ** 3` for a grid size — use `voxelCountFor()`,
 `tensorByteLengthFor()`, `fiberAffinityByteLengthFor()` or `inferVoxelDim()`.
 `npm test` fails the build if a shader re-declares `VOXEL_DIM`. See
 `docs/field-resolution.md`.
+
+**Clipmap (WebGPU only).** When zoomed in, a 64³ fine brick (a window into a
+256³ lattice) nests one-way in the coarse field, and a cortical patch replaces
+the organic mesh below a further zoom. Policy is pure JS in `src/clipmap/`
+(`tests/test_clipmap.js`); GPU work is `src/brain-renderer/clipmap.js`. The §6
+step body exists once, in `src/shaders/field-step.js`, emitted into both GPU
+levels — never paste a field stage into another shader. The brick never writes
+the coarse field (NWS1, the golden fixture, WASM and WebGL are unaffected), and
+the budget governor reads `cognitiveLoad` but must never write it (it is a
+physics input). See `docs/field-resolution.md` §7–§8, `docs/tensor-physics.md` §11.
 
 #### 4. **One Renderer Facade, Two Backends**
 
@@ -156,9 +169,9 @@ Uniform structs require strict memory alignment (16-byte for `vec4`/`mat4`), so 
 ### Changing the Neural Field
 
 1. Edit `docs/tensor-physics.md` first — it is the specification, not a summary.
-2. Edit `src/physics/tensor-field.js` and `wasm/brain_tensor_engine.cpp` together; they carry the same section markers.
+2. Edit `src/physics/tensor-field.js` and the C++ engine in `wasm/src/` together; they carry the same section markers.
 3. Edit `src/shaders/volumetric-compute.js` unless §8 documents a divergence there.
-4. `node scripts/gen_tensor_fixture.mjs`, then `npm run test:all`.
+4. `node scripts/gen_tensor_fixture.mjs`, then `npm run test:all` and `npm run test:wgsl`.
 
 ### Adding a New Uniform Parameter
 

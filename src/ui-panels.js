@@ -11,3 +11,4 @@ export { setupTrainingPanel } from './ui-training-panel.js';
 export { setupSessionPanel } from './ui-session-panel.js';
 export { setupPathwayPanel } from './ui-pathway-panel.js';
 export { setupLiveInputPanel } from './ui-live-input-panel.js';
+export { setupClipmapPanel } from './ui-clipmap-panel.js';

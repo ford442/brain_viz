@@ -10,7 +10,7 @@ export function setupNeuromodulatorPanel(renderer, controls) {
     const neuroTitle = document.createElement('div');
     neuroTitle.id = 'neuro-panel-title';
     neuroTitle.textContent = 'Neuromodulator Profile';
-    neuroTitle.dataset.tooltip = "Live-edit chemical diffusion, decay, and regional retention";
+    neuroTitle.dataset.tooltip = "Live-edit decay, diffusion and regional retention of the neural field (docs/tensor-physics.md §3.4)";
     neuroTitle.style.color = '#ffffff';
     neuroTitle.style.fontSize = '12px';
     neuroTitle.style.fontWeight = 'bold';
@@ -42,15 +42,33 @@ export function setupNeuromodulatorPanel(renderer, controls) {
     const slidersContainer = document.createElement('div');
     slidersContainer.id = 'neuro-sliders-container';
 
+    // [Tensor Physics] `scope` says what a slider actually reaches, and the
+    // row shows it. These sliders used to look identical while only some of
+    // them did anything; see docs/tensor-physics.md §3.4 and §6.14.
+    //   field   — read by the neural field on WebGPU, WASM and WebGL
+    //   visual  — read by a render shader only
+    //   unwired — read by nothing yet; kept so saved profiles round-trip
+    const SCOPE_BADGES = {
+        field: { text: 'field', color: '#00ffaa', tooltip: 'Changes the simulated neural field on every renderer (WebGPU, WASM, WebGL).' },
+        visual: { text: 'visual only', color: '#ffcc66', tooltip: 'Changes rendering only — the simulated field is unaffected.' },
+        unwired: { text: 'not wired', color: '#888888', tooltip: 'Stored in the profile but read by nothing yet. Moving it has no effect.' },
+    };
     const sliders = [
-        { id: 'neuro-diffusion', label: 'Diffusion Rate', min: 0.0, max: 0.5, step: 0.01, prop: 'diffusionRate' },
-        { id: 'neuro-decay', label: 'Decay Rate', min: 0.8, max: 1.0, step: 0.001, prop: 'decayRate' },
-        { id: 'neuro-pulse', label: 'Pulse Saturation', min: 0.0, max: 3.0, step: 0.1, prop: 'pulseSaturation' },
-        { id: 'neuro-trail', label: 'Trail Length', min: 0.0, max: 5.0, step: 0.1, prop: 'trailLength' },
-        { id: 'neuro-ret-front', label: 'Retention: Frontal', min: -1.0, max: 2.0, step: 0.1, prop: 'retentionBias', subprop: 'frontal' },
-        { id: 'neuro-ret-occ', label: 'Retention: Occipital', min: -1.0, max: 2.0, step: 0.1, prop: 'retentionBias', subprop: 'occipital' },
-        { id: 'neuro-ret-temp', label: 'Retention: Temporal', min: -1.0, max: 2.0, step: 0.1, prop: 'retentionBias', subprop: 'temporal' },
-        { id: 'neuro-ret-par', label: 'Retention: Parietal', min: -1.0, max: 2.0, step: 0.1, prop: 'retentionBias', subprop: 'parietal' }
+        { id: 'neuro-diffusion', label: 'Diffusion Rate', min: 0.0, max: 0.5, step: 0.01, prop: 'diffusionRate', scope: 'field',
+          tooltip: 'How far activity spreads per step. 0.1 = unchanged; 0 = no spread.' },
+        { id: 'neuro-decay', label: 'Decay Rate', min: 0.8, max: 1.0, step: 0.001, prop: 'decayRate', scope: 'field',
+          tooltip: 'Per-step retention. Higher keeps activity longer; 0.96 = unchanged.' },
+        { id: 'neuro-pulse', label: 'Pulse Saturation', min: 0.0, max: 3.0, step: 0.1, prop: 'pulseSaturation', scope: 'unwired' },
+        { id: 'neuro-trail', label: 'Trail Length', min: 0.0, max: 5.0, step: 0.1, prop: 'trailLength', scope: 'visual',
+          tooltip: 'Connectome fiber pulse trails. Values below 1 have no effect.' },
+        { id: 'neuro-ret-front', label: 'Retention: Frontal', min: -1.0, max: 2.0, step: 0.1, prop: 'retentionBias', subprop: 'frontal', scope: 'field',
+          tooltip: 'Frontal lobe retention. Each +1 above 0.5 halves its activity loss.' },
+        { id: 'neuro-ret-occ', label: 'Retention: Occipital', min: -1.0, max: 2.0, step: 0.1, prop: 'retentionBias', subprop: 'occipital', scope: 'field',
+          tooltip: 'Occipital lobe retention. Each +1 above 0.0 halves its activity loss.' },
+        { id: 'neuro-ret-temp', label: 'Retention: Temporal', min: -1.0, max: 2.0, step: 0.1, prop: 'retentionBias', subprop: 'temporal', scope: 'field',
+          tooltip: 'Temporal lobe retention. Each +1 above 0.2 halves its activity loss.' },
+        { id: 'neuro-ret-par', label: 'Retention: Parietal', min: -1.0, max: 2.0, step: 0.1, prop: 'retentionBias', subprop: 'parietal', scope: 'field',
+          tooltip: 'Parietal lobe retention. Each +1 above 0.2 halves its activity loss.' }
     ];
 
     const sliderElements = {};
@@ -64,6 +82,19 @@ export function setupNeuromodulatorPanel(renderer, controls) {
         label.textContent = s.label;
         label.style.flex = '1';
         label.style.fontSize = '11px';
+
+        const badge = SCOPE_BADGES[s.scope];
+        const scopeTag = document.createElement('span');
+        scopeTag.className = 'neuro-scope-badge';
+        scopeTag.dataset.scope = s.scope;
+        scopeTag.textContent = badge.text;
+        scopeTag.style.marginLeft = '4px';
+        scopeTag.style.fontSize = '9px';
+        scopeTag.style.color = badge.color;
+        scopeTag.style.opacity = '0.85';
+        label.appendChild(scopeTag);
+        label.dataset.tooltip = s.tooltip ? `${s.tooltip} ${badge.tooltip}` : badge.tooltip;
+        if (s.scope === 'unwired') label.style.opacity = '0.6';
 
         const valLabel = document.createElement('span');
         valLabel.style.width = '30px';

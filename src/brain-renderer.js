@@ -11,6 +11,7 @@ import { applyCoreMethods } from './brain-renderer/core-methods.js';
 import { applySynaptiXBridgeMethods } from './brain-renderer/synaptix-bridges.js';
 import { applyPathwayMethods, createPathwayState } from './pathway-renderer.js';
 import { applyResolutionMethods } from './brain-renderer/resolution.js';
+import { applyClipmapMethods } from './brain-renderer/clipmap.js';
 import { DEFAULT_VOXEL_DIM, voxelCountFor } from './voxel-dim.js';
 
 /**
@@ -77,7 +78,6 @@ export class BrainRenderer {
 
         this.params = {
             cognitiveLoad: 0.0, // [Phase 9] Visual Cortex Fatigue (Dynamic LoD)
-            cognitiveDissonance: 0.0, // [Phase 2.5] Cognitive Dissonance
             frequency: 2.0,
             amplitude: 0.5,
             spikeThreshold: 0.8,
@@ -180,7 +180,9 @@ export class BrainRenderer {
             radius: 0.0,
             erase: false,
             decayHalfLife: 0.0,
-            lastDecayTime: 0
+            lastDecayTime: 0,
+            // [Clipmap] performance.now() of the last injectStimulus(); -Infinity = never.
+            injectedAt: Number.NEGATIVE_INFINITY
         };
 
         // Altitude/Hypoxia Internal State
@@ -193,6 +195,11 @@ export class BrainRenderer {
         this.renderTarget = null;
         this.sampler = null;
         this.postBindGroup = null;
+
+        // [Clipmap] Fine-brick + cortical-patch policy (src/clipmap/). GPU
+        // objects are created in initialize(); see brain-renderer/clipmap.js.
+        // @ts-expect-error attached by applyClipmapMethods() below.
+        this.createClipmapController();
 
         // @ts-expect-error setupInputHandlers is attached to the prototype by
         // applyCoreMethods() below, after this class body — not visible to TS.
@@ -209,3 +216,4 @@ applyCoreMethods(BrainRenderer);
 applySynaptiXBridgeMethods(BrainRenderer);
 applyPathwayMethods(BrainRenderer);
 applyResolutionMethods(BrainRenderer);
+applyClipmapMethods(BrainRenderer);

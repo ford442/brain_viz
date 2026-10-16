@@ -50,6 +50,7 @@ const BACKENDS = {
             'src/brain-renderer/core-methods.js',
             'src/brain-renderer/synaptix-bridges.js',
             'src/brain-renderer/resolution.js',
+            'src/brain-renderer/clipmap.js',
             'src/pathway-renderer.js'
         ]
     },
@@ -66,6 +67,7 @@ const BACKENDS = {
             'src/brain-renderer-webgl/draw.js',
             'src/brain-renderer-webgl/lifecycle.js',
             'src/brain-renderer-webgl/resolution.js',
+            'src/brain-renderer-webgl/clipmap.js',
             'src/pathway-renderer.js'
         ]
     }

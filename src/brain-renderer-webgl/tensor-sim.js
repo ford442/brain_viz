@@ -113,6 +113,14 @@ export function applyTensorSimMethods(Klass) {
                 cognitiveLoad: p.cognitiveLoad,
                 stress: p.stress,
                 heavyMetal: p.heavyMetal,
+                // §3.4 neuromodulation. Unset keys fall back to the
+                // baselines in DEFAULT_FIELD_PARAMS, which are an identity.
+                decayRate: p.decayRate,
+                diffusionRate: p.diffusionRate,
+                retentionBiasX: p.retentionBiasX,
+                retentionBiasY: p.retentionBiasY,
+                retentionBiasZ: p.retentionBiasZ,
+                retentionBiasW: p.retentionBiasW,
                 resonanceThreshold: p.resonanceThreshold,
                 // SynaptiX stays visual-only on this path, matching the WebGPU
                 // renderer's uniform upload (see brain-renderer/uniforms.js).
@@ -130,6 +138,8 @@ export function applyTensorSimMethods(Klass) {
         },
 
         updateTensorSimulation() {
+            // [Clipmap] Reported by getFrameTimings(): the CPU cost this backend pays per frame.
+            const stepStartedAt = performance.now();
             const affinity = this._normalizedFiberAffinity
                 ?? (this.fiberAffinityData ? this.prepareFiberAffinities() : null);
 
@@ -140,6 +150,7 @@ export function applyTensorSimMethods(Klass) {
             });
             this._lastHumanTensor.set(this._nextHumanTensor);
             this._tensorFrame = (this._tensorFrame | 0) + 1;
+            this._lastFieldStepMs = performance.now() - stepStartedAt;
 
             // [Paint Energy] Exponential half-life decay (set by injectStimulus()
             // when a caller passes decayHalfLife, e.g. the paint brush) takes

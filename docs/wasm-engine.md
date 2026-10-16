@@ -31,19 +31,42 @@ Both modes write identical data into the same `tensorBuffer` WebGPU storage buff
 
 ```
 wasm/
-├── brain_tensor_engine.h      C API declarations (Emscripten-compatible)
-└── brain_tensor_engine.cpp    Full simulation implementation
+├── brain_tensor_engine.h      C ABI — the only thing JavaScript sees
+├── brain_tensor_engine.cpp    C ABI implementation (handles, copies, introspection)
+├── brain_tensor_params.h      GENERATED from COMPUTE_UNIFORM_LAYOUT (gen_wasm_params.mjs)
+├── compile_flags.txt          clangd fallback for a fresh clone (host golden flags)
+├── compile_commands.json      GENERATED, gitignored (gen_compile_commands.mjs)
+├── src/                       the engine, split by docs/tensor-physics.md section
+│   ├── engine.h               engine state, §4 samplers, internal entry points
+│   ├── field_math.h           §1 constants, §2 helpers, §4.1, §8.1 hash (inline)
+│   ├── region.h               §3 region / hypoxia / criticality / neuromodulation (inline)
+│   ├── stencil.cpp            §6.2 neighbourhood — explicit wasm SIMD + scalar fallback
+│   ├── step.cpp               §6 the step
+│   ├── stimulus.cpp           §6.9 one-shot stimulus
+│   └── affinity.cpp           §7 fiber affinities
+└── tests/
+    ├── golden_step_test.cpp   C++ vs the JS reference's fixtures (npm run test:golden)
+    └── bench_step.cpp         per-step cost at 32³/48³/64³ (npm run bench:wasm)
 
 scripts/
-└── build_wasm.sh              Emscripten build script
+├── wasm_flags.sh              THE flags and source list — everything below reads it
+├── build_wasm.sh              Emscripten build (build_wasm_colab.sh: same, Colab emsdk)
+├── test_golden.sh             host golden test (+ GOLDEN_WASM=1: the SIMD build under node)
+├── bench_wasm.sh              SIMD vs scalar wasm (+ BENCH_HOST=1) timing
+└── gen_compile_commands.mjs   host or Emscripten compile graph for clangd
 
 src/
 └── wasm-engine.js             JS loader + bridge (WasmTensorEngine class)
 
-public/wasm/                   Build output (generated — do not edit)
-├── brain_tensor_engine.js     Emscripten glue JS (MODULARIZE=1)
-└── brain_tensor_engine.wasm   Compiled binary
+public/wasm/                        Build output (generated — do not edit)
+├── brain_tensor_engine.mjs         Emscripten glue, an ES module (EXPORT_ES6)
+├── brain_tensor_engine.wasm        Compiled binary
+└── brain_tensor_engine.build.json  Build manifest {simd128, pthreads, debug}
 ```
+
+`.h` files under `src/` are inline on purpose: `region_zone()`,
+`get_region_physics()`, `clampf()` and the hash run per voxel, and the host
+golden build has no LTO to inline them across translation units.
 
 ---
 
@@ -74,17 +97,21 @@ If none of these resolve, the script exits with an error explaining how to insta
 ### Compile
 
 ```bash
-# Release build (O2) — WASM engine only
+# Release build (-O3 -flto -msimd128) — WASM engine only
 npm run build:wasm
 
-# Debug build (O0, assertions, safe-heap)
+# Debug build (-O0 -g, ASSERTIONS=2, SAFE_HEAP; still -msimd128, so it runs
+# the same §6.2 kernel the release does)
 npm run build:wasm:debug
 
 # Full production build: Vite bundle + WASM engine
 npm run build:full
 ```
 
-Output is placed in `public/wasm/` and served as static assets by Vite. Plain `npm run build` (used by CI) is web-only and skips this entirely; see the README's "Build tiers" section for the full breakdown.
+Output is `public/wasm/brain_tensor_engine.{mjs,wasm,build.json}`, served as
+static assets by Vite. The flags and the translation-unit list come from
+`scripts/wasm_flags.sh` (`BTE_SRCS`); `em++` still links one `.mjs`/`.wasm`
+pair however many TUs there are. Plain `npm run build` (used by CI) is web-only and skips this entirely; see the README's "Build tiers" section for the full breakdown.
 
 ### Vite Configuration
 
@@ -104,6 +131,8 @@ void     bte_destroy(void* engine);
 
 // Parameters — BrainTensorParams is generated from COMPUTE_UNIFORM_LAYOUT.
 uint32_t bte_params_byte_size(void);
+uint32_t bte_params_layout_hash(void);   // BTE_PARAMS_LAYOUT_HASH
+uint32_t bte_build_features(void);       // BTE_FEATURE_SIMD128 | BTE_FEATURE_PTHREADS
 void     bte_set_params(void* engine, const BrainTensorParams* params);
 BrainTensorParams* bte_get_params(void* engine);
 
@@ -136,15 +165,34 @@ declaration that generates the WGSL `TensorParams` struct and the JS offsets —
 with explicit `_padN` filler reproducing the WGSL alignment. It is checked in,
 and `npm test` fails if it is stale.
 
-`bte_params_byte_size()` is the runtime guard: `src/wasm-engine.js` compares it
-against `COMPUTE_UNIFORM_BYTE_SIZE` at init and refuses a `.wasm` built from an
-older layout, instead of reading every field at a shifted offset.
+`bte_params_byte_size()` and `bte_params_layout_hash()` are the runtime guard:
+`src/wasm-engine.js` compares them against `COMPUTE_UNIFORM_BYTE_SIZE` and
+`COMPUTE_UNIFORM_LAYOUT_HASH` at init and refuses a `.wasm` built from an older
+layout, instead of reading every field at a shifted offset. The size alone is
+not enough: removing `cognitiveDissonance` shifted every later field by 4 bytes
+and left the struct at 176, because `retentionBias`'s 16-byte alignment absorbed
+the difference. A `.wasm` built before the fingerprint existed has no
+`bte_params_layout_hash` export and is refused too — rebuild with
+`npm run build:wasm`.
 
 ### Editor support
 
-`wasm/compile_flags.txt` is checked in, so clangd can analyse `wasm/` with no
-setup. `node scripts/gen_compile_commands.mjs` (also run by `build_wasm.sh`)
-writes a `compile_commands.json` with absolute paths; it is gitignored.
+The engine has two compilers, so clangd can be given either graph. Both are
+derived from `scripts/wasm_flags.sh`, never retyped:
+
+| Graph | How | Flags | What the editor sees |
+|---|---|---|---|
+| Fresh clone | nothing — `wasm/compile_flags.txt` is checked in | `-std=c++17 -ffp-contract=off -Wall -Wextra` | host build; SIMD branch inactive |
+| Host | `npm run gen:compile-commands` (no emsdk needed) | `BTE_HOST_FLAGS` — exactly `test_golden.sh`'s, `-O2 -ffp-contract=off` | host build; SIMD branch inactive |
+| Emscripten | `npm run gen:compile-commands:wasm`, or any `build_wasm.sh` run | `em++ --cflags` (wasm32 target, sysroot) + `BTE_CLANG_FLAGS` + `-msimd128` | `__EMSCRIPTEN__`, `__wasm_simd128__`, `<wasm_simd128.h>` — the shipped code path |
+
+The generated file is `wasm/compile_commands.json` (gitignored — absolute
+paths). It lives in `wasm/` rather than the repo root because clangd uses the
+*nearest* directory holding either a `compile_commands.json` or a
+`compile_flags.txt`: a root-level database is shadowed by
+`wasm/compile_flags.txt`, while one next to it takes precedence. The
+Emscripten graph needs `em++` on `PATH` or `$EMSDK` set, and exits non-zero
+otherwise; the host graph needs only `node` and `bash`.
 
 ---
 
@@ -208,8 +256,8 @@ The WASM stimulus path is wired into `injectStimulus()`: when `wasmMode` is acti
 ## Simulation physics
 
 The engine implements [`docs/tensor-physics.md`](./tensor-physics.md), which is
-the specification, not a summary of the code. Each step in
-`brain_tensor_engine.cpp` carries the spec section it implements, and
+the specification, not a summary of the code. The sources under `wasm/src/`
+are split by spec section, each step carries the section it implements, and
 `src/physics/tensor-field.js` carries the same markers on the same steps.
 
 Do not describe the physics here — it would become a third account of it, which
@@ -228,33 +276,132 @@ why each one has to.
 ### Verifying the engine
 
 ```bash
-npm run test:golden    # C++ engine vs the JS reference stepper's fixture
-npm run test:all       # the above, plus the Node test suite
+npm run test:golden                  # C++ engine (host build) vs the JS reference's fixtures
+GOLDEN_WASM=1 npm run test:golden    # + the em++ -O3 -flto -msimd128 build, under node
+npm run test:all                     # npm test + npm run test:golden
 ```
 
 `wasm/tests/golden_step_test.cpp` needs only a host C++17 compiler — not
-Emscripten — so the contract is checkable in ordinary CI.
+Emscripten — so the contract is checkable in ordinary CI. The host build can
+only run the scalar path of `src/stencil.cpp`; that still pins the SIMD path
+because the two are **bit-identical** by construction (same operations in the
+same order per lane, correctly-rounded `f32x4` arithmetic, no FMA in baseline
+simd128, and `wasm_f32x4_pmax` — not `wasm_f32x4_max` — matching `std::max`).
+`GOLDEN_WASM=1` checks it directly against the fixtures; when this was written
+it measured `maxAbsDiff` 8.7e-05 / 5.1e-04 against the unchanged `GOLDEN_EPSILON`
+of 2e-3 (host: 7.7e-05 / 5.0e-04 — the gap is Emscripten's libm, spec §8.3).
+If a kernel change moves those numbers, that is a bug in the kernel, not a
+reason to widen the epsilon.
 
 ---
 
-## Performance Notes
+## Performance
 
-| Parameter | Typical value |
-|-----------|--------------|
-| Tensor size | 32³ = 32 768 voxels × 4 bytes = 128 KB |
-| C++ O2 (Chromebook M1) | ~1–2 ms / step |
-| WebGPU compute (RTX 3070) | < 0.1 ms / step (massively parallel) |
+Measured with `npm run bench:wasm` (`wasm/tests/bench_step.cpp`): the golden
+scenario's parameters — fiber coupling, fluid advection, hazards and a live
+stimulus all on, i.e. every expensive branch taken — median ms per
+`bte_update()`, V8 in Node 24, one core of an 8-vCPU x86-64 Linux VM. A browser
+tab will be somewhat slower. The fibers column varied by about ±10% between runs
+on this machine, so read it as a range.
 
-**Recommendation**: Use WebGPU compute for real-time rendering; switch to WASM for:
-- Platforms without WebGPU (future headless / Node.js server-side simulation).
-- Debugging simulation physics (C++ is much easier to inspect with conventional tools).
-- Future: multi-threaded WASM with SharedArrayBuffer workers for higher-fidelity models.
+| Build | 32³ fibers | 32³ isotropic | 48³ fibers | 64³ fibers | 64³ isotropic |
+|---|---|---|---|---|---|
+| Before the split (1 TU, `-O3 -flto -msimd128`, auto-vectoriser only) | 16–20 | 10 | 50–52 | 122–124 | 76–79 |
+| Now, `-msimd128` off | 12–13 | 6 | 38–40 | 92–96 | 47–49 |
+| **Now, release (`-O3 -flto -msimd128`)** | **10–13** | **5** | **35–39** | **85–98** | **40** |
+| Host `-O2` (for scale) | 8 | 4.6 | 25 | 62 | 33 |
+
+**64³ hybrid mode does not hold a 16 ms frame, and SIMD alone will not get it
+there.** Neither did the old `-msimd128` flag: the auto-vectoriser left the
+600-line per-voxel step entirely scalar. What moved the numbers:
+
+1. **Hoisting per-axis transcendentals** (`step.cpp`, `AxisTables`): the six
+   fluid `sin`/`cos` factors are each a function of one axis, the no-tract
+   phase wave of `y`, and the §3.4 retention `exp2` of the zone. Computing them
+   per step instead of per voxel was most of the win — wasm's libm is
+   software, ~20–50 ns a call. Each table entry is the exact expression the
+   per-voxel code evaluated on the same inputs, so the output is bit-identical.
+2. **The explicit SIMD stencil** (`stencil.cpp`): ~17% at 64³ isotropic,
+   within run-to-run noise once fiber gathers dominate.
+
+Where the remaining 64³ time goes (ablation, release build, ~85 ms total):
+
+| Turned off | 64³ fibers | Saves |
+|---|---|---|
+| fiber gathers (`fiberCoupling = 0` disables §6.4; §6.3 still runs) | 70 | ~15 ms |
+| fluid advection (§6.8 trilinear read) | 71 | ~15 ms |
+| fluid + stimulus + all hazards | 58 | ~28 ms |
+| isotropic, fluid + stimulus + hazards off | 17 | per-voxel floor (§6.1/6.5/6.11) |
+
+So the tracts (fibers vs isotropic is ~45 ms at 64³: five §4.2 nearest-voxel
+samples per active slot, up to three slots per voxel) and advection are the
+budget, not the stencil. The next levers, in expected order of
+payoff: z-slab tiling across pthreads (needs cross-origin isolation, below),
+then SIMD over the §4.2 gather address arithmetic. **Clipmap Phase B must not
+assume "SIMD on" means a 64³ coarse field fits a frame.** Re-run
+`npm run bench:wasm` before relying on any of these numbers.
+
+The WebGPU compute shader does the same 64³ step in well under a millisecond on
+a discrete GPU. WASM mode is for platforms without WebGPU compute, for
+inspecting the physics with conventional tools, and for a future worker-hosted
+or server-side stepper — not for speed.
+
+---
+
+## Threads and cross-origin isolation
+
+`WASM_PTHREADS=1 npm run build:wasm` builds with `-pthread`. It is **off by
+default and is not a supported shipping option yet**, for two reasons:
+
+1. **The step is single-threaded.** A pthreads build today only proves the
+   plumbing; it is no faster until `bte_update()` tiles z-slabs across workers.
+2. **Production is not confirmed to be cross-origin isolated.** A `-pthread`
+   module needs `SharedArrayBuffer`, which browsers only expose when the page
+   is served with
+
+   ```
+   Cross-Origin-Opener-Policy: same-origin
+   Cross-Origin-Embedder-Policy: require-corp
+   ```
+
+   `vite.config.js` sends both for `npm run dev` and `npm run preview`.
+   `deploy.py` cannot: it uploads `dist/` files to the storage service's API,
+   and response headers are the serving host's configuration, not part of the
+   upload. Whether `test.1ink.us` / `go.1ink.us` send them is unverified.
+   Check a deployed page with `crossOriginIsolated` in the devtools console;
+   it must be `true`.
+
+What happens if a pthreads build reaches a non-isolated page: the build writes
+`brain_tensor_engine.build.json` next to the glue, and `WasmTensorEngine.init()`
+reads it **before** importing the module (a pthreads module cannot be
+instantiated to ask). If `pthreads` is true and `crossOriginIsolated` is false,
+init resolves `false` with `unavailableReason` naming the missing headers, the
+Activity tab's *Simulation Backend* status shows that reason, and the renderer
+stays on WebGPU compute. A default build has `"pthreads": false` and loads on
+any host; a build from before the manifest existed is treated the same way.
+
+Making threads shippable means configuring the host, then flipping the default.
+For an nginx-served host:
+
+```nginx
+location /brain-viz/ {
+    add_header Cross-Origin-Opener-Policy  "same-origin"  always;
+    add_header Cross-Origin-Embedder-Policy "require-corp" always;
+    types { application/javascript mjs; application/wasm wasm; }
+}
+```
+
+(Netlify / Cloudflare Pages read the same two headers from a `public/_headers`
+file; the current host is neither, so none is shipped.) `require-corp` also
+blocks any cross-origin subresource that sends neither CORS nor
+`Cross-Origin-Resource-Policy`. Check ONNX models, fonts and CDN scripts before
+turning it on.
 
 ---
 
 ## Fallback Behaviour
 
-If the WASM build has not been run, or the browser fails to load the module, `WasmTensorEngine.init()` catches the error, logs a warning, and returns `false`. The renderer silently falls back to the WebGPU compute shader. **The visualisation is never broken by a missing WASM build.**
+If the WASM build has not been run, the browser fails to load the module, the `.wasm` was built from a stale params layout, or a pthreads build meets a page that is not cross-origin isolated, `WasmTensorEngine.init()` catches the error, logs a warning, records it in `unavailableReason` (shown in the Activity tab), and returns `false`. The renderer silently falls back to the WebGPU compute shader. **The visualisation is never broken by a missing WASM build.**
 
 ---
 
@@ -262,28 +409,28 @@ If the WASM build has not been run, or the browser fails to load the module, `Wa
 
 - **Phase 2**: Multi-compartment neuron models; region-specific fibre dynamics; connectome graph simulation.
 - **Phase 3**: Real EEG/BCI tensor input pipelines; ONNX model hooks inside the C++ engine.
-- **Phase 4**: ~~WebAssembly SIMD optimisation~~ (done: release builds use
-  `-O3 -flto -msimd128`); WebWorker-based async compute; GPU ↔ WASM zero-copy
-  interop via `GPUBuffer.mapAsync`.
+- **Phase 4**: WebAssembly SIMD — the flag (`-msimd128`) and the §6.2 stencil
+  kernel are done; the fiber gathers are not (see *Performance*). pthreads
+  z-slab tiling once the host is isolated; WebWorker-based async compute; GPU ↔
+  WASM zero-copy interop via `GPUBuffer.mapAsync`.
 
 ### Build flags
 
-`scripts/wasm_flags.sh` is the single definition, sourced by both
-`build_wasm.sh` and `build_wasm_colab.sh`. Release builds use `-O3 -flto
--msimd128`; `FILESYSTEM=0` and `MALLOC=emmalloc` trim the glue; `EXPORT_ES6=1`
+`scripts/wasm_flags.sh` is the single definition, sourced by
+`build_wasm.sh`, `build_wasm_colab.sh`, `test_golden.sh`, `bench_wasm.sh` and
+(through bash) `gen_compile_commands.mjs`. Release builds use `-O3 -flto
+-msimd128`, and every graph, host and wasm alike, has `-ffp-contract=off`; `FILESYSTEM=0` and `MALLOC=emmalloc` trim the glue; `EXPORT_ES6=1`
 makes the glue a real ES module (`brain_tensor_engine.mjs`) that
 `src/wasm-engine.js` imports from a URL built off `import.meta.env.BASE_URL`, so
 it resolves under `base: '/brain-viz/'` instead of 404ing at the host root.
 
 Two flags are deliberately **off**:
 
-- `-mrelaxed-simd` would permit fused multiply-add, changing rounding enough to
-  put the engine outside the golden fixture's epsilon. Enabling it means
-  re-measuring `GOLDEN_EPSILON` in the same commit.
-- `USE_PTHREADS` needs cross-origin isolation on every host that serves the app.
-  `vite.config.js` sets COOP/COEP on the dev and preview servers; the production
-  host (`deploy.py`) does not yet, and a pthreads build would simply fail to
-  start there. Opt in with `WASM_PTHREADS=1` once those headers ship.
+- `-mrelaxed-simd` would permit fused multiply-add (`relaxed_madd`), changing
+  rounding and breaking `src/stencil.cpp`'s bit-identity with its scalar
+  fallback, and with it the golden fixture's epsilon. `npm test` fails if it
+  is switched on.
+- `-pthread` (`WASM_PTHREADS=1`) — see *Threads and cross-origin isolation*.
 
 If the production host does not map `.mjs` to a JavaScript MIME type, the module
 import will be rejected by the browser; `src/wasm-engine.js` falls back to

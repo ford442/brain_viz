@@ -425,29 +425,143 @@ export function applyFibersMethods(Target) {
      * render pipelines, so its dim must equal the field's; `setVoxelDim()`
      * rebuilds the geometry for exactly this reason.
      *
+     * [Clipmap] The whole-grid map is now just the full-lattice case of
+     * buildFiberAffinityRegion() below, which the fine brick also uses — one
+     * rasteriser for every level. When an `affinityCache` is attached (the
+     * WebGPU renderer attaches one), a map already baked for this exact
+     * geometry and dim is reused instead of re-rasterised: the bake is the
+     * single most expensive step of a geometry rebuild (~1 s), and a
+     * 32 → 64 → 32 resolution round trip used to pay it every time.
+     *
      * @param {number} [dim] - Grid resolution; defaults to the geometry's.
      */
     Target.prototype.buildFiberAffinityMap = function(dim = this.voxelDim ?? DEFAULT_VOXEL_DIM) {
-        const brainRange = 1.6;
-        const voxelCount = dim * dim * dim;
-        const voxelAccumulators = new Array(voxelCount).fill(null).map(() => []);
-        const voxelRadius = brainRange * 2.0 / dim;
+        const cache = this.affinityCache;
+        const key = cache ? `level:${dim}:full:${this.getFiberGeometryKey()}` : null;
+        let data = key ? cache.get(key) : undefined;
+        if (!data) {
+            data = this.buildFiberAffinityRegion({ latticeDim: dim, origin: [0, 0, 0], size: dim });
+            if (key) cache.set(key, data);
+        }
+        this.fiberAffinityData = data;
+        this.fiberAffinityDim = dim;
+    };
 
-        const worldToVoxel = (wx, wy, wz) => {
-    const nx = (wx / brainRange) * 0.5 + 0.5;
-    const ny = (wy / brainRange) * 0.5 + 0.5;
-    const nz = (wz / brainRange) * 0.5 + 0.5;
-    return [
-        Math.max(0, Math.min(dim - 1, Math.floor(nx * dim))),
-        Math.max(0, Math.min(dim - 1, Math.floor(ny * dim))),
-        Math.max(0, Math.min(dim - 1, Math.floor(nz * dim)))
-    ];
+    /**
+     * [Clipmap] Identifies everything the fiber centerlines (and therefore any
+     * affinity map) depend on: the seed, the mesh resolution, and every
+     * geometry option except `voxelDim`, which only says what grid the *coarse*
+     * map is baked at — the tracts themselves do not move when it changes.
+     * @returns {string}
+     */
+    Target.prototype.getFiberGeometryKey = function() {
+        const entries = Object.entries(this.options)
+            .filter(([name, value]) => name !== 'voxelDim' && typeof value !== 'object' && typeof value !== 'function')
+            .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+        return JSON.stringify([this.seed, this.generatedRows ?? null, this.generatedCols ?? null, entries]);
+    };
+
+    /**
+     * [Clipmap] Rasterises the fiber centerlines into a `size³` block of a
+     * `latticeDim³` lattice spanning the field cube [-BRAIN_RANGE, BRAIN_RANGE]³.
+     *
+     * Every level uses this: the coarse map is the whole lattice
+     * (`latticeDim = voxelDim`, `origin = 0`, `size = voxelDim`), and the fine
+     * brick bakes 16³ chunks of a 256³ virtual lattice on demand
+     * (src/clipmap/affinity-chunks.js).
+     *
+     * Lattice indices are computed in the global lattice and clamped to *its*
+     * edges exactly as the whole-grid bake always did; splats that land
+     * outside the requested block are dropped rather than clamped onto its
+     * border. So any block, built on its own, is bit-identical to the same
+     * voxels of the whole lattice built in one go — which is what lets fine
+     * chunks be cached and assembled independently (tests/test_clipmap.js
+     * pins both properties).
+     *
+     * @param {{ latticeDim: number, origin: number[], size: number }} region
+     *   `origin` is the block's lowest lattice index per axis.
+     * @returns {Float32Array} `size³ × 12` floats: 3 × (dir.xyz, weight) per voxel,
+     *   indexed `z * size² + y * size + x` in block-local coordinates.
+     */
+    Target.prototype.buildFiberAffinityRegion = function(region) {
+        const steps = this.bakeFiberAffinityRegion(region);
+        let result = steps.next();
+        while (!result.done) result = steps.next();
+        return result.value;
+    };
+
+    /**
+     * [Clipmap] Resumable form of buildFiberAffinityRegion(): a generator that
+     * yields every few thousand splats / few hundred clustered voxels and
+     * returns the finished block. The per-chunk cost has a long tail — a 16³
+     * chunk through the corpus callosum clusters hundreds of crossing samples
+     * per voxel and takes tens of milliseconds where a sparse one takes one —
+     * so the fine brick bakes chunks a slice at a time inside a per-frame
+     * budget instead of stalling the frame that needed them.
+     *
+     * @param {{ latticeDim: number, origin: number[], size: number }} region
+     * @returns {Generator<void, Float32Array, void>}
+     */
+    Target.prototype.bakeFiberAffinityRegion = function* ({ latticeDim, origin, size }) {
+        const brainRange = 1.6;
+        const dim = latticeDim;
+        const [ox, oy, oz] = origin;
+        const blockCount = size * size * size;
+        // Per-voxel splat lists as one typed-array linked list (head/tail per
+        // voxel, `next` per entry) instead of an array of `{dir, weight}`
+        // objects per voxel. Same entries in the same order — so the result is
+        // bit-identical — but no per-splat allocation: the object form spent
+        // more time in GC pauses than in rasterising. Float64 keeps the
+        // doubles the clustering below has always summed.
+        const head = new Int32Array(blockCount).fill(-1);
+        const tail = new Int32Array(blockCount).fill(-1);
+        const counts = new Int32Array(blockCount);
+        let capacity = 4096;
+        let entryCount = 0;
+        let next = new Int32Array(capacity);
+        let entries = new Float64Array(capacity * 4);
+        const pushEntry = (idx, dir, weight) => {
+            if (entryCount === capacity) {
+                capacity *= 2;
+                const grownNext = new Int32Array(capacity);
+                grownNext.set(next);
+                next = grownNext;
+                const grownEntries = new Float64Array(capacity * 4);
+                grownEntries.set(entries);
+                entries = grownEntries;
+            }
+            const e = entryCount++;
+            entries[e * 4] = dir[0];
+            entries[e * 4 + 1] = dir[1];
+            entries[e * 4 + 2] = dir[2];
+            entries[e * 4 + 3] = weight;
+            next[e] = -1;
+            if (tail[idx] < 0) head[idx] = e;
+            else next[tail[idx]] = e;
+            tail[idx] = e;
+            counts[idx]++;
+        };
+        const voxelRadius = brainRange * 2.0 / dim;
+        let work = 0;
+
+        const toLattice = (w) => {
+            const n = (w / brainRange) * 0.5 + 0.5;
+            return Math.max(0, Math.min(dim - 1, Math.floor(n * dim)));
+        };
+        // A sample at lattice index g splats into g-1..g+1. Floor and clamp are
+        // monotonic, so a segment's samples lie between its endpoints' indices;
+        // the extra voxel of margin absorbs the last-ulp rounding of p0 + d*t.
+        const overlaps = (a, b, lo) => {
+            const ga = toLattice(a);
+            const gb = toLattice(b);
+            return Math.max(ga, gb) + 2 >= lo && Math.min(ga, gb) - 2 < lo + size;
         };
 
         for (const cl of this.fiberCenterlines) {
     for (let i = 0; i < cl.pts.length - 1; i++) {
         const p0 = cl.pts[i];
         const p1 = cl.pts[i+1];
+        if (!overlaps(p0[0], p1[0], ox) || !overlaps(p0[1], p1[1], oy) || !overlaps(p0[2], p1[2], oz)) continue;
         const dx = p1[0] - p0[0];
         const dy = p1[1] - p0[1];
         const dz = p1[2] - p0[2];
@@ -462,40 +576,41 @@ export function applyFibersMethods(Target) {
         const samples = Math.max(2, Math.ceil(segLen / (voxelRadius * 0.55)));
         for (let s = 0; s < samples; s++) {
             const t = (s + 0.5) / samples;
-            const sx = p0[0] + dx * t;
-            const sy = p0[1] + dy * t;
-            const sz = p0[2] + dz * t;
-            const [vx, vy, vz] = worldToVoxel(sx, sy, sz);
+            const vx = toLattice(p0[0] + dx * t);
+            const vy = toLattice(p0[1] + dy * t);
+            const vz = toLattice(p0[2] + dz * t);
             const localWeight = (segLen / samples) * (0.35 + (cl.myelin || 0.5)) * bundleBoost;
-            for (let oz = -1; oz <= 1; oz++) {
-                for (let oy = -1; oy <= 1; oy++) {
-                    for (let ox = -1; ox <= 1; ox++) {
-                        const nx = Math.max(0, Math.min(dim - 1, vx + ox));
-                        const ny = Math.max(0, Math.min(dim - 1, vy + oy));
-                        const nz = Math.max(0, Math.min(dim - 1, vz + oz));
-                        const idx = nz * dim * dim + ny * dim + nx;
-                        const dist2 = ox*ox + oy*oy + oz*oz;
+            for (let offz = -1; offz <= 1; offz++) {
+                const lz = Math.max(0, Math.min(dim - 1, vz + offz)) - oz;
+                if (lz < 0 || lz >= size) continue;
+                for (let offy = -1; offy <= 1; offy++) {
+                    const ly = Math.max(0, Math.min(dim - 1, vy + offy)) - oy;
+                    if (ly < 0 || ly >= size) continue;
+                    for (let offx = -1; offx <= 1; offx++) {
+                        const lx = Math.max(0, Math.min(dim - 1, vx + offx)) - ox;
+                        if (lx < 0 || lx >= size) continue;
+                        const idx = lz * size * size + ly * size + lx;
+                        const dist2 = offx*offx + offy*offy + offz*offz;
                         const spread = Math.exp(-dist2 * 0.75);
                         const directionalBias = cl.bundleId === 50 ? 1.25 - Math.min(0.2, Math.abs(dir[1]) * 0.2) : 1.0;
-                        voxelAccumulators[idx].push({
-                            dir,
-                            weight: localWeight * spread * directionalBias
-                        });
+                        pushEntry(idx, dir, localWeight * spread * directionalBias);
                     }
                 }
             }
+            if (++work % 256 === 0) yield;
         }
     }
         }
 
-        const data = new Float32Array(voxelCount * 12);
-        for (let i = 0; i < voxelCount; i++) {
-    const accs = voxelAccumulators[i];
-    if (accs.length === 0) {
-        const z = Math.floor(i / (dim * dim));
-        const rem = i % (dim * dim);
-        const y = Math.floor(rem / dim);
-        const x = rem % dim;
+        const data = new Float32Array(blockCount * 12);
+        for (let i = 0; i < blockCount; i++) {
+    work += counts[i];
+    if (work >= 4096) { work = 0; yield; }
+    if (head[i] < 0) {
+        const z = Math.floor(i / (size * size)) + oz;
+        const rem = i % (size * size);
+        const y = Math.floor(rem / size) + oy;
+        const x = (rem % size) + ox;
         const wx = (x / dim) * 2.0 - 1.0;
         const wy = (y / dim) * 2.0 - 1.0;
         const wz = (z / dim) * 2.0 - 1.0;
@@ -503,34 +618,32 @@ export function applyFibersMethods(Target) {
         data[i*12+0] = wx/len;
         data[i*12+1] = wy/len;
         data[i*12+2] = wz/len;
-        data[i*12+3] = 0.0;
-        for (let k = 1; k < 3; k++) {
-            data[i*12+k*4+0] = 0.0;
-            data[i*12+k*4+1] = 0.0;
-            data[i*12+k*4+2] = 0.0;
-            data[i*12+k*4+3] = 0.0;
-        }
+        // Weight and slots 1–2 stay at the Float32Array's zero fill.
         continue;
     }
 
     // Cluster similar directions
     const summed = [];
-    for (const a of accs) {
+    for (let e = head[i]; e >= 0; e = next[e]) {
+        const ax = entries[e * 4];
+        const ay = entries[e * 4 + 1];
+        const az = entries[e * 4 + 2];
+        const aw = entries[e * 4 + 3];
         let found = false;
         for (const s of summed) {
-            const dot = s.dx*a.dir[0] + s.dy*a.dir[1] + s.dz*a.dir[2];
+            const dot = s.dx*ax + s.dy*ay + s.dz*az;
             if (Math.abs(dot) > 0.78) {
                 const sign = dot >= 0.0 ? 1.0 : -1.0;
-                s.dx += a.dir[0] * a.weight * sign;
-                s.dy += a.dir[1] * a.weight * sign;
-                s.dz += a.dir[2] * a.weight * sign;
-                s.weight += a.weight;
+                s.dx += ax * aw * sign;
+                s.dy += ay * aw * sign;
+                s.dz += az * aw * sign;
+                s.weight += aw;
                 found = true;
                 break;
             }
         }
         if (!found) {
-            summed.push({ dx: a.dir[0]*a.weight, dy: a.dir[1]*a.weight, dz: a.dir[2]*a.weight, weight: a.weight });
+            summed.push({ dx: ax*aw, dy: ay*aw, dz: az*aw, weight: aw });
         }
     }
 
@@ -561,13 +674,10 @@ export function applyFibersMethods(Target) {
             data[base+1] = p.dy;
             data[base+2] = p.dz;
             data[base+3] = p.weight / totalW;
-        } else {
-            data[base+0] = 0.0; data[base+1] = 0.0; data[base+2] = 0.0; data[base+3] = 0.0;
         }
     }
         }
-        this.fiberAffinityData = data;
-        this.fiberAffinityDim = dim;
+        return data;
     };
 
 }

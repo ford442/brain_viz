@@ -35,6 +35,7 @@ npm run dev                       # dev server, http://localhost:5173
 npm run build                     # web-only production build
 python3 scripts/test_run.py       # smoke test
 python3 verification/verify_suite.py   # full visual verification suite (WebGL fallback)
+python3 verification/verify_clipmap_webgpu.py   # optional WebGPU-only clipmap check
 python3 scripts/deploy.py         # deploy dist/ via SFTP
 ```
 

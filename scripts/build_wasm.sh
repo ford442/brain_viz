@@ -17,8 +17,8 @@
 #   ./scripts/build_wasm.sh --debug     # -O0, assertions, safe heap
 #   WASM_PTHREADS=1 ./scripts/build_wasm.sh   # opt into pthreads (see wasm_flags.sh)
 #
-# Output: public/wasm/brain_tensor_engine.{mjs,wasm}, plus a regenerated
-# compile_commands.json so clangd can analyse wasm/.
+# Output: public/wasm/brain_tensor_engine.{mjs,wasm,build.json}, plus a
+# regenerated wasm/compile_commands.json (Emscripten graph) for clangd.
 
 set -euo pipefail
 
@@ -68,14 +68,20 @@ source "${SCRIPT_DIR}/wasm_flags.sh"
 
 if [[ "${1:-}" == "--debug" ]]; then
     echo "[build_wasm] Building DEBUG build…"
-    em++ "${BTE_DEBUG_FLAGS[@]}" "${BTE_COMMON_FLAGS[@]}" "${BTE_SRC}"
+    em++ "${BTE_DEBUG_FLAGS[@]}" "${BTE_COMMON_FLAGS[@]}" "${BTE_SRCS[@]}" -o "${BTE_OUTPUT}"
+    bte_write_manifest true
 else
-    echo "[build_wasm] Building RELEASE build (-O3 -flto -msimd128)…"
-    em++ "${BTE_RELEASE_FLAGS[@]}" "${BTE_COMMON_FLAGS[@]}" "${BTE_SRC}"
+    echo "[build_wasm] Building RELEASE build (-O3 -flto -msimd128, ${#BTE_SRCS[@]} TUs)…"
+    em++ "${BTE_RELEASE_FLAGS[@]}" "${BTE_COMMON_FLAGS[@]}" "${BTE_SRCS[@]}" -o "${BTE_OUTPUT}"
+    bte_write_manifest false
 fi
 
-echo "[build_wasm] Output → ${BTE_OUTPUT} (+ .wasm)"
+echo "[build_wasm] Output → ${BTE_OUTPUT} (+ .wasm, $(basename "${BTE_MANIFEST}"))"
 
+# em++ is known to be on PATH here, so give clangd the Emscripten graph
+# (--target=wasm32, -msimd128: the SIMD branch of src/stencil.cpp is live).
+# `npm run gen:compile-commands` switches back to the host graph.
 if command -v node >/dev/null 2>&1; then
-    node "${SCRIPT_DIR}/gen_compile_commands.mjs"
+    node "${SCRIPT_DIR}/gen_compile_commands.mjs" --emscripten || \
+        echo "[build_wasm] WARNING: could not write the Emscripten compile graph" >&2
 fi

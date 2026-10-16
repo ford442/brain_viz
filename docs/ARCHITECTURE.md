@@ -61,7 +61,7 @@ an exhaustive listing — use `Glob`/`Grep` or an Explore agent for that.
 
 - **`docs/tensor-physics.md`** — the normative specification.
 - **`src/physics/tensor-field.js`** — CPU reference stepper; drives the WebGL2
-  fallback and is the standard `wasm/brain_tensor_engine.cpp` is golden-tested against
+  fallback and is the standard the C++ engine (`wasm/src/`) is golden-tested against
   (`npm run test:golden`).
 - **`src/shaders/volumetric-compute.js`** — the WGSL compute-shader implementation
   (WebGPU's authoritative path).

@@ -383,3 +383,10 @@ hr { border: 0; border-top: 1px solid rgba(100, 150, 200, 0.1); margin: 12px 0; 
 .section-header.expanded + .section-content {
     max-height: 1200px;
 }
+
+/* [Clipmap] GPU-time HUD (src/ui-clipmap-panel.js) */
+.clipmap-panel select { margin-top: 4px; }
+.gpu-budget-meter { height: 4px; margin-top: 8px; background: rgba(100, 150, 200, 0.15); border-radius: 2px; overflow: hidden; }
+.gpu-budget-fill { height: 100%; width: 0%; background: var(--color-cyan); transition: width 0.25s linear, background-color 0.25s linear; }
+.gpu-budget-fill.over { background: #ff9a3c; }
+.gpu-hud { margin: 6px 0 0; color: #7fa8bb; font: 10px/1.5 var(--font-mono); white-space: pre-wrap; }

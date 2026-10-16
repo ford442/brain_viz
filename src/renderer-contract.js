@@ -62,6 +62,9 @@
  * @property {(float32Array: Float32Array) => boolean} setAITensorData - Deprecated alias of `setPartnerTensorData()`.
  * @property {(dim: number) => boolean} setVoxelDim - [Field Resolution] Change the neural field's grid resolution at runtime to a member of `SUPPORTED_VOXEL_DIMS` (src/voxel-dim.js). Rebuilds every dim-sized buffer, bind group and the geometry's fiber-affinity map, trilinearly resampling the live field so the simulation continues rather than resetting. Returns false if already at `dim`; throws on an unsupported dimension, or (WebGPU) on a device whose limits cannot hold the larger field. Both backends implement it — the WebGL2 fallback steps the field on the CPU, so the cost scales with dim³ there (see docs/webgl-fallback.md).
  * @property {() => number} getVoxelDim - [Field Resolution] The field's current grid resolution. Equivalent to reading `voxelDim`.
+ * @property {(options?: {enabled?: boolean, focus?: 'auto'|'camera'|'stimulus', autoQuality?: boolean, budgetMs?: number, patch?: boolean, nudge?: number, jobBudgetMs?: number}) => boolean} setClipmapOptions - [Clipmap] Configure the fine brick (docs/field-resolution.md §7): master switch, focus policy (`auto` follows a recent stimulus, else the camera), whether GPU budget pressure may lower its quality tier, the GPU budget, the Phase C cortical-patch swap, and the coarse-coupling nudge. Throws on an invalid value on both backends. Returns whether the backend can run the brick at all — WebGPU `true` (unless the device refused it); the WebGL2 fallback records the options and returns `false` (the brick is WebGPU-only there).
+ * @property {() => Object} getClipmapState - [Clipmap] Snapshot for the HUD: `supported` / `reason`, `active`, `mode` (`off`/`interpolate`/`simulate`), quality `tier`, zoom `weight`, brick `origin`/`center`, affinity-bake and cache progress, cortical-patch state, and the budget governor. WebGL2 always reports `supported: false`.
+ * @property {() => Object} getFrameTimings - [Clipmap] Last measured frame cost: WebGPU reads `GPUTimer` (`renderMs` = scene + post, `computeMs` = coarse field + brick, per-pass `fieldMs`/`brickMs`/`sceneMs`/`postMs`, `null` without `timestamp-query`) plus the rAF interval and the budget governor's `pressure`/`lodLoad`; WebGL2 reports the rAF interval and its CPU field-step time, never GPU time.
  * @property {(state: Object) => void} setSynaptiXCoupling - Record the latest human/AI regional coupling snapshot for resonance-driven visuals.
  * @property {(opts?: {warmupFrames?: number, sampleFrames?: number}) => Promise<{singleMedianMs: number, dualMedianMs: number, frameTimeRatio: number}>} benchmarkSynaptiX - Measure single- vs dual-avatar frame cost.
  *
@@ -87,8 +90,11 @@
  *
  * WebGPU-only (`BrainRenderer`): dispose(), reinitialize(), handleDeviceLost(),
  * reconfigure(), getSynaptiXPerformanceStats() (WebGL implements this one too,
- * but with a different stat shape — see docs/webgl-fallback.md), and every
- * `init*`/pipeline-internal method (initComputePipeline, initSomaPipeline, …).
+ * but with a different stat shape — see docs/webgl-fallback.md),
+ * readBrickSnapshot() ([Clipmap] reads the fine brick's render copy back for
+ * verification — resolves null while the brick is off), and every
+ * `init*`/pipeline-internal method (initComputePipeline, initSomaPipeline,
+ * initClipmap, …).
  *
  * WebGL2-only (`BrainRendererWebGL`): setDebugOptions(), getDebugOptions(),
  * resize(), beginXRFrame(), drawXRView() (WebXR requires the WebGL2 backend —

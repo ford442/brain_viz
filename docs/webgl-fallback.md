@@ -69,6 +69,10 @@ backend is active:
 - `spawnImmuneParticles()` / `clearImmuneParticles()`
 - `calmState()` / `resetActivity()` / `updateAltitudeState()`
 - `start()` / `stop()` / `render()` / `initialize()`
+- `setVoxelDim()` / `getVoxelDim()`
+- `setClipmapOptions()` / `getClipmapState()` / `getFrameTimings()` — present on
+  both so the HUD needs no capability check; on WebGL2 they report the fine
+  brick as unsupported and timings as CPU-only (see the matrix below)
 
 `scripts/check-renderer-facade.mjs` (`npm run check:facade`, part of `npm
 test`) enforces this list statically against both backends' source files —
@@ -99,8 +103,12 @@ only one backend, and say why the other doesn't need it.
 | Device-loss recovery (`dispose()`, `reinitialize()`, `handleDeviceLost()`, `reconfigure()`) | Yes (GPU device loss is a real WebGPU event) | Not applicable — no equivalent context-loss model | — |
 | Debug visualization (`setDebugOptions()`/`getDebugOptions()`: wireframe, tensor-point visibility, layer isolation) | Not implemented | Yes | — |
 | WebXR (`beginXRFrame()`, `drawXRView()`) | Not implemented | Yes — `webxr-manager.js` requires the WebGL2 backend and throws if WebGPU is active | — |
-| Field resolution (`setVoxelDim()`, `docs/field-resolution.md`) | 32³/48³/64³. Device limits are provisioned for 64³ up front; the compute shader reads `params.voxelDim`, so the cost is GPU-side and scales with dim³ | Same API and same supported dims, but the field is stepped on the **CPU** every frame — 64³ is 8× the per-frame work of 32³. Treat above-32³ as a debug/verification capability, not a shipping mode | `bte_create(dim)` has always taken a dim; without `-msimd128` do not expect a frame budget above 32³ |
+| Field resolution (`setVoxelDim()`, `docs/field-resolution.md`) | 32³/48³/64³. Device limits are provisioned for 64³ up front; the compute shader reads `params.voxelDim`, so the cost is GPU-side and scales with dim³ | Same API and same supported dims, but the field is stepped on the **CPU** every frame — 64³ is 8× the per-frame work of 32³. Treat above-32³ as a debug/verification capability, not a shipping mode | `bte_create(dim)` has always taken a dim. `-msimd128` is on and the §6.2 stencil is explicit SIMD, but the step is single-threaded and fiber-gather bound: ~10–13 ms at 32³, ~85–98 ms at 64³ (`npm run bench:wasm`, `docs/wasm-engine.md`). Do not expect a frame budget above 32³ |
 | SynaptiX performance stats (`getSynaptiXPerformanceStats()`) | Frame-time based | Work-unit based (different stat shape — see `synaptixPerformance` on each class) | — |
+| Clipmap fine brick (`setClipmapOptions()`, `getClipmapState()`; `docs/field-resolution.md` §7) | **Yes.** A 64³ brick of a 256³ fine lattice, stepped on the GPU by the same §6 body as the coarse field, nested one-way, zoom- and budget-gated | **No.** Both methods exist; `setClipmapOptions()` returns `false` and `getClipmapState()` reports `supported: false`. Coarse `setVoxelDim()` is unchanged. A fine brick would be another 262k voxels of scalar JS per frame on top of the CPU coarse step | Never runs the brick. Hybrid mode steps the *coarse* field; the brick still steps on the GPU around it |
+| Recursive-zoom cortical patch (Phase C) | Yes — mesh + laminar somas, point impostors at the reduced tier | No | — |
+| GPU frame timing (`getFrameTimings()`) | `GPUTimer` per pass (coarse field, brick, scene, post) when the adapter has `timestamp-query`; budget governor + Activity HUD | No GPU timing: rAF interval and the CPU field-step time | — |
+| Brick snapshot readback (`readBrickSnapshot()`, extension) | Yes (verification/debug) | No | — |
 
 ## Differences
 

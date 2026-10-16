@@ -112,6 +112,24 @@ export const RENDER_UNIFORM_LAYOUT = [
     // shader. Carried as f32 because the render uniform block is uploaded as a
     // Float32Array; WGSL reads it back through `voxel_dim()` in render-shared.js.
     { name: 'voxelDim', type: 'f32', comment: '[Field Resolution] runtime grid resolution' },
+    // [Clipmap] The fine brick (docs/field-resolution.md §7). Render shaders
+    // turn a model-space position into a fine-lattice coordinate with these,
+    // sample the brick's 3D texture (toroidally addressed, repeat sampler) and
+    // blend it over the coarse field by brickWeight × the brick's edge mask.
+    // brickWeight = 0 means no brick: every brick read short-circuits.
+    { name: 'brickLatticeOrigin', type: 'vec3', comment: '[Clipmap] brick origin, in fine-lattice voxels' },
+    { name: 'brickWeight', type: 'f32', comment: '[Clipmap] 0 = no brick; zoom-gated, budget-gated' },
+    { name: 'brickLatticeDim', type: 'f32', comment: '[Clipmap] fine lattice resolution over the field cube' },
+    { name: 'brickDim', type: 'f32', comment: '[Clipmap] brick edge length, in fine voxels' },
+    { name: 'brickFineSteps', type: 'f32', comment: '[Clipmap] heatmap raymarch steps spent inside the brick' },
+    { name: 'lodLoad', type: 'f32', comment: '[Clipmap] max(cognitiveLoad, GPU budget pressure)' },
+    // [Clipmap Phase C] The cortical patch that replaces the organic mesh
+    // around the brick below the zoom threshold. The global mesh fades out
+    // inside the cone `dot(normalize(p), patchAxis) > patchCosOuter`.
+    { name: 'patchAxis', type: 'vec3', comment: '[Clipmap] patch centre direction (model space)' },
+    { name: 'patchBlend', type: 'f32', comment: '[Clipmap] 0 = global mesh only, 1 = patch fully swapped in' },
+    { name: 'patchCosInner', type: 'f32' },
+    { name: 'patchCosOuter', type: 'f32' },
 ];
 
 /**
@@ -148,9 +166,11 @@ export const COMPUTE_UNIFORM_LAYOUT = [
     { name: 'resonanceThreshold', type: 'f32' },
     { name: 'synaptiXActive', type: 'f32' },
     { name: 'fiberCoupling', type: 'f32', comment: '[V3.2] Fiber-volume coupling' },
-    { name: 'cognitiveDissonance', type: 'f32' },
+    // `cognitiveDissonance` used to sit here, uploaded and read by nothing; it
+    // was removed rather than given an invented meaning (docs/tensor-physics.md
+    // §6.14). Its removal is why the C ABI carries COMPUTE_UNIFORM_LAYOUT_HASH.
     { name: 'pad3', type: 'f32' },
-    { name: 'decayRate', type: 'f32', comment: '[Phase 21] Neuromodulator physics' },
+    { name: 'decayRate', type: 'f32', comment: '[Phase 21] Neuromodulator physics (§3.4)' },
     { name: 'diffusionRate', type: 'f32' },
     { name: 'pulseSaturation', type: 'f32' },
     { name: 'trailLength', type: 'f32' },
@@ -161,6 +181,29 @@ export const COMPUTE_UNIFORM_LAYOUT = [
     { name: 'decimation', type: 'f32' },
     { name: 'stimulusRadius', type: 'f32', comment: '[Paint Energy] brush radius (0 = legacy fixed sigma 0.5)' },
     { name: 'stimulusErase', type: 'f32', comment: '[Paint Energy] erase/damping mode flag (>0.5 = erase)' },
+];
+
+/**
+ * [Clipmap] The fine-brick compute `BrickParams` struct
+ * (src/shaders/brick-compute.js). Deliberately *not* part of
+ * COMPUTE_UNIFORM_LAYOUT: TensorParams is the field's physics contract, mirrored
+ * into the C ABI and pinned by the golden fixture, and nothing here is physics
+ * — it is the brick's placement and its coupling to the coarse level, which
+ * the CPU reference and the C++ engine never see (docs/tensor-physics.md §11).
+ *
+ * Lattice coordinates are carried as f32: they are integers below 2^24, so the
+ * round trip through float is exact.
+ *
+ * @type {UniformLayoutField[]}
+ */
+export const BRICK_UNIFORM_LAYOUT = [
+    { name: 'latticeOrigin', type: 'vec3', comment: 'brick origin this step, in fine-lattice voxels' },
+    { name: 'brickDim', type: 'f32', comment: 'brick edge length, in fine voxels' },
+    { name: 'prevOrigin', type: 'vec3', comment: 'brick origin last step (toroidal carry-over test)' },
+    { name: 'prevValid', type: 'f32', comment: '0 = nothing carried over; reseed every texel' },
+    { name: 'latticeDim', type: 'f32', comment: 'fine lattice resolution over the field cube' },
+    { name: 'nudge', type: 'f32', comment: '§11.3 share of the cell-scale fine/coarse mismatch corrected per step' },
+    { name: 'mode', type: 'f32', comment: '1 = interpolate the coarse field, 2 = simulate' },
 ];
 
 /**
@@ -247,11 +290,56 @@ export const COMPUTE_UNIFORM_FLOAT_COUNT = computeLayout.totalFloats;
 /** Total size of `TensorParams`, in bytes. */
 export const COMPUTE_UNIFORM_BYTE_SIZE = COMPUTE_UNIFORM_FLOAT_COUNT * 4;
 
+/**
+ * 32-bit FNV-1a over every field's `name:type@byteOffset;`, in order.
+ *
+ * The byte size alone does not identify a layout: removing an f32 that sits
+ * ahead of a vec4 shifts every later field while the vec4's alignment padding
+ * absorbs the difference, so the struct stays the same size. A .wasm built
+ * before such a change would pass a size check and read every parameter one
+ * slot off. The hash changes whenever any name, type or offset does.
+ *
+ * @param {UniformLayoutField[]} layout
+ * @returns {number} unsigned 32-bit hash
+ */
+export function layoutHash(layout) {
+    const { offsets } = computeStructOffsets(layout);
+    let h = 0x811c9dc5;
+    for (const field of layout) {
+        const text = `${field.name}:${field.type}@${offsets[field.name] * 4};`;
+        for (let i = 0; i < text.length; i++) {
+            h ^= text.charCodeAt(i);
+            h = Math.imul(h, 0x01000193) >>> 0;
+        }
+    }
+    return h >>> 0;
+}
+
+/** Layout fingerprint of `TensorParams`; the C ABI exports the same value (bte_params_layout_hash). */
+export const COMPUTE_UNIFORM_LAYOUT_HASH = layoutHash(COMPUTE_UNIFORM_LAYOUT);
+
 /** The generated `struct Uniforms { ... }` WGSL, interpolated by every render shader. */
 export const UNIFORMS_STRUCT_WGSL = generateStructWGSL('Uniforms', RENDER_UNIFORM_LAYOUT);
 
 /** The generated `struct TensorParams { ... }` WGSL, interpolated by the compute shader. */
 export const TENSOR_PARAMS_STRUCT_WGSL = generateStructWGSL('TensorParams', COMPUTE_UNIFORM_LAYOUT);
+
+const brickLayout = computeStructOffsets(BRICK_UNIFORM_LAYOUT);
+
+/**
+ * [Clipmap] Float32Array index of every `BrickParams` field.
+ * @type {Object<string, number>}
+ */
+export const BRICK_UNIFORM_OFFSETS = Object.freeze(brickLayout.offsets);
+
+/** [Clipmap] Total size of `BrickParams`, in Float32Array elements. */
+export const BRICK_UNIFORM_FLOAT_COUNT = brickLayout.totalFloats;
+
+/** [Clipmap] Total size of `BrickParams`, in bytes. */
+export const BRICK_UNIFORM_BYTE_SIZE = BRICK_UNIFORM_FLOAT_COUNT * 4;
+
+/** [Clipmap] The generated `struct BrickParams { ... }` WGSL, interpolated by the brick compute shader. */
+export const BRICK_PARAMS_STRUCT_WGSL = generateStructWGSL('BrickParams', BRICK_UNIFORM_LAYOUT);
 
 const FIELD_LINE_RE = /^\s*(\w+)\s*:\s*(f32|u32|vec2<f32>|vec3<f32>|vec4<f32>|mat4x4<f32>)\s*,/gm;
 
@@ -423,6 +511,11 @@ ${TENSOR_PARAMS_STRUCT_C}
 // Byte size of the struct. bte_params_byte_size() returns this at runtime so
 // the JS bridge can refuse to run against a stale .wasm.
 #define BTE_PARAMS_BYTE_SIZE ${COMPUTE_UNIFORM_BYTE_SIZE}u
+
+// FNV-1a over every field's name, type and byte offset
+// (COMPUTE_UNIFORM_LAYOUT_HASH). bte_params_layout_hash() returns it, because
+// a layout change can keep the size: see docs/tensor-physics.md §5.
+#define BTE_PARAMS_LAYOUT_HASH 0x${COMPUTE_UNIFORM_LAYOUT_HASH.toString(16).padStart(8, '0')}u
 
 #ifdef __cplusplus
 } // extern "C"

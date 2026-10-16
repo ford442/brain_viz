@@ -27,11 +27,22 @@
 //   renderer.setVoxelData(engine.getTensorData());
 //
 // If the module is unavailable (build not run, unsupported environment) init()
-// resolves false and callers stay on the WebGPU compute path.
+// resolves false, `unavailableReason` says why, and callers stay on the WebGPU
+// compute path.
+//
+//  3. **A pthreads build is refused up front without cross-origin isolation.**
+//     SharedArrayBuffer — and so a `-pthread` .wasm — only exists when the page
+//     is served with COOP `same-origin` + COEP `require-corp`. vite.config.js
+//     sends them for dev/preview; a static production host may not. The build
+//     writes `brain_tensor_engine.build.json` (scripts/wasm_flags.sh), and init()
+//     reads it *before* importing the glue, because a pthreads module cannot be
+//     instantiated just to ask whether it is one. Default builds are
+//     single-threaded and load anywhere.
 
 import {
     COMPUTE_UNIFORM_OFFSETS,
     COMPUTE_UNIFORM_BYTE_SIZE,
+    COMPUTE_UNIFORM_LAYOUT_HASH,
 } from './shaders/uniform-layout.js';
 import { DEFAULT_VOXEL_DIM, assertVoxelDim, voxelCountFor } from './voxel-dim.js';
 
@@ -39,18 +50,15 @@ import { DEFAULT_VOXEL_DIM, assertVoxelDim, voxelCountFor } from './voxel-dim.js
 const cOff = (name) => COMPUTE_UNIFORM_OFFSETS[name] * 4;
 
 /**
- * Where the Emscripten glue lives at runtime.
+ * The app's deployment base, with a trailing slash.
  *
- * It is served out of `public/wasm/`, so the URL has to be built from the app's
- * deployment base. A host-root '/wasm/…' 404s under `base: '/brain-viz/'`
- * exactly the way the ONNX Runtime assets used to (see vite.config.js).
+ * The engine is served out of `public/wasm/`, so its URLs have to be built
+ * from this. A host-root '/wasm/…' 404s under `base: '/brain-viz/'` exactly the
+ * way the ONNX Runtime assets used to (see vite.config.js).
  *
- * The release build emits an ES module (`.mjs`); a `.js` from a build made
- * before EXPORT_ES6 is still accepted, so both spellings are tried in turn.
- *
- * @returns {string[]} candidate URLs, most current first
+ * @returns {string}
  */
-function resolveModuleUrls() {
+function resolveBaseUrl() {
     let base = '/';
     try {
         // import.meta.env exists under Vite; guard so this module still loads
@@ -61,7 +69,78 @@ function resolveModuleUrls() {
         base = '/';
     }
     if (!base.endsWith('/')) base += '/';
-    return [`${base}wasm/brain_tensor_engine.mjs`, `${base}wasm/brain_tensor_engine.js`];
+    return base;
+}
+
+/**
+ * Glue URLs. The release build emits an ES module (`.mjs`); a `.js` from a
+ * build made before EXPORT_ES6 is still accepted, so both are tried in turn.
+ * @returns {string[]} candidate URLs, most current first
+ */
+function resolveModuleUrls() {
+    const base = resolveBaseUrl();
+    return [`${base}wasm/brain_tensor_engine.mjs`, `${base}wasm/brain_tensor_engine.js`].map(toAbsoluteUrl);
+}
+
+/**
+ * Make a root-relative URL absolute against the page.
+ *
+ * Under `npm run dev`, Vite rewrites a root-relative dynamic import to
+ * `…?import`, which sends it through the transform pipeline — and that refuses
+ * any file in public/ ("should not be imported from source code"), so the
+ * engine could never load on the dev server. An absolute http(s) URL is left
+ * alone and served as a plain static file, as it is in production.
+ *
+ * @param {string} url
+ * @returns {string}
+ */
+function toAbsoluteUrl(url) {
+    const href = /** @type {any} */ (globalThis).location?.href;
+    return href ? new URL(url, href).href : url;
+}
+
+/**
+ * @typedef {Object} WasmBuildManifest
+ * @property {boolean} [simd128]   built with -msimd128 (src/stencil.cpp runs as SIMD)
+ * @property {boolean} [pthreads]  built with WASM_PTHREADS=1 — needs crossOriginIsolated
+ * @property {boolean} [debug]     the -O0 / assertions build
+ */
+
+/**
+ * Why a build cannot run on this page, or null if it can.
+ *
+ * Pure, so tests/test_wasm_engine.js can cover it without a browser.
+ *
+ * @param {WasmBuildManifest|null} manifest  null: no manifest (an older build,
+ *        which predates WASM_PTHREADS and is single-threaded)
+ * @param {boolean} crossOriginIsolated  the page's `crossOriginIsolated`
+ * @returns {string|null}
+ */
+export function wasmBuildRefusal(manifest, crossOriginIsolated) {
+    if (manifest?.pthreads && !crossOriginIsolated) {
+        return 'this WASM build uses pthreads, which need SharedArrayBuffer, but the page is not ' +
+            'cross-origin isolated — the host must send "Cross-Origin-Opener-Policy: same-origin" and ' +
+            '"Cross-Origin-Embedder-Policy: require-corp" (see docs/wasm-engine.md), or rebuild without WASM_PTHREADS=1.';
+    }
+    return null;
+}
+
+/**
+ * Fetch the build manifest written next to the glue. Missing or unparsable
+ * (a pre-manifest build, or a dev server answering a 404 with index.html)
+ * reads as null.
+ * @returns {Promise<WasmBuildManifest|null>}
+ */
+async function fetchBuildManifest() {
+    if (typeof fetch !== 'function') return null;
+    try {
+        const res = await fetch(`${resolveBaseUrl()}wasm/brain_tensor_engine.build.json`);
+        if (!res.ok) return null;
+        const manifest = await res.json();
+        return manifest && typeof manifest === 'object' ? manifest : null;
+    } catch {
+        return null;
+    }
 }
 
 /**
@@ -70,20 +149,22 @@ function resolveModuleUrls() {
  * @returns {Promise<{factory: Function, url: string}>}
  */
 async function importModuleFactory(urls) {
-    /** @type {unknown} */
-    let lastError = null;
+    // Every candidate's failure is kept: the first (.mjs) is usually the one
+    // that matters, and reporting only the last (.js fallback, typically a
+    // plain 404) hid real errors in the current build.
+    /** @type {string[]} */
+    const failures = [];
     for (const url of urls) {
         try {
             const factory = (await import(/* @vite-ignore */ url)).default;
             if (typeof factory === 'function') return { factory, url };
-            lastError = new Error(`${url} has no default export factory`);
+            failures.push(`${url}: no default export factory`);
         } catch (err) {
-            lastError = err;
+            failures.push(`${url}: ${/** @type {Error} */ (err)?.message ?? 'unknown error'}`);
         }
     }
     throw new Error(
-        `no loadable WASM glue at ${urls.join(' or ')} — did you run npm run build:wasm? ` +
-        `(${/** @type {Error} */ (lastError)?.message ?? 'unknown error'})`
+        `no loadable WASM glue — did you run npm run build:wasm? (${failures.join('; ')})`
     );
 }
 
@@ -100,6 +181,10 @@ export class WasmTensorEngine {
         this._scratchPtr = null;  // staging buffer for affinity / AI uploads
         this._scratchBytes = 0;
         this._benchmarkResults = null;
+        /** @type {string|null} why init() last resolved false; null once available */
+        this.unavailableReason = null;
+        /** @type {{simd128: boolean, pthreads: boolean}|null} from bte_build_features() */
+        this.buildFeatures = null;
 
         this._bte = {};
     }
@@ -113,6 +198,10 @@ export class WasmTensorEngine {
         if (this.available) return true;
 
         try {
+            const refusal = wasmBuildRefusal(await fetchBuildManifest(),
+                globalThis.crossOriginIsolated === true);
+            if (refusal) throw new Error(refusal);
+
             const { factory, url } = await importModuleFactory(resolveModuleUrls());
             this._module = await factory();
             const cwrap = this._module.cwrap;
@@ -121,6 +210,11 @@ export class WasmTensorEngine {
                 create: cwrap('bte_create', 'number', ['number']),
                 destroy: cwrap('bte_destroy', null, ['number']),
                 paramsByteSize: cwrap('bte_params_byte_size', 'number', []),
+                // Absent from builds that predate the layout fingerprint;
+                // checked below before it is called.
+                paramsLayoutHash: typeof this._module._bte_params_layout_hash === 'function'
+                    ? cwrap('bte_params_layout_hash', 'number', [])
+                    : null,
                 setParams: cwrap('bte_set_params', null, ['number', 'number']),
                 setFiberAffinities: cwrap('bte_set_fiber_affinities', null, ['number', 'number', 'number']),
                 setAiTensor: cwrap('bte_set_ai_tensor', null, ['number', 'number', 'number']),
@@ -144,6 +238,17 @@ export class WasmTensorEngine {
                     `npm run build:wasm (the header is generated by scripts/gen_wasm_params.mjs).`
                 );
             }
+            // The size alone misses a field removed ahead of a vec4 (its
+            // alignment padding absorbs the change), so check the fingerprint
+            // too. A .wasm with no fingerprint predates it — refuse that too.
+            const wasmLayoutHash = this._bte.paramsLayoutHash ? (this._bte.paramsLayoutHash() >>> 0) : null;
+            if (wasmLayoutHash !== COMPUTE_UNIFORM_LAYOUT_HASH) {
+                throw new Error(
+                    `BrainTensorParams layout ${wasmLayoutHash === null ? '(no fingerprint)' : '0x' + wasmLayoutHash.toString(16)} ` +
+                    `in the .wasm does not match COMPUTE_UNIFORM_LAYOUT (0x${COMPUTE_UNIFORM_LAYOUT_HASH.toString(16)}) — ` +
+                    `rebuild with npm run build:wasm.`
+                );
+            }
 
             this._handle = this._bte.create(this.voxelDim);
             if (!this._handle) throw new Error('bte_create returned null');
@@ -152,11 +257,20 @@ export class WasmTensorEngine {
             this._paramsPtr = this._module._malloc(COMPUTE_UNIFORM_BYTE_SIZE);
             if (!this._outPtr || !this._paramsPtr) throw new Error('malloc failed for the engine buffers');
 
+            // Absent from builds that predate it; introspection only.
+            if (typeof this._module._bte_build_features === 'function') {
+                const bits = this._module._bte_build_features() >>> 0;
+                this.buildFeatures = { simd128: (bits & 0x1) !== 0, pthreads: (bits & 0x2) !== 0 };
+            }
+
             this.available = true;
-            console.log('[WasmTensorEngine] Initialised — voxelDim:', this.voxelDim, 'from', url);
+            this.unavailableReason = null;
+            console.log('[WasmTensorEngine] Initialised — voxelDim:', this.voxelDim, 'from', url,
+                this.buildFeatures ?? '(pre-feature-flag build)');
             return true;
         } catch (err) {
-            console.warn('[WasmTensorEngine] Unavailable — falling back to WebGPU compute:', /** @type {Error} */ (err).message);
+            this.unavailableReason = /** @type {Error} */ (err).message;
+            console.warn('[WasmTensorEngine] Unavailable — falling back to WebGPU compute:', this.unavailableReason);
             this.available = false;
             return false;
         }
@@ -241,8 +355,8 @@ export class WasmTensorEngine {
         f('resonanceThreshold', params.resonanceThreshold ?? 0.2);
         f('synaptiXActive', 0.0);
         f('fiberCoupling', params.fiberCoupling ?? 0.5);
-        f('cognitiveDissonance', params.cognitiveDissonance ?? 0.0);
 
+        // §3.4 neuromodulation — read by the engine since the spec gave it a meaning.
         f('decayRate', params.decayRate ?? 0.96);
         f('diffusionRate', params.diffusionRate ?? 0.1);
         f('pulseSaturation', params.pulseSaturation ?? 1.0);

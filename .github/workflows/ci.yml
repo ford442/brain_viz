@@ -30,11 +30,28 @@ jobs:
       # Emscripten SDK. The WASM engine is an optional runtime feature
       # (wasm-engine.js falls back gracefully when the module is absent),
       # so it is not a build gate; `npm run build:full` opts into it locally.
+      # naga validates every WGSL source in `npm test` (tests/test_wgsl_naga.js,
+      # docs/tensor-physics.md §9.1). Pinned and cached: building it from
+      # source is the slow part, and only happens on a cache miss.
+      - name: Cache naga
+        id: naga-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/naga
+          key: naga-cli-29.0.3-${{ runner.os }}
+
+      - name: Install naga
+        if: steps.naga-cache.outputs.cache-hit != 'true'
+        run: cargo install naga-cli --version 29.0.3 --locked
+
       # Headless layout/shader assertions — plain Node, no WebGPU or browser.
       # These catch uniform-struct drift that the visual suite cannot see
       # (a clip plane read four floats off still renders an image).
-      - name: Node unit tests (uniform layout, shaders, tensor physics, renderer facade)
+      # REQUIRE_NAGA=1: on this runner a missing naga is a failure, not a skip.
+      - name: Node unit tests (uniform layout, shaders, naga, tensor physics, renderer facade)
         run: npm test
+        env:
+          REQUIRE_NAGA: '1'
 
       # JSDoc typecheck for the files that opt into `// @ts-check` (renderer
       # internals, routine player, wasm engine, types.js). Most renderer
@@ -46,9 +63,9 @@ jobs:
         run: npm run typecheck
 
       # The C++ half of the neural-field contract (docs/tensor-physics.md).
-      # It compiles wasm/brain_tensor_engine.cpp with the runner's own C++17
-      # compiler — no Emscripten — and compares one 24-step run against the
-      # fixture the JS reference stepper produced. This is what catches the
+      # It compiles the C++ engine (BTE_SRCS in scripts/wasm_flags.sh) with the runner's own C++17
+      # compiler — no Emscripten — and compares two 24-step runs against the
+      # fixtures the JS reference stepper produced. This is what catches the
       # engines drifting apart, which is exactly how the C++ path spent several
       # phases silently simulating a subset of the shader.
       - name: Golden field test (C++ engine vs JS reference)
@@ -85,6 +102,15 @@ jobs:
       - name: Install Chromium
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: python3 -m playwright install chromium
+
+      # The WGSL compute shader against the CPU reference on SwiftShader's
+      # software WebGPU (docs/tensor-physics.md §9.2). Reported, not gating:
+      # headless SwiftShader WebGPU has been too flaky to block on (see the
+      # verification note below). It prints SKIP rather than passing when no
+      # adapter comes up, and a real disagreement fails this step visibly.
+      - name: WGSL oracle (compute shader vs CPU reference, SwiftShader)
+        continue-on-error: true
+        run: npm run test:wgsl
 
       # Every script in verification/ forces ?renderer=webgl and launches its
       # own dev server (see AGENTS.md #7) — WebGPU + SwiftShader is too flaky

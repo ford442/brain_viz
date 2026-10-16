@@ -2,6 +2,7 @@
 import { Mat4 } from '../math-utils.js';
 import { COMPUTE_UNIFORM_BUFFER_SIZE, RENDER_UNIFORM_FLOAT_COUNT } from './constants.js';
 import { RENDER_UNIFORM_OFFSETS as R, COMPUTE_UNIFORM_OFFSETS } from '../shaders/uniform-layout.js';
+import { BRICK_DIM, FINE_LATTICE_DIM } from '../clipmap/brick-layout.js';
 
 // Byte offset of a compute (`TensorParams`) field, for the DataView writes below.
 const cOff = (name) => COMPUTE_UNIFORM_OFFSETS[name] * 4;
@@ -164,6 +165,23 @@ export function applyUniformsMethods(Target) {
         // shader, so setVoxelDim() takes effect on the next frame.
         uData[R.voxelDim] = this.voxelDim;
 
+        // [Clipmap] Fine brick + cortical patch (src/clipmap/clipmap-controller.js
+        // decided this frame's values in updateClipmapFrame()). brickWeight 0
+        // turns every brick read in the render shaders into a no-op.
+        const clip = this.clipmapFrame;
+        const brickOn = Boolean(clip && clip.active);
+        uData.set(brickOn ? clip.latticeOrigin : [0, 0, 0], R.brickLatticeOrigin);
+        uData[R.brickWeight] = brickOn ? clip.weight : 0.0;
+        uData[R.brickLatticeDim] = FINE_LATTICE_DIM;
+        uData[R.brickDim] = BRICK_DIM;
+        uData[R.brickFineSteps] = brickOn ? clip.fineSteps : 0.0;
+        uData[R.lodLoad] = clip ? clip.lodLoad : 0.0;
+        const patch = clip && clip.patch;
+        uData.set(patch && patch.draw ? patch.axis : [0, 0, 1], R.patchAxis);
+        uData[R.patchBlend] = patch && patch.draw ? patch.blend : 0.0;
+        uData[R.patchCosInner] = patch && patch.draw ? patch.cosInner : 1.0;
+        uData[R.patchCosOuter] = patch && patch.draw ? patch.cosOuter : 1.0;
+
         // [SynaptiX Multi-Brain] Each avatar gets the same camera rotation but a
         // distinct local transform and tensor-only bind group.
         const avatarALocal = Mat4.composeTranslationScale(-1.05, 0, 0, 0.62);
@@ -225,9 +243,9 @@ export function applyUniformsMethods(Target) {
 
         // [V3.2] Fiber-volume coupling strength
         dv.setFloat32(cOff('fiberCoupling'), this.params.fiberCoupling ?? 0.5, true);
-        dv.setFloat32(cOff('cognitiveDissonance'), this.params.cognitiveDissonance ?? 0.0, true);
 
-        // [Phase 21] Neuromodulator physics
+        // [Phase 21] Neuromodulator physics — read by the field (docs/tensor-physics.md §3.4).
+        // pulseSaturation and trailLength share the block but are not physics (§6.14).
         dv.setFloat32(cOff('decayRate'), this.params.decayRate !== undefined ? this.params.decayRate : 0.96, true);
         dv.setFloat32(cOff('diffusionRate'), this.params.diffusionRate !== undefined ? this.params.diffusionRate : 0.1, true);
         dv.setFloat32(cOff('pulseSaturation'), this.params.pulseSaturation !== undefined ? this.params.pulseSaturation : 1.0, true);

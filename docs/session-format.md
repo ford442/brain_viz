@@ -37,6 +37,8 @@ One `performance.now()` origin timestamps all modalities. Every 100 ms tick capt
 
 Session replay owns only the human tensor while active. Loading a session stops TensorPlayer and its WebSocket, pauses paired SynaptiX human-frame playback, disconnects live BCI, enables `tensorPlaybackMode`, and writes frames through `renderer.setVoxelData()`. The partner/SynaptiX tensor is untouched. Stop restores normal simulation; deliberately, it does not reconnect a BCI device. Each displayed modality is the latest chunk at or before the playhead. Forward note crossings emit the safe `session_note` routine event; seeking resolves the caption without replaying historical events.
 
+Tensor chunks hold the **coarse** field only — the `voxelDim³` grid named in `tensor.shape`. The WebGPU clipmap's fine brick (`docs/field-resolution.md` §7) is a view-dependent refinement of that field and is not recorded; during replay it only interpolates the recorded frames and adds no dynamics of its own. An optional fine-brick chunk would be a new chunk type under a codec version bump, never a change to what type 1 contains.
+
 ## Analysis and CSV export
 
 Audio samples pair with the nearest tensor sample only when the absolute timestamp difference is at most 50 ms. Occipital activation uses the same anatomical partition as SynaptiX. The Session tab shows a 16×16 occupancy heatmap and Pearson correlations for RMS/energy versus normalized occipital activation.

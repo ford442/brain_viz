@@ -1,7 +1,7 @@
 // src/shaders/mesh.js
 // [Neuro-Weaver] Primary brain-surface mesh shaders (Organic/Cyber/Heatmap/SynaptiX styles).
 // Split out of the former monolithic shaders.js.
-import { CONSTANTS, HELPERS, VOXEL_DIM_FROM_UNIFORMS } from './render-shared.js';
+import { CONSTANTS, HELPERS, VOXEL_DIM_FROM_UNIFORMS, BRICK_RENDER_HELPERS, ORGANIC_SURFACE_DISPLACEMENT } from './render-shared.js';
 import { UNIFORMS_STRUCT_WGSL } from './uniform-layout.js';
 
 export const vertexShader = `
@@ -28,9 +28,12 @@ struct VertexOutput {
     @location(7) fiberMaterial: vec3<f32>,
     @location(8) fiberTangent: vec3<f32>,
     @location(9) fiberFlags: vec2<f32>,
+    // [Clipmap] Model-space (field-space) position, for per-fragment brick reads.
+    @location(10) modelPos: vec3<f32>,
 }
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
+${ORGANIC_SURFACE_DISPLACEMENT}
 // [Verified] Volumetric Data: Flattened 3D buffer representing brain activity
 @group(0) @binding(1) var<storage, read> activityTensor: array<f32>;
 @group(0) @binding(2) var<storage, read> aiTensor: array<f32>;
@@ -145,35 +148,7 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
     }
     // --- GHOST MODE ---
     else {
-            let displacement = normalize(input.position) * activity * 0.05;
-            finalPos = input.position + displacement;
-
-            // [Phase 5] Cortisol Structural Decay
-            if (uniforms.cortisol > 0.0) {
-                let decayFactor = 1.0 - (uniforms.cortisol * 0.3);
-                finalPos *= max(0.0, decayFactor);
-            }
-
-            // [Phase 2] Cognitive Stress Distortion
-            if (uniforms.stress > 0.0) {
-                let noiseFreq = 15.0;
-                let stressDisp = sin(finalPos.x * noiseFreq + uniforms.time * 10.0) * cos(finalPos.y * noiseFreq + uniforms.time * 8.0) * sin(finalPos.z * noiseFreq);
-                finalPos += normalize(input.position) * stressDisp * uniforms.stress * 0.5;
-            }
-
-            // [Phase 5] Cortisol Structural Decay
-            if (uniforms.cortisol > 0.0) {
-                // Decay structural integrity based on cortisol level (shrinks vertices inward, especially higher activity areas)
-                let decayErosion = uniforms.cortisol * 0.2 * (1.0 - activity);
-                finalPos -= normalize(input.position) * decayErosion;
-            }
-
-            // [Phase 6] Heavy Metal Structural Alteration
-            if (uniforms.heavyMetal > 0.0) {
-                let lesionNoise = fract(sin(dot(finalPos.xyz, vec3(12.9898, 78.233, 45.164))) * 43758.5453);
-                let erosion = uniforms.heavyMetal * 0.3 * lesionNoise;
-                finalPos -= normalize(input.position) * erosion;
-            }
+            finalPos = organicSurfaceDisplace(input.position, activity);
 
             finalColor = vec3<f32>(0.2, 0.6, 1.0);
 
@@ -213,6 +188,7 @@ fn main(input: VertexInput, @builtin(vertex_index) vertexIndex: u32) -> VertexOu
 
     output.position = uniforms.mvpMatrix * vec4<f32>(finalPos, 1.0);
     output.worldPos = (uniforms.modelMatrix * vec4<f32>(finalPos, 1.0)).xyz;
+    output.modelPos = finalPos;
     output.normal = normalize((uniforms.modelMatrix * vec4<f32>(finalNormal, 0.0)).xyz);
     output.color = finalColor;
     output.activity = activity;
@@ -242,6 +218,7 @@ ${UNIFORMS_STRUCT_WGSL}
 @group(0) @binding(1) var<storage, read> activityTensor: array<f32>;
 @group(0) @binding(2) var<storage, read> aiTensor: array<f32>;
 @group(0) @binding(3) var<storage, read> fiberDirections: array<vec4<f32>>;
+${BRICK_RENDER_HELPERS}
 
 fn getAIVoxelValue(worldPos: vec3<f32>) -> f32 {
     let normPos = (worldPos / BRAIN_RANGE) * 0.5 + 0.5;
@@ -316,6 +293,7 @@ struct FragmentInput {
     @location(7) fiberMaterial: vec3<f32>,
     @location(8) fiberTangent: vec3<f32>,
     @location(9) fiberFlags: vec2<f32>,
+    @location(10) modelPos: vec3<f32>,
 }
 
 @fragment
@@ -432,15 +410,22 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
     // [Neuro-Weaver] Style 3.0: Translucent Heatmap Shell
     // Volume raymarch through the tensor so the interior reads as a true thermal body
     if (uniforms.style >= 3.0) {
-        let rayOrigin = vec3<f32>(0.0, 0.0, uniforms.zoom);
-        let rayDir = normalize(input.worldPos - rayOrigin);
+        // [Clipmap] March in model space — the field's own space — so the
+        // volume turns with the shell (marching in world space sampled a volume
+        // that stayed put while the brain rotated) and so the fine brick, which
+        // is placed in model space, lines up. The single-brain model matrix is
+        // a pure rotation, so its inverse is its transpose; the world-space
+        // slice plane comes along by the same rotation.
+        let invRotation = transpose(mat3x3<f32>(uniforms.modelMatrix[0].xyz, uniforms.modelMatrix[1].xyz, uniforms.modelMatrix[2].xyz));
+        let rayOrigin = invRotation * vec3<f32>(0.0, 0.0, uniforms.zoom);
+        let rayDir = normalize(input.modelPos - rayOrigin);
         let bounds = raySphereBounds(rayOrigin, rayDir, BRAIN_RANGE);
 
         if (bounds.y <= bounds.x) {
             discard;
         }
 
-        let volume = raymarchHeatmapVolume(rayOrigin, rayDir, bounds.x, bounds.y, uniforms.slicePlane.xyz, uniforms.slicePlane.w, uniforms.time);
+        let volume = raymarchHeatmapVolume(rayOrigin, rayDir, bounds.x, bounds.y, invRotation * uniforms.slicePlane.xyz, uniforms.slicePlane.w, uniforms.time);
         let shellTint = getHeatmapColor(pow(input.activity, 0.9));
         let rimBoost = smoothstep(0.4, 1.0, rim) * 0.22;
         let shellBurst = smoothstep(0.68, 0.98, input.activity) * 0.18;
@@ -505,8 +490,13 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
     // Low base alpha + rim silhouette + activity punch-through = see-through glass effect
     let rimAlpha = smoothstep(0.5, 1.0, rim);
     let glassAlpha = 0.04 + rimAlpha * 0.22;
-    let activityAlpha = input.activity * 0.18;
-    let finalAlpha = clamp(glassAlpha + activityAlpha, 0.0, 0.35);
+    // [Clipmap] Per-fragment activity from the fine brick where it exists — the
+    // vertex-interpolated coarse value is one sample per ~0.09 world units.
+    let activity = detailedFieldValue(input.modelPos, input.activity);
+    let activityAlpha = activity * 0.18;
+    // [Clipmap Phase C] Inside the cortical patch's footprint the patch draws
+    // the cortex; the global mesh fades out under it.
+    let finalAlpha = clamp(glassAlpha + activityAlpha, 0.0, 0.35) * (1.0 - patchFootprint(input.modelPos));
 
     // [Phase 2] Dynamic Lighting Control
     let NdotL = max(0.0, dot(input.normal, normalize(uniforms.lightDir)));
@@ -518,7 +508,7 @@ fn main(input: FragmentInput) -> @location(0) vec4<f32> {
 
     // Activity glow punches through glass where brain is active
     let activityGlowColor = vec3<f32>(0.5, 0.8, 1.0);
-    let mixFactor = clamp(input.activity * 1.5 * rimAlpha, 0.0, 1.0);
+    let mixFactor = clamp(activity * 1.5 * rimAlpha, 0.0, 1.0);
     col = mix(col, activityGlowColor, mixFactor);
 
     // Apply volumetric fog based on fragment depth

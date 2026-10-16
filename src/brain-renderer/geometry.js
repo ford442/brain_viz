@@ -16,11 +16,28 @@ export function applyGeometryMethods(Target) {
     // [Field Resolution] Bakes the fiber affinity map at the field's dim.
     voxelDim: this.voxelDim
         });
+        // [Clipmap] Shared, byte-bounded affinity cache: a coarse map already
+        // baked for this geometry at this dim is reused, not re-rasterised.
+        // @ts-expect-error affinityCache is attached here, not declared on the class.
+        geometry.affinityCache = this.clipmap?.cache ?? null;
         // @ts-expect-error generate() is attached to BrainGeometry.prototype by
         // applyMeshMethods() in brain-geometry.js — not visible to TS across
         // the mixin boundary (same pattern as setupInputHandlers() below).
         geometry.generate(this.geometryRows, this.geometryCols);
         return geometry;
+    };
+
+    /**
+     * [Clipmap] Hand a freshly uploaded geometry to the clipmap and release
+     * its upload arrays (BrainGeometry#releaseRenderData). The clipmap keeps
+     * the centerlines for fine affinity bakes and the surface function for the
+     * cortical patch; a changed geometry invalidates both.
+     * @param {any} geometry
+     */
+    Target.prototype.adoptGeometry = function(geometry) {
+        this.geometry = geometry;
+        this.clipmap?.setGeometry(geometry);
+        geometry.releaseRenderData();
     };
 
     Target.prototype.destroyGeometryBuffers = function() {
@@ -63,6 +80,7 @@ export function applyGeometryMethods(Target) {
         this.initSomaResources(geometry);
         this.initSparkResources(geometry);
         this.uploadFiberDirections(geometry);
+        this.adoptGeometry(geometry);
 
         this.geometryDirty = false;
         this.lastGeometryRebuildTime = typeof performance !== 'undefined' ? performance.now() : 0;

@@ -2,6 +2,20 @@
 // Predefined neuromodulator profiles that control signal diffusion, decay, and regional retention
 
 export const DEFAULT_PROFILES = {
+    // [Tensor Physics] The §3.4 identity (docs/tensor-physics.md): every
+    // neuromodulator scale is exactly 1, so the field is unmodulated. It is
+    // first because the panel applies its initially-selected profile on load —
+    // which, once these values started reaching the field, would otherwise
+    // have put every session on Dopamine before anyone touched the panel.
+    'baseline': {
+        name: 'Baseline (unmodulated)',
+        color: '#ffffff',
+        diffusionRate: 0.1,
+        decayRate: 0.96,
+        pulseSaturation: 1.0,
+        trailLength: 1.0,
+        retentionBias: { frontal: 0.5, occipital: 0.0, temporal: 0.2, parietal: 0.2 }
+    },
     'dopamine': {
         name: 'Dopamine',
         color: '#ffaa00', // Gold/Orange

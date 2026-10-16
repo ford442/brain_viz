@@ -83,8 +83,10 @@ brain_viz/
 ├── package.json            # npm manifest (includes build:wasm script)
 ├── CONTRIBUTING.md         # "Where to look" map across all docs
 ├── wasm/                   # [Phase 1] C++ BrainTensorEngine source
-│   ├── brain_tensor_engine.h    # C API declarations
-│   └── brain_tensor_engine.cpp  # Full simulation implementation
+│   ├── brain_tensor_engine.h    # C ABI declarations
+│   ├── brain_tensor_engine.cpp  # C ABI implementation (handles, copies)
+│   ├── src/                     # The engine, split by docs/tensor-physics.md section (stencil.cpp = SIMD)
+│   └── tests/                   # golden_step_test.cpp, bench_step.cpp
 ├── scripts/                # Build/deploy/test helper scripts
 │   ├── build_wasm.sh       # [Phase 1] Emscripten build script (npm run build:wasm)
 │   ├── build_wasm_colab.sh # Colab-flavored WASM build variant
@@ -111,6 +113,7 @@ brain_viz/
 │       └── brain_tensor_engine.wasm
 ├── verification/           # Canonical verification tree: Python/Playwright scripts + generated screenshots
 │   ├── verify_suite.py            # Runs all checks below and reports pass/fail
+│   ├── verify_clipmap_webgpu.py   # [Clipmap] Optional, WebGPU-only (not in the suite): fine brick + cortical patch
 │   ├── verify_brain.py            # Style cycling + WebGL debug controls
 │   ├── verify_stimulus.py         # Region stimulus injection
 │   ├── verify_camera.py           # Camera preset + spline moves
@@ -293,7 +296,11 @@ differs from the shader and why each one has to.
   struct `wasm/brain_tensor_params.h` is generated from it by
   `scripts/gen_wasm_params.mjs`, and `npm test` fails if it is stale.
 - Changing the physics: spec first, then both CPU implementations together,
-  then the WGSL; regenerate the fixture and run `npm run test:all`.
+  then the WGSL; regenerate the fixtures and run `npm run test:all` and
+  `npm run test:wgsl` (the compute shader vs the CPU reference, §9.2).
+- Never upload a parameter the field ignores. §6.14 of the spec lists the few
+  `TensorParams` fields no stepper reads; a slider or Live Input Bus sink that
+  drives one says so in the UI. Neuromodulation is §3.4.
 
 ### 5.5 WASM Hybrid Architecture
 
@@ -305,10 +312,24 @@ See [`docs/wasm-engine.md`](docs/wasm-engine.md) for the full specification.  Ke
 - If the WASM build is absent, `init()` returns `false` and `wasmMode` stays `false` — **no breakage**.
 - Parameters cross the ABI as a `BrainTensorParams` struct generated from
   `COMPUTE_UNIFORM_LAYOUT` — not as a positional argument list. `bte_params_byte_size()`
+  and `bte_params_layout_hash()` (a fingerprint of every field's name, type and offset)
   is checked at init so a `.wasm` built from a stale layout is refused rather
   than read at shifted offsets.
 - The C++ engine implements the same spec as the CPU reference, and
   `npm run test:golden` proves it (host C++17 compiler only; no Emscripten).
+- Sources live in `wasm/src/`, split by spec section; the TU list and every
+  flag set (host golden, em++ release/debug, clangd) come from
+  `scripts/wasm_flags.sh`. `-msimd128` is **on**, and `wasm/src/stencil.cpp`
+  is an explicit SIMD kernel that must stay bit-identical to its scalar
+  fallback — never `-mrelaxed-simd`, never `wasm_f32x4_max` for `std::max`.
+  64³ still misses a frame (~85–98 ms measured): do not "turn on SIMD" again;
+  see `docs/wasm-engine.md` → *Performance*.
+- A `WASM_PTHREADS=1` build is refused at init on a page that is not
+  cross-origin isolated (`brain_tensor_engine.build.json` manifest); pthreads
+  stay off until the production host sends COOP/COEP.
+- clangd: `wasm/compile_flags.txt` for a fresh clone; `npm run
+  gen:compile-commands` (host, no emsdk) or `:wasm` (Emscripten graph) writes
+  `wasm/compile_commands.json`.
 - Heap views are re-derived after every call: `ALLOW_MEMORY_GROWTH=1` detaches
   the old `HEAPF32.buffer` on growth, so a cached view silently becomes empty.
 
@@ -337,6 +358,26 @@ ambition (fractal soma zoom, gyrus-scale resonance, XR walkthrough) behind it.
 - NWS1 sessions carry their dimension in `tensor.shape`; old 32³ files load
   unchanged, and `SessionPlayer` resamples into the renderer's current grid.
 
+**Clipmap (Phases B–C, WebGPU only).** A 64³ fine brick, a window into a 256³
+lattice, follows the camera (or a recent stimulus) once you zoom in, and below
+a further threshold a cortical patch replaces the organic mesh around it.
+Policy is pure JS in `src/clipmap/`; GPU work in `src/brain-renderer/clipmap.js`.
+
+- **The §6 step body exists once**, in `src/shaders/field-step.js`, and both
+  the coarse shader and the brick emit it. Never write a second copy of a
+  field stage into another shader — `npm test` fails if one appears.
+- The nesting is one-way: the brick never writes the coarse field, so NWS1,
+  the golden fixture, WASM and the WebGL fallback are unaffected
+  (`docs/tensor-physics.md` §8.5, §11).
+- `BrickParams` is generated from `BRICK_UNIFORM_LAYOUT`, like the other two
+  structs. It is not part of `TensorParams` (that is the physics ABI).
+- The budget governor reads `cognitiveLoad` and must never write it — it is a
+  physics input. GPU time comes from `GPUTimer`, which now times every pass.
+- A new GPU resource the brick binds that captures a coarse buffer must be
+  rebuilt in `createBrickBindGroups()`, which `setVoxelDim()` calls.
+- WGSL reserved words (`target`, `meta`, …) as identifiers make Chrome reject
+  the whole module; `tests/test_shader.js` scans for them.
+
 ---
 
 ## 6. Code Style Guidelines
@@ -357,8 +398,11 @@ browser:
 
 ```bash
 npm test             # uniform layout, shaders, neural-field fixture, renderer facade check
-npm run test:golden  # the C++ engine against the same fixture (host C++ compiler)
+npm run test:golden  # the C++ engine against the same fixtures (host C++ compiler)
+GOLDEN_WASM=1 npm run test:golden  # + the em++ SIMD build under node (needs emsdk)
+npm run bench:wasm   # bte_update() ms/step at 32³/48³/64³, SIMD vs scalar (needs emsdk)
 npm run test:all     # both
+npm run test:wgsl    # the WGSL compute shader against the CPU reference (Playwright Chromium, SwiftShader)
 npm run typecheck    # tsc --noEmit over the JSDoc-checked files (see §3 and CLAUDE.md)
 npm run check:facade # standalone: both backends implement src/renderer-contract.js
 ```
@@ -381,7 +425,9 @@ python test_run.py
 ```
 
 **Automated verification via WebGL fallback (recommended for CI):**
-All Playwright-based verification scripts force `?renderer=webgl` for reliable headless execution. WebGPU requires `--enable-unsafe-webgpu` and SwiftShader, which frequently loses the GPU context in automated environments. The WebGL path provides deterministic screenshots and stable console behavior.
+All Playwright-based verification scripts force `?renderer=webgl` for reliable headless execution. The WebGL path provides deterministic screenshots and stable console behavior.
+
+Headless WebGPU *is* usable, with the right flags: `--enable-unsafe-webgpu --use-webgpu-adapter=swiftshader` alone loses the device seconds after the first frame (Chrome cannot allocate the canvas swap-chain image without a Vulkan back end — the log says `Could not find SharedImageBackingFactory … WebgpuSwapChainTexture`), and adding `--enable-features=Vulkan --use-vulkan=swiftshader` fixes it. `verification/verify_clipmap_webgpu.py` uses exactly that and is the one WebGPU-only check; it is optional and not part of `verify_suite.py`. SwiftShader runs at roughly one frame per second, so use small viewports and wait on simulation time, not wall-clock time.
 
 ```bash
 # Run the full suite
@@ -413,13 +459,14 @@ python verification/verify_live_input_bus.py    # Live tab mapping matrix UI + o
 `.github/workflows/ci.yml` runs on every push/PR to `main` and gates on:
 
 1. `npm ci`
-2. `npm test` — headless Node assertions: uniform layout, shaders, the neural-field golden fixture, and `scripts/check-renderer-facade.mjs` (both renderer backends implement `src/renderer-contract.js`)
+2. `npm test` (with `REQUIRE_NAGA=1`, after a cached `cargo install naga-cli`) — headless Node assertions: uniform layout, shaders (including a WGSL reserved-word scan and naga validation of every WGSL source), the neural-field golden fixtures, field resolution, the clipmap (`tests/test_clipmap.js`), and `scripts/check-renderer-facade.mjs` (both renderer backends implement `src/renderer-contract.js`)
 3. `npm run typecheck` — `tsc -p jsconfig.json --noEmit` over the files that opt into `// @ts-check`
-4. `npm run test:golden` — compiles `wasm/brain_tensor_engine.cpp` with the runner's own C++17 compiler (no Emscripten) and checks it against the same fixture
+4. `npm run test:golden` — compiles the C++ engine (`BTE_SRCS` in `scripts/wasm_flags.sh`) with the runner's own C++17 compiler (no Emscripten) and checks it against the same fixtures
 5. `npm run build` — frontend-only vite build; the `prebuild` WASM check is advisory and never fails
 6. `python3 scripts/test_run.py` — dev server smoke test
 7. `pip install playwright && playwright install chromium`
-8. `python3 verification/verify_suite.py` — the WebGL-fallback (`?renderer=webgl`) Playwright suite described above
+8. `npm run test:wgsl` — the WGSL oracle (`docs/tensor-physics.md` §9.2); **reported, not gating** (`continue-on-error`), because headless SwiftShader WebGPU is not reliable enough to block on
+9. `python3 verification/verify_suite.py` — the WebGL-fallback (`?renderer=webgl`) Playwright suite described above
 
 `node_modules` and the Playwright browser cache are cached across runs. Verification screenshots are uploaded as a build artifact when the job fails. The WASM build (`npm run build:wasm`) stays a local/manual step and is **not** a CI gate unless an Emscripten toolchain is added to the workflow later.
 
@@ -480,7 +527,7 @@ When adding new physiological simulations, consult or update `docs/SCIENTIFIC_AC
 3. **New BCI pattern?** Add a generator method to `tensor-player.js` and register it in `BUILTIN_PATTERNS`.
 4. **New UI control?** Add the HTML input to `index.html`, map it in `main.js` `initUIControls()`, and ensure `routine-player.js` can lerp it if needed.
 5. **New post-processing effect?** Modify `postFragmentShader` in `shaders.js` and add the corresponding parameter to `renderer.params`.
-6. **New neural-field behaviour?** Edit [`docs/tensor-physics.md`](docs/tensor-physics.md) first, then `src/physics/tensor-field.js` and `wasm/brain_tensor_engine.cpp` together, then the WGSL compute shader; regenerate the fixture (`node scripts/gen_tensor_fixture.mjs`) and run `npm run test:all`.
+6. **New neural-field behaviour?** Edit [`docs/tensor-physics.md`](docs/tensor-physics.md) first, then `src/physics/tensor-field.js` and the C++ engine (`wasm/src/`) together, then the WGSL compute shader; regenerate the fixtures (`node scripts/gen_tensor_fixture.mjs`) and run `npm run test:all` and `npm run test:wgsl`.
 
 ---
 

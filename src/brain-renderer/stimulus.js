@@ -97,6 +97,8 @@ export function applyStimulusMethods(Target) {
         ];
         // Ensure intensity is non-negative
         this.stimulus.active = Math.max(0.0, intensity);
+        // [Clipmap] 'auto' brick focus follows a stimulus injected recently.
+        this.stimulus.injectedAt = performance.now();
         // [Paint Energy] Brush radius (0/null = legacy fixed sigma) and
         // eraser/damping mode. See src/shaders.js TensorParams.
         this.stimulus.radius = (radius === null || isNaN(radius)) ? 0.0 : Math.max(0.0, radius);

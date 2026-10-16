@@ -3,6 +3,9 @@ import { buildPathwayMetadata } from '../pathways.js';
 export function applyMeshMethods(Target) {
     Target.prototype.generate = function(rows, cols) {
         this.randomState = this.seed >>> 0;
+        // [Clipmap] Part of getFiberGeometryKey(): affinity caches key on it.
+        this.generatedRows = rows;
+        this.generatedCols = cols;
         // Clear previous data
         this.vertices = [];
         this.normals = [];

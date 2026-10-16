@@ -14,7 +14,6 @@
  *
  * @typedef {Object} RendererParams
  * @property {number} cognitiveLoad - [Phase 9] Visual cortex fatigue / dynamic LoD (0-1).
- * @property {number} cognitiveDissonance - [Phase 2.5] Cognitive dissonance intensity (0-1).
  * @property {number} frequency - Compute shader signal frequency.
  * @property {number} amplitude - Compute shader signal amplitude.
  * @property {number} spikeThreshold - Firing threshold for activity spikes.
@@ -23,15 +22,15 @@
  * @property {number} sliceZ - Clip-plane Z distance (starts outside the mesh bounds).
  * @property {number} flowSpeed - V2.3 signal pulse speed along fibers.
  * @property {number} colorShift - [Phase 5] Serotonin color-shift amount.
- * @property {number} decayRate - [Phase 21] Neuromodulator trail decay rate per step.
- * @property {number} diffusionRate - [Phase 21] Neuromodulator spatial diffusion rate.
- * @property {number} pulseSaturation - [Phase 21] Neuromodulator pulse color saturation.
- * @property {number} trailLength - [Phase 21] Neuromodulator trail length multiplier.
+ * @property {number} decayRate - [Phase 21] Neuromodulator per-step retention; scales every zone's field loss (docs/tensor-physics.md §3.4). 0.96 = no change.
+ * @property {number} diffusionRate - [Phase 21] Neuromodulator spatial spread; scales zone diffusion and the §6.3 neighbourhood mix (§3.4). 0.1 = no change.
+ * @property {number} pulseSaturation - [Phase 21] Neuromodulator profile field. Not read by any shader or stepper yet (§6.14).
+ * @property {number} trailLength - [Phase 21] Connectome fiber trail length (render-only; values below 1 have no effect).
  * @property {number} particleSpeed - Dynamic control over individual particle traversal speed.
- * @property {number} retentionBiasX - [Phase 21] Regional retention bias: frontal.
- * @property {number} retentionBiasY - [Phase 21] Regional retention bias: occipital.
- * @property {number} retentionBiasZ - [Phase 21] Regional retention bias: temporal.
- * @property {number} retentionBiasW - [Phase 21] Regional retention bias: parietal.
+ * @property {number} retentionBiasX - [Phase 21] Regional retention bias: frontal (§3.4; +1 above 0.5 halves the lobe's field loss).
+ * @property {number} retentionBiasY - [Phase 21] Regional retention bias: occipital (§3.4; baseline 0.0).
+ * @property {number} retentionBiasZ - [Phase 21] Regional retention bias: temporal (§3.4; baseline 0.2).
+ * @property {number} retentionBiasW - [Phase 21] Regional retention bias: parietal (§3.4; baseline 0.2).
  * @property {number} sparkle - [Phase 5] Synaptic sparkle intensity.
  * @property {number} growth - [Phase 6] Dendritic growth radius (0-1).
  * @property {number} shake - [Phase 2] Camera shake intensity (trauma/panic).

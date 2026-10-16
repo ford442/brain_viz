@@ -25,6 +25,13 @@ Production server requirement — cross-origin isolation:
 
   Note that require-corp also blocks cross-origin subresources that do not send
   `Cross-Origin-Resource-Policy` / CORS headers.
+
+  This script cannot set them: it uploads files, and response headers are the
+  serving host's configuration. Until a deployed page reports
+  `crossOriginIsolated === true`, keep WASM pthreads off (the default). A
+  WASM_PTHREADS=1 build is refused at runtime on a non-isolated page — see
+  docs/wasm-engine.md, "Threads and cross-origin isolation", for the check and
+  an nginx snippet.
 """
 
 import io

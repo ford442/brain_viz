@@ -149,10 +149,17 @@ export function setupSynaptiXIntegration(renderer, player, controls, inputs, lab
                     wasmToggleBtn.style.borderColor = 'rgba(0,229,100,0.5)';
                     wasmToggleBtn.style.color = '#00e564';
                     if (wasmBenchmarkBtn) wasmBenchmarkBtn.style.display = '';
-                    if (wasmStatusDiv)    wasmStatusDiv.textContent = 'WASM engine active — tensor physics running on CPU (C++).';
+                    const features = renderer.wasmEngine?.buildFeatures;
+                    const detail = features
+                        ? ` SIMD ${features.simd128 ? 'on' : 'off'}, ${features.pthreads ? 'threaded' : 'single-threaded'}.`
+                        : '';
+                    if (wasmStatusDiv)    wasmStatusDiv.textContent = `WASM engine active — tensor physics running on CPU (C++).${detail}`;
                 } else {
                     wasmToggleBtn.textContent = '⚙️ WebGPU Compute (active) — WASM unavailable';
-                    if (wasmStatusDiv)    wasmStatusDiv.textContent = 'WASM build not found. Run: npm run build:wasm';
+                    // The engine records why: a missing build, a stale params
+                    // layout, or a pthreads build on a page without COOP/COEP.
+                    if (wasmStatusDiv)    wasmStatusDiv.textContent =
+                        `WASM unavailable: ${renderer.wasmEngine?.unavailableReason ?? 'build not found. Run: npm run build:wasm'}`;
                 }
             } else {
                 renderer.disableWasmMode();

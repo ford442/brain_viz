@@ -11,6 +11,7 @@ import { applyDynamicBufferMethods } from './brain-renderer-webgl/dynamic-buffer
 import { applyDrawMethods } from './brain-renderer-webgl/draw.js';
 import { applyLifecycleMethods } from './brain-renderer-webgl/lifecycle.js';
 import { applyResolutionMethods } from './brain-renderer-webgl/resolution.js';
+import { applyClipmapMethods } from './brain-renderer-webgl/clipmap.js';
 import { DEFAULT_VOXEL_DIM, voxelCountFor } from './voxel-dim.js';
 
 /**
@@ -72,7 +73,8 @@ export class BrainRendererWebGL {
             radius: 0.0,
             erase: false,
             decayHalfLife: 0.0,
-            lastDecayTime: 0
+            lastDecayTime: 0,
+            injectedAt: Number.NEGATIVE_INFINITY
         };
         // [Paint Energy] Guards the orbit-drag mouse handlers below so a
         // paint stroke on the canvas doesn't also rotate the camera.
@@ -213,3 +215,4 @@ applyDrawMethods(BrainRendererWebGL);
 applyLifecycleMethods(BrainRendererWebGL);
 applyPathwayMethods(BrainRendererWebGL);
 applyResolutionMethods(BrainRendererWebGL);
+applyClipmapMethods(BrainRendererWebGL);

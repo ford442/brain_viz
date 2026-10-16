@@ -28,6 +28,11 @@ import {
     assertShaderUniformsMatch,
     generateTensorParamsHeader,
     TENSOR_PARAMS_STRUCT_C,
+    BRICK_UNIFORM_LAYOUT,
+    BRICK_UNIFORM_OFFSETS,
+    BRICK_UNIFORM_BYTE_SIZE,
+    COMPUTE_UNIFORM_LAYOUT_HASH,
+    layoutHash,
 } from '../src/shaders/uniform-layout.js';
 import {
     RENDER_UNIFORM_BUFFER_SIZE,
@@ -45,6 +50,12 @@ import {
 } from '../src/shaders.js';
 import { fiberVertexShader, fiberFragmentShader } from '../src/shaders/fiber.js';
 import { immuneVertexShader, immuneFragmentShader } from '../src/shaders/immune.js';
+import {
+    patchVertexShader, patchFragmentShader,
+    patchSomaVertexShader, patchSomaFragmentShader,
+    patchImpostorVertexShader,
+} from '../src/shaders/cortical-patch.js';
+import { brickComputeShader } from '../src/shaders/brick-compute.js';
 
 const shaderDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'shaders');
 
@@ -54,7 +65,7 @@ const shaderDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'sh
 for (const file of readdirSync(shaderDir).filter((f) => f.endsWith('.js'))) {
     if (file === 'uniform-layout.js') continue; // the generator itself
     const source = readFileSync(join(shaderDir, file), 'utf8');
-    for (const structName of ['Uniforms', 'TensorParams']) {
+    for (const structName of ['Uniforms', 'TensorParams', 'BrickParams']) {
         assert.ok(
             !source.includes(`struct ${structName} {`),
             `${file} hand-writes 'struct ${structName} {'. Interpolate the generated ` +
@@ -75,6 +86,11 @@ const liveShaders = {
     postVertexShader, postFragmentShader,
     pointCloudVertexShader, pointCloudFragmentShader,
     immuneVertexShader, immuneFragmentShader,
+    // [Clipmap Phase C] Cortical patch pipelines share the render bind group.
+    // (patchImpostorFragmentShader reads no uniforms and declares none.)
+    patchVertexShader, patchFragmentShader,
+    patchSomaVertexShader, patchSomaFragmentShader,
+    patchImpostorVertexShader,
 };
 assertShaderUniformsMatch(liveShaders);
 
@@ -92,6 +108,16 @@ assert.deepEqual(
     extractUniformFieldOrder(computeShader, 'TensorParams'),
     COMPUTE_UNIFORM_LAYOUT.map((f) => f.name),
     'computeShader TensorParams struct drifted from COMPUTE_UNIFORM_LAYOUT'
+);
+assert.deepEqual(
+    extractUniformFieldOrder(brickComputeShader, 'TensorParams'),
+    COMPUTE_UNIFORM_LAYOUT.map((f) => f.name),
+    'brickComputeShader binds the same TensorParams buffer and must declare the same struct'
+);
+assert.deepEqual(
+    extractUniformFieldOrder(brickComputeShader, 'BrickParams'),
+    BRICK_UNIFORM_LAYOUT.map((f) => f.name),
+    'brickComputeShader BrickParams struct drifted from BRICK_UNIFORM_LAYOUT'
 );
 
 // ---------------------------------------------------------------------------
@@ -127,6 +153,7 @@ function checkAlignment(label, layout, offsets, totalBytes) {
 
 checkAlignment('Uniforms', RENDER_UNIFORM_LAYOUT, RENDER_UNIFORM_OFFSETS, RENDER_UNIFORM_BYTE_SIZE);
 checkAlignment('TensorParams', COMPUTE_UNIFORM_LAYOUT, COMPUTE_UNIFORM_OFFSETS, COMPUTE_UNIFORM_BYTE_SIZE);
+checkAlignment('BrickParams', BRICK_UNIFORM_LAYOUT, BRICK_UNIFORM_OFFSETS, BRICK_UNIFORM_BYTE_SIZE);
 
 // The two fields the drift bug actually corrupted: slicePlane must sit on its
 // own vec4 boundary after dopamineTrails, not share dopamineTrails' slot (which
@@ -219,6 +246,31 @@ for (const field of COMPUTE_UNIFORM_LAYOUT) {
         TENSOR_PARAMS_STRUCT_C.includes(`byte offset ${COMPUTE_UNIFORM_OFFSETS[field.name] * 4}`),
         `The C struct does not place ${field.name} at its WGSL byte offset`
     );
+}
+
+// [Tensor Physics] The C ABI's layout fingerprint (docs/tensor-physics.md §5).
+// The byte size alone cannot see a field removed ahead of a vec4 — removing
+// `cognitiveDissonance` shifted every later field by 4 bytes and left the
+// struct at 176 — so the bridge also compares this hash. It must see exactly
+// that kind of change.
+{
+    assert.ok(
+        generateTensorParamsHeader().includes(`#define BTE_PARAMS_LAYOUT_HASH 0x${COMPUTE_UNIFORM_LAYOUT_HASH.toString(16).padStart(8, '0')}u`),
+        'the generated header must carry COMPUTE_UNIFORM_LAYOUT_HASH'
+    );
+    const withExtra = [
+        ...COMPUTE_UNIFORM_LAYOUT.slice(0, COMPUTE_UNIFORM_LAYOUT.findIndex((f) => f.name === 'pad3')),
+        { name: 'cognitiveDissonance', type: 'f32' },
+        ...COMPUTE_UNIFORM_LAYOUT.slice(COMPUTE_UNIFORM_LAYOUT.findIndex((f) => f.name === 'pad3')),
+    ];
+    assert.equal(computeStructOffsets(withExtra).totalFloats * 4, COMPUTE_UNIFORM_BYTE_SIZE,
+        'test premise: the pre-removal layout has the same byte size');
+    assert.notEqual(layoutHash(withExtra), COMPUTE_UNIFORM_LAYOUT_HASH,
+        'the layout hash must distinguish two layouts of the same size with shifted fields');
+    const renamed = COMPUTE_UNIFORM_LAYOUT.map((f) => (f.name === 'decayRate' ? { ...f, name: 'decayRateX' } : f));
+    assert.notEqual(layoutHash(renamed), COMPUTE_UNIFORM_LAYOUT_HASH, 'the layout hash must see a rename');
+    assert.ok(!COMPUTE_UNIFORM_LAYOUT.some((f) => f.name === 'cognitiveDissonance'),
+        'cognitiveDissonance was removed from TensorParams (§6.14); give it a §6 meaning before re-adding it');
 }
 
 console.log('test_uniform_layout passed');

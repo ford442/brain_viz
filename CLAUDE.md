@@ -6,9 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 npm install                    # Install dependencies
-npm test                       # Headless Node assertions (uniform layout, shaders, tensor physics, renderer facade)
+npm test                       # Headless Node assertions (uniform layout, shaders, naga WGSL validation, tensor physics, renderer facade)
 npm run test:golden            # C++ neural field vs the JS reference (needs a host C++ compiler)
+GOLDEN_WASM=1 npm run test:golden  # + the em++ -msimd128 build under node (needs emsdk)
+npm run bench:wasm             # WASM bte_update() ms/step at 32³/48³/64³ (needs emsdk)
+npm run gen:compile-commands   # clangd graph for wasm/ (host flags; :wasm for the Emscripten graph)
 npm run test:all               # npm test + npm run test:golden
+npm run test:wgsl              # WGSL compute shader vs the JS reference on SwiftShader WebGPU (needs a Playwright Chromium)
 npm run typecheck              # tsc --noEmit over the JSDoc-checked files (see §3b)
 npm run check:facade           # Both renderer backends implement src/renderer-contract.js
 npm run dev                    # Start dev server (http://localhost:5173)
@@ -16,6 +20,7 @@ npm run build                  # Build production bundle to dist/
 npm run preview                # Preview production build locally
 python3 scripts/test_run.py    # Smoke test (checks if server responds)
 python3 verification/verify_suite.py  # Full visual verification suite (WebGL fallback)
+python3 verification/verify_clipmap_webgpu.py  # Optional WebGPU-only clipmap check (SwiftShader is fine)
 ```
 
 ## Project Overview
@@ -111,18 +116,31 @@ sets, and nothing could tell them apart.
 
 **How it is handled:** `docs/tensor-physics.md` is the *specification*. Each
 step in the CPU reference and the C++ engine cites its section number, and
-`npm run test:golden` compares them against a committed 32³ fixture. The WebGL
+`npm run test:golden` compares them against committed 32³ fixtures; `npm run
+test:wgsl` holds the compute shader to the same reference (§9.2). The WebGL
 fallback no longer has physics of its own — it calls the reference stepper.
 
 **Action:**
 1. **Never add a field effect to one implementation only.** Spec first, then
-   `src/physics/tensor-field.js` and `wasm/brain_tensor_engine.cpp` together,
+   `src/physics/tensor-field.js` and the C++ engine (`wasm/src/`) together,
    then the WGSL unless §8 documents a divergence.
 2. A parameter the field reads has to be in `COMPUTE_UNIFORM_LAYOUT`. The C ABI
    struct is generated from it (`node scripts/gen_wasm_params.mjs`); `npm test`
    fails if the checked-in header is stale.
 3. After a deliberate physics change: `node scripts/gen_tensor_fixture.mjs`,
-   then `npm run test:all`.
+   then `npm run test:all` and `npm run test:wgsl`.
+4. **Never upload a parameter the field ignores.** `docs/tensor-physics.md`
+   §6.14 lists the few `TensorParams` fields no stepper reads, and why; a
+   slider or Live Input Bus sink that drives one must say so in the UI.
+   Neuromodulation (`decayRate`, `diffusionRate`, `retentionBias`) is §3.4.
+5. **C++ build.** The engine is `wasm/src/`, split by spec section; its TU list
+   and all flags (host golden, em++, clangd) live once in
+   `scripts/wasm_flags.sh`. `-msimd128` is already on and the §6.2 stencil
+   (`wasm/src/stencil.cpp`) is explicit SIMD, bit-identical to its scalar
+   fallback — keep it that way (no `-mrelaxed-simd`, `pmax` not `max`). 64³ is
+   still ~85–98 ms/step; the levers are threads and SIMD gathers
+   (`docs/wasm-engine.md` → *Performance*). Pthreads stay off until production
+   is cross-origin isolated; the loader refuses a pthreads build otherwise.
 
 ### 3b. One Renderer Facade, Two Backends
 **The Issue:** `BrainRenderer` (WebGPU) and `BrainRendererWebGL` each assemble
@@ -171,7 +189,7 @@ every "more detail" ambition behind it.
 `renderer.setVoxelDim(dim)` is on the shared facade and implemented on both
 backends; WGSL reads `uniforms.voxelDim` / `params.voxelDim` through
 `voxel_dim()`. `docs/field-resolution.md` has the full picture, including what
-is still 32³ and the unstarted clipmap/recursive-zoom phases.
+is still 32³, the clipmap fine brick and the recursive-zoom cortical patch.
 
 **Action:**
 1. **Never write a bare `32`, `32 ** 3`, or `32*32*32` for a grid size.** Use
@@ -185,12 +203,23 @@ is still 32³ and the unstarted clipmap/recursive-zoom phases.
    through `assertVoxelDim()` (hard boundary) or `normalizeVoxelDim()` (soft).
 4. `SUPPORTED_VOXEL_DIMS` entries must satisfy `dim³ % 64 === 0` (the compute
    workgroup size) and fit the limits `deriveRequiredLimits()` asks for.
+5. **Clipmap (WebGPU only).** A 64³ fine brick (a window into a 256³ lattice)
+   nests one-way in the coarse field when zoomed in; a cortical patch replaces
+   the organic mesh below a further zoom. Policy: `src/clipmap/` (pure JS,
+   `tests/test_clipmap.js`); GPU: `src/brain-renderer/clipmap.js`. The §6 step
+   body lives once in `src/shaders/field-step.js` and both GPU levels emit it —
+   never paste a field stage into another shader. The budget governor reads
+   `cognitiveLoad` and must never write it (it is a physics input). See
+   `docs/field-resolution.md` §7–§8 and `docs/tensor-physics.md` §11.
 
 ### 4. Minimal Automated Tests
 `npm test` runs headless Node assertions (`tests/test_uniform_layout.js`,
-`tests/test_shader.js`, `tests/test_tensor_physics.js`) — no WebGPU, no browser
-— covering uniform-struct alignment/drift, fiber geometry, and the neural-field
-contract. `npm run test:golden` additionally compiles the C++ engine with a host
+`tests/test_shader.js`, `tests/test_tensor_physics.js`, `tests/test_voxel_dim.js`,
+`tests/test_clipmap.js`, …) — no WebGPU, no browser — covering uniform-struct
+alignment/drift, fiber geometry, WGSL reserved words, the neural-field
+contract, and the clipmap's policy, lattice math and affinity bakes, and
+`tests/test_wgsl_naga.js` validates every emitted WGSL source with naga (skips
+loudly without the binary; `REQUIRE_NAGA=1` in CI). `npm run test:golden` additionally compiles the C++ engine with a host
 compiler and checks it against the same fixture. CI runs them before the build.
 Everything else is **manual and visual**. Verify:
 - Brain renders and animates smoothly (~60 FPS)
@@ -265,8 +294,8 @@ npm run dev
 
 ## Known Limitations
 
-- **Thin automated coverage.** `npm test` covers uniform-buffer layout, fiber geometry and the neural-field fixture; `npm run test:golden` covers the C++ engine. Everything visual is manual, plus a Playwright-based `verification/` suite that runs against the WebGL2 fallback.
-- **No WGSL-vs-CPU comparison.** The golden fixture pins the JS and C++ implementations to each other. Comparing the shader itself needs a software WGSL runner; see `docs/tensor-physics.md` §8 for the divergences that are intentional.
+- **Thin automated coverage.** `npm test` covers uniform-buffer layout, fiber geometry, naga validation of every WGSL source and the neural-field fixtures; `npm run test:golden` covers the C++ engine. Everything visual is manual, plus a Playwright-based `verification/` suite that runs against the WebGL2 fallback.
+- **WGSL-vs-CPU is aggregate, not bit-exact, and not a CI gate.** `npm run test:wgsl` runs the production compute shader on SwiftShader and compares it with the CPU reference by lobe means and relative L2 (`docs/tensor-physics.md` §9.2), with the hash and advection divergences (§8) switched off. CI reports it without blocking on it.
 - **WebGPU-primary, strict browser requirement for full fidelity.** The WebGL2 fallback trades visual/simulation fidelity for portability and automation.
 - **Memory fixed at startup.** Window resize recreates depth texture but not geometry buffers.
 - **Routine branching pauses.** `choice` and `wait` events pause the routine player.
@@ -282,6 +311,6 @@ npm run dev
 - **docs/ARCHITECTURE.md** — Detailed module breakdown
 - **docs/SCIENTIFIC_ACCURACY_REPORT.md** — Physiological models verification
 - **docs/tensor-physics.md** — The neural-field specification (normative; read before changing any field code)
-- **docs/field-resolution.md** — How the field's grid resolution is carried and changed (`voxelDim`), and the unstarted clipmap/recursive-zoom phases
+- **docs/field-resolution.md** — How the field's grid resolution is carried and changed (`voxelDim`), the clipmap fine brick (Phase B) and recursive-zoom cortical patch (Phase C)
 - **docs/webgl-fallback.md** / **docs/wasm-engine.md** — WebGL2 fallback and WASM hybrid engine details
 - **.github/copilot-instructions.md** — Comprehensive guide for AI agents

@@ -43,12 +43,12 @@ typedef struct BrainTensorParams {
     float resonanceThreshold; // byte offset 92
     float synaptiXActive; // byte offset 96
     float fiberCoupling; // [V3.2] Fiber-volume coupling — byte offset 100
-    float cognitiveDissonance; // byte offset 104
-    float pad3; // byte offset 108
-    float decayRate; // [Phase 21] Neuromodulator physics — byte offset 112
-    float diffusionRate; // byte offset 116
-    float pulseSaturation; // byte offset 120
-    float trailLength; // byte offset 124
+    float pad3; // byte offset 104
+    float decayRate; // [Phase 21] Neuromodulator physics (§3.4) — byte offset 108
+    float diffusionRate; // byte offset 112
+    float pulseSaturation; // byte offset 116
+    float trailLength; // byte offset 120
+    float _pad1[1]; // WGSL alignment filler
     float retentionBias[4]; // x=frontal, y=occipital, z=temporal, w=parietal — byte offset 128
     float lesionCenter[3]; // byte offset 144
     float lesionActive; // byte offset 156
@@ -64,6 +64,11 @@ typedef struct BrainTensorParams {
 // Byte size of the struct. bte_params_byte_size() returns this at runtime so
 // the JS bridge can refuse to run against a stale .wasm.
 #define BTE_PARAMS_BYTE_SIZE 176u
+
+// FNV-1a over every field's name, type and byte offset
+// (COMPUTE_UNIFORM_LAYOUT_HASH). bte_params_layout_hash() returns it, because
+// a layout change can keep the size: see docs/tensor-physics.md §5.
+#define BTE_PARAMS_LAYOUT_HASH 0x5c9f6300u
 
 #ifdef __cplusplus
 } // extern "C"

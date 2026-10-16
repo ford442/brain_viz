@@ -1,12 +1,14 @@
 // tests/golden-scenario.js
-// [Tensor Physics] The single scenario definition behind the cross-implementation
-// golden fixture. Mirrored field-for-field by SCENARIO in
+// [Tensor Physics] The scenario definitions behind the cross-implementation
+// golden fixtures. Mirrored field-for-field by apply_scenario() in
 // wasm/tests/golden_step_test.cpp and documented in docs/tensor-physics.md §9.
 //
-// It is deliberately "everything at once": a live stimulus with a paint radius,
-// partial hypoxia, fluid advection, criticality drive, and both hazard paths, so
-// a step that one implementation skips shows up in the diff instead of hiding
-// behind a zero parameter.
+// Each is deliberately "everything at once": a live stimulus with a paint
+// radius, partial hypoxia, fluid advection, criticality drive, and both hazard
+// paths, so a step that one implementation skips shows up in the diff instead
+// of hiding behind a zero parameter. The neuromod scenario adds §3.4 off its
+// defaults for the same reason: at the defaults every neuromodulator scale is
+// exactly 1, so the baseline scenario cannot see a broken §3.4.
 import { makeReferenceFiberAffinities, resolveFieldParams, stepTensorField } from '../src/physics/tensor-field.js';
 
 export const GOLDEN_SCENARIO = Object.freeze({
@@ -43,6 +45,37 @@ export const GOLDEN_SCENARIO = Object.freeze({
 });
 
 /**
+ * §3.4 off its baselines in every direction: shorter global retention, wider
+ * spread, two lobes more retentive (frontal, temporal) and two less (occipital,
+ * parietal). Otherwise identical to GOLDEN_SCENARIO.
+ */
+export const NEUROMOD_SCENARIO = Object.freeze({
+    name: 'neuromod-v1',
+    voxelDim: GOLDEN_SCENARIO.voxelDim,
+    steps: GOLDEN_SCENARIO.steps,
+    dt: GOLDEN_SCENARIO.dt,
+    params: Object.freeze({
+        ...GOLDEN_SCENARIO.params,
+        decayRate: 0.93,
+        diffusionRate: 0.16,
+        retentionBiasX: 1.1,   // frontal   (+0.6)
+        retentionBiasY: -0.3,  // occipital (-0.3)
+        retentionBiasZ: 0.9,   // temporal  (+0.7)
+        retentionBiasW: -0.4,  // parietal  (-0.6)
+    }),
+});
+
+/**
+ * Every fixture, by file stem under tests/fixtures/. `baseline-v1` predates
+ * §3.4 and was deliberately not regenerated when it landed — it is the proof
+ * that the neuromodulator defaults are an exact identity.
+ */
+export const GOLDEN_FIXTURES = Object.freeze([
+    Object.freeze({ stem: 'tensor-field-golden', scenario: GOLDEN_SCENARIO }),
+    Object.freeze({ stem: 'tensor-field-golden-neuromod', scenario: NEUROMOD_SCENARIO }),
+]);
+
+/**
  * Maximum absolute per-voxel difference tolerated between the JavaScript
  * reference stepper (double-precision intermediates) and the C++/WASM engine
  * (single-precision intermediates) after `steps` steps.
@@ -56,17 +89,19 @@ export const GOLDEN_SCENARIO = Object.freeze({
 export const GOLDEN_EPSILON = 2e-3;
 
 /**
- * Runs the JavaScript reference stepper over the golden scenario.
+ * Runs the JavaScript reference stepper over a golden scenario.
  *
  * Shared by scripts/gen_tensor_fixture.mjs (which records the result) and
  * tests/test_tensor_physics.js (which re-runs it and requires a bit-exact
  * match), so the fixture and the test can never be generated from two slightly
  * different loops.
  *
- * @returns {Float32Array} the field after GOLDEN_SCENARIO.steps steps.
+ * @param {typeof GOLDEN_SCENARIO} [scenario]
+ * @param {number} [steps] stop early (the WGSL oracle runs a prefix)
+ * @returns {Float32Array} the field after `steps` steps.
  */
-export function runGoldenScenario() {
-    const { voxelDim, steps, dt, params } = GOLDEN_SCENARIO;
+export function runGoldenScenario(scenario = GOLDEN_SCENARIO, steps = scenario.steps) {
+    const { voxelDim, dt, params } = scenario;
     const count = voxelDim ** 3;
     const field = new Float32Array(count);
     const next = new Float32Array(count);

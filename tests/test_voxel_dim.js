@@ -262,6 +262,8 @@ class StubGPURenderer {
     rebuildGeometry() { this.log.push('rebuildGeometry'); }
     createRenderBindGroups() { this.log.push('renderBindGroups'); }
     createComputeBindGroup() { this.log.push('computeBindGroup'); }
+    // [Clipmap] The fine-brick step reads the coarse tensors through its own bind groups.
+    createBrickBindGroups() { this.log.push('brickBindGroups'); }
 }
 applyGPUResolution(StubGPURenderer);
 
@@ -282,7 +284,7 @@ assert.ok(Math.abs(gpu._lastHumanTensor[voxelCountFor(64) >> 1] - 0.4) < 1e-6,
 assert.deepEqual(
     gpu.log,
     ['destroy:tensor', 'destroy:ai', 'destroy:fiber', 'createBuffers', 'rebuildGeometry',
-     'renderBindGroups', 'computeBindGroup'],
+     'renderBindGroups', 'computeBindGroup', 'brickBindGroups'],
     'buffers must be recreated before the bind groups that capture them'
 );
 

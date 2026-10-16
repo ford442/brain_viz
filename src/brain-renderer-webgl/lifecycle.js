@@ -40,6 +40,10 @@ export function applyLifecycleMethods(Klass) {
 
         render() {
             if (!this.isRunning) return;
+            // [Clipmap] Frame interval for getFrameTimings() (no GPU timestamps on WebGL2).
+            const frameAt = performance.now();
+            this._lastIntervalMs = this._lastRenderAt ? frameAt - this._lastRenderAt : null;
+            this._lastRenderAt = frameAt;
             if (this.geometryDirty && (!this.lastGeometryRebuildTime || performance.now() - this.lastGeometryRebuildTime >= this.geometryRebuildIntervalMs)) {
                 this.buildAndUploadGeometry();
             }

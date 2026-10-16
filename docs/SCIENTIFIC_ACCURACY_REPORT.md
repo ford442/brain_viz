@@ -185,6 +185,42 @@ The traveling gold pulse is a narrative representation of neurotransmitter signa
 
 **Conclusion:** These values are reasonable artistic/scientific choices for visualization purposes.
 
+### 8.1 Neuromodulator Profiles ⚠️ STYLISED
+
+**Code reference:** `docs/tensor-physics.md` §3.4, implemented in
+`src/physics/tensor-field.js`, `wasm/src/step.cpp` and
+`src/shaders/field-step.js`; profiles in `src/neuromodulators.js`.
+
+Until this revision the Neuromodulator panel's Decay, Diffusion and Retention
+sliders were uploaded to every renderer and read by none of them. They now act
+on the field above, on every path:
+
+- `decayRate` scales each zone's per-step loss (`1 − decay`), so the regional
+  ordering in this section — frontal most retentive, occipital least — survives
+  any profile.
+- `retentionBias` changes one lobe's loss by a factor of two per unit.
+- `diffusionRate` scales how far activity spreads to its neighbours per step.
+
+**What is defensible:** neuromodulators do change how long cortical activity
+persists and how far it spreads, and they do so unevenly across cortex — for
+example, dopamine's role in sustaining prefrontal working-memory activity, and
+acetylcholine's in sharpening sensory (including visual) cortical processing.
+The profiles point in those directions: Dopamine raises frontal retention,
+Acetylcholine raises occipital and temporal retention and narrows spread, GABA
+shortens retention everywhere.
+
+**What is not:** the numbers in each profile are chosen for legibility, not
+fitted to data. The field has no receptors, concentrations, reuptake or
+pharmacokinetics; a "profile" is a set of three scales on a stylised diffusion
+field. As with the dopamine pathway (§2.1) and Double Mirror, this is a
+visualisation, not a pharmacological model, and must not be read as one.
+
+**Removed:** `cognitiveDissonance` was a field parameter no stepper read. The
+`cognitive_dissonance` routine event still runs; its field effect is the
+`stress` it raises, which feeds the existing criticality term.
+`pulseSaturation` is still a profile field that nothing reads; the panel labels
+it "not wired".
+
 ---
 
 ## Summary of Recommendations - STATUS: ✅ COMPLETED

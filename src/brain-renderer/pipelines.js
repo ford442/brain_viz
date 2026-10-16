@@ -7,7 +7,7 @@ import { fiberAffinityByteLengthFor, tensorByteLengthFor } from '../voxel-dim.js
 
 export function applyPipelineMethods(Target) {
     /**
-     * [Field Resolution] Creates the three buffers whose size is a function of
+     * [Field Resolution] Creates the buffers whose size is a function of
      * `voxelCount`. Split out of initVolumetricResources() so setVoxelDim()
      * can rebuild exactly these — the uniform buffers below are dim-independent
      * and must survive a resolution change.
@@ -21,6 +21,16 @@ export function applyPipelineMethods(Target) {
         this.tensorBuffer = this.device.createBuffer({
     size: tensorByteLengthFor(this.voxelDim),
     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC
+        });
+
+        // [Tensor Physics] The compute pass's destination. docs/tensor-physics.md
+        // §6: source and destination never alias — the shader used to step
+        // tensorBuffer in place, so neighbour reads raced with neighbour writes.
+        // render-loop.js copies this back into tensorBuffer after the pass, so
+        // every other reader (render, brick, readback) keeps binding tensorBuffer.
+        this.tensorScratchBuffer = this.device.createBuffer({
+    size: tensorByteLengthFor(this.voxelDim),
+    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
         });
 
         this.aiTensorBuffer = this.device.createBuffer({
@@ -320,7 +330,8 @@ export function applyPipelineMethods(Target) {
     entries: [{ binding: 0, resource: { buffer: this.tensorBuffer } },
               { binding: 1, resource: { buffer: this.computeUniformBuffer } },
               { binding: 2, resource: { buffer: this.fiberDirectionBuffer } },
-              { binding: 3, resource: { buffer: this.aiTensorBuffer } }]
+              { binding: 3, resource: { buffer: this.aiTensorBuffer } },
+              { binding: 4, resource: { buffer: this.tensorScratchBuffer } }]
         });
     };
 
@@ -329,10 +340,11 @@ export function applyPipelineMethods(Target) {
         // [Field Resolution] Layout kept on `this` so setVoxelDim() can rebuild
         // the bind group against resized buffers without rebuilding the pipeline.
         const computeLayout = this.computeBindGroupLayout = this.device.createBindGroupLayout({
-     entries: [{ binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
+     entries: [{ binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
                { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'uniform' } },
                { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
-               { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } }]
+               { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
+               { binding: 4, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } }]
         });
         this.createComputeBindGroup();
         this.computePipeline = this.device.createComputePipeline({

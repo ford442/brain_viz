@@ -84,7 +84,25 @@ export function applyAccessorsMethods(Target) {
     };
 
     Target.prototype.getFiberMetadata = function() {
- return new Float32Array(this.fiberMetadata); 
+ return new Float32Array(this.fiberMetadata);
+    };
+
+    /**
+     * [Clipmap] Drop the per-vertex arrays once they are on the GPU. The
+     * WebGPU renderer keeps its geometry alive after upload — the fine brick
+     * bakes affinity from `fiberCenterlines` and the cortical patch samples
+     * `sampleCorticalSurface()` — and those arrays are ~15M numbers (~120 MB
+     * of JS heap) that nothing reads after upload. Centerlines, options and
+     * the surface/noise methods are kept.
+     */
+    Target.prototype.releaseRenderData = function() {
+        for (const key of [
+            'vertices', 'normals', 'indices', 'fibers', 'fiberNormals', 'fiberMetadata',
+            'fiberPaths', 'pathwayMetadata', 'somaInstances', 'pointCloudInstances', 'sparkSources'
+        ]) {
+            this[key] = [];
+        }
+        this.fiberAffinityData = null;
     };
 
 }

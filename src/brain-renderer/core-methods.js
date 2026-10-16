@@ -87,6 +87,10 @@ export function applyCoreMethods(Target) {
         this.initImmuneResources();
         this.initVolumetricResources();
         this.uploadFiberDirections(geometry);
+        // [Clipmap] Keep the geometry (centerlines + surface function) for the
+        // fine brick's affinity bakes and the cortical patch; drop its upload
+        // arrays, which are ~120 MB of JS heap nothing reads after this.
+        this.adoptGeometry(geometry);
         
         // Bind Groups Layouts
         // [Field Resolution] Kept on `this` so setVoxelDim() can rebuild the
@@ -98,9 +102,16 @@ export function applyCoreMethods(Target) {
         { binding: 1, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } },
         { binding: 2, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } },
         { binding: 3, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'read-only-storage' } },
-        { binding: 4, visibility: GPUShaderStage.VERTEX, buffer: { type: 'uniform' } }
+        { binding: 4, visibility: GPUShaderStage.VERTEX, buffer: { type: 'uniform' } },
+        // [Clipmap] Fine-brick render copy + its repeat sampler (BRICK_RENDER_HELPERS).
+        { binding: 5, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, texture: { sampleType: 'float', viewDimension: '3d' } },
+        { binding: 6, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, sampler: { type: 'filtering' } }
     ]
         });
+
+        // [Clipmap] Brick textures, step pipeline and cortical-patch pipelines.
+        // Before the render bind groups: they bind the brick render texture.
+        this.initClipmap(format);
         
         // Create Bind Group for Rendering
         // Binding 0: Uniforms (MVP, Time, Style, etc.)
@@ -271,7 +282,9 @@ export function applyCoreMethods(Target) {
         { binding: 1, resource: { buffer: this.tensorBuffer } },
         { binding: 2, resource: { buffer: this.aiTensorBuffer } },
         { binding: 3, resource: { buffer: this.fiberDirectionBuffer } },
-        { binding: 4, resource: { buffer: this.pathwayStateBuffer } }
+        { binding: 4, resource: { buffer: this.pathwayStateBuffer } },
+        { binding: 5, resource: this.brickRenderTexture.createView() },
+        { binding: 6, resource: this.brickSampler }
     ]
         });
         const makeAvatarBindGroup = (uniformBuffer, tensorBuffer) => this.device.createBindGroup({
@@ -281,7 +294,9 @@ export function applyCoreMethods(Target) {
         { binding: 1, resource: { buffer: tensorBuffer } },
         { binding: 2, resource: { buffer: tensorBuffer } },
         { binding: 3, resource: { buffer: this.fiberDirectionBuffer } },
-        { binding: 4, resource: { buffer: this.pathwayStateBuffer } }
+        { binding: 4, resource: { buffer: this.pathwayStateBuffer } },
+        { binding: 5, resource: this.brickRenderTexture.createView() },
+        { binding: 6, resource: this.brickSampler }
     ]
         });
         this.avatarABindGroup = makeAvatarBindGroup(this.avatarAUniformBuffer, this.tensorBuffer);

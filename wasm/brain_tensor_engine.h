@@ -47,6 +47,27 @@ void bte_destroy(void* engine);
 uint32_t bte_params_byte_size(void);
 
 /**
+ * BTE_PARAMS_LAYOUT_HASH: a fingerprint of every field's name, type and offset.
+ * The bridge checks it alongside the size, because a layout change can keep
+ * the size (docs/tensor-physics.md §5).
+ */
+uint32_t bte_params_layout_hash(void);
+
+/** bte_build_features() bit: the §6.2 stencil runs as explicit wasm SIMD. */
+#define BTE_FEATURE_SIMD128 0x1u
+/** bte_build_features() bit: built with -pthread (needs cross-origin isolation). */
+#define BTE_FEATURE_PTHREADS 0x2u
+
+/**
+ * What this binary was compiled with (BTE_FEATURE_* bits). Introspection only:
+ * results are bit-identical with or without SIMD (see src/stencil.cpp). A
+ * pthreads build cannot even be instantiated without cross-origin isolation,
+ * so the JS loader decides that from the build manifest *before* loading
+ * (src/wasm-engine.js), not from this.
+ */
+uint32_t bte_build_features(void);
+
+/**
  * Copy a full parameter block into the engine. Every field of the WGSL
  * `TensorParams` struct is present; the engine reads the ones spec §6 lists
  * and ignores the ones spec §6.14 documents as reserved.

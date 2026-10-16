@@ -103,6 +103,7 @@ export function applyResolutionMethods(Target) {
         this._lastAITensor = new Float32Array(ai);
 
         this.tensorBuffer?.destroy?.();
+        this.tensorScratchBuffer?.destroy?.();
         this.aiTensorBuffer?.destroy?.();
         this.fiberDirectionBuffer?.destroy?.();
         this.createTensorStorageBuffers();
@@ -113,6 +114,11 @@ export function applyResolutionMethods(Target) {
 
         this.createRenderBindGroups();
         this.createComputeBindGroup();
+        // [Clipmap] The brick step reads the coarse tensors through its own
+        // bind groups, which captured the old buffers. The brick itself is
+        // dim-independent (it lives on the fine lattice) and keeps stepping;
+        // only its coarse boundary condition is now read at the new dim.
+        this.createBrickBindGroups();
 
         this.device.queue.writeBuffer(this.tensorBuffer, 0, this._lastHumanTensor);
         this.device.queue.writeBuffer(this.aiTensorBuffer, 0, this._lastAITensor);
