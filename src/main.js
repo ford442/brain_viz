@@ -121,6 +121,20 @@ if (player) {
                  }
              });
 
+             player.registerHandler('neuro_genesis', (evt) => {
+                 const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+                 const duration = evt.duration || 5.0;
+                 const ease = evt.ease || 'sineInOut';
+
+                 // Slowly increase structural complexity
+                 player.startLerp({ key: 'growth', value: 2.0 * intensity, duration: duration, ease: ease });
+                 player.startLerp({ key: 'synapticDensity', value: 1.8 * intensity, duration: duration, ease: ease });
+
+                 if (evt.message) {
+                     player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+                 }
+             });
+
              player.registerHandler('oxytocin', (evt) => {
                  const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
                  const duration = evt.duration || 3.0;
@@ -240,8 +254,15 @@ if (player) {
         const cogLegendPanelEndorphin = document.getElementById('legend-panel');
         if (cogLegendPanelEndorphin) {
             const newEntry = document.createElement('div');
-            newEntry.innerHTML = '<b>E</b> : Trigger Endorphin Rush Simulation';
+            newEntry.innerHTML = '<b>e</b> : Trigger Endorphin Rush Simulation';
             cogLegendPanelEndorphin.appendChild(newEntry);
+        }
+
+        const cogLegendPanelAdaptive = document.getElementById('legend-panel');
+        if (cogLegendPanelAdaptive) {
+            const newEntry = document.createElement('div');
+            newEntry.innerHTML = '<b>E</b> : Trigger Adaptive Emotion Routine (Live Input Bus Branching)';
+            cogLegendPanelAdaptive.appendChild(newEntry);
         }
 
         const cogLegendPanelSerotonin = document.getElementById('legend-panel');
@@ -251,7 +272,36 @@ if (player) {
             cogLegendPanelSerotonin.appendChild(newEntry);
         }
 
+
+        const cogLegendPanelLTP = document.getElementById('legend-panel');
+        if (cogLegendPanelLTP) {
+            const newEntry = document.createElement('div');
+            newEntry.innerHTML = '<b>k</b> : Trigger Long-Term Potentiation Simulation';
+            cogLegendPanelLTP.appendChild(newEntry);
+        }
+
+        const cogLegendPanelSenescence = document.getElementById('legend-panel');
+        if (cogLegendPanelSenescence) {
+            const newEntry = document.createElement('div');
+            newEntry.innerHTML = '<b>c</b> : Trigger Cellular Senescence Simulation';
+            cogLegendPanelSenescence.appendChild(newEntry);
+        }
+
         // Global hook for external data sonification (satisfies manual testing and integration points)
+
+        player.registerHandler('long_term_potentiation', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 5.0;
+            const ease = evt.ease || 'sineInOut';
+
+            player.startLerp({ key: 'pathwayWidth', value: 1.5 * intensity, duration: duration, ease: ease });
+            player.startLerp({ key: 'synapticDensity', value: 2.0 * intensity, duration: duration, ease: ease });
+
+            if (evt.message) {
+                player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+            }
+        });
+
         window.triggerExternalData = (feedType = 'stock_market') => {
             if (player) {
                 player.executeEvent({ type: 'external_data', feedType: feedType, duration: 10.0 });
@@ -314,8 +364,17 @@ import { MINI_ROUTINES } from './mini-routines.js';
 
 MINI_ROUTINES['e'] = [{ time: 0, type: 'endorphin_rush', duration: 4.0 }];
 MINI_ROUTINES['4'] = [{ time: 0, type: 'text', message: 'Serotonin Surge', duration: 2.0 }, { time: 0, type: 'serotonin', intensity: 1.5, duration: 5.0 }];
+MINI_ROUTINES['c'] = [{ time: 0, type: 'text', message: 'Cellular Senescence', duration: 2.0 }, { time: 0, type: 'cellular_senescence', intensity: 1.5, duration: 5.0 }];
 MINI_ROUTINES['p'] = [{ time: 0, type: 'parameter_interpolation', targetParam: 'sparkle', targetValue: 1.0, duration: 2.0, ease: 'sineInOut' }];
+MINI_ROUTINES['>'] = [{ time: 0, type: 'text', message: 'Gamma Waves', duration: 2.0 }, { time: 0, type: 'binaural', targetBrainwave: 'gamma', duration: 10.0 }, { time: 2.0, type: 'text', message: 'Easing to Alpha', duration: 2.0 }, { time: 2.0, type: 'binaural', targetBrainwave: 'alpha', duration: 8.0, transitionDuration: 2.0 }];
 MINI_ROUTINES['Q'] = [{ time: 0, type: 'acetylcholine', duration: 4.0 }];
 MINI_ROUTINES['O'] = [{ time: 0, type: 'text', message: 'Oxytocin Release', duration: 2.0 }, { time: 0, type: 'oxytocin', intensity: 1.5, duration: 5.0 }];
+MINI_ROUTINES['N'] = [{ time: 0, type: 'text', message: 'Neuroplasticity Triggered', duration: 2.0 }, { time: 0, type: 'neuroplasticity', intensity: 1.5, duration: 5.0 }];
+MINI_ROUTINES['W'] = [{ time: 0, type: 'text', message: 'Web Traffic Sync', duration: 2.0 }, { time: 0, type: 'web_traffic', intensity: 1.5, duration: 5.0 }];
+MINI_ROUTINES['j'] = [{ time: 0, type: 'text', message: 'Melatonin Release', duration: 2.0 }, { time: 0, type: 'melatonin', intensity: 1.0, duration: 5.0 }];
+MINI_ROUTINES['z'] = [{ time: 0, type: 'text', message: 'Neuro-Genesis: Structural Complexity', duration: 2.0 }, { time: 0, type: 'neuro_genesis', intensity: 1.5, duration: 8.0 }];
 
+MINI_ROUTINES['k'] = [{ time: 0, type: 'text', message: 'Long-Term Potentiation Activated', duration: 2.0 }, { time: 0, type: 'long_term_potentiation', intensity: 1.5, duration: 5.0 }];
+
+MINI_ROUTINES['v'] = [{ time: 0, type: 'text', message: 'Environmental Turbulence', duration: 2.0 }, { time: 0, type: 'environmental_turbulence', intensity: 1.5, duration: 5.0 }]; // Neuro-Script Implementation Cycle extension
 export { MINI_ROUTINES };
