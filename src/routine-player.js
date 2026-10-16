@@ -403,6 +403,8 @@ export class RoutinePlayer {
         }
 
         const isWebGPUBackend = this.renderer.backendType !== 'webgl';
+        if (!isWebGPUBackend) return false;
+
         const isDeviceLost = this._deviceLost;
         const isDeviceLostNow = isWebGPUBackend && this.renderer.isContextLost === true;
         const rendererMissing = (isWebGPUBackend && (!this.renderer.device || this.renderer.device.lost)) || isDeviceLostNow;
