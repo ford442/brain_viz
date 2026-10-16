@@ -34,6 +34,7 @@ export function setupLegendPanel() {
                 <div class="legend-item"><span class="legend-key">W</span><span>Weather</span></div>
                 <div class="legend-item"><span class="legend-key">P</span><span>Panic</span></div>
                 <div class="legend-item"><span class="legend-key">6</span><span>Cortisol</span></div>
+                <div class="legend-item"><span class="legend-key">E</span><span>Adaptive Emotion Routine</span></div>
             </div>
         </div>
         <div class="legend-section">
@@ -69,14 +70,13 @@ export function setupLegendPanel() {
                 <div class="legend-item"><span class="legend-key">W</span><span>Sensory Overload</span></div>
                 <div class="legend-item"><span class="legend-key">A</span><span>Auditory Hallucination</span></div>
                 <div class="legend-item"><span class="legend-key">[</span><span>Binding Kinetics</span></div>
-                <div class="legend-item"><span class="legend-key">Q</span><span>Neuroplasticity</span></div>
                 <div class="legend-item"><span class="legend-key">}</span><span>Neuroplasticity Decay</span></div>
                 <div class="legend-item"><span class="legend-key">_</span><span>Visual Fatigue</span></div>
                 <div class="legend-item"><span class="legend-key">]</span><span>Apoptosis</span></div>
                 <div class="legend-item"><span class="legend-key">(</span><span>Cortical Thickness</span></div>
 
                 <div class="legend-item"><span class="legend-key">K</span><span>Memory Formation</span></div>
-                <div class="legend-item"><span class="legend-key">N</span><span>Myelin Degradation</span></div>
+                <div class="legend-item"><span class="legend-key">N</span><span>Neuroplasticity</span></div>
                 <div class="legend-item"><span class="legend-key">*</span><span>Sync Burst</span></div>
                 <div class="legend-item"><span class="legend-key">D</span><span>Dynamic Topology</span></div>
                 <div class="legend-item"><span class="legend-key">+</span><span>Dendritic Growth</span></div>
@@ -102,7 +102,7 @@ export function setupLegendPanel() {
                 <div class="legend-item"><span class="legend-key">_</span><span>Neural Pruning</span></div>
                 <div class="legend-item"><span class="legend-key">g</span><span>Fog</span></div>
                 <div class="legend-item"><span class="legend-key">f</span><span>Filters</span></div>
-                <div class="legend-item"><span class="legend-key">v</span><span>Fly-Through</span></div>
+                <div class="legend-item"><span class="legend-key">v</span><span>Env. Turbulence</span></div>
                 <div class="legend-item"><span class="legend-key">V</span><span>HRV Glitch Sync</span></div>
                 <div class="legend-item"><span class="legend-key">O</span><span>Dynamic FOV</span></div>
                 <div class="legend-item"><span class="legend-key">Z</span><span>Clip Reveal</span></div>
@@ -127,6 +127,7 @@ export function setupLegendPanel() {
                 <div class="legend-item"><span class="legend-key">b</span><span>Branch</span></div>
                 <div class="legend-item"><span class="legend-key">o</span><span>Orbit Avoid</span></div>
                 <div class="legend-item"><span class="legend-key">c</span><span>Custom Audio</span></div>
+                <div class="legend-item"><span class="legend-key">&gt;</span><span>Binaural Easing</span></div>
                 <div class="legend-item"><span class="legend-key">k</span><span>Binaural</span></div>
                 <div class="legend-item"><span class="legend-key">f</span><span>Focus</span></div>
                 <div class="legend-item"><span class="legend-key">n</span><span>Neuro-Cinema</span></div>

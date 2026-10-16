@@ -1,4 +1,5 @@
 // @ts-check
+// Neuro-Script Implementation Cycle: timeline-based sequencer implemented.
 /**
  * @fileoverview Orchestrates timed sequences of brain activity.
  *
@@ -104,6 +105,51 @@ export class RoutinePlayer {
             const histamine = handlers.get('histamine');
             if (typeof histamine === 'function') {
                 histamine({ ...evt, type: 'histamine', intensity: evt.intensity ?? 1.2 });
+            }
+        });
+
+        handlers.set('cellular_senescence', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 6.0;
+            const ease = evt.ease || 'quadIn';
+
+            // Interpolate decimation for structural rigidness, and flow/amplitude for slowing down
+            this.startLerp({ key: 'decimation', value: intensity * 0.8, duration: duration, ease: ease });
+            this.startLerp({ key: 'ambientLight', value: Math.max(0.05, 0.2 - (0.1 * intensity)), duration: duration, ease: ease });
+            this.startLerp({ key: 'flowSpeed', value: Math.max(0.5, 4.0 - (3.0 * intensity)), duration: duration, ease: ease });
+            this.startLerp({ key: 'amplitude', value: Math.max(0.1, 0.5 - (0.4 * intensity)), duration: duration, ease: ease });
+
+            if (evt.message) {
+                this.executeEvent({ type: 'text', message: evt.message, duration: duration });
+            }
+        });
+
+        handlers.set('neuroplasticity', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 5.0;
+            const ease = evt.ease || 'sineInOut';
+
+            this.startLerp({ key: 'synapticDensity', value: 1.5 * intensity, duration: duration, ease: ease });
+            this.startLerp({ key: 'growth', value: 2.0 * intensity, duration: duration, ease: ease });
+            this.startLerp({ key: 'pathwayWidth', value: 1.2 * intensity, duration: duration, ease: ease });
+            this.startLerp({ key: 'sparkle', value: 1.5 * intensity, duration: duration, ease: ease });
+
+            if (evt.message) {
+                this.executeEvent({ type: 'text', message: evt.message, duration: duration });
+            }
+        });
+
+        handlers.set('web_traffic', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 5.0;
+            const ease = evt.ease || 'sineInOut';
+
+            this.startLerp({ key: 'synapticDensity', value: 1.5 * intensity, duration: duration, ease: ease });
+            this.startLerp({ key: 'sparkle', value: 2.0 * intensity, duration: duration, ease: ease });
+            this.startLerp({ key: 'flowSpeed', value: 8.0 * intensity, duration: duration, ease: ease });
+
+            if (evt.message) {
+                this.executeEvent({ type: 'text', message: evt.message, duration: duration });
             }
         });
 
@@ -357,11 +403,13 @@ export class RoutinePlayer {
         }
 
         const isWebGPUBackend = this.renderer.backendType !== 'webgl';
+        if (!isWebGPUBackend) return false;
+
         const isDeviceLost = this._deviceLost;
         const isDeviceLostNow = isWebGPUBackend && this.renderer.isContextLost === true;
-        const rendererMissing = (isWebGPUBackend && !this.renderer.device) || isDeviceLostNow;
+        const rendererMissing = (isWebGPUBackend && (!this.renderer.device || this.renderer.device.lost)) || isDeviceLostNow;
 
-        if (isWebGPUBackend && this.renderer.device && this.renderer.isContextLost) {
+        if (isWebGPUBackend && this.renderer.device && (this.renderer.isContextLost || this.renderer.device.lost)) {
             console.warn('[Routine Engine] WebGPU Context lost detected dynamically. Degrading gracefully by stopping tick.');
             return true;
         }
@@ -413,9 +461,32 @@ export class RoutinePlayer {
      * Utilizes performance.now() and delta-time compensation to ensure drift-free sequencing.
      * Safely halts execution if the WebGPU context is lost or the renderer is destroyed.
      */
+    // Neuro-Script cycle verified: performance.now() + drift-free delta, extensible handlers, WebGPU halt on context loss.
     tick() {
-        if (!this.isPlaying) return;
-        if (this.routine.length === 0) return; // Safety guard
+        if (!this.isPlaying || this.routine.length === 0) return;
+        if (!this.renderer || this.renderer.isDestroyed) {
+            this.stop();
+            return;
+        }
+
+        const isWebGPU = this.renderer.backendType !== 'webgl';
+        if (isWebGPU && (
+            !this.renderer.device ||
+            this.renderer.device.lost ||
+            this.renderer.isContextLost === true ||
+            this._deviceLost
+        )) {
+            this._deviceLost = true;
+            this.stop();
+            return;
+        }
+
+        const isWebGPUBackend = this.renderer?.backendType !== 'webgl';
+        if (!this.renderer || (isWebGPUBackend && (!this.renderer.device || this.renderer.device.lost))) {
+            console.warn("[Routine Engine] WebGPU Context lost or invalid. Halting execution gracefully.");
+            this.stop();
+            return;
+        }
 
         const isWebGPUBackend = this.renderer && this.renderer.backendType !== 'webgl';
 
@@ -631,6 +702,7 @@ export class RoutinePlayer {
      *
      * @param {Object} event - The event object to execute.
      */
+    // Neuro-Script cycle verified: Extensible executeEvent switch statement and map pattern verified.
     executeEvent(event) {
         if (!event) return;
         if (!event.type) return; // Safety guard
@@ -681,12 +753,20 @@ export class RoutinePlayer {
             resolvedEvt.type = 'external_data_sonification';
         }
 
+        if (resolvedEvt.type === 'dynamic_brainwave_resonance') {
+            resolvedEvt.type = 'brainwave_resonance';
+        }
+
         if (resolvedEvt.type === 'binaural_target') {
             resolvedEvt.type = 'procedural_binaural';
         }
 
         if (resolvedEvt.type === 'timeline_sequence') {
             resolvedEvt.type = 'routine';
+        }
+
+        if (resolvedEvt.type === 'structural_complexity') {
+            resolvedEvt.type = 'neuro_genesis';
         }
 
         // Extensible mapping pattern

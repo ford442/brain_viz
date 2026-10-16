@@ -16,7 +16,7 @@ export function handleCamera(player, evt) {
 
     const getPresetParams = (target) => {
         if (typeof target === 'string') {
-            const preset = CAMERA_PRESETS[target] || player.cameraMap[target] || player.customPresets[target];
+            const preset = player.cameraMap[target] || player.customPresets[target] || CAMERA_PRESETS[target];
             if (preset) {
                 return { ...preset };
             } else if (player.cameraRegions && player.cameraRegions.has(target)) {

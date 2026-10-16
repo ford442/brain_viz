@@ -700,6 +700,24 @@ MINI_ROUTINES_PART2['T'] = [ // [Phase 28] DMN to TPN Handoff
     { time: 14.0, type: 'style', value: 0 }
 ];
 
+MINI_ROUTINES_PART2['E'] = [ // Adaptive Emotion Branching (Live Input Bus)
+    { time: 0.0, type: 'text', message: 'Analyzing Webcam Emotion...', duration: 2.0 },
+
+    // High Stress Branch
+    { time: 2.0, if: "live.webcam.stress > 0.5", type: 'text', message: 'High Stress Detected: Activating Calming Protocol', duration: 3.0 },
+    { time: 2.0, if: "live.webcam.stress > 0.5", type: 'gaba', intensity: 1.5, duration: 5.0 },
+    { time: 2.0, if: "live.webcam.stress > 0.5", type: 'camera', target: 'deep', duration: 3.0 },
+
+    // Calm Branch
+    { time: 2.0, if: "live.webcam.stress <= 0.5", type: 'text', message: 'Calm State Detected: Enhancing Focus', duration: 3.0 },
+    { time: 2.0, if: "live.webcam.stress <= 0.5", type: 'acetylcholine', intensity: 1.2, duration: 5.0 },
+    { time: 2.0, if: "live.webcam.stress <= 0.5", type: 'camera', target: 'frontal', duration: 3.0 },
+
+    { time: 8.0, type: 'text', message: 'Adaptive Routine Complete', duration: 2.0 },
+    { time: 8.0, type: 'calm' },
+    { time: 8.0, type: 'camera', target: 'overview', duration: 2.0 }
+];
+
 MINI_ROUTINES_PART2['.'] = [ // External Data Sonification
     { time: 0.0, type: 'style', value: 2.0 }, // Connectome view
     { time: 0.0, type: 'text', message: 'Connecting to External Data Feed...', duration: 2.0 },

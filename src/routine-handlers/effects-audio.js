@@ -107,38 +107,87 @@ export function registerEffectsAudioHandlers(handlers, player) {
         }
 
         const duration = evt.duration || 5.0;
+        const transitionDuration = evt.transitionDuration || 0.1;
         const vol = evt.volume !== undefined ? evt.volume : 0.5;
+        const now = player.audioContext.currentTime;
+        const targetFreqL = baseFreq - (beatFreq / 2);
+        const targetFreqR = baseFreq + (beatFreq / 2);
 
-        const gainNode = player.audioContext.createGain();
-        const oscL = player.audioContext.createOscillator();
-        const oscR = player.audioContext.createOscillator();
-        const panL = player.audioContext.createStereoPanner();
-        const panR = player.audioContext.createStereoPanner();
+        if (player.binauralState && player.binauralState.active) {
+            // Easing an existing binaural oscillator pair
+            const state = player.binauralState;
 
-        oscL.type = evt.oscType || 'sine';
-        oscR.type = evt.oscType || 'sine';
+            // Cancel previously scheduled future stops/ramps
+            state.oscL.frequency.cancelScheduledValues(now);
+            state.oscR.frequency.cancelScheduledValues(now);
+            state.gainNode.gain.cancelScheduledValues(now);
 
-        oscL.frequency.setValueAtTime(baseFreq - (beatFreq / 2), player.audioContext.currentTime);
-        oscR.frequency.setValueAtTime(baseFreq + (beatFreq / 2), player.audioContext.currentTime);
+            // Maintain current frequency so we can ramp from it
+            state.oscL.frequency.setValueAtTime(state.oscL.frequency.value, now);
+            state.oscR.frequency.setValueAtTime(state.oscR.frequency.value, now);
 
-        panL.pan.value = -1;
-        panR.pan.value = 1;
+            // Ramp to new frequency smoothly
+            state.oscL.frequency.linearRampToValueAtTime(targetFreqL, now + transitionDuration);
+            state.oscR.frequency.linearRampToValueAtTime(targetFreqR, now + transitionDuration);
 
-        oscL.connect(panL);
-        oscR.connect(panR);
-        panL.connect(gainNode);
-        panR.connect(gainNode);
-        gainNode.connect(player.audioContext.destination);
+            // Extend duration and set volume
+            state.gainNode.gain.linearRampToValueAtTime(vol, now + transitionDuration);
+            state.gainNode.gain.setValueAtTime(vol, now + duration - 0.1);
+            state.gainNode.gain.linearRampToValueAtTime(0, now + duration);
 
-        gainNode.gain.setValueAtTime(0, player.audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(vol, player.audioContext.currentTime + 0.1);
-        gainNode.gain.setValueAtTime(vol, player.audioContext.currentTime + duration - 0.1);
-        gainNode.gain.linearRampToValueAtTime(0, player.audioContext.currentTime + duration);
+            // Update the stop schedule
+            if (state.stopTimeout) clearTimeout(state.stopTimeout);
+            state.stopTimeout = setTimeout(() => {
+                state.oscL.stop();
+                state.oscR.stop();
+                state.active = false;
+            }, duration * 1000);
 
-        oscL.start(player.audioContext.currentTime);
-        oscR.start(player.audioContext.currentTime);
-        oscL.stop(player.audioContext.currentTime + duration);
-        oscR.stop(player.audioContext.currentTime + duration);
+        } else {
+            // Start a new pair
+            const gainNode = player.audioContext.createGain();
+            const oscL = player.audioContext.createOscillator();
+            const oscR = player.audioContext.createOscillator();
+            const panL = player.audioContext.createStereoPanner();
+            const panR = player.audioContext.createStereoPanner();
+
+            oscL.type = evt.oscType || 'sine';
+            oscR.type = evt.oscType || 'sine';
+
+            oscL.frequency.setValueAtTime(targetFreqL, now);
+            oscR.frequency.setValueAtTime(targetFreqR, now);
+
+            panL.pan.value = -1;
+            panR.pan.value = 1;
+
+            oscL.connect(panL);
+            oscR.connect(panR);
+            panL.connect(gainNode);
+            panR.connect(gainNode);
+            gainNode.connect(player.audioContext.destination);
+
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(vol, now + transitionDuration);
+            gainNode.gain.setValueAtTime(vol, now + duration - 0.1);
+            gainNode.gain.linearRampToValueAtTime(0, now + duration);
+
+            oscL.start(now);
+            oscR.start(now);
+
+            const stopTimeout = setTimeout(() => {
+                oscL.stop();
+                oscR.stop();
+                if (player.binauralState) player.binauralState.active = false;
+            }, duration * 1000);
+
+            player.binauralState = {
+                active: true,
+                oscL,
+                oscR,
+                gainNode,
+                stopTimeout
+            };
+        }
     });
 
     // [Phase 2] Neuro-Sonification (Audio Events)

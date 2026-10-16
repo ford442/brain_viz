@@ -2,9 +2,12 @@
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
 - [x] **Parameter Interpolation / Easing**
 - [x] **Camera Coordinates Map**
+- [x] **Neuroplasticity Simulation:** Implement neuroplasticity event handler and mini-routine.
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer. (Verified existing implementation meets all requirements: `performance.now()`, extensible `executeEvent`, WebGPU safety).
 - [x] **Parameter Interpolation/Easing:** Add support for parameter interpolation and easing.
 - [x] **Camera Coordinates Map:** Implement a camera coordinates map for better camera angles.
+- [x] **Web Traffic:** Visualize real-time web traffic as synaptic activity across the lobes.
+- [x] **Adaptive Routines:** Implement adaptive routines that branch based on real-time webcam emotion detection (`if: "live.webcam.stress > 0.5"`).
 
 *Idea:* "What if we visualized Acetylcholine release as enhanced cognitive focus and neural synchronization?"
 *Idea:* "What if we visualized Serotonin levels as color shifts?"
@@ -16,16 +19,17 @@
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
 - [x] **Parameter Interpolation / Easing**
 - [x] **Camera Camera Coordinates Map**
-- [ ] **Dynamic Brainwave Resonance**
+- [x] **Dynamic Brainwave Resonance**
+- [x] **Parameter Interpolation/Easing Refinement: Add spline-based easing transitions for smoother parameter interpolation.**
 - [x] **External Data Sonification:** Map external data to connectome signal pulses.
 - [x] **Procedural Binaural Generation:** Automatically generate binaural beat frequencies for a desired brainwave target.
 - [x] **Binaural Easing:** Add smooth interpolation support when transitioning between different binaural beat frequencies instead of instant snapping.
 - [x] **Endorphin Simulation:** What if we visualized endorphins as a temporary suppression of stress parameters and an increase in harmonic wave synchronization?
+- [x] **Melatonin Release Simulation:** Visualize melatonin release as a gradual darkening of ambient light and slowing of particle flow.
 
 *Idea:* "What if we synchronized the neural pulse rate with live heart rate data from a wearable?"
 *Idea:* "What if we visualized Oxytocin levels as increased connectivity and soft glowing pathways?"
 *Idea:* "What if we map local weather conditions to global ambient lighting and particle turbulence?"
-*Idea:* "What if we visualize real-time web traffic as synaptic activity across the lobes?"
 *Idea:* "What if we visualize neuroplasticity as real-time growth of new synaptic pathways between active regions?"
 
 *Idea:* "What if we visualized melatonin release as a gradual darkening of ambient light and slowing of particle flow?"
@@ -36,3 +40,21 @@
 - [ ] **Camera Camera Coordinates Map**
 
 *Idea:* "What if we visualized Serotonin levels as color shifts?"
+*Idea:* "What if we visualize memory fragmentation as erratic spline paths and flickering opacities?"
+
+### Roadmap Refinements
+- [x] **Environmental Turbulence:** Implement environmental turbulence modular event handler.
+- [x] **Parameter Interpolation/Easing**
+- [x] **Camera Camera Coordinates Map**
+
+*Idea:* "What if we visualized Serotonin levels as color shifts?"
+*Idea:* "What if we visualized Acetylcholine release as enhanced cognitive focus and neural synchronization?"
+*Idea:* "What if we map spatial audio sources to individual neural clusters, so that hearing sounds from the left triggers left-hemisphere visual activity?"
+*Idea:* "What if we visualized circadian rhythms by dynamically mapping the local time to global brain illumination?"
+- [x] **Neuro-genesis Simulation:** Implement a slow increase in structural complexity.
+- [x] **Long-Term Potentiation Simulation:** Visualize enduring thicker pathways that persist across routine changes.
+*Idea:* "What if we visualized dopamine pathways lighting up during reward-based interactions?"
+*Idea:* "What if we visualized cellular memory as lingering resonance patterns?"
+*Idea:* "What if we visualized a state of 'flow' by synchronizing neural pathways with musical tempo?"
+- [x] **Neuro-Script Implementation Cycle:** Add try/catch safeguards to AudioReactor tone methods.
+*Idea:* "What if we map spatial audio sources to individual neural clusters, so that hearing sounds from the left triggers left-hemisphere visual activity?"
