@@ -8,7 +8,7 @@ from playwright.sync_api import sync_playwright
 
 
 ROOT = Path(__file__).resolve().parents[1]
-APP_URL = "http://127.0.0.1:5190/?renderer=webgl"
+APP_URL = "http://127.0.0.1:5195/?renderer=webgl"
 
 
 def wait_for_server(url: str, timeout: float = 25.0) -> None:
@@ -25,7 +25,7 @@ def wait_for_server(url: str, timeout: float = 25.0) -> None:
 
 def launch_dev_server() -> subprocess.Popen:
     return subprocess.Popen(
-        ["npm", "run", "dev", "--", "--host", "127.0.0.1", "--port", "5190", "--strictPort"],
+        ["npm", "run", "dev", "--", "--host", "127.0.0.1", "--port", "5195", "--strictPort"],
         cwd=ROOT,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,

@@ -282,12 +282,12 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
         let matchedKey = e.key;
 
         // Advanced Trigger System implementation for multi-key chords
-        if (!typing) {
-            if (activeKeys.has('Shift') && activeKeys.has('a')) {
+        if (!typing && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            if (e.shiftKey && e.key.toLowerCase() === 'a') {
                 matchedRoutine = MINI_ROUTINES['A'];
                 matchedKey = 'Shift+A';
             } else {
-                matchedRoutine = MINI_ROUTINES[e.key] || MINI_ROUTINES[e.key.toLowerCase()] || MINI_ROUTINES[e.key.toUpperCase()];
+                matchedRoutine = MINI_ROUTINES[e.key];
             }
         }
 
