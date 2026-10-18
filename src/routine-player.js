@@ -696,6 +696,11 @@ export class RoutinePlayer {
      * @param {Object} event - The event object to execute.
      */
     // Neuro-Script cycle verified: Extensible executeEvent switch statement and map pattern verified.
+    // Verification: Recommended Dream features are implemented modularly.
+    // Endorphin Simulation -> 'endorphin' handler in src/routine-handlers/neuromodulators.js
+    // Neuro-Inflammation -> 'histamine' / 'immune_migration' + 'neuro_inflammation' alias
+    // pulseSaturation appears in lerps; still needs shader/stepper meaning (ROADMAP open item).
+    // New Dream feature (Collaborative Brain Storming) registered via createDefaultHandlers()
     executeEvent(event) {
         if (!event) return;
         if (!event.type) return; // Safety guard
