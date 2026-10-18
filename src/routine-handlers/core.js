@@ -184,6 +184,22 @@ export function registerCoreHandlers(handlers, player) {
         }
     });
 
+    // Memory Fragmentation Simulation
+    handlers.set('memory_fragmentation', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const duration = evt.duration || 2.0;
+        const ease = evt.ease || 'sineInOut';
+
+        player.startLerp({ key: 'sparkle', value: 2.0 * intensity, duration: duration, ease: ease });
+        player.startLerp({ key: 'flowSpeed', value: 8.0 * intensity, duration: duration, ease: ease });
+        player.startLerp({ key: 'shake', value: 0.2 * intensity, duration: duration, ease: ease });
+        player.startLerp({ key: 'ambientLight', value: 0.1 * intensity, duration: duration, ease: ease });
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
+
     // [Phase 2] Serotonin Color Shift & Fluid Sim
 
     handlers.set('visual_cortex_filter', (evt) => {
