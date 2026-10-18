@@ -401,6 +401,46 @@ export function registerNarrativeFlowHandlers(handlers, player) {
         }
     });
 
+    handlers.set('collaborative_brain_storming', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const duration = evt.duration || 5.0;
+
+        const regions = Object.keys(player.regions);
+        const eventsToInsert = [];
+
+        if (regions.length > 0 && player.routine) {
+            const numStimuli = Math.floor(duration * 2);
+            for (let i = 0; i < numStimuli; i++) {
+                const target = regions[Math.floor(Math.random() * regions.length)];
+                eventsToInsert.push({
+                    time: player.elapsedTime + (Math.random() * duration),
+                    type: 'stimulus',
+                    target: target,
+                    intensity: intensity * 1.5
+                });
+            }
+        }
+
+        if (eventsToInsert.length > 0 && player.routine) {
+            eventsToInsert.sort((a, b) => a.time - b.time);
+            let insertIdx = player.cursor;
+            for (const ev of eventsToInsert) {
+                while (insertIdx < player.routine.length && player.routine[insertIdx].time < ev.time) {
+                    insertIdx++;
+                }
+                player.routine.splice(insertIdx, 0, ev);
+                insertIdx++;
+            }
+        }
+
+        player.startLerp({ key: 'flowSpeed', value: 8.0 * intensity, duration: 2.0, ease: 'quadOut' });
+        player.startLerp({ key: 'flowSpeed', value: 4.0, duration: duration, ease: 'quadIn', delay: 2.0 });
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
+
     // [Phase 14] Synchronized Firing Patterns
     handlers.set('sync_burst', (evt) => {
         const duration = evt.duration || 5.0;

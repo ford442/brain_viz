@@ -288,6 +288,13 @@ if (player) {
             cogLegendPanelSenescence.appendChild(newEntry);
         }
 
+        const cogLegendPanelBrainStorming = document.getElementById('legend-panel');
+        if (cogLegendPanelBrainStorming) {
+            const newEntry = document.createElement('div');
+            newEntry.innerHTML = '<b>b</b> : Trigger Collaborative Brain Storming';
+            cogLegendPanelBrainStorming.appendChild(newEntry);
+        }
+
         // Global hook for external data sonification (satisfies manual testing and integration points)
 
         player.registerHandler('long_term_potentiation', (evt) => {
@@ -378,4 +385,5 @@ MINI_ROUTINES['z'] = [{ time: 0, type: 'text', message: 'Neuro-Genesis: Structur
 MINI_ROUTINES['k'] = [{ time: 0, type: 'text', message: 'Long-Term Potentiation Activated', duration: 2.0 }, { time: 0, type: 'long_term_potentiation', intensity: 1.5, duration: 5.0 }];
 
 MINI_ROUTINES['v'] = [{ time: 0, type: 'text', message: 'Environmental Turbulence', duration: 2.0 }, { time: 0, type: 'environmental_turbulence', intensity: 1.5, duration: 5.0 }]; // Neuro-Script Implementation Cycle extension
+MINI_ROUTINES['b'] = [{ time: 0, type: 'text', message: 'Collaborative Brain Storming', duration: 2.0 }, { time: 0, type: 'collaborative_brain_storming', intensity: 1.5, duration: 5.0 }];
 export { MINI_ROUTINES };
