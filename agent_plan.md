@@ -36,11 +36,11 @@
 *Idea:* "What if we visualize cognitive load as dynamic variations in global flow speed and fiber thickness?"
 
 ### Roadmap Refinements
-- [ ] **Parameter Interpolation/Easing**
-- [ ] **Camera Camera Coordinates Map**
+- [x] **Parameter Interpolation/Easing**
+- [x] **Camera Camera Coordinates Map**
+- [x] **Memory Fragmentation Simulation:** Implement memory fragmentation visual effect using interpolation of sparkle, flow speed, shake, and ambient light.
 
-*Idea:* "What if we visualized Serotonin levels as color shifts?"
-*Idea:* "What if we visualize memory fragmentation as erratic spline paths and flickering opacities?"
+*Idea:* "What if we visualize Serotonin levels as color shifts?"
 
 ### Roadmap Refinements
 - [x] **Environmental Turbulence:** Implement environmental turbulence modular event handler.
