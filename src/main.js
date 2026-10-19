@@ -295,7 +295,27 @@ if (player) {
             cogLegendPanelBrainStorming.appendChild(newEntry);
         }
 
+        const cogLegendPanelCellularMemory = document.getElementById('legend-panel');
+        if (cogLegendPanelCellularMemory) {
+            const newEntry = document.createElement('div');
+            newEntry.innerHTML = '<b>m</b> : Trigger Cellular Memory Simulation';
+            cogLegendPanelCellularMemory.appendChild(newEntry);
+        }
+
         // Global hook for external data sonification (satisfies manual testing and integration points)
+
+        player.registerHandler('cellular_memory', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 5.0;
+            const ease = evt.ease || 'sineInOut';
+
+            player.startLerp({ key: 'sparkle', value: 1.5 * intensity, duration: duration, ease: ease });
+            player.startLerp({ key: 'flowSpeed', value: 2.0 * intensity, duration: duration, ease: ease });
+
+            if (evt.message) {
+                player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+            }
+        });
 
         player.registerHandler('long_term_potentiation', (evt) => {
             const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
@@ -386,4 +406,5 @@ MINI_ROUTINES['k'] = [{ time: 0, type: 'text', message: 'Long-Term Potentiation 
 
 MINI_ROUTINES['v'] = [{ time: 0, type: 'text', message: 'Environmental Turbulence', duration: 2.0 }, { time: 0, type: 'environmental_turbulence', intensity: 1.5, duration: 5.0 }]; // Neuro-Script Implementation Cycle extension
 MINI_ROUTINES['b'] = [{ time: 0, type: 'text', message: 'Collaborative Brain Storming', duration: 2.0 }, { time: 0, type: 'collaborative_brain_storming', intensity: 1.5, duration: 5.0 }];
+MINI_ROUTINES['m'] = [{ time: 0, type: 'text', message: 'Cellular Memory Simulation', duration: 2.0 }, { time: 0, type: 'cellular_memory', intensity: 1.5, duration: 5.0 }];
 export { MINI_ROUTINES };
