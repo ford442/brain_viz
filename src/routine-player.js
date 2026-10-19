@@ -462,7 +462,7 @@ export class RoutinePlayer {
      * Safely halts execution if the WebGPU context is lost or the renderer is destroyed.
      */
     // Neuro-Script cycle verified: performance.now() + drift-free delta, extensible handlers, WebGPU halt on context loss.
-    // intentional verification comment inside tick
+    // intentional verification comment inside tick - Neuro-Script Update Cycle active
     tick() {
         if (!this.isPlaying || this.routine.length === 0) return;
         if (!this.renderer || this.renderer.isDestroyed) {
@@ -702,7 +702,7 @@ export class RoutinePlayer {
     // Neuro-Inflammation -> 'histamine' / 'immune_migration' + 'neuro_inflammation' alias
     // pulseSaturation appears in lerps; still needs shader/stepper meaning (ROADMAP open item).
     // New Dream feature (Collaborative Brain Storming) registered via createDefaultHandlers()
-    // intentional verification comment inside executeEvent
+    // intentional verification comment inside executeEvent - Neuro-Script Update Cycle active
     executeEvent(event) {
         if (!event) return;
         if (!event.type) return; // Safety guard

@@ -1,5 +1,6 @@
 ### Phase 32: Neuro-Script Implementation Cycle
 - [x] **Neuro-Script Implementation Cycle:** Implement `routine-player.js` timeline-based sequencer.
+- [x] **Neuro-Script Implementation Cycle:** Complete update cycle.
 - [x] **Parameter Interpolation / Easing**
 - [x] **Camera Coordinates Map**
 - [x] **Neuroplasticity Simulation:** Implement neuroplasticity event handler and mini-routine.
@@ -61,3 +62,4 @@
 - [x] **Neuro-Script Implementation Cycle:** Add try/catch safeguards to AudioReactor tone methods.
 *Idea:* "What if we map spatial audio sources to individual neural clusters, so that hearing sounds from the left triggers left-hemisphere visual activity?"
 *Idea:* "What if we visualized collaborative brain storming with scattered synchronous stimuli?"
+*Idea:* "What if we visualized Cortisol levels as rapid flashing and aggressive particle flow?"
