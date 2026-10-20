@@ -62,4 +62,6 @@
 - [x] **Neuro-Script Implementation Cycle:** Add try/catch safeguards to AudioReactor tone methods.
 *Idea:* "What if we map spatial audio sources to individual neural clusters, so that hearing sounds from the left triggers left-hemisphere visual activity?"
 *Idea:* "What if we visualized collaborative brain storming with scattered synchronous stimuli?"
-*Idea:* "What if we visualized Cortisol levels as rapid flashing and aggressive particle flow?"
+- [x] **Cortisol Simulation:** Visualize Cortisol levels as rapid flashing and aggressive particle flow.
+
+*Idea:* "What if we visualized dopamine pathways lighting up during reward-based interactions?"

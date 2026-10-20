@@ -27,6 +27,7 @@ let isInitialized = false;
 
 // intentional verification comment inside init - Neuro-Script Update Cycle active
 async function init() {
+    // intentional verification comment inside init() - Neuro-Script Update Cycle active
     if (isInitialized) return; // Safety: Prevent multiple initializations
     if (!window || !document) return; // Safety guard
     // Safety check for critical DOM elements before proceeding
@@ -260,6 +261,13 @@ if (player) {
             cogLegendPanelEndorphin.appendChild(newEntry);
         }
 
+        const cogLegendPanelCortisol = document.getElementById('legend-panel');
+        if (cogLegendPanelCortisol) {
+            const newEntry = document.createElement('div');
+            newEntry.innerHTML = '<b>Y</b> : Trigger Cortisol Simulation';
+            cogLegendPanelCortisol.appendChild(newEntry);
+        }
+
         const cogLegendPanelAdaptive = document.getElementById('legend-panel');
         if (cogLegendPanelAdaptive) {
             const newEntry = document.createElement('div');
@@ -404,6 +412,7 @@ MINI_ROUTINES['j'] = [{ time: 0, type: 'text', message: 'Melatonin Release', dur
 MINI_ROUTINES['z'] = [{ time: 0, type: 'text', message: 'Neuro-Genesis: Structural Complexity', duration: 2.0 }, { time: 0, type: 'neuro_genesis', intensity: 1.5, duration: 8.0 }];
 
 MINI_ROUTINES['k'] = [{ time: 0, type: 'text', message: 'Long-Term Potentiation Activated', duration: 2.0 }, { time: 0, type: 'long_term_potentiation', intensity: 1.5, duration: 5.0 }];
+MINI_ROUTINES['Y'] = [{ time: 0, type: 'text', message: 'Cortisol Surge Detected', duration: 2.0 }, { time: 0, type: 'cortisol', intensity: 1.5, duration: 5.0 }];
 
 MINI_ROUTINES['v'] = [{ time: 0, type: 'text', message: 'Environmental Turbulence', duration: 2.0 }, { time: 0, type: 'environmental_turbulence', intensity: 1.5, duration: 5.0 }]; // Neuro-Script Implementation Cycle extension
 MINI_ROUTINES['b'] = [{ time: 0, type: 'text', message: 'Collaborative Brain Storming', duration: 2.0 }, { time: 0, type: 'collaborative_brain_storming', intensity: 1.5, duration: 5.0 }];
