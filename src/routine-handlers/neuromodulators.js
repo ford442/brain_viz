@@ -38,15 +38,52 @@ export function registerNeuromodulatorsHandlers(handlers, player) {
     // [Phase 5] Cortisol Structural Decay
     handlers.set('cortisol', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
-        if (evt.duration) {
-            player.startLerp({
-                key: 'cortisol',
-                value: intensity,
-                duration: evt.duration,
-                ease: evt.ease || 'linear'
+        const duration = evt.duration || 5.0;
+        const ease = evt.ease || 'quadOut';
+
+        // Set cortisol level
+        player.startLerp({
+            key: 'cortisol',
+            value: intensity,
+            duration: duration,
+            ease: ease
+        });
+
+        // Aggressive particle flow
+        player.startLerp({
+            key: 'flowSpeed',
+            value: 4.0 + (10.0 * intensity),
+            duration: duration * 0.3,
+            ease: 'quadIn'
+        });
+
+        // Revert flow speed
+        player.activeTasks.push({
+            delay: duration * 0.3,
+            execute: () => {
+                player.startLerp({
+                    key: 'flowSpeed',
+                    value: 4.0,
+                    duration: duration * 0.7,
+                    ease: 'quadOut'
+                });
+            }
+        });
+
+        // Rapid flashing
+        const flashCount = Math.floor(intensity * 5);
+        for (let i = 0; i < flashCount; i++) {
+            player.activeTasks.push({
+                delay: (i * 0.5) * (duration / flashCount),
+                execute: () => {
+                    player.renderer.setParams({ ambientLight: 0.8 });
+                    player.startLerp({ key: 'ambientLight', value: 0.2, duration: 0.3, ease: 'quadOut' });
+                }
             });
-        } else {
-            player.renderer.setParams({ cortisol: intensity });
+        }
+
+        if (evt.message) {
+             player.executeEvent({ type: 'text', message: evt.message, duration: duration });
         }
     });
 
