@@ -25,6 +25,7 @@ import { startMainUpdateLoop } from './main-update-loop.js';
 
 let isInitialized = false;
 
+// intentional verification comment inside init - Neuro-Script Update Cycle active
 async function init() {
     if (isInitialized) return; // Safety: Prevent multiple initializations
     if (!window || !document) return; // Safety guard
