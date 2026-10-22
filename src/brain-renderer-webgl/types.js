@@ -38,6 +38,7 @@
  * @property {() => void} buildImmuneResources
  * @property {() => void} resize
  *
+ * @property {() => void} syncAutoFrame - Attached by applyCameraFramingMethods() (src/camera-framing.js).
  * @property {() => void} updateCameraState
  * @property {() => Float32Array} updateMatrices - Returns the MVP for the current camera.
  * @property {(mvp: Float32Array, wireframe?: boolean, vao?: WebGLVertexArrayObject|null) => void} drawMesh

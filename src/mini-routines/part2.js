@@ -49,7 +49,7 @@ export const MINI_ROUTINES_PART2 = {
         { time: 0.0, type: 'lerp', key: 'focus', value: 0.15, duration: 2.0 }, // Start close focus
         { time: 2.0, type: 'lerp', key: 'focus', value: 0.25, duration: 3.0, ease: 'sineInOut' }, // Rack focus
         { time: 5.0, type: 'lerp', key: 'aperture', value: 0.0, duration: 1.0 }, // Clear up
-        { time: 5.0, type: 'camera', zoom: 3.5, duration: 2.0 } // Reset Zoom
+        { time: 5.0, type: 'camera', zoom: 'fit', duration: 2.0 } // Reset Zoom (whole brain in frame)
     ],
     '-': [ // Deep Breathing (Parameter Interpolation Demo)
         { time: 0.0, type: 'text', message: 'Inhale...', duration: 3.0 },

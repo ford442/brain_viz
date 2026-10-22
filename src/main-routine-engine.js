@@ -4,6 +4,7 @@ import { RoutinePlayer } from './routine-player.js';
 import { AudioReactor } from './audio-reactor.js';
 import { MINI_ROUTINES } from './mini-routines.js';
 import { DOPAMINE_PATHWAY_DEMO } from './pathways.js';
+import { FIT_ZOOM } from './camera-framing.js';
 
 export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo) {
     // Setup Routine Engine integrating main UI with RoutinePlayer.
@@ -39,7 +40,7 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
         'temporal': { rotation: { x: 0, y: -Math.PI / 2 }, zoom: 3.5 }, // Right Side
         'parietal': { rotation: { x: 1.0, y: 0 }, zoom: 3.5 },    // Top-ish
         'deep': { rotation: { x: 0.3, y: 0.3 }, zoom: 2.5 },      // Close up angle
-        'global': { rotation: { x: 0.3, y: 0 }, zoom: 3.5 },      // Standard view
+        'global': { rotation: { x: 0.3, y: 0 }, zoom: FIT_ZOOM },      // Standard view
         'top': { rotation: { x: 1.57, y: 0 }, zoom: 3.5 },        // Direct Top-down
         'bottom': { rotation: { x: -1.57, y: 0 }, zoom: 3.5 },    // Bottom-up
         'iso': { rotation: { x: 0.5, y: 0.5 }, zoom: 3.0 }        // Isometric-like

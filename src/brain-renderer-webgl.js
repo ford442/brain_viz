@@ -2,6 +2,7 @@
 import { meshVertexSource, meshFragmentSource, pointVertexSource, pointFragmentSource } from './webgl-shaders.js';
 import { createDefaultParams, createProgram } from './webgl-gl-utils.js';
 import { applyPathwayMethods, createPathwayState } from './pathway-renderer.js';
+import { applyCameraFramingMethods } from './camera-framing.js';
 import { createImmunePool } from './immune-particles.js';
 import { applyGeometryMethods } from './brain-renderer-webgl/geometry.js';
 import { applyImmuneMethods } from './brain-renderer-webgl/immune.js';
@@ -37,6 +38,9 @@ export class BrainRendererWebGL {
         this.targetRotation = { x: 0.3, y: 0 };
         this.zoom = 3.5;
         this.targetZoom = 3.5;
+        // [Camera] Fit-to-brain framing; the first syncAutoFrame() (render loop) replaces 3.5.
+        this.autoFrame = true;
+        this.autoFrameZoom = NaN;
         this.fov = Math.PI / 4;
         this.targetFov = Math.PI / 4;
         this.camera = { zoom: this.zoom };
@@ -232,3 +236,4 @@ applyLifecycleMethods(BrainRendererWebGL);
 applyPathwayMethods(BrainRendererWebGL);
 applyResolutionMethods(BrainRendererWebGL);
 applyClipmapMethods(BrainRendererWebGL);
+applyCameraFramingMethods(BrainRendererWebGL);

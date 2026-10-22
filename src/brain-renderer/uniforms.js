@@ -10,6 +10,7 @@ const cOff = (name) => COMPUTE_UNIFORM_OFFSETS[name] * 4;
 
 export function applyUniformsMethods(Target) {
     Target.prototype.updateUniforms = function() {
+        this.syncAutoFrame();
         this.rotation.x += (this.targetRotation.x - this.rotation.x) * 0.1;
         this.rotation.y += (this.targetRotation.y - this.rotation.y) * 0.1;
         this.zoom += (this.targetZoom - this.zoom) * 0.1;

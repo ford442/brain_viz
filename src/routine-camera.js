@@ -1,10 +1,12 @@
+import { FIT_ZOOM } from './camera-framing.js';
+
 export const CAMERA_PRESETS = {
     'frontal': { rotation: { x: 0.1, y: 0 }, zoom: 3.0 },     // Face on
     'occipital': { rotation: { x: 0.2, y: Math.PI }, zoom: 3.0 }, // Back
     'temporal': { rotation: { x: 0, y: -Math.PI / 2 }, zoom: 3.5 }, // Right Side
     'parietal': { rotation: { x: 1.0, y: 0 }, zoom: 3.5 },    // Top-ish
     'deep': { rotation: { x: 0.3, y: 0.3 }, zoom: 2.5 },      // Close up angle
-    'global': { rotation: { x: 0.3, y: 0 }, zoom: 3.5 },      // Standard view
+    'global': { rotation: { x: 0.3, y: 0 }, zoom: FIT_ZOOM },  // Standard view: whole brain in frame
     // [Phase 2] Expanded Presets
     'top': { rotation: { x: 1.57, y: 0 }, zoom: 3.5 },        // Direct Top-down
     'bottom': { rotation: { x: -1.57, y: 0 }, zoom: 3.5 },    // Bottom-up
@@ -14,11 +16,17 @@ export const CAMERA_PRESETS = {
 export function handleCamera(player, evt) {
     let params = {};
 
+    // 'fit' (FIT_ZOOM) means "the zoom that frames the whole brain right now";
+    // numbers pass through. The renderer owns the answer (FOV + canvas aspect).
+    const resolveZoom = (zoom) => (zoom === FIT_ZOOM
+        ? (player.renderer.getFitZoom?.() ?? 3.5)
+        : zoom);
+
     const getPresetParams = (target) => {
         if (typeof target === 'string') {
             const preset = player.cameraMap[target] || player.customPresets[target] || CAMERA_PRESETS[target];
             if (preset) {
-                return { ...preset };
+                return { ...preset, ...(preset.zoom !== undefined && { zoom: resolveZoom(preset.zoom) }) };
             } else if (player.cameraRegions && player.cameraRegions.has(target)) {
                 const region = player.cameraRegions.get(target);
                 const coords = region.coords;
@@ -145,7 +153,7 @@ export function handleCamera(player, evt) {
     }
 
     if (evt.zoom !== undefined) {
-        params.zoom = evt.zoom;
+        params.zoom = resolveZoom(evt.zoom);
     }
 
     if (evt.fov !== undefined) {
