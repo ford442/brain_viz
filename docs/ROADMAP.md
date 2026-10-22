@@ -44,6 +44,7 @@ For the current architecture and module responsibilities, see [`AGENTS.md`](../A
 | 29 | Cortical Dynamics | Cortical thickness atrophy and swelling visualization |
 | 30 | Neural Field Physics Contract | `docs/tensor-physics.md` as the normative spec; `src/physics/tensor-field.js` CPU reference driving the WebGL2 fallback; C++ engine ported to the full model behind a generated `BrainTensorParams` ABI; golden 32³ fixture + `npm run test:golden`; SIMD/LTO/ESM WASM build |
 | 31 | Live Input Bus | `LiveInputBus`: one shared, user-editable mapping table (source/feature -> renderer-param sink, with scale + attack/release smoothing) driving mic, BCI band-power, and Training Mode metrics without a new per-source integration file; "Live" tab mapping matrix UI with JSON import/export; `if: "live.…"` routine condition sugar |
+| 32 | Neuro-Script Exchange & Multi-Brain | `.nwroutine` import/export with the untrusted-file sandbox (`bci_connect` / `drug_delivery` need "I trust this file"), a Routine-tab gallery of the built-in routines as packages, fork lineage via `manifest.id` / `parentId` ([`nwroutine.md`](nwroutine.md)); the two-cortex SynaptiX layout centralised in `src/multi-brain-layout.js` for both backends, a `multi_brain` routine event and toggle, and the mirror-neuron "I reach, you move" demo ([`synaptix.md`](synaptix.md) → *Multi-Brain*) |
 
 ## Open Items
 
@@ -54,15 +55,22 @@ For the current architecture and module responsibilities, see [`AGENTS.md`](../A
 - **`pulseSaturation`** — a neuromodulator profile field and Live Input Bus sink that no shader or stepper reads (§6.14); the panel labels it "not wired". Give it a render meaning or retire it.
 - **WASM pthreads** (Phase 30 follow-up) — off until the production host is confirmed to send COOP/COEP (`crossOriginIsolated === true` on the deployed page); `WASM_PTHREADS=1` opts in, and the loader refuses a pthreads build on a non-isolated page. The step is single-threaded either way: threads only pay once `bte_update()` tiles z-slabs, which with SIMD fiber gathers is what a 64³ hybrid frame needs (measured ~85–98 ms today, `docs/wasm-engine.md` → *Performance*).
 
+- **Collaborative rooms** (Phase 32 follow-up, [#405](https://github.com/ford442/brain_viz/issues/405)). A local WebSocket room: one host sim, clients send stimulus and paint, plus an optional partner tensor. No cloud and no accounts.
+  - Host: `scripts/nw_room_bridge.mjs`, following the `openbci_ws_bridge.mjs` pattern with the existing `ws` dependency.
+  - Protocol: `{ type: 'stimulus'|'tensor'|'note', voxelDim, payload }`. A mismatched `voxelDim` is rejected. Resampling happens only when the client sets an explicit flag, and then only through the existing `resampleField`.
+  - Clients: `LiveInputBus.registerSource('room', …)` for remote features, and `renderer.injectStimulus` for remote paint. On stimulus, the last writer wins; no CRDTs.
+  - Privacy: opt-in. Rooms share tensors and stimuli only: no webcam thumbnails, no mic PCM, and Double Mirror stays local-only. Document this next to Double Mirror's boundary in [`session-format.md`](session-format.md).
+  - Rooms at 64³ want the clipmap's camera-local fine brick, and dual SynaptiX clipmaps are its Phase D. At 32³ they don't need it.
+
 ## Dream Backlog (Not Yet Implemented)
 
 Deduplicated from the historical "Dream Log" entries across the archived plans — ideas confirmed already shipped (see phases above) have been dropped.
 
-- **Neuro-Script Exchange** — a shared platform to publish, fork, and remix visualization routines.
-- **Multi-Brain Mode** — visualize two brains interacting (mirror-neuron storytelling).
+- **Neuro-Script Exchange** — a shared platform to publish, fork, and remix visualization routines. *The local-first part is done (Phase 32, [`nwroutine.md`](nwroutine.md)): `.nwroutine` files, a built-in gallery, and fork lineage. A hosted gallery stays out of scope; a static one in the repo or on GitHub Pages is enough.*
+- **Multi-Brain Mode** — visualize two brains interacting (mirror-neuron storytelling). *Two cortices in one scene are done (Phase 32, [`synaptix.md`](synaptix.md), section Multi-Brain). Still open: N > 2 brains, split or over-the-shoulder camera presets, WebXR, and shared rooms (see Collaborative rooms under Open Items).*
 - **AI Narrative Generation** — use an LLM to generate routine scripts from themes (e.g. "Anxiety Spike", "Eureka Moment"); related to the multimodal ideas in [`docs/DOUBLE_MIRROR_VISION.md`](DOUBLE_MIRROR_VISION.md).
 - **Fractal Recursive Zoom** — procedurally generate infinite detail when zooming into a soma or fiber. *Phases A (runtime `voxelDim`), B (clipmap field: a 64³ fine brick nested in the coarse field) and C (cortical patch with laminar somas below the zoom threshold) are done on WebGPU — see [`docs/field-resolution.md`](field-resolution.md) §7–§8. Phase D (WASM SIMD kernels, a 128³ brick, dual SynaptiX clipmaps, a fine NWS1 chunk) is next.*
-- **Collaborative Brain Storming** — multi-user session injecting stimuli into a shared visualization via WebSockets.
+- **Collaborative Brain Storming** — multi-user session injecting stimuli into a shared visualization via WebSockets. *Specified as Collaborative rooms under Open Items.*
 - **Adaptive Routines** — *`if: "live.…"` condition sugar (Phase 31) covers gating a single event on a live feature; routines that branch on real-time webcam emotion detection specifically are still open.*
 - **Neuromodulation External API** — *Phase 31's `LiveInputBus.registerSource()` is the extension point (see [`docs/live-input-bus.md`](live-input-bus.md)); an actual external WebSocket/OSC ingest source is not yet implemented.*
 - **Custom Audio-Feature Mapping Matrix** — *done, generalized past audio — see Phase 31 and [`docs/live-input-bus.md`](live-input-bus.md). The audio-only `ReactivityRouter` "Brain DJ" panel (Phase 3) remains as its own preset-driven panel.*

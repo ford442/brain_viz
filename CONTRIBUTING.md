@@ -18,6 +18,7 @@ This file is a map of "where to look" — the repo has grown a lot of documentat
 | Complexity hotspots, dependency flows, gotchas | [`docs/DEVELOPER_CONTEXT.md`](docs/DEVELOPER_CONTEXT.md) |
 | Scientific accuracy of physiological models | [`docs/SCIENTIFIC_ACCURACY_REPORT.md`](docs/SCIENTIFIC_ACCURACY_REPORT.md) |
 | SynaptiX comparative mode | [`docs/synaptix.md`](docs/synaptix.md), [`docs/SYNAPTIX_SPEC.md`](docs/SYNAPTIX_SPEC.md) |
+| Neuro-Script `.nwroutine` packages, gallery, fork lineage | [`docs/nwroutine.md`](docs/nwroutine.md) |
 | WebGL2 fallback/debug renderer | [`docs/webgl-fallback.md`](docs/webgl-fallback.md) |
 | C++/WASM hybrid simulation engine | [`docs/wasm-engine.md`](docs/wasm-engine.md) |
 | Neural-field physics specification (normative) | [`docs/tensor-physics.md`](docs/tensor-physics.md) |

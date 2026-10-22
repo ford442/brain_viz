@@ -24,6 +24,7 @@ export function setupSynaptiXIntegration(renderer, player, controls, inputs, lab
         if (inputs.resonanceThreshold) inputs.resonanceThreshold.value = renderer.params.resonanceThreshold;
         if (labels.resonanceThreshold) labels.resonanceThreshold.textContent = renderer.params.resonanceThreshold.toFixed(2);
         if (inputs.fusionParticles) inputs.fusionParticles.checked = synaptixEngine.fusionParticlesEnabled;
+        if (inputs.dualAvatar) inputs.dualAvatar.checked = renderer.params.dualAvatarEnabled ?? true;
         syncStyleDropdowns(renderer.params.style);
     };
 
@@ -300,6 +301,15 @@ export function setupSynaptiXIntegration(renderer, player, controls, inputs, lab
             synaptixEngine.fusionParticlesEnabled = evt.target.checked;
             // Mirror to renderer params for shader visibility if needed
             renderer.setSynaptiXParams({ fusionParticles: evt.target.checked ? 1.0 : 0.0 });
+        });
+    }
+
+    // [Multi-Brain] Two cortices vs. one cortex with the partner overlaid
+    // (src/multi-brain-layout.js). The `multi_brain` routine event drives the
+    // same param.
+    if (inputs.dualAvatar) {
+        inputs.dualAvatar.addEventListener('change', (evt) => {
+            renderer.setParams({ dualAvatarEnabled: evt.target.checked });
         });
     }
 

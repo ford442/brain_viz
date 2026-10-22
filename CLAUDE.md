@@ -44,6 +44,8 @@ python3 verification/verify_clipmap_webgpu.py  # Optional WebGPU-only clipmap ch
 - **`inference-engine.js`** — ONNX Runtime integration for SqueezeNet inference (AI dreaming mode).
 - **`audio-reactor.js`** — Web Audio API microphone input for real-time audio reactivity.
 - **`synaptix-engine.js`** — AI tensor projection, phantom generation, frame playback, and resonance metrics for comparative mode.
+- **`src/multi-brain-layout.js`** — The two-cortex SynaptiX layout and bridge geometry, shared by both backends (multi-brain rendering goes here, not into `synaptix-engine.js`).
+- **`src/nwroutine-format.js`** / **`src/nwroutine-gallery.js`** / **`src/ui-nwroutine-gallery.js`** — Neuro-Script Exchange: `.nwroutine` validation, fork lineage, the built-in gallery, and sandboxed import (untrusted files cannot run `bci_connect` / `drug_delivery`). See `docs/nwroutine.md`.
 
 ### Data Flow
 ```
@@ -321,4 +323,5 @@ npm run dev
 - **docs/tensor-physics.md** — The neural-field specification (normative; read before changing any field code)
 - **docs/field-resolution.md** — How the field's grid resolution is carried and changed (`voxelDim`), the clipmap fine brick (Phase B) and recursive-zoom cortical patch (Phase C)
 - **docs/webgl-fallback.md** / **docs/wasm-engine.md** — WebGL2 fallback and WASM hybrid engine details
+- **docs/nwroutine.md** — `.nwroutine` packages, the built-in gallery, the import sandbox and fork lineage
 - **.github/copilot-instructions.md** — Comprehensive guide for AI agents

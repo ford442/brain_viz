@@ -84,6 +84,11 @@ an exhaustive listing — use `Glob`/`Grep` or an Explore agent for that.
   **`src/routine-csv.js`**, **`src/routine-procedural.js`**, **`src/nwroutine-format.js`**,
   **`src/mini-routines/`** — the timed-event sequencer, its per-type handlers, camera
   director, CSV/fMRI import, procedural generation, and keyboard-triggered mini-routines.
+- **`src/nwroutine-gallery.js`** + **`src/ui-nwroutine-gallery.js`** — the Neuro-Script
+  Exchange: built-in routine catalog, sandboxed file import, fork, `.nwroutine` export
+  ([`nwroutine.md`](nwroutine.md)).
+- **`src/multi-brain-layout.js`** — the two-cortex SynaptiX layout and bridge geometry,
+  shared by both renderer backends ([`synaptix.md`](synaptix.md) → Multi-Brain).
 - **`src/tensor-player.js`**, **`src/bci/`** — synthetic pattern generation and
   live/pre-recorded BCI tensor playback (Muse/OpenBCI adapters, DSP, recording/replay).
 - **`src/webxr-manager.js`** — WebGL2-only stereo VR/AR session, navigation, controller
