@@ -51,7 +51,8 @@ const BACKENDS = {
             'src/brain-renderer/synaptix-bridges.js',
             'src/brain-renderer/resolution.js',
             'src/brain-renderer/clipmap.js',
-            'src/pathway-renderer.js'
+            'src/pathway-renderer.js',
+            'src/camera-framing.js'
         ]
     },
     webgl: {
@@ -68,7 +69,8 @@ const BACKENDS = {
             'src/brain-renderer-webgl/lifecycle.js',
             'src/brain-renderer-webgl/resolution.js',
             'src/brain-renderer-webgl/clipmap.js',
-            'src/pathway-renderer.js'
+            'src/pathway-renderer.js',
+            'src/camera-framing.js'
         ]
     }
 };

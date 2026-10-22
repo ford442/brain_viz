@@ -49,6 +49,8 @@
  *
  * @property {(newParams: Partial<import('./types.js').RendererParams>) => void} setParams - Merge params; flags `geometryDirty` when a geometry-affecting key changes.
  * @property {(newParams: Partial<import('./types.js').RendererParams>) => void} setSynaptiXParams - Alias of `setParams()` used by SynaptiX call sites.
+ * @property {() => number} getFitZoom - [Camera] Zoom (camera distance) at which the whole brain fits the viewport at the current FOV and canvas aspect. Routine/XR presets resolve their `'fit'` zoom through it.
+ * @property {() => void} frameBrain - [Camera] Re-enter auto-framing: zoom to `getFitZoom()` and keep tracking it across resizes until something else writes `targetZoom` (wheel, routine, XR, router).
  * @property {(preset?: {rotation?: {x?: number, y?: number}, zoom?: number, fov?: number}) => void} setCameraParams - Write *target* camera state; the render loop's smoothing drives the transition. Used by RoutinePlayer camera events, the reactivity router's scroll-zoom binding, and WebXR viewpoint presets.
  *
  * @property {(targetX: number, targetY: number, targetZ: number, intensity: number, duration?: number, radius?: number|null, erase?: boolean, decayHalfLife?: number) => void} injectStimulus - Inject a signal pulse at a voxel-space coordinate (paint gestures, routine stimulus events, BCI-driven region injection).

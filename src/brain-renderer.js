@@ -12,6 +12,7 @@ import { applySynaptiXBridgeMethods } from './brain-renderer/synaptix-bridges.js
 import { applyPathwayMethods, createPathwayState } from './pathway-renderer.js';
 import { applyResolutionMethods } from './brain-renderer/resolution.js';
 import { applyClipmapMethods } from './brain-renderer/clipmap.js';
+import { applyCameraFramingMethods } from './camera-framing.js';
 import { DEFAULT_VOXEL_DIM, voxelCountFor } from './voxel-dim.js';
 
 /**
@@ -55,6 +56,9 @@ export class BrainRenderer {
         this.targetRotation = { x: 0.3, y: 0 };
         this.zoom = 3.5;
         this.targetZoom = 3.5; // [Neuro-Weaver] Smooth Zoom Target
+        // [Camera] Fit-to-brain framing; the first syncAutoFrame() (render loop) replaces 3.5.
+        this.autoFrame = true;
+        this.autoFrameZoom = NaN;
         this.fov = Math.PI / 4;
         this.targetFov = Math.PI / 4;
         this.time = 0;
@@ -217,3 +221,4 @@ applySynaptiXBridgeMethods(BrainRenderer);
 applyPathwayMethods(BrainRenderer);
 applyResolutionMethods(BrainRenderer);
 applyClipmapMethods(BrainRenderer);
+applyCameraFramingMethods(BrainRenderer);
