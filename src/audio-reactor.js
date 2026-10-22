@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // audio-reactor.js
 // Handles Web Audio API integration for reactive brain visualization
 export class AudioReactor {

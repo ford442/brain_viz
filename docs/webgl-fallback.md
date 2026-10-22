@@ -78,12 +78,15 @@ backend is active:
 test`) enforces this list statically against both backends' source files —
 see [CLAUDE.md](../CLAUDE.md) §3b for why a JSDoc `@implements` on the
 classes themselves can't do this (the methods above are attached by mixins
-that TypeScript can't see across a module boundary).
+that TypeScript can't see across a module boundary). Within the WebGL mixins,
+`src/brain-renderer-webgl/types.js` types each method literal against this
+facade (`@satisfies {WebGLMixin}`), so `npm run typecheck` catches a wrong
+signature or return type there — but only the grep proves a method exists.
 
 Both renderers also share:
 
 - `BrainGeometry` output
-- two independent 32x32x32 avatar/partner tensor buffers
+- two independent `voxelDim`³ avatar/partner tensor buffers (32³ by default; `setVoxelDim()` resamples both)
 - camera orbit / zoom state
 - style selection and SynaptiX controls
 
@@ -120,7 +123,7 @@ only one backend, and say why the other doesn't need it.
 
 ### WebGL2
 
-- CPU-side tensor update approximates diffusion / coupling
+- tensor evolution is the CPU reference stepper (`src/physics/tensor-field.js`) — the same specified field (`docs/tensor-physics.md`) the C++ engine is golden-tested against, not an approximation of it. Differences from the WGSL path are the documented §8 divergences
 - dynamic vertex and color uploads drive the visible scene
 - adds debug controls for wireframe, tensor-point visibility, and layer isolation
 - intended as a reference/debug renderer, not a perfect match for the WGSL path

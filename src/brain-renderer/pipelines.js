@@ -1,5 +1,5 @@
 // @ts-check
-import { vertexShader, fragmentShader, computeShader, somaVertexShader, somaFragmentShader, sparkVertexShader, sparkFragmentShader, postVertexShader, postFragmentShader, pointCloudVertexShader, pointCloudFragmentShader } from '../shaders.js';
+import { computeShader, somaVertexShader, somaFragmentShader, sparkVertexShader, sparkFragmentShader, postVertexShader, postFragmentShader, pointCloudVertexShader, pointCloudFragmentShader } from '../shaders.js';
 import { RENDER_UNIFORM_BUFFER_SIZE, COMPUTE_UNIFORM_BUFFER_SIZE } from './constants.js';
 import { immuneVertexShader, immuneFragmentShader } from '../shaders/immune.js';
 import { createImmunePool, IMMUNE_STRIDE } from '../immune-particles.js';
@@ -99,8 +99,8 @@ export function applyPipelineMethods(Target) {
         this.somaInstanceCount = somaInstances.length / 9;
 
         // Create a simple low-poly sphere (Icosahedron) for the instance geometry
-        const X = 0.525731112119133606;
-        const Z = 0.850650808352039932;
+        const X = 0.5257311121191336;
+        const Z = 0.8506508083520399;
         const N = 0.0;
 
         const icoVerts = new Float32Array([

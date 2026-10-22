@@ -11,6 +11,7 @@
     "test:wgsl": "node scripts/wgsl_oracle.mjs",
     "check:facade": "node scripts/check-renderer-facade.mjs",
     "typecheck": "tsc -p jsconfig.json --noEmit",
+    "lint": "eslint src",
     "gen:wasm-params": "node scripts/gen_wasm_params.mjs",
     "gen:tensor-fixture": "node scripts/gen_tensor_fixture.mjs",
     "gen:compile-commands": "node scripts/gen_compile_commands.mjs",
@@ -29,7 +30,11 @@
     "deploy": "python deploy.py"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@webgpu/types": "^0.1.72",
+    "eslint": "^9.39.5",
+    "eslint-plugin-jsdoc": "^63.3.3",
+    "globals": "^17.13.0",
     "typescript": "^7.0.2",
     "vite": "^5.4.21"
   },

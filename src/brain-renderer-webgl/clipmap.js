@@ -19,45 +19,45 @@ import { DEFAULT_CLIPMAP_OPTIONS, mergeClipmapOptions } from '../clipmap/clipmap
 const UNSUPPORTED_REASON =
     'The fine brick is WebGPU-only: the WebGL2 fallback steps the coarse field on the CPU (docs/webgl-fallback.md).';
 
+/** @param {import('./types.js').WebGLRendererClass} Klass */
 export function applyClipmapMethods(Klass) {
-    /** @type {import('../renderer-contract.js').BrainRendererFacade['setClipmapOptions']} */
-    Klass.prototype.setClipmapOptions = function(options = {}) {
-        this._clipmapOptions = mergeClipmapOptions(this._clipmapOptions ?? { ...DEFAULT_CLIPMAP_OPTIONS }, options);
-        return false;
-    };
+    Object.assign(Klass.prototype, /** @satisfies {import('./types.js').WebGLMixin} */ ({
+        setClipmapOptions(options = {}) {
+            this._clipmapOptions = mergeClipmapOptions(this._clipmapOptions ?? { ...DEFAULT_CLIPMAP_OPTIONS }, options);
+            return false;
+        },
 
-    /** @type {import('../renderer-contract.js').BrainRendererFacade['getClipmapState']} */
-    Klass.prototype.getClipmapState = function() {
-        return {
-            supported: false,
-            reason: UNSUPPORTED_REASON,
-            backend: 'webgl',
-            active: false,
-            mode: 'off',
-            options: { ...(this._clipmapOptions ?? DEFAULT_CLIPMAP_OPTIONS) },
-        };
-    };
+        getClipmapState() {
+            return {
+                supported: false,
+                reason: UNSUPPORTED_REASON,
+                backend: 'webgl',
+                active: false,
+                mode: 'off',
+                options: { ...(this._clipmapOptions ?? DEFAULT_CLIPMAP_OPTIONS) },
+            };
+        },
 
-    /** @type {import('../renderer-contract.js').BrainRendererFacade['getFrameTimings']} */
-    Klass.prototype.getFrameTimings = function() {
-        return {
-            backend: 'webgl',
-            gpuTimestamps: false,
-            renderMs: null,
-            computeMs: null,
-            totalMs: null,
-            fieldMs: null,
-            brickMs: null,
-            sceneMs: null,
-            postMs: null,
-            cpuFrameMs: this._lastIntervalMs ?? null,
-            cpuEncodeMs: null,
-            // The CPU reference stepper's own cost — the number that scales with voxelDim³ here.
-            cpuFieldStepMs: this._lastFieldStepMs ?? null,
-            budgetMs: null,
-            pressure: 0,
-            lodLoad: Math.max(0, Math.min(1, Number(this.params?.cognitiveLoad) || 0)),
-            source: 'interval',
-        };
-    };
+        getFrameTimings() {
+            return {
+                backend: 'webgl',
+                gpuTimestamps: false,
+                renderMs: null,
+                computeMs: null,
+                totalMs: null,
+                fieldMs: null,
+                brickMs: null,
+                sceneMs: null,
+                postMs: null,
+                cpuFrameMs: this._lastIntervalMs ?? null,
+                cpuEncodeMs: null,
+                // The CPU reference stepper's own cost — the number that scales with voxelDim³ here.
+                cpuFieldStepMs: this._lastFieldStepMs ?? null,
+                budgetMs: null,
+                pressure: 0,
+                lodLoad: Math.max(0, Math.min(1, Number(this.params?.cognitiveLoad) || 0)),
+                source: 'interval',
+            };
+        },
+    }));
 }

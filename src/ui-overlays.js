@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // ui-overlays.js
 export function setupOverlays(player, filterOverlay, inputs, labels) {
     // [Phase 4] Narrative Overlay

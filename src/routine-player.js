@@ -1,7 +1,7 @@
 // @ts-check
 // Neuro-Script Implementation Cycle: timeline-based sequencer implemented.
 /**
- * @fileoverview Orchestrates timed sequences of brain activity.
+ * @file Orchestrates timed sequences of brain activity.
  *
  * Architectural Features:
  * - Sequencer: Uses performance.now() and delta-time compensation to ensure drift-free sequencing.
@@ -12,7 +12,6 @@
  */
 
 import { Easing, evaluateSpline } from './math-utils.js';
-import { CAMERA_PRESETS, handleCamera } from './routine-camera.js';
 import { createDefaultHandlers } from './routine-handlers.js';
 import { parseRoutineCSV } from './routine-csv.js';
 import { buildProceduralRoutine } from './routine-procedural.js';
@@ -161,7 +160,7 @@ export class RoutinePlayer {
     /**
      * Register a custom event handler
      * @param {string} type - Event type (e.g., 'sound', 'custom')
-     * @param {function} callback - Function receiving the event object
+     * @param {Function} callback - Function receiving the event object
      */
     registerHandler(type, callback) {
         if (typeof callback !== 'function') {

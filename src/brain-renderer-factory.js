@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 import { BrainRenderer } from './brain-renderer.js';
 import { BrainRendererWebGL } from './brain-renderer-webgl.js';
 

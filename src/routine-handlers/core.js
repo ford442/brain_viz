@@ -1,4 +1,3 @@
-import { handleCamera } from '../routine-camera.js';
 
 export function registerCoreHandlers(handlers, player) {
     handlers.set('stimulus', (evt) => {

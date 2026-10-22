@@ -1,11 +1,9 @@
-import { handleCamera } from '../routine-camera.js';
 
 export function registerNarrativeFlowHandlers(handlers, player) {
 
     // [Phase 2.5] Circadian Rhythm Simulation
     handlers.set('circadian_rhythm', (evt) => {
         const duration = evt.duration || 10.0;
-        const cycles = evt.cycles || 1.0;
 
         const segment = duration / 4;
 

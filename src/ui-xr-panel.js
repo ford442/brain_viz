@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 import { buildRendererUrl } from './brain-renderer-factory.js';
 import { WebXRManager } from './webxr-manager.js';
 

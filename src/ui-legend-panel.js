@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // ui-legend-panel.js
 export function setupLegendPanel() {
     const fabHelp = document.createElement('button');
@@ -88,7 +89,7 @@ export function setupLegendPanel() {
                 <div class="legend-item"><span class="legend-key">|</span><span>Env. Noise</span></div>
                 <div class="legend-item"><span class="legend-key">Z</span><span>Synaptic Pruning</span></div>
                 <div class="legend-item"><span class="legend-key">&amp;</span><span>Drug Delivery</span></div>
-                <div class="legend-item"><span class="legend-key">\</span><span>Particle Speed</span></div>
+                <div class="legend-item"><span class="legend-key">\\</span><span>Particle Speed</span></div>
 
             </div>
         </div>

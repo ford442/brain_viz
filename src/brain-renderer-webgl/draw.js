@@ -1,7 +1,9 @@
+// @ts-check
 import { Mat4 } from '../math-utils.js';
 
+/** @param {import('./types.js').WebGLRendererClass} Klass */
 export function applyDrawMethods(Klass) {
-    Object.assign(Klass.prototype, {
+    Object.assign(Klass.prototype, /** @satisfies {import('./types.js').WebGLMixin} */ ({
         updateCameraState() {
             this.rotation.x += (this.targetRotation.x - this.rotation.x) * 0.1;
             this.rotation.y += (this.targetRotation.y - this.rotation.y) * 0.1;
@@ -140,5 +142,5 @@ export function applyDrawMethods(Klass) {
             this.synaptixPerformance = { ...this.synaptixPerformance, ...result };
             return result;
         },
-    });
+    }));
 }

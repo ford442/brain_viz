@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // [Neuro-Weaver] WebGL-first WebXR companion. WebGPU remains the authoritative
 // desktop renderer until a broadly available WebGPU XR layer exists.
 import { raySphere } from './math-utils.js';

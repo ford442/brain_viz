@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // sonification-engine.js — Neuro-Sonification: the inverse of AudioReactor.
 // Where AudioReactor turns microphone input into visual reactivity,
 // SonificationEngine turns live brain-activity state (tensor stats per lobe,

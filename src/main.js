@@ -1,5 +1,6 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 /**
- * @fileoverview Main application entry point for Neuro-Weaver.
+ * @file Main application entry point for Neuro-Weaver.
  * Initializes the renderer, UI components, and the Routine Engine.
  *
  * Architectural Features Integrated:

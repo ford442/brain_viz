@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 const DEFAULT_BANDS = Object.freeze({
     alpha: [8, 12],
     beta: [13, 30],

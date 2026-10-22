@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // main-update-loop.js — RAF loop syncing UI, SynaptiX, audio reactivity, and routine transport
 export function startMainUpdateLoop(renderer, player, inputs, labels, tensorPlayer, synaptixEngine, inferenceEngine, audioReactor, transport, directorLabels, modeSelector, aiPromptRef, trainingEngine, sessionController, sonificationEngine, reactivityRouter, liveInputBus) {
     let lastAIStep = 0;

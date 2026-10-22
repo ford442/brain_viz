@@ -193,6 +193,7 @@ export function validateRoutine(routine, options = {}) {
 
 /**
  * Build a manifest object with sane defaults for the optional fields.
+ * @param {{title: string, author: string, tags?: string[], description?: string, minEngineVersion?: string, parentId?: string|null}} fields
  */
 export function createManifest({ title, author, tags = [], description = '', minEngineVersion, parentId = null }) {
   return {
@@ -291,7 +292,7 @@ export function parsePackage(raw, options = {}) {
   try {
     data = typeof raw === 'string' ? JSON.parse(raw) : raw;
   } catch (e) {
-    return { valid: false, errors: [`invalid JSON: ${e.message}`], warnings: [], package: null };
+    return { valid: false, errors: [`invalid JSON: ${/** @type {Error} */ (e).message}`], warnings: [], package: null };
   }
 
   if (Array.isArray(data)) {

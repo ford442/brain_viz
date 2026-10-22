@@ -1,8 +1,6 @@
 import { SynaptiXCouplingModel, SYNAPTIX_REGIONS } from './synaptix-coupling.js';
 import { DEFAULT_VOXEL_DIM, normalizeVoxelDim, voxelCountFor } from './voxel-dim.js';
 
-const BRAIN_RANGE = 1.6;
-
 /**
  * [SynaptiX] AITensorProjector — Maps transformer/ViT activation tensors into the 32³ brain volume.
  *
@@ -132,7 +130,12 @@ export class SynaptiXEngine {
         this.partnerSourceType = 'none';
         this.partnerSocket = null;
         this.couplingModel = new SynaptiXCouplingModel({ windowSeconds: 2, sampleRate: 10 });
+        /** @type {{empathyPulse: {region: string, intensity: number, startedAt: number, endsAt: number}|null, divergenceStorm: {intensity: number, startedAt: number, endsAt: number}|null}} */
         this.effects = { empathyPulse: null, divergenceStorm: null };
+        // The coupling fields are only present when the coupling model produced
+        // the stats (_syncResonanceStats); the legacy fallbacks in
+        // computeResonanceStats() report resonance/energies alone.
+        /** @type {{resonance: number, humanEnergy: number, aiEnergy: number, avatarAEnergy?: number, partnerEnergy?: number, globalCoupling?: number, regions?: Record<string, number>}} */
         this.resonanceStats = {        // Computed each update
             resonance: 0.0,
             humanEnergy: 0.0,
@@ -565,7 +568,7 @@ export class SynaptiXEngine {
         const avatarPatterns = sequenceId === 'social-coupling'
             ? ['attention-occipital', 'attention-temporal', 'aligned-prefrontal', 'visual-mismatch', 'full-resonance', 'aligned-prefrontal']
             : ['attention-frontal', 'attention-occipital', 'visual-mismatch', 'full-resonance'];
-        const avatarFrames = avatarPatterns.map((id) => this.createPatternData(id)).filter(Boolean);
+        const avatarFrames = avatarPatterns.map((id) => this.createPatternData(id)).filter((frame) => frame !== null);
         const partnerFrames = avatarFrames.map((frame, frameIndex) => {
             const partner = new Float32Array(frame.length);
             const divergent = frameIndex === Math.max(1, avatarFrames.length - 3);
@@ -622,7 +625,6 @@ export class SynaptiXEngine {
 
     _fillAttentionFrontal(data) {
         const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
-        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         let idx = 0;
         for (let z = 0; z < VOXEL_DIM; z++) {
             for (let y = 0; y < VOXEL_DIM; y++) {
@@ -643,7 +645,6 @@ export class SynaptiXEngine {
 
     _fillAttentionOccipital(data) {
         const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
-        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         let idx = 0;
         for (let z = 0; z < VOXEL_DIM; z++) {
             for (let y = 0; y < VOXEL_DIM; y++) {
@@ -664,7 +665,6 @@ export class SynaptiXEngine {
 
     _fillAttentionTemporal(data) {
         const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
-        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         let idx = 0;
         for (let z = 0; z < VOXEL_DIM; z++) {
             for (let y = 0; y < VOXEL_DIM; y++) {
@@ -685,7 +685,6 @@ export class SynaptiXEngine {
 
     _fillGradientExplode(data) {
         const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
-        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         let idx = 0;
         for (let z = 0; z < VOXEL_DIM; z++) {
             for (let y = 0; y < VOXEL_DIM; y++) {
@@ -704,7 +703,6 @@ export class SynaptiXEngine {
 
     _fillEmbeddingSpace(data) {
         const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
-        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         let idx = 0;
         for (let z = 0; z < VOXEL_DIM; z++) {
             for (let y = 0; y < VOXEL_DIM; y++) {
@@ -723,7 +721,6 @@ export class SynaptiXEngine {
 
     _fillAlignedPrefrontal(data) {
         const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
-        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         // Human and AI agree: strong, clean frontal lobe activation
         let idx = 0;
         for (let z = 0; z < VOXEL_DIM; z++) {
@@ -745,7 +742,6 @@ export class SynaptiXEngine {
 
     _fillHallucinationSpike(data) {
         const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
-        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         // Chaotic high-frequency spikes = confabulation signature
         let idx = 0;
         for (let z = 0; z < VOXEL_DIM; z++) {
@@ -765,7 +761,6 @@ export class SynaptiXEngine {
 
     _fillVisualMismatch(data) {
         const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
-        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         // Occipital strong, but with phase-inverted interference pattern
         let idx = 0;
         for (let z = 0; z < VOXEL_DIM; z++) {
@@ -789,7 +784,6 @@ export class SynaptiXEngine {
 
     _fillFullResonance(data) {
         const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
-        const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
         // Broad, smooth activation across the whole brain = perfect alignment
         let idx = 0;
         for (let z = 0; z < VOXEL_DIM; z++) {

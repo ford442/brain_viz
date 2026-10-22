@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // ui-training-panel.js — wires the Training tab (course picker, progress ring,
 // live metric gauge, session history) to a TrainingEngine instance.
 import { getHistory, clearHistory } from './training-engine.js';

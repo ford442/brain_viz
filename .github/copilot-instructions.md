@@ -31,14 +31,17 @@ python3 verification/verify_clipmap_webgpu.py
 # Headless Node assertions: uniform layout, shaders, tensor physics, renderer facade
 npm test
 
-# tsc --noEmit over the files that opt into `// @ts-check` (see §5 below)
+# tsc --noEmit, checkJs on for src/ minus the @ts-nocheck backlog (see §5 below)
 npm run typecheck
+
+# ESLint: eslint:recommended + JSDoc tag validity, no formatting rules
+npm run lint
 
 # Standalone: both renderer backends implement src/renderer-contract.js
 npm run check:facade
 ```
 
-**Note:** Automated coverage is narrow (`npm test` — including naga validation of every WGSL source —, `npm run typecheck`, `npm run test:golden`, all headless, no browser; plus `npm run test:wgsl`, which runs the compute shader on SwiftShader against the CPU reference) — everything visual is still manual, plus the Playwright-based `verification/` suite described above. Verify the brain renders, animates smoothly (~60 FPS), and UI controls function correctly.
+**Note:** Automated coverage is narrow (`npm test` — including naga validation of every WGSL source —, `npm run lint`, `npm run typecheck`, `npm run test:golden`, all headless, no browser; plus `npm run test:wgsl`, which runs the compute shader on SwiftShader against the CPU reference) — everything visual is still manual, plus the Playwright-based `verification/` suite described above. Verify the brain renders, animates smoothly (~60 FPS), and UI controls function correctly.
 
 ## Key Architecture & Design Patterns
 

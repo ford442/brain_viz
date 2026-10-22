@@ -70,6 +70,7 @@
  * @property {number} couplingWindowSeconds - Temporal correlation window in seconds.
  * @property {number} resonanceThreshold - [SynaptiX] Human/AI resonance detection threshold.
  * @property {number} aiLayer - [SynaptiX] Active inference-engine layer index.
+ * @property {boolean} [dualAvatarEnabled] - [SynaptiX] Draw the partner avatar beside the human one in style 4 (read as `?? true`).
  * @property {number} pointCloudDensity - Point-cloud render density multiplier.
  * @property {number} fiberCoupling - [V3.2] Fiber-to-volume coupling strength (0-1).
  * @property {number} foldScale - Procedural gyri/sulci fold scale (geometry key, triggers rebuild).

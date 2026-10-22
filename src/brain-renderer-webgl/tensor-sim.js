@@ -1,3 +1,4 @@
+// @ts-check
 // src/brain-renderer-webgl/tensor-sim.js
 // [Tensor Physics] Field sampling and colouring for the WebGL2 fallback.
 //
@@ -12,8 +13,9 @@ import { clamp01, mix, smoothstep } from '../webgl-gl-utils.js';
 import { BRAIN_RANGE } from './constants.js';
 import { normalizeFiberAffinities, resolveFieldParams, stepTensorField } from '../physics/tensor-field.js';
 
+/** @param {import('./types.js').WebGLRendererClass} Klass */
 export function applyTensorSimMethods(Klass) {
-    Object.assign(Klass.prototype, {
+    Object.assign(Klass.prototype, /** @satisfies {import('./types.js').WebGLMixin} */ ({
         sampleField(worldPos, useAI = false) {
             const tensor = useAI ? this._lastAITensor : this._lastHumanTensor;
             const normalizedX = clamp01((worldPos[0] / BRAIN_RANGE) * 0.5 + 0.5);
@@ -172,5 +174,5 @@ export function applyTensorSimMethods(Klass) {
             this.stimulus.electricalActive = 0.0;
             this.stimulus.mercuryActive = 0.0;
         },
-    });
+    }));
 }
