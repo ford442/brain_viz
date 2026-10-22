@@ -1,8 +1,10 @@
+// @ts-check
 import { clamp01 } from '../webgl-gl-utils.js';
 import { computePathwayEmission } from '../pathway-renderer.js';
 
+/** @param {import('./types.js').WebGLRendererClass} Klass */
 export function applyDynamicBufferMethods(Klass) {
-    Object.assign(Klass.prototype, {
+    Object.assign(Klass.prototype, /** @satisfies {import('./types.js').WebGLMixin} */ ({
         updateDynamicBuffers() {
             const gl = this.gl;
             this.updateImmuneParticles();
@@ -23,7 +25,6 @@ export function applyDynamicBufferMethods(Klass) {
                 const normal = [this.baseNormals[i + 0], this.baseNormals[i + 1], this.baseNormals[i + 2]];
                 const humanVal = this.sampleField(pos, false);
                 const aiVal = this.sampleField(pos, true);
-                const resonance = this.computeResonance(humanVal, aiVal);
                 const displacement = humanVal * (0.018 + this.params.amplitude * 0.05);
                 this.meshPositions[i + 0] = pos[0] + normal[0] * displacement;
                 this.meshPositions[i + 1] = pos[1] + normal[1] * displacement;
@@ -200,5 +201,5 @@ export function applyDynamicBufferMethods(Klass) {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.meshBuffers.bridgeColor);
             gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.bridgeColors.subarray(0, vertex * 3));
         },
-    });
+    }));
 }

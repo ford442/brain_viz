@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // [Neuro-Weaver] Paint Energy: click-drag brush painting of activation
 // energy onto the brain, replacing the old always-on naive screen-plane
 // injector that used to live in main-routine-engine.js.

@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 import { SessionRecorder } from './session-recorder.js';
 import { SessionPlayer } from './session-player.js';
 import { analyzeSession, sessionAnalysisToCsv } from './session-analysis.js';

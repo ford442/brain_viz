@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // src/training-engine.js
 // [Neuro-Weaver] Neurofeedback Training Mode — gamified objectives that ask the
 // player to hold a simulated brain-state metric inside a target band for a

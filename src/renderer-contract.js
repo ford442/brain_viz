@@ -2,12 +2,16 @@
 // [Neuro-Weaver] JSDoc-only facade contract shared by BrainRenderer (WebGPU,
 // brain-renderer.js) and BrainRendererWebGL (brain-renderer-webgl.js).
 //
-// This file has no runtime exports. It exists so both renderer classes can
-// declare `@implements {import('./renderer-contract.js').BrainRendererFacade}`
-// and get a real typecheck: with `// @ts-check` + `checkJs` on for a file, an
-// empty-bodied or missing method on either backend is a build-time error
-// instead of a `renderer.setCameraParams is not a function` discovered at
-// runtime (see docs/ROADMAP.md / the "one renderer contract" hardening pass).
+// This file has no runtime exports. Two checks hold the backends to it:
+//   - `npm run check:facade` (scripts/check-renderer-facade.mjs) greps each
+//     backend's mixin files for every method name below. This is the only
+//     thing that catches a method *missing* from one backend: the methods are
+//     attached by applyXMethods() mixins, which tsc cannot see on the class,
+//     so `@implements` on either class would prove nothing. Keep the grep.
+//   - `npm run typecheck` checks a facade method's *signature* where it is
+//     defined: WebGL mixin literals via `@satisfies {WebGLMixin}`
+//     (src/brain-renderer-webgl/types.js), WebGPU methods that carry
+//     `@type {BrainRendererFacade['name']}`.
 //
 // `docs/webgl-fallback.md` "Shared Contracts" / "Capability Matrix" sections
 // are the human-readable mirror of this list — keep them in sync.
@@ -70,7 +74,7 @@
  *
  * @property {() => Promise<boolean>} enableWasmMode - Attempt to switch tensor evolution to the C++/WASM engine; resolves false (and stays on the existing backend's own stepper) when unavailable.
  * @property {() => void} disableWasmMode - Return to the backend's own tensor stepper (WebGPU compute shader / CPU reference).
- * @property {(opts?: Object) => Promise<Object>} runWasmBenchmark - Compare WASM vs the backend's own stepper.
+ * @property {(steps?: number) => {steps: number, elapsedMs: number, stepsPerSec: number}|null} runWasmBenchmark - Time `steps` WASM field steps (synchronous). Null when the WASM engine is not loaded — always on WebGL2, which has no WASM path.
  *
  * @property {(name: string, opts?: Object) => boolean} selectPathway - Toggle a named connectome pathway selection on/off.
  * @property {(name: string, blocked: boolean) => void} setPathwayBlocked - Mark a pathway as lesioned/blocked without changing its selection.

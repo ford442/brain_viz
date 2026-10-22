@@ -17,7 +17,14 @@ export function pearsonCorrelation(xs, ys) {
     return vx > 0 && vy > 0 ? covariance / Math.sqrt(vx * vy) : 0;
 }
 
+/**
+ * @template {{timestamp: number}} T
+ * @param {T[]} items - Sorted by timestamp.
+ * @param {number} timestamp
+ * @returns {T|null}
+ */
 function latestAtOrBefore(items, timestamp) {
+    /** @type {T|null} */
     let result = null;
     for (const item of items) {
         if (item.timestamp > timestamp) break;
@@ -27,7 +34,7 @@ function latestAtOrBefore(items, timestamp) {
 }
 
 /**
- * @param {Array} chunks
+ * @param {import('./session-format.js').SessionChunk[]} chunks
  * @param {number} [maxAlignmentMs]
  * @param {number} [voxelDim] - [Field Resolution] Grid the tensor chunks were
  *   written at, from `parseSession()`'s `voxelDim`. Defaults to 32³ for
@@ -41,6 +48,7 @@ export function analyzeSession(chunks, maxAlignmentMs = 50, voxelDim = DEFAULT_V
     const tensorValues = tensors.map((chunk) => ({ ...chunk, occipital: getAnatomicalRegionMeans(decodeTensorPayload(chunk.payload, voxelDim), voxelDim).occipital }));
     const pairs = [];
     for (const sample of audio) {
+        /** @type {{tensor: {timestamp: number, occipital: number}, error: number}|null} */
         let nearest = null;
         for (const tensor of tensorValues) {
             const error = Math.abs(tensor.timestamp - sample.timestamp);

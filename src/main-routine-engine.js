@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // Extracted from main.js
 import { RoutinePlayer } from './routine-player.js';
 import { AudioReactor } from './audio-reactor.js';
@@ -247,7 +248,6 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
         // To avoid breaking existing tests (e.g., test using 'a' for Adrenaline)
         // while allowing synth play, we trigger the synth but DO NOT return early
         // if there is a matching routine below.
-        let synthPlayed = false;
         const upperKey = e.key.toUpperCase();
         if (synthKeyMap[upperKey] && !e.ctrlKey && !e.metaKey && !e.altKey) {
             const tag = (e.target && e.target.tagName) || '';
@@ -258,7 +258,6 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
                 } catch (error) {
                     console.warn('[Main] Error playing tone:', error);
                 }
-                synthPlayed = true;
             }
         }
 

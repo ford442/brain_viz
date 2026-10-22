@@ -132,6 +132,21 @@ export class BrainRendererWebGL {
         this.bridgePositions = new Float32Array(5 * 16 * 2 * 3);
         this.bridgeColors = new Float32Array(5 * 16 * 2 * 3);
         this.synaptixPerformance = { singleWorkUnits: 0, dualWorkUnits: 0, workRatio: 1, frameTimes: [] };
+        this.wireIndexCount = 0;
+        // [Phase 17] Pulse started by triggerTMS(), decayed by _updateTms().
+        /** @type {{center: number[], strength: number, radius: number, duration: number, startTime: number}|null} */
+        this.tms = null;
+        this._immuneSurgeSeed = 0;
+        // [Clipmap] Read by getFrameTimings(); written by render() and
+        // updateTensorSimulation(). Null until the first frame measures them.
+        /** @type {number|null} */
+        this._lastRenderAt = null;
+        /** @type {number|null} */
+        this._lastIntervalMs = null;
+        /** @type {number|null} */
+        this._lastFieldStepMs = null;
+        /** @type {import('./clipmap/clipmap-controller.js').ClipmapOptions|null} */
+        this._clipmapOptions = null;
 
         this.setupInputHandlers();
     }

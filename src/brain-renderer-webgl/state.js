@@ -1,7 +1,9 @@
+// @ts-check
 import { clamp01 } from '../webgl-gl-utils.js';
 
+/** @param {import('./types.js').WebGLRendererClass} Klass */
 export function applyStateMethods(Klass) {
-    Object.assign(Klass.prototype, {
+    Object.assign(Klass.prototype, /** @satisfies {import('./types.js').WebGLMixin} */ ({
         setParams(newParams) {
             if (newParams.aiInfluence !== undefined && newParams.partnerInfluence === undefined) {
                 newParams = { ...newParams, partnerInfluence: newParams.aiInfluence };
@@ -157,8 +159,9 @@ export function applyStateMethods(Klass) {
             this.wasmMode = false;
         },
 
+        // No WASM engine on this backend; the benchmark button reports nothing.
         runWasmBenchmark() {
             return null;
         },
-    });
+    }));
 }

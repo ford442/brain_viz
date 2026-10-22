@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // main-renderer-setup.js — WebGPU/WebGL renderer bootstrap and debug controls
 import { createBrainRenderer, buildRendererUrl, persistRendererPreference } from './brain-renderer-factory.js';
 

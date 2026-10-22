@@ -81,6 +81,11 @@ class TemporarySessionStore {
     }
 }
 
+/**
+ * @param {HTMLCanvasElement} canvas
+ * @param {string} mimeType
+ * @returns {Promise<Blob|null>}
+ */
 function canvasToBlob(canvas, mimeType) {
     return new Promise((resolve) => canvas.toBlob(resolve, mimeType, 0.72));
 }
@@ -100,21 +105,33 @@ export class SessionRecorder {
         this.now = now;
         this.onAutoStop = onAutoStop;
         this.state = 'idle';
+        // Everything below is null until start() opens it, and again after cleanup().
+        /** @type {TemporarySessionStore|null} */
         this.store = null;
+        /** @type {MediaStream|null} */
         this.stream = null;
+        /** @type {AudioContext|null} */
         this.audioContext = null;
+        /** @type {AnalyserNode|null} */
         this.analyser = null;
+        /** @type {Uint8Array<ArrayBuffer>|null} */
         this.audioTimeData = null;
+        /** @type {Uint8Array<ArrayBuffer>|null} */
         this.audioFreqData = null;
+        /** @type {HTMLVideoElement|null} */
         this.video = null;
+        /** @type {HTMLCanvasElement|null} */
         this.captureCanvas = null;
+        /** @type {CanvasRenderingContext2D|null} */
         this.captureContext = null;
         this.origin = 0;
         this.lastTick = -Infinity;
         this.pending = new Set();
         this.counts = { tensor: 0, visual: 0, audio: 0, note: 0 };
         this.droppedFrames = 0;
+        /** @type {{camera: boolean, audio: boolean, localOnly: boolean}|null} */
         this.consent = null;
+        /** @type {string|null} */
         this.visualMimeType = null;
         this.storageError = null;
         this.captureError = null;
@@ -148,21 +165,25 @@ export class SessionRecorder {
         }
     }
 
+    /** @param {HTMLVideoElement|null} [videoElement] */
     setupCamera(videoElement) {
-        this.video = videoElement || document.createElement('video');
-        this.video.muted = true;
-        this.video.playsInline = true;
-        this.video.srcObject = this.stream;
-        Promise.resolve(this.video.play()).catch(() => {});
-        this.captureCanvas = document.createElement('canvas');
-        this.captureCanvas.width = 320;
-        this.captureCanvas.height = 180;
-        this.captureContext = this.captureCanvas.getContext('2d', { alpha: false });
+        const video = videoElement || document.createElement('video');
+        this.video = video;
+        video.muted = true;
+        video.playsInline = true;
+        video.srcObject = this.stream;
+        Promise.resolve(video.play()).catch(() => {});
+        const captureCanvas = document.createElement('canvas');
+        this.captureCanvas = captureCanvas;
+        captureCanvas.width = 320;
+        captureCanvas.height = 180;
+        this.captureContext = captureCanvas.getContext('2d', { alpha: false });
         if (!this.captureContext) throw new Error('Camera thumbnail canvas is unavailable');
     }
 
     async setupAudio() {
         if (!this.AudioContextClass) throw new Error('Web Audio API is unavailable');
+        if (!this.stream) throw new Error('setupAudio() needs the media stream start() opens');
         this.audioContext = new this.AudioContextClass();
         if (this.audioContext.state === 'suspended') await this.audioContext.resume();
         this.analyser = this.audioContext.createAnalyser();
@@ -209,22 +230,24 @@ export class SessionRecorder {
     }
 
     readAudioFeatures() {
-        this.analyser.getByteTimeDomainData(this.audioTimeData);
-        this.analyser.getByteFrequencyData(this.audioFreqData);
+        const { analyser, audioTimeData, audioFreqData } = this;
+        if (!analyser || !audioTimeData || !audioFreqData) throw new Error('Audio capture is not set up');
+        analyser.getByteTimeDomainData(audioTimeData);
+        analyser.getByteFrequencyData(audioFreqData);
         let squareSum = 0, bass = 0, weighted = 0, energy = 0;
-        const bassBins = Math.max(1, Math.floor(this.audioFreqData.length * 0.1));
-        for (const value of this.audioTimeData) squareSum += ((value - 128) / 128) ** 2;
-        for (let i = 0; i < this.audioFreqData.length; i++) {
-            const value = this.audioFreqData[i] / 255;
+        const bassBins = Math.max(1, Math.floor(audioFreqData.length * 0.1));
+        for (const value of audioTimeData) squareSum += ((value - 128) / 128) ** 2;
+        for (let i = 0; i < audioFreqData.length; i++) {
+            const value = audioFreqData[i] / 255;
             energy += value;
-            weighted += value * (i / Math.max(1, this.audioFreqData.length - 1));
+            weighted += value * (i / Math.max(1, audioFreqData.length - 1));
             if (i < bassBins) bass += value;
         }
-        const normalizedEnergy = energy / Math.max(1, this.audioFreqData.length);
+        const normalizedEnergy = energy / Math.max(1, audioFreqData.length);
         const onset = Math.max(0, normalizedEnergy - (this.previousEnergy || 0)) * 4;
         this.previousEnergy = normalizedEnergy;
         return {
-            rms: Math.min(1, Math.sqrt(squareSum / this.audioTimeData.length)),
+            rms: Math.min(1, Math.sqrt(squareSum / audioTimeData.length)),
             bass: bass / bassBins,
             energy: normalizedEnergy,
             brightness: energy > 0 ? weighted / energy : 0,
@@ -235,12 +258,14 @@ export class SessionRecorder {
     captureVisual(timestamp) {
         const task = (async () => {
             try {
-                this.captureContext.drawImage(this.video, 0, 0, 320, 180);
+                const { captureContext, captureCanvas, video } = this;
+                if (!captureContext || !captureCanvas || !video) throw new Error('Camera capture is not set up');
+                captureContext.drawImage(video, 0, 0, 320, 180);
                 let mimeType = 'image/webp';
-                let blob = await canvasToBlob(this.captureCanvas, mimeType);
+                let blob = await canvasToBlob(captureCanvas, mimeType);
                 if (!blob || blob.type !== mimeType) {
                     mimeType = 'image/jpeg';
-                    blob = await canvasToBlob(this.captureCanvas, mimeType);
+                    blob = await canvasToBlob(captureCanvas, mimeType);
                 }
                 if (!blob) throw new Error('Thumbnail encoding returned no data');
                 this.visualMimeType = mimeType;
@@ -255,6 +280,7 @@ export class SessionRecorder {
     }
 
     persist(chunk, countKey) {
+        if (!this.store) throw new Error('No session store is open');
         const task = this.store.put(chunk).then(() => { this.counts[countKey]++; }).catch((error) => {
             this.storageError = error;
             throw error;
@@ -280,6 +306,7 @@ export class SessionRecorder {
             await Promise.all([...this.pending]);
             if (this.storageError) throw this.storageError;
             if (this.captureError) throw this.captureError;
+            if (!this.store || !this.consent) throw new Error('No session store is open');
             const chunks = await this.store.getAll();
             const manifest = {
                 format: NWS_MAGIC,
@@ -300,7 +327,7 @@ export class SessionRecorder {
         } catch (error) {
             await this.cleanup(true);
             this.state = 'idle';
-            throw new Error(`Session finalization failed: ${error.message}`);
+            throw new Error(`Session finalization failed: ${/** @type {Error} */ (error).message}`);
         }
     }
 

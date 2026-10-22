@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // ui-timeline-editor.js
 // Interactive Visual Timeline Editor for RoutinePlayer
 
@@ -355,17 +356,16 @@ export function setupTimelineEditor(player, container) {
     };
 
     // Continuous Sync with Player (Phase 4)
-    let syncAnimationFrame = null;
 
     function syncPlayhead() {
         if (editorModal.style.display === 'flex' && player) {
             playhead.style.left = `${(player.elapsedTime || 0) * PIXELS_PER_SECOND}px`;
         }
-        syncAnimationFrame = requestAnimationFrame(syncPlayhead);
+        requestAnimationFrame(syncPlayhead);
     }
 
     // Start the sync loop
-    syncAnimationFrame = requestAnimationFrame(syncPlayhead);
+    requestAnimationFrame(syncPlayhead);
 
     // Sync back to player seamlessly
     function syncRoutineToPlayer() {

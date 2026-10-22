@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 import { PATHWAYS, DOPAMINE_PATHWAY_DEMO } from './pathways.js';
 
 export function setupPathwayPanel(renderer, player, modeSelector) {

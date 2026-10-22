@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // ui-clipmap-panel.js
 // [Clipmap] Activity tab: fine-brick controls and the GPU-time HUD.
 //

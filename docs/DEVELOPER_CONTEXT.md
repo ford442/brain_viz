@@ -2,9 +2,9 @@
 
 ## 1. High-Level Architecture & Intent
 
-*   **Core Purpose:** This application is a 3D brain visualization tool that renders real-time, organic animations driven by tensor data. It is designed to eventually visualize EEG/BCI data but currently uses simulated tensor fields. WebGPU is the primary renderer, and a WebGL2 fallback exists for debugging and automation.
+*   **Core Purpose:** This application is a 3D brain visualization tool that renders real-time, organic animations driven by tensor data. The field is a specified neural-field model (`docs/tensor-physics.md`), stepped by the WGSL compute shader, the CPU reference (`src/physics/tensor-field.js`) or the C++/WASM engine. It can be driven by real EEG (Muse / OpenBCI via `src/bci/`), recorded tensor series, Double Mirror session replay, the Live Input Bus, or built-in synthetic patterns. Its grid resolution is a runtime value (`src/voxel-dim.js`, 32³/48³/64³), not a constant. WebGPU is the primary renderer, and a WebGL2 fallback exists for debugging and automation.
 *   **Tech Stack:**
-    *   **Language:** Vanilla JavaScript (ES Modules). **No TypeScript**, no bundlers (except Vite for dev server), no frameworks (React/Vue).
+    *   **Language:** Vanilla JavaScript (ES Modules). **No TypeScript sources** — types are JSDoc, checked by `npm run typecheck` (`tsc --noEmit`, `checkJs`). Vite is the dev server and production bundler. No frameworks (React/Vue).
     *   **Graphics/Compute:** WebGPU (API), WGSL (Shading Language).
     *   **Math:** Custom `Mat4` library (Column-Major).
     *   **Build Tool:** Vite (minimal config).

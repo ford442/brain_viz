@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // ui-routine-transport.js
 // TimelineEditor / setupTimelineEditor are dynamically imported on first use
 // (see btnEditor.onclick below) to keep the editor UI out of the initial bundle.

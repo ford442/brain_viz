@@ -1,10 +1,31 @@
+// `npm run typecheck` = `tsc -p jsconfig.json --noEmit`. JSDoc-only: this
+// project has no .ts files and no TypeScript syntax in .js (see AGENTS.md).
+//
+// checkJs is on for every file under src/. Files that are not clean yet open
+// with `// @ts-nocheck — checkJs backlog` — that comment *is* the backlog
+// (`grep -rl "@ts-nocheck" src`). To burn one down, delete the line, fix the
+// real errors (narrow, add a JSDoc type, add a guard — not `@type {any}`), and
+// keep `npm run typecheck` green. Never add @ts-nocheck to a file that passes.
+//
+// Mixins: both renderers attach most methods with applyXMethods(Klass) from
+// other files, which tsc cannot see on the class. So:
+//   - src/brain-renderer-webgl/*.js type their method literals with
+//     `@satisfies {WebGLMixin}` (src/brain-renderer-webgl/types.js): `this` is
+//     the whole renderer, and facade methods get the contract's signature.
+//   - Do NOT put `@implements BrainRendererFacade` on either class expecting
+//     tsc to see mixin methods — it can't. `npm run check:facade`
+//     (scripts/check-renderer-facade.mjs) is the cross-file "does each backend
+//     implement every facade method" check; do not delete it in favour of tsc.
+//
+// TypeScript 7 defaults to `strict`; noImplicitAny stays off so an untyped
+// parameter is `any` rather than an error. That is deliberate, not a TODO.
 {
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "allowJs": true,
-    "checkJs": false,
+    "checkJs": true,
     "noEmit": true,
     "skipLibCheck": true,
     "noImplicitAny": false,
@@ -12,5 +33,8 @@
     "types": ["@webgpu/types"]
   },
   "include": ["src/**/*.js"],
+  // src/shaders/** and src/ui/templates/** are checked too: they are plain
+  // template-string modules and pass as-is. (`exclude` would only drop them as
+  // roots — the renderers import the shaders, so they'd be checked anyway.)
   "exclude": ["node_modules", "dist"]
 }

@@ -35,7 +35,7 @@ export function createMapping(overrides = {}) {
         id: overrides.id || nextMappingId(),
         source: overrides.source || '',
         feature: overrides.feature || '',
-        sink: LIVE_INPUT_SINKS.includes(overrides.sink) ? overrides.sink : LIVE_INPUT_SINKS[0],
+        sink: overrides.sink && LIVE_INPUT_SINKS.includes(overrides.sink) ? overrides.sink : LIVE_INPUT_SINKS[0],
         // scale: raw [0,1] feature value * scale is the sink's offset from its baseline.
         scale: overrides.scale !== undefined ? overrides.scale : 1,
         // attack/release: one-pole smoothing time constants in seconds, applied

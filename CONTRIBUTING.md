@@ -43,6 +43,20 @@ python3 scripts/deploy.py         # deploy dist/ via SFTP
 
 Pure vanilla JavaScript (ES Modules, no TypeScript), no frameworks, `camelCase`/`PascalCase` naming, `// [Neuro-Weaver]` or `// [Phase N]` tags on subsystem-level comments. See `AGENTS.md` §6 for the full style guide.
 
-## No automated unit tests
+## Tests and checks
 
-Testing is manual/visual for rendering changes, plus the Playwright-based `verification/` suite (WebGL2 fallback) for CI. See `AGENTS.md` §7.
+Run these before opening a PR; CI (`.github/workflows/ci.yml`) runs all of them.
+
+| Command | What it checks |
+|---|---|
+| `npm test` | Headless Node, no browser: uniform-layout drift, WGSL reserved words, naga validation of every WGSL source, the neural-field contract against committed fixtures (`tests/test_tensor_physics.js`), every supported `voxelDim`, the Live Input Bus, clipmap policy/lattice math, the WASM loader, and `npm run check:facade` |
+| `npm run check:facade` | Both renderer backends implement every method in `src/renderer-contract.js` (a cross-file grep — tsc cannot see mixin methods) |
+| `npm run lint` | ESLint (`eslint.config.js`): `eslint:recommended` + JSDoc tag validity. Undefined names, unused variables, duplicate keys. No formatting rules |
+| `npm run typecheck` | `tsc --noEmit` with `checkJs` on for all of `src/`, minus files still marked `// @ts-nocheck — checkJs backlog` (see `jsconfig.json`). JSDoc only — no `.ts` files |
+| `npm run test:golden` | The C++ engine against the same fixtures as the JS reference (needs a host C++ compiler) |
+| `npm run test:wgsl` | The WGSL compute shader against the CPU reference on SwiftShader (reported in CI, not gating) |
+| `python3 verification/verify_suite.py` | Playwright visual suite against the WebGL2 fallback |
+
+Rendering changes still need a manual look in a WebGPU browser (`npm run dev`) — nothing above can tell you a frame looks right. See `AGENTS.md` §7.
+
+Removing a `// @ts-nocheck — checkJs backlog` line and fixing what tsc then reports is a welcome small PR. Fix the real error (narrow, guard, add a JSDoc type); don't paper over it with `@type {any}`.

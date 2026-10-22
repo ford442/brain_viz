@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // ui-neuromodulator-panel.js
 import { DEFAULT_PROFILES, getCustomProfile, saveCustomProfile } from './neuromodulators.js';
 

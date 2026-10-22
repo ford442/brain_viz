@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 export class TimelineEditor {
     constructor(player) {
         this.player = player;

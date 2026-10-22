@@ -1,4 +1,3 @@
-import { handleCamera } from '../routine-camera.js';
 
 export function registerNeuromodulatorsHandlers(handlers, player) {
     handlers.set('melatonin', (evt) => {

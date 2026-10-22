@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 export class OpenBCIAdapter {
     constructor(url = 'ws://127.0.0.1:8765', { WebSocketImpl = globalThis.WebSocket } = {}) {
         this.url = url;

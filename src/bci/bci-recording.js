@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 const MAGIC = new TextEncoder().encode('NWB1');
 const CHUNK_TYPES = Object.freeze({ raw: 1, motion: 2, features: 3, tensor: 4 });
 

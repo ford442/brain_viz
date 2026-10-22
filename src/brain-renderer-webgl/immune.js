@@ -1,8 +1,10 @@
+// @ts-check
 import { clamp01, mix } from '../webgl-gl-utils.js';
 import { seedImmuneSurge, clearImmunePool, sampleImmuneParticle } from '../immune-particles.js';
 
+/** @param {import('./types.js').WebGLRendererClass} Klass */
 export function applyImmuneMethods(Klass) {
-    Object.assign(Klass.prototype, {
+    Object.assign(Klass.prototype, /** @satisfies {import('./types.js').WebGLMixin} */ ({
         spawnImmuneParticles(target, intensity = 1.0) {
             const site = (Array.isArray(target) && target.length >= 3 && !target.some(isNaN))
                 ? target
@@ -52,5 +54,5 @@ export function applyImmuneMethods(Klass) {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.meshBuffers.immuneColorSize);
             gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.immuneColorSize.subarray(0, written * 4));
         },
-    });
+    }));
 }

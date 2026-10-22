@@ -1,4 +1,3 @@
-import { handleCamera } from '../routine-camera.js';
 import { DEFAULT_VOXEL_DIM, normalizeVoxelDim, voxelCountFor } from '../voxel-dim.js';
 
 export function registerSynaptixHandlers(handlers, player) {
