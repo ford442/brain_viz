@@ -3,6 +3,7 @@ import { Mat4 } from '../math-utils.js';
 import { COMPUTE_UNIFORM_BUFFER_SIZE, RENDER_UNIFORM_FLOAT_COUNT } from './constants.js';
 import { RENDER_UNIFORM_OFFSETS as R, COMPUTE_UNIFORM_OFFSETS } from '../shaders/uniform-layout.js';
 import { BRICK_DIM, FINE_LATTICE_DIM } from '../clipmap/brick-layout.js';
+import { avatarLocalMatrices } from '../multi-brain-layout.js';
 
 // Byte offset of a compute (`TensorParams`) field, for the DataView writes below.
 const cOff = (name) => COMPUTE_UNIFORM_OFFSETS[name] * 4;
@@ -184,10 +185,9 @@ export function applyUniformsMethods(Target) {
 
         // [SynaptiX Multi-Brain] Each avatar gets the same camera rotation but a
         // distinct local transform and tensor-only bind group.
-        const avatarALocal = Mat4.composeTranslationScale(-1.05, 0, 0, 0.62);
-        const partnerLocal = Mat4.composeTranslationScale(1.05, 0, 0, 0.62);
-        const avatarAModel = Mat4.multiply(avatarALocal, model);
-        const partnerModel = Mat4.multiply(partnerLocal, model);
+        const local = avatarLocalMatrices();
+        const avatarAModel = Mat4.multiply(local.avatarA, model);
+        const partnerModel = Mat4.multiply(local.partner, model);
         const avatarAData = new Float32Array(uData);
         const partnerData = new Float32Array(uData);
         avatarAData.set(Mat4.multiply(avatarAModel, pv), OFFSET_MVP);

@@ -13,6 +13,7 @@ import { applyLifecycleMethods } from './brain-renderer-webgl/lifecycle.js';
 import { applyResolutionMethods } from './brain-renderer-webgl/resolution.js';
 import { applyClipmapMethods } from './brain-renderer-webgl/clipmap.js';
 import { DEFAULT_VOXEL_DIM, voxelCountFor } from './voxel-dim.js';
+import { BRIDGE_MAX_VERTICES } from './multi-brain-layout.js';
 
 /**
  * WebGL2 fallback/debug renderer. Implements the shared `BrainRendererFacade`
@@ -129,8 +130,8 @@ export class BrainRendererWebGL {
         this.frameHandle = null;
         this.bridgeVao = null;
         this.bridgeVertexCount = 0;
-        this.bridgePositions = new Float32Array(5 * 16 * 2 * 3);
-        this.bridgeColors = new Float32Array(5 * 16 * 2 * 3);
+        this.bridgePositions = new Float32Array(BRIDGE_MAX_VERTICES * 3);
+        this.bridgeColors = new Float32Array(BRIDGE_MAX_VERTICES * 3);
         this.synaptixPerformance = { singleWorkUnits: 0, dualWorkUnits: 0, workRatio: 1, frameTimes: [] };
         this.wireIndexCount = 0;
         // [Phase 17] Pulse started by triggerTMS(), decayed by _updateTms().

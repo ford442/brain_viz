@@ -1,6 +1,7 @@
 // @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // ui-timeline-editor.js
 // Interactive Visual Timeline Editor for RoutinePlayer
+import { exportEditedRoutine } from './ui-nwroutine-gallery.js';
 
 export function setupTimelineEditor(player, container) {
     const btnEditor = document.createElement('button');
@@ -57,6 +58,11 @@ export function setupTimelineEditor(player, container) {
     const btnExport = document.createElement('button');
     btnExport.textContent = '💾 Export JSON';
     editorControls.appendChild(btnExport);
+
+    const btnExportPackage = document.createElement('button');
+    btnExportPackage.textContent = '📦 Export .nwroutine';
+    btnExportPackage.title = 'Export as a shareable .nwroutine package (forks the routine you opened)';
+    editorControls.appendChild(btnExportPackage);
 
     const btnCloseEditor = document.createElement('button');
     btnCloseEditor.textContent = 'Close';
@@ -182,6 +188,10 @@ export function setupTimelineEditor(player, container) {
 
     // --- State and Interaction Logic ---
     let editingRoutine = [];
+    // [Neuro-Script] Package the editor was opened on (player.activePackage);
+    // exporting the edit forks it. loadRoutine() clears activePackage, so the
+    // sync paths below put it back.
+    let sourcePackage = null;
     let selectedEventIndex = -1;
     let isDragging = false;
     let draggedEventIndex = -1;
@@ -376,6 +386,7 @@ export function setupTimelineEditor(player, container) {
         const wasPlaying = player.isPlaying;
         const currentElapsed = player.elapsedTime;
         player.loadRoutine(routineToPlay, player.loop);
+        player.activePackage = sourcePackage;
         player.elapsedTime = currentElapsed;
         if (wasPlaying) {
             player.play();
@@ -391,7 +402,16 @@ export function setupTimelineEditor(player, container) {
 
         // Use loadRoutine + play to update state without breaking existing playNow behavior
         player.loadRoutine(routineToPlay, false);
+        player.activePackage = sourcePackage;
         player.play();
+    };
+
+    btnExportPackage.onclick = () => {
+        const pkg = exportEditedRoutine(editingRoutine, sourcePackage);
+        if (pkg) {
+            sourcePackage = pkg;
+            player.activePackage = pkg;
+        }
     };
 
     btnExport.onclick = () => {
@@ -406,6 +426,7 @@ export function setupTimelineEditor(player, container) {
 
     btnEditor.onclick = () => {
         editingRoutine = JSON.parse(JSON.stringify(player.routine.length > 0 ? player.routine : []));
+        sourcePackage = player.activePackage || null;
         selectedEventIndex = -1;
         populatePropertiesPanel();
         renderTimeline();
