@@ -32,6 +32,10 @@ Production server requirement — cross-origin isolation:
   WASM_PTHREADS=1 build is refused at runtime on a non-isolated page — see
   docs/wasm-engine.md, "Threads and cross-origin isolation", for the check and
   an nginx snippet.
+
+Redirects — also server config, not something this script can ship:
+  deploy/nginx-redirects.conf sends /brain_viz, /brain_viz/* and /brain-viz to
+  /brain-viz/. It has to be included in the test.1ink.us server block by hand.
 """
 
 import io
