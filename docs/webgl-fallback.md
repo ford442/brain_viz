@@ -112,6 +112,7 @@ only one backend, and say why the other doesn't need it.
 | Recursive-zoom cortical patch (Phase C) | Yes — mesh + laminar somas, point impostors at the reduced tier | No | — |
 | GPU frame timing (`getFrameTimings()`) | `GPUTimer` per pass (coarse field, brick, scene, post) when the adapter has `timestamp-query`; budget governor + Activity HUD | No GPU timing: rAF interval and the CPU field-step time | — |
 | Brick snapshot readback (`readBrickSnapshot()`, extension) | Yes (verification/debug) | No | — |
+| UI treatment of WebGPU-only controls | Live | Disabled, badged "WebGPU only" with an explanatory tooltip (`src/ui-backend-capabilities.js`: fog/aberration/grain/focus/aperture sliders, clipmap controls; the WASM toggle in `main-synaptix-integration.js`). The `active: … \| fallback: …` status line stays visible. Add a new WebGPU-only control's id to `WEBGPU_ONLY_CONTROL_IDS` | — |
 
 ## Differences
 

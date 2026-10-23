@@ -2,6 +2,7 @@
 // Extracted from main.js
 import { SynaptiXEngine } from './synaptix-engine.js';
 import { TensorPlayer } from './tensor-player.js';
+import { WEBGPU_ONLY_NOTE } from './ui-backend-capabilities.js';
 
 export function setupSynaptiXIntegration(renderer, player, controls, inputs, labels, inferenceEngine, aiPromptRef, rendererInfo) {
     const styleSynaptix = document.getElementById('style-mode-synaptix');
@@ -131,6 +132,11 @@ export function setupSynaptiXIntegration(renderer, player, controls, inputs, lab
             wasmToggleBtn.textContent = '⚙️ WebGL2 Renderer (WASM compute unavailable)';
             wasmToggleBtn.disabled = true;
             wasmToggleBtn.style.opacity = '0.6';
+            wasmToggleBtn.title = WEBGPU_ONLY_NOTE;
+            const wasmLabel = wasmToggleBtn.closest('.control-group')?.querySelector('label');
+            if (wasmLabel && !wasmLabel.querySelector('.webgpu-only-badge')) {
+                wasmLabel.insertAdjacentHTML('beforeend', ' <span class="webgpu-only-badge">WebGPU only</span>');
+            }
             if (wasmStatusDiv) wasmStatusDiv.textContent = 'WASM simulation is only wired into the WebGPU renderer path.';
         }
         wasmToggleBtn.addEventListener('click', async () => {
