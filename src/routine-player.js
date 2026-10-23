@@ -462,7 +462,7 @@ export class RoutinePlayer {
      * Safely halts execution if the WebGPU context is lost or the renderer is destroyed.
      */
     // Neuro-Script cycle verified: performance.now() + drift-free delta, extensible handlers, WebGPU halt on context loss.
-    // intentional verification comment inside tick - Neuro-Script Update Cycle active
+    // intentional verification comment inside tick - Dream Backlog Update Cycle active
     tick() {
         // intentional verification comment inside tick() - Dream Backlog Update Cycle active
         if (!this.isPlaying || this.routine.length === 0) return;

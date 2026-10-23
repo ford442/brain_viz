@@ -25,9 +25,9 @@ import { startMainUpdateLoop } from './main-update-loop.js';
 
 let isInitialized = false;
 
-// intentional verification comment inside init - Neuro-Script Update Cycle active
+// intentional verification comment inside init - Dream Backlog Update Cycle active
 async function init() {
-    // intentional verification comment inside init() - Neuro-Script Update Cycle active
+    // intentional verification comment inside init() - Dream Backlog Update Cycle active
     if (isInitialized) return; // Safety: Prevent multiple initializations
     if (!window || !document) return; // Safety guard
     // Safety check for critical DOM elements before proceeding
@@ -273,6 +273,10 @@ if (player) {
             const newEntry = document.createElement('div');
             newEntry.innerHTML = '<b>E</b> : Trigger Adaptive Emotion Routine (Live Input Bus Branching)';
             cogLegendPanelAdaptive.appendChild(newEntry);
+
+            const newEntryEureka = document.createElement('div');
+            newEntryEureka.innerHTML = '<b>U</b> : Trigger Eureka Moment Simulation';
+            cogLegendPanelAdaptive.appendChild(newEntryEureka);
         }
 
         const cogLegendPanelSerotonin = document.getElementById('legend-panel');
@@ -333,6 +337,23 @@ if (player) {
             });
             player.startLerp({ key: 'dopamineTrails', value: 1.5 * intensity, duration: duration, ease: ease });
             player.startLerp({ key: 'sparkle', value: 2.0 * intensity, duration: duration, ease: ease });
+
+            if (evt.message) {
+                player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+            }
+        });
+
+        player.registerHandler('eureka_moment', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 5.0;
+            const ease = evt.ease || 'sineInOut';
+
+            // Brainwave synchronization to gamma state
+            player.executeEvent({ type: 'brainwave_resonance', band: 'gamma', intensity: intensity * 1.5, duration: duration });
+
+            // Spike sparkle and synaptic density for structural 'aha' visualization
+            player.startLerp({ key: 'sparkle', value: 2.5 * intensity, duration: duration, ease: ease });
+            player.startLerp({ key: 'synapticDensity', value: 2.0 * intensity, duration: duration, ease: ease });
 
             if (evt.message) {
                 player.executeEvent({ type: 'text', message: evt.message, duration: duration });
@@ -444,4 +465,5 @@ MINI_ROUTINES['v'] = [{ time: 0, type: 'text', message: 'Environmental Turbulenc
 MINI_ROUTINES['b'] = [{ time: 0, type: 'text', message: 'Collaborative Brain Storming', duration: 2.0 }, { time: 0, type: 'collaborative_brain_storming', intensity: 1.5, duration: 5.0 }];
 MINI_ROUTINES['m'] = [{ time: 0, type: 'text', message: 'Cellular Memory Simulation', duration: 2.0 }, { time: 0, type: 'cellular_memory', intensity: 1.5, duration: 5.0 }];
 MINI_ROUTINES['X'] = [{ time: 0, type: 'text', message: 'Reward Interaction Triggered', duration: 2.0 }, { time: 0, type: 'reward_interaction', intensity: 1.5, duration: 5.0 }];
+MINI_ROUTINES['U'] = [{ time: 0, type: 'text', message: 'Eureka Moment!', duration: 2.0 }, { time: 0, type: 'eureka_moment', intensity: 1.5, duration: 5.0 }];
 export { MINI_ROUTINES };
