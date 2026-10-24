@@ -27,6 +27,7 @@ let isInitialized = false;
 
 // intentional verification comment inside init - Neuro-Script Update Cycle active
 async function init() {
+    // intentional verification comment inside init - Eureka Moment Simulation active
     // intentional verification comment inside init() - Neuro-Script Update Cycle active
     if (isInitialized) return; // Safety: Prevent multiple initializations
     if (!window || !document) return; // Safety guard
@@ -304,7 +305,15 @@ if (player) {
             cogLegendPanelBrainStorming.appendChild(newEntry);
         }
 
-        const cogLegendPanelReward = document.getElementById('legend-panel');
+
+        const cogLegendPanelEureka = document.getElementById('legend-panel');
+        if (cogLegendPanelEureka) {
+            const newEntry = document.createElement('div');
+            newEntry.innerHTML = '<b>U</b> : Trigger Eureka Moment';
+            cogLegendPanelEureka.appendChild(newEntry);
+        }
+
+const cogLegendPanelReward = document.getElementById('legend-panel');
         if (cogLegendPanelReward) {
             const newEntry = document.createElement('div');
             newEntry.innerHTML = '<b>X</b> : Trigger Reward Interaction';
@@ -339,7 +348,22 @@ if (player) {
             }
         });
 
-        player.registerHandler('cellular_memory', (evt) => {
+
+        player.registerHandler('eureka_moment', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 5.0;
+            const ease = evt.ease || 'sineInOut';
+
+            player.executeEvent({ type: 'brainwave_resonance', targetBand: 'gamma', intensity: intensity, duration: duration });
+            player.startLerp({ key: 'sparkle', value: 2.0 * intensity, duration: duration, ease: ease });
+            player.startLerp({ key: 'synapticDensity', value: 1.5 * intensity, duration: duration, ease: ease });
+
+            if (evt.message) {
+                player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+            }
+        });
+
+player.registerHandler('cellular_memory', (evt) => {
             const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
             const duration = evt.duration || 5.0;
             const ease = evt.ease || 'sineInOut';
@@ -444,4 +468,6 @@ MINI_ROUTINES['v'] = [{ time: 0, type: 'text', message: 'Environmental Turbulenc
 MINI_ROUTINES['b'] = [{ time: 0, type: 'text', message: 'Collaborative Brain Storming', duration: 2.0 }, { time: 0, type: 'collaborative_brain_storming', intensity: 1.5, duration: 5.0 }];
 MINI_ROUTINES['m'] = [{ time: 0, type: 'text', message: 'Cellular Memory Simulation', duration: 2.0 }, { time: 0, type: 'cellular_memory', intensity: 1.5, duration: 5.0 }];
 MINI_ROUTINES['X'] = [{ time: 0, type: 'text', message: 'Reward Interaction Triggered', duration: 2.0 }, { time: 0, type: 'reward_interaction', intensity: 1.5, duration: 5.0 }];
+MINI_ROUTINES['U'] = [{ time: 0, type: 'text', message: 'Eureka Moment Triggered', duration: 2.0 }, { time: 0, type: 'eureka_moment', intensity: 1.5, duration: 5.0 }];
+
 export { MINI_ROUTINES };
