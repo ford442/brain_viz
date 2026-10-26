@@ -70,7 +70,9 @@
 - [x] **Eureka Moment Simulation:** Visualizes a sudden synchronization of all brain waves into a coherent gamma state.
 
 - [x] **Reward Interaction:** Implement dopamine reward visualization.
+- [x] **Eureka Moment:** Implement sudden synchronization of all brain waves into a coherent gamma state.
 
+*Idea:* "What if we mapped eye tracking data to specific neural pathway activation for focus analysis?"
 - [x] **Eureka Moment:** Implement a 'Eureka' moment with a sudden synchronization of all brain waves into a coherent gamma state.
 
 *Idea:* "What if we visualized cognitive dissonance as a conflicting, unsynchronized pattern of signals across the frontal and parietal lobes?"

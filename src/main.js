@@ -275,6 +275,10 @@ if (player) {
             const newEntry = document.createElement('div');
             newEntry.innerHTML = '<b>E</b> : Trigger Adaptive Emotion Routine (Live Input Bus Branching)';
             cogLegendPanelAdaptive.appendChild(newEntry);
+
+            const newEntryEureka = document.createElement('div');
+            newEntryEureka.innerHTML = '<b>U</b> : Trigger Eureka Moment Simulation';
+            cogLegendPanelAdaptive.appendChild(newEntryEureka);
         }
 
         const cogLegendPanelSerotonin = document.getElementById('legend-panel');
@@ -377,16 +381,19 @@ const cogLegendPanelReward = document.getElementById('legend-panel');
             const duration = evt.duration || 5.0;
             const ease = evt.ease || 'sineInOut';
 
-            player.executeEvent({ type: 'brainwave_resonance', targetBand: 'gamma', intensity: intensity, duration: duration });
-            player.startLerp({ key: 'sparkle', value: 2.0 * intensity, duration: duration, ease: ease });
-            player.startLerp({ key: 'synapticDensity', value: 1.5 * intensity, duration: duration, ease: ease });
+            // Brainwave synchronization to gamma state
+            player.executeEvent({ type: 'brainwave_resonance', band: 'gamma', intensity: intensity * 1.5, duration: duration });
+
+            // Spike sparkle and synaptic density for structural 'aha' visualization
+            player.startLerp({ key: 'sparkle', value: 2.5 * intensity, duration: duration, ease: ease });
+            player.startLerp({ key: 'synapticDensity', value: 2.0 * intensity, duration: duration, ease: ease });
 
             if (evt.message) {
                 player.executeEvent({ type: 'text', message: evt.message, duration: duration });
             }
         });
 
-player.registerHandler('cellular_memory', (evt) => {
+        player.registerHandler('cellular_memory', (evt) => {
             const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
             const duration = evt.duration || 5.0;
             const ease = evt.ease || 'sineInOut';
