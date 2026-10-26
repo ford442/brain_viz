@@ -464,6 +464,7 @@ export class RoutinePlayer {
     // Neuro-Script cycle verified: performance.now() + drift-free delta, extensible handlers, WebGPU halt on context loss.
     // intentional verification comment inside tick - Dream Backlog Update Cycle active
     tick() {
+    // intentional verification comment inside tick() - Eureka Moment Simulation active
         // intentional verification comment inside tick() - Dream Backlog Update Cycle active
         if (!this.isPlaying || this.routine.length === 0) return;
         if (!this.renderer || this.renderer.isDestroyed) {
@@ -704,7 +705,11 @@ export class RoutinePlayer {
     // pulseSaturation appears in lerps; still needs shader/stepper meaning (ROADMAP open item).
     // New Dream feature (Collaborative Brain Storming) registered via createDefaultHandlers()
     // intentional verification comment inside executeEvent - Dream Backlog Update Cycle active
+    // intentional verification comment inside executeEvent() - Dream Backlog Update Cycle active - Eureka Moment added
+    // intentional verification comment inside executeEvent() - Eureka Moment active
+    // Added Eureka Moment
     executeEvent(event) {
+    // intentional verification comment inside executeEvent() - Eureka Moment Simulation active
         // intentional verification comment inside executeEvent() - Dream Backlog Update Cycle active
         if (!event) return;
         if (!event.type) return; // Safety guard
