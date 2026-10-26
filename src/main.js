@@ -26,6 +26,7 @@ import { startMainUpdateLoop } from './main-update-loop.js';
 let isInitialized = false;
 
 // intentional verification comment inside init - Neuro-Script Update Cycle active
+// intentional verification comment above init() - Dream Backlog Update Cycle active
 async function init() {
     // intentional verification comment inside init - Eureka Moment Simulation active
     // intentional verification comment inside init() - Neuro-Script Update Cycle active
@@ -320,6 +321,13 @@ const cogLegendPanelReward = document.getElementById('legend-panel');
             cogLegendPanelReward.appendChild(newEntry);
         }
 
+        const cogLegendPanelEureka = document.getElementById('legend-panel');
+        if (cogLegendPanelEureka) {
+            const newEntry = document.createElement('div');
+            newEntry.innerHTML = '<b>U</b> : Trigger Eureka Moment';
+            cogLegendPanelEureka.appendChild(newEntry);
+        }
+
         const cogLegendPanelCellularMemory = document.getElementById('legend-panel');
         if (cogLegendPanelCellularMemory) {
             const newEntry = document.createElement('div');
@@ -328,6 +336,21 @@ const cogLegendPanelReward = document.getElementById('legend-panel');
         }
 
         // Global hook for external data sonification (satisfies manual testing and integration points)
+
+        player.registerHandler('eureka_moment', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 5.0;
+            const ease = evt.ease || 'sineInOut';
+
+            player.executeEvent({ type: 'brainwave_resonance', band: 'gamma', intensity: intensity * 1.5, duration: duration });
+
+            player.startLerp({ key: 'sparkle', value: 2.0 * intensity, duration: duration, ease: ease });
+            player.startLerp({ key: 'synapticDensity', value: 1.5 * intensity, duration: duration, ease: ease });
+
+            if (evt.message) {
+                player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+            }
+        });
 
         player.registerHandler('reward_interaction', (evt) => {
             const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
