@@ -597,9 +597,9 @@ export function stepTensorField(field, next, { params, fiberAffinity = null, aiF
                 if (weight < fr(0.01)) continue;
                 const upVal = slotUp[slot];
                 const downVal = slotDown[slot];
-                const centerDrive = Math.max(val, Math.max(upVal, downVal));
-                val += Math.max(upVal, downVal) * weight * p.fiberCoupling * 0.34;
-                val += centerDrive * weight * p.fiberCoupling * 0.12;
+                // Relaxation toward the lead sample, never injection: see §6.4.
+                const lead = Math.max(upVal, downVal);
+                val += Math.max(0.0, lead - val) * weight * p.fiberCoupling * 0.46;
                 if (synaptiX) {
                     const u = slot * 3, d = slot * 3;
                     const aiUp = sampleVoxel(aiField, dim, slotUpPos[u], slotUpPos[u + 1], slotUpPos[u + 2]);

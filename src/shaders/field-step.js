@@ -156,10 +156,9 @@ ${h.neighborReads}
             let downstreamPos = worldPosition + fiberDir * voxelStep;
             let upVal = ${h.sample('upstreamPos')};
             let downVal = ${h.sample('downstreamPos')};
-            let centerDrive = max(val, max(upVal, downVal));
-            let highway = max(upVal, downVal) * weight * params.fiberCoupling * 0.34;
-            let priming = centerDrive * weight * params.fiberCoupling * 0.12;
-            val = val + highway + priming;
+            // §6.4: relaxation toward the lead sample, never injection.
+            let lead = max(upVal, downVal);
+            val = val + max(0.0, lead - val) * weight * params.fiberCoupling * 0.46;
             if (params.synaptiXActive > 0.5) {
                 let aiUp = sampleAIActivation(upstreamPos, dim);
                 let aiDown = sampleAIActivation(downstreamPos, dim);
