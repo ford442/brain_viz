@@ -29,7 +29,6 @@ let isInitialized = false;
 // intentional verification comment above init() - Dream Backlog Update Cycle active
 async function init() {
     // intentional verification comment inside init - Eureka Moment Simulation active
-    // intentional verification comment inside init - Neuromodulation External API active
     // intentional verification comment inside init() - Neuro-Script Update Cycle active
     if (isInitialized) return; // Safety: Prevent multiple initializations
     if (!window || !document) return; // Safety guard
@@ -324,13 +323,6 @@ const cogLegendPanelReward = document.getElementById('legend-panel');
             const newEntry = document.createElement('div');
             newEntry.innerHTML = '<b>X</b> : Trigger Reward Interaction';
             cogLegendPanelReward.appendChild(newEntry);
-        }
-
-        const cogLegendPanelEureka = document.getElementById('legend-panel');
-        if (cogLegendPanelEureka) {
-            const newEntry = document.createElement('div');
-            newEntry.innerHTML = '<b>U</b> : Trigger Eureka Moment';
-            cogLegendPanelEureka.appendChild(newEntry);
         }
 
         const cogLegendPanelCellularMemory = document.getElementById('legend-panel');
