@@ -69,6 +69,41 @@ export function setupLiveInputIntegration(renderer, player, audioReactor, bciSes
         }
     });
 
+    // Neuromodulation External API
+    // Connects to a generic WebSocket bridge only if requested via URL parameter
+    // Expects JSON messages: { channels: { alpha: 0.4, stress: 0.8, ... } }
+    let latestExternalData = {};
+    const params = new URLSearchParams(window.location.search);
+    const externalUrl = params.get('external');
+
+    if (externalUrl) {
+        try {
+            const ws = new WebSocket(externalUrl);
+            ws.onerror = (e) => {
+                if (e && e.preventDefault) e.preventDefault();
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data && data.channels) {
+                        latestExternalData = data.channels;
+                    }
+                } catch (err) {
+                    // Ignore parse errors on external socket
+                }
+            };
+        } catch (e) {
+            // Graceful fallback if WebSocket is blocked or fails to init
+        }
+    }
+
+    bus.registerSource('external', {
+        hz: 30,
+        features: ['alpha', 'beta', 'stress', 'focus'],
+        sample: () => latestExternalData
+    });
+
     if (!bus.loadFromLocalStorage()) {
         bus.enabled = true;
     }
