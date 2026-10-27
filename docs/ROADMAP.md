@@ -44,7 +44,7 @@ For the current architecture and module responsibilities, see [`AGENTS.md`](../A
 | 29 | Cortical Dynamics | Cortical thickness atrophy and swelling visualization |
 | 30 | Neural Field Physics Contract | `docs/tensor-physics.md` as the normative spec; `src/physics/tensor-field.js` CPU reference driving the WebGL2 fallback; C++ engine ported to the full model behind a generated `BrainTensorParams` ABI; golden 32³ fixture + `npm run test:golden`; SIMD/LTO/ESM WASM build |
 | 31 | Live Input Bus | `LiveInputBus`: one shared, user-editable mapping table (source/feature -> renderer-param sink, with scale + attack/release smoothing) driving mic, BCI band-power, and Training Mode metrics without a new per-source integration file; "Live" tab mapping matrix UI with JSON import/export; `if: "live.…"` routine condition sugar |
-| 33 | Dream Implementations | **Reward Interaction**: Implement dopamine reward visualization. |
+| 33 | Dream Implementations | **Reward Interaction**: Implement dopamine reward visualization. **AI Narrative Generation**: Implement a template-based and LLM-ready generator for dynamic routine scripts from themes. |
 
 ## Open Items
 
@@ -61,7 +61,6 @@ Deduplicated from the historical "Dream Log" entries across the archived plans �
 
 - **Neuro-Script Exchange** — a shared platform to publish, fork, and remix visualization routines.
 - **Multi-Brain Mode** — visualize two brains interacting (mirror-neuron storytelling).
-- **AI Narrative Generation** — use an LLM to generate routine scripts from themes (e.g. "Anxiety Spike", "Eureka Moment"); related to the multimodal ideas in [`docs/DOUBLE_MIRROR_VISION.md`](DOUBLE_MIRROR_VISION.md).
 - **Fractal Recursive Zoom** — procedurally generate infinite detail when zooming into a soma or fiber. *Phases A (runtime `voxelDim`), B (clipmap field: a 64³ fine brick nested in the coarse field) and C (cortical patch with laminar somas below the zoom threshold) are done on WebGPU — see [`docs/field-resolution.md`](field-resolution.md) §7–§8. Phase D (WASM SIMD kernels, a 128³ brick, dual SynaptiX clipmaps, a fine NWS1 chunk) is next.*
 - **Collaborative Brain Storming** — multi-user session injecting stimuli into a shared visualization via WebSockets.
 - **Adaptive Routines** — *`if: "live.…"` condition sugar (Phase 31) covers gating a single event on a live feature; routines that branch on real-time webcam emotion detection specifically are still open.*

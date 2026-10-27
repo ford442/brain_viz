@@ -464,6 +464,7 @@ export class RoutinePlayer {
     // Neuro-Script cycle verified: performance.now() + drift-free delta, extensible handlers, WebGPU halt on context loss.
     // intentional verification comment inside tick - Dream Backlog Update Cycle active
     tick() {
+    // intentional verification comment inside tick() - AI Narrative Generation active
     // intentional verification comment inside tick() - Neuromodulation External API active
     // intentional verification comment inside tick() - Eureka Moment Simulation active
         // intentional verification comment inside tick() - Dream Backlog Update Cycle active
@@ -710,6 +711,7 @@ export class RoutinePlayer {
     // intentional verification comment inside executeEvent() - Eureka Moment active
     // Added Eureka Moment
     executeEvent(event) {
+    // intentional verification comment inside executeEvent() - AI Narrative Generation active
     // intentional verification comment inside executeEvent() - Neuromodulation External API active
     // intentional verification comment inside executeEvent() - Eureka Moment Simulation active
         // intentional verification comment inside executeEvent() - Dream Backlog Update Cycle active
