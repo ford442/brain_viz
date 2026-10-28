@@ -471,6 +471,9 @@ window.addEventListener('keydown', (e) => {
 init();
 
 import { MINI_ROUTINES } from './mini-routines.js';
+import { generateNarrativeRoutine } from './narrative-generator.js';
+
+MINI_ROUTINES['A'] = generateNarrativeRoutine('Anxiety Spike', false);
 
 MINI_ROUTINES['e'] = [{ time: 0, type: 'endorphin_rush', duration: 4.0 }];
 MINI_ROUTINES['4'] = [{ time: 0, type: 'text', message: 'Serotonin Surge', duration: 2.0 }, { time: 0, type: 'serotonin', intensity: 1.5, duration: 5.0 }];
