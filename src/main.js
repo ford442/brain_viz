@@ -326,6 +326,7 @@ const cogLegendPanelReward = document.getElementById('legend-panel');
             cogLegendPanelReward.appendChild(newEntry);
         }
 
+
         const cogLegendPanelCellularMemory = document.getElementById('legend-panel');
         if (cogLegendPanelCellularMemory) {
             const newEntry = document.createElement('div');
