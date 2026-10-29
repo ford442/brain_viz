@@ -39,10 +39,10 @@
   },
   "epsilon": 0.002,
   "voxelCount": 32768,
-  "sha256": "fac8ab35e51ee27cdd6ddea40e25e80a8756f62804959c1ab4510c685bd88794",
+  "sha256": "54d37c3e2041e889f1026b5ce68b0ccc5c8c6faf70450a50a2ef16d91c4f45f1",
   "stats": {
-    "mean": 0.204572207,
-    "max": 0.871120095,
+    "mean": 0.189552212,
+    "max": 0.87205255,
     "activeVoxels": 32768
   }
 }

@@ -13,6 +13,7 @@ import { renderBciTab } from './tab-bci.js';
 import { renderXrTab } from './tab-xr.js';
 import { renderSessionTab } from './tab-session.js';
 import { renderLiveTab } from './tab-live.js';
+import { renderExchangeTab } from './tab-exchange.js';
 
 const TABS = [
     { id: 'tab-activity', label: 'Activity', render: renderActivityTab },
@@ -26,6 +27,7 @@ const TABS = [
     { id: 'tab-training', label: 'Training', render: renderTrainingTab },
     { id: 'tab-live', label: 'Live', render: renderLiveTab },
     { id: 'tab-session', label: 'Session', render: renderSessionTab },
+    { id: 'tab-exchange', label: 'Exchange', render: renderExchangeTab },
 ];
 
 function renderTabBar() {

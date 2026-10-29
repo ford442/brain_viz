@@ -128,6 +128,7 @@ export function setupLegendPanel() {
                 <div class="legend-item"><span class="legend-key">b</span><span>Branch</span></div>
                 <div class="legend-item"><span class="legend-key">o</span><span>Orbit Avoid</span></div>
                 <div class="legend-item"><span class="legend-key">c</span><span>Custom Audio</span></div>
+                <div class="legend-item"><span class="legend-key">A</span><span>AI Narrative Gen</span></div>
                 <div class="legend-item"><span class="legend-key">&gt;</span><span>Binaural Easing</span></div>
                 <div class="legend-item"><span class="legend-key">k</span><span>Binaural</span></div>
                 <div class="legend-item"><span class="legend-key">f</span><span>Focus</span></div>

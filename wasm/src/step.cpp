@@ -9,62 +9,34 @@
 #include "engine.h"
 #include "region.h"
 
+
+#if defined(BTE_PTHREADS) && BTE_PTHREADS
+#include <thread>
+#include <vector>
+#include <algorithm>
+#endif
+
 namespace bte {
 
-void step(BrainTensorEngine& eng)
+static void step_z_range(BrainTensorEngine& eng, uint32_t z0, uint32_t z1,
+                         const HypoxiaPhysics& hyp, const Neuromodulation& nm,
+                         float isotropicMix, float couplingMix, float criticality,
+                         float ambientWave, float phaseSpeed, float waveFreq,
+                         const float retentionScale[5],
+                         float* out, const float* data, const StencilRow& row)
 {
     const BrainTensorParams& p = eng.params;
     const uint32_t dim = eng.voxelDim;
     const uint32_t dim2 = dim * dim;
     const uint32_t total = eng.voxelCount;
-    const float* data = eng.tensor.data();
-    float* out = eng.scratch.data();
-    const StencilRow& row = eng.row;
 
     const float voxelStep = (BRAIN_RANGE / static_cast<float>(dim)) * 0.9f;
     const bool hasFibers = eng.fibers.size() >= static_cast<size_t>(total) * FIBER_STRIDE;
     const bool synaptiX = p.synaptiXActive > 0.5f && eng.aiTensor.size() >= total;
     const int32_t frame = static_cast<int32_t>(eng.frame);
-
-    const HypoxiaPhysics hyp = get_hypoxia_physics(p.hypoxiaStress, p.metabolicRate,
-                                                   p.mitochondrialFunction);
-    // §3.4 Neuromodulation: global scales here, the per-lobe term per voxel.
-    const Neuromodulation nm = get_neuromodulation(p.decayRate, p.diffusionRate);
-    const float isotropicMix = spread(0.7f, nm.diffusionScale);
-    const float couplingMix = std::min(spread(clampf(0.45f + p.fiberCoupling * 0.35f, 0.0f, 0.92f),
-                                              nm.diffusionScale), 0.92f);
-    const float criticality = avalanche_criticality(p.cognitiveLoad, p.stress, p.fluidActive);
-    // §6.11 Ambient drive — the low-amplitude heartbeat between stimuli.
-    const float ambientWave = std::sin(p.time * p.frequency) * 0.5f + 0.5f;
-    // §6.6 constants.
-    const float phaseSpeed = 4.0f;
-    const float waveFreq = 6.2832f;
-
-    // ── Per-step hoists (engine.h AxisTables). Same expressions, same inputs. ──
-    // §3.4 The regional retention term depends on the zone alone: 5 exp2 calls
-    // per step rather than one per voxel.
-    float retentionScale[5];
-    for (uint32_t zone = 0; zone < 5u; ++zone) retentionScale[zone] = retention_loss_scale(zone, p.retentionBias);
-
     const AxisTables& axis = eng.axis;
-    const float fluidTs = p.time * 2.0f;
-    for (uint32_t i = 0; i < dim; ++i) {
-        const float w = voxel_to_world(i, dim);
-        const float np = clamp01((w / BRAIN_RANGE) * 0.5f + 0.5f);
-        // §6.6 The no-tract wave reads npy only.
-        axis.waveY[i] = std::sin(np * waveFreq - p.time * phaseSpeed) * 0.5f + 0.5f;
-        // §6.8 Each velocity component is a product of single-axis factors.
-        if (p.fluidActive > 0.0f) {
-            axis.fluidSinY3[i] = std::sin(w * 3.0f + fluidTs);
-            axis.fluidCosY3[i] = std::cos(w * 3.0f - fluidTs);
-            axis.fluidCosZ2[i] = std::cos(w * 2.0f - fluidTs);
-            axis.fluidSinZ2[i] = std::sin(w * 2.0f + fluidTs);
-            axis.fluidCosX3[i] = std::cos(w * 3.0f - fluidTs);
-            axis.fluidSinX2[i] = std::sin(w * 2.0f + fluidTs);
-        }
-    }
 
-    for (uint32_t z = 0; z < dim; ++z) {
+    for (uint32_t z = z0; z < z1; ++z) {
     const float wz = voxel_to_world(z, dim);
     const float npz = clamp01((wz / BRAIN_RANGE) * 0.5f + 0.5f);
     for (uint32_t y = 0; y < dim; ++y) {
@@ -144,9 +116,9 @@ void step(BrainTensorEngine& eng)
                 const float dx = wx + fx * voxelStep, dy = wy + fy * voxelStep, dz = wz + fz * voxelStep;
                 const float upVal = eng.sample(eng.tensor, ux, uy, uz);
                 const float downVal = eng.sample(eng.tensor, dx, dy, dz);
-                const float centerDrive = std::max(val, std::max(upVal, downVal));
-                val += std::max(upVal, downVal) * weight * p.fiberCoupling * 0.34f;
-                val += centerDrive * weight * p.fiberCoupling * 0.12f;
+                // Relaxation toward the lead sample, never injection: see §6.4.
+                const float lead = std::max(upVal, downVal);
+                val += std::max(0.0f, lead - val) * weight * p.fiberCoupling * 0.46f;
                 if (synaptiX) {
                     const float aiUp = eng.sample(eng.aiTensor, ux, uy, uz);
                     const float aiDown = eng.sample(eng.aiTensor, dx, dy, dz);
@@ -276,6 +248,79 @@ void step(BrainTensorEngine& eng)
     }
     }
 
+
+}
+
+void step(BrainTensorEngine& eng)
+{
+    const BrainTensorParams& p = eng.params;
+    const uint32_t dim = eng.voxelDim;
+    const float* data = eng.tensor.data();
+    float* out = eng.scratch.data();
+
+
+    const HypoxiaPhysics hyp = get_hypoxia_physics(p.hypoxiaStress, p.metabolicRate,
+                                                   p.mitochondrialFunction);
+    // §3.4 Neuromodulation: global scales here, the per-lobe term per voxel.
+    const Neuromodulation nm = get_neuromodulation(p.decayRate, p.diffusionRate);
+    const float isotropicMix = spread(0.7f, nm.diffusionScale);
+    const float couplingMix = std::min(spread(clampf(0.45f + p.fiberCoupling * 0.35f, 0.0f, 0.92f),
+                                              nm.diffusionScale), 0.92f);
+    const float criticality = avalanche_criticality(p.cognitiveLoad, p.stress, p.fluidActive);
+    // §6.11 Ambient drive — the low-amplitude heartbeat between stimuli.
+    const float ambientWave = std::sin(p.time * p.frequency) * 0.5f + 0.5f;
+    // §6.6 constants.
+    const float phaseSpeed = 4.0f;
+    const float waveFreq = 6.2832f;
+
+    // ── Per-step hoists (engine.h AxisTables). Same expressions, same inputs. ──
+    // §3.4 The regional retention term depends on the zone alone: 5 exp2 calls
+    // per step rather than one per voxel.
+    float retentionScale[5];
+    for (uint32_t zone = 0; zone < 5u; ++zone) retentionScale[zone] = retention_loss_scale(zone, p.retentionBias);
+
+    const AxisTables& axis = eng.axis;
+    const float fluidTs = p.time * 2.0f;
+    for (uint32_t i = 0; i < dim; ++i) {
+        const float w = voxel_to_world(i, dim);
+        const float np = clamp01((w / BRAIN_RANGE) * 0.5f + 0.5f);
+        // §6.6 The no-tract wave reads npy only.
+        axis.waveY[i] = std::sin(np * waveFreq - p.time * phaseSpeed) * 0.5f + 0.5f;
+        // §6.8 Each velocity component is a product of single-axis factors.
+        if (p.fluidActive > 0.0f) {
+            axis.fluidSinY3[i] = std::sin(w * 3.0f + fluidTs);
+            axis.fluidCosY3[i] = std::cos(w * 3.0f - fluidTs);
+            axis.fluidCosZ2[i] = std::cos(w * 2.0f - fluidTs);
+            axis.fluidSinZ2[i] = std::sin(w * 2.0f + fluidTs);
+            axis.fluidCosX3[i] = std::cos(w * 3.0f - fluidTs);
+            axis.fluidSinX2[i] = std::sin(w * 2.0f + fluidTs);
+        }
+    }
+
+
+#if defined(BTE_PTHREADS) && BTE_PTHREADS
+    const unsigned nthreads = std::min(dim, 4u);
+    std::vector<std::thread> workers;
+
+    if (eng.rowStorage.size() < static_cast<size_t>(8) * dim * nthreads) {
+        eng.rowStorage.resize(static_cast<size_t>(8) * dim * nthreads, 0.0f);
+    }
+
+    for (unsigned t = 0; t < nthreads; ++t) {
+        uint32_t z0 = t * dim / nthreads;
+        uint32_t z1 = (t + 1) * dim / nthreads;
+        if (t == nthreads - 1) z1 = dim;
+
+        workers.emplace_back([&eng, z0, z1, hyp, nm, isotropicMix, couplingMix, criticality, ambientWave, phaseSpeed, waveFreq, &retentionScale, out, data, t, dim]() {
+            float* r = eng.rowStorage.data() + t * 8 * dim;
+            StencilRow local_row{r, r + dim, r + 2u * dim, r + 3u * dim, r + 4u * dim, r + 5u * dim, r + 6u * dim, r + 7u * dim};
+            step_z_range(eng, z0, z1, hyp, nm, isotropicMix, couplingMix, criticality, ambientWave, phaseSpeed, waveFreq, retentionScale, out, data, local_row);
+        });
+    }
+    for (auto& worker : workers) worker.join();
+#else
+    step_z_range(eng, 0, dim, hyp, nm, isotropicMix, couplingMix, criticality, ambientWave, phaseSpeed, waveFreq, retentionScale, out, data, eng.row);
+#endif
     std::swap(eng.tensor, eng.scratch);
     eng.frame += 1u;
 }
