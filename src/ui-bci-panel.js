@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 import { BUILTIN_PATTERNS } from './tensor-player.js';
 import { BCISession } from './bci/bci-session.js';
 import { MuseAdapter } from './bci/muse-adapter.js';

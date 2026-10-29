@@ -3,8 +3,10 @@
 // A .nwroutine package is a single JSON document wrapping a routine (the
 // flat event-array format already consumed by RoutinePlayer.loadRoutine)
 // together with a manifest describing it for sharing/discovery. This module
-// only defines the format and validates it — import/export UI, the gallery
-// browser, and fork lineage are separate follow-up work.
+// defines the format, validates it, and forks it (`manifest.id` /
+// `manifest.parentId` carry the lineage). The gallery of built-in routines
+// lives in src/nwroutine-gallery.js and the import/export UI in
+// src/ui-nwroutine-gallery.js. Human-readable reference: docs/nwroutine.md.
 
 export const NWROUTINE_FORMAT = 'nwroutine';
 export const NWROUTINE_FORMAT_VERSION = '1.0.0';
@@ -42,6 +44,7 @@ export const KNOWN_EVENT_TYPES = new Set([
   'spatial_memory',
   // synaptix.js
   'synaptiXLoad', 'synaptiXBlend', 'injectAIStimulus', 'resonanceBurst',
+  'multi_brain',
   // biosync.js
   'neural_pruning', 'neuromodulator', 'environmental_noise',
   'pupillary_dilation', 'gsr_sync', 'neurotransmitter_depletion',
@@ -73,6 +76,26 @@ export const SANDBOX_DISALLOWED_TYPES = new Set([
 
 const TAG_PATTERN = /^[a-z0-9][a-z0-9-]{0,31}$/;
 const SEMVER_PATTERN = /^\d+\.\d+\.\d+$/;
+// Package ids are opaque: a UUID for packages made in the app, or a
+// `builtin:<name>` id for the shipped gallery (src/nwroutine-gallery.js).
+const ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9:._-]{0,127}$/;
+
+/**
+ * A fresh package id. crypto.randomUUID() only exists in secure contexts, so
+ * a dev server opened over a LAN IP falls back to getRandomValues().
+ * @returns {string}
+ */
+export function generatePackageId() {
+  const c = globalThis.crypto;
+  if (c && typeof c.randomUUID === 'function') return c.randomUUID();
+  const bytes = new Uint8Array(16);
+  if (c && typeof c.getRandomValues === 'function') {
+    c.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+  }
+  return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+}
 
 function isPlainObject(value) {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -81,8 +104,10 @@ function isPlainObject(value) {
 /**
  * Validate a package manifest. Returns { valid, errors }.
  * Required: title (non-empty string), author (non-empty string).
- * Optional but type-checked: tags (array of lowercase-kebab strings),
+ * Optional but type-checked: id, tags (array of lowercase-kebab strings),
  * minEngineVersion (semver-ish "x.y.z"), description, parentId, created.
+ * `id` names this package; `parentId` is the id of the package it was forked
+ * from (null for an original).
  */
 export function validateManifest(manifest) {
   const errors = [];
@@ -120,8 +145,15 @@ export function validateManifest(manifest) {
     errors.push('manifest.description must be a string');
   }
 
+  if (manifest.id !== undefined && (typeof manifest.id !== 'string' || !ID_PATTERN.test(manifest.id))) {
+    errors.push('manifest.id must be 1-128 characters of letters, digits, ":", ".", "_" or "-"');
+  }
+
   if (manifest.parentId !== undefined && manifest.parentId !== null && typeof manifest.parentId !== 'string') {
     errors.push('manifest.parentId must be a string or null');
+  }
+  if (typeof manifest.parentId === 'string' && manifest.parentId === manifest.id) {
+    errors.push('manifest.parentId must not equal manifest.id');
   }
 
   if (manifest.created !== undefined) {
@@ -192,10 +224,13 @@ export function validateRoutine(routine, options = {}) {
 }
 
 /**
- * Build a manifest object with sane defaults for the optional fields.
+ * Build a manifest object with sane defaults for the optional fields. A new
+ * manifest gets a fresh id unless one is passed.
+ * @param {{id?: string, title: string, author: string, tags?: string[], description?: string, minEngineVersion?: string, parentId?: string|null}} fields
  */
-export function createManifest({ title, author, tags = [], description = '', minEngineVersion, parentId = null }) {
+export function createManifest({ id = generatePackageId(), title, author, tags = [], description = '', minEngineVersion, parentId = null }) {
   return {
+    id,
     title,
     author,
     tags,
@@ -291,7 +326,7 @@ export function parsePackage(raw, options = {}) {
   try {
     data = typeof raw === 'string' ? JSON.parse(raw) : raw;
   } catch (e) {
-    return { valid: false, errors: [`invalid JSON: ${e.message}`], warnings: [], package: null };
+    return { valid: false, errors: [`invalid JSON: ${/** @type {Error} */ (e).message}`], warnings: [], package: null };
   }
 
   if (Array.isArray(data)) {
@@ -306,4 +341,60 @@ export function parsePackage(raw, options = {}) {
 
   const result = validatePackage(data, options);
   return { ...result, package: data };
+}
+
+/**
+ * Fork a package: a deep copy with a fresh id whose `parentId` is the
+ * source's id, so lineage survives being passed around as a file. Anything
+ * in `overrides` replaces the copied value (e.g. the edited routine from the
+ * timeline editor). A source without an id (a legacy file) forks with
+ * `parentId: null` — there is nothing to point back to.
+ *
+ * @param {any} pkg - the package being forked (assumed valid)
+ * @param {{title?: string, author?: string, tags?: string[], description?: string, routine?: any[], subRoutines?: Record<string, any[]>}} [overrides]
+ */
+export function forkPackage(pkg, overrides = {}) {
+  const source = JSON.parse(JSON.stringify(pkg));
+  const parent = source.manifest || {};
+  const manifest = createManifest({
+    title: overrides.title ?? `${parent.title || 'Untitled routine'} (fork)`,
+    author: overrides.author ?? parent.author ?? 'unknown',
+    tags: overrides.tags ?? parent.tags ?? [],
+    description: overrides.description ?? parent.description ?? '',
+    minEngineVersion: parent.minEngineVersion,
+    parentId: typeof parent.id === 'string' ? parent.id : null,
+  });
+  return createPackage(
+    manifest,
+    overrides.routine ? JSON.parse(JSON.stringify(overrides.routine)) : source.routine,
+    {
+      subRoutines: overrides.subRoutines ? JSON.parse(JSON.stringify(overrides.subRoutines)) : (source.subRoutines || {}),
+      assets: source.assets || {},
+    },
+  );
+}
+
+/**
+ * The text written to disk for a package. Drops `undefined` manifest fields
+ * (JSON.stringify does) so a round trip through parsePackage is lossless.
+ * @param {any} pkg
+ * @returns {string}
+ */
+export function serializePackage(pkg) {
+  return JSON.stringify(pkg, null, 2) + '\n';
+}
+
+/**
+ * A safe download filename for a package: the title, kebab-cased, with the
+ * `.nwroutine` extension.
+ * @param {any} manifest
+ * @returns {string}
+ */
+export function packageFileName(manifest) {
+  const slug = String(manifest?.title || 'routine')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 64);
+  return `${slug || 'routine'}.nwroutine`;
 }

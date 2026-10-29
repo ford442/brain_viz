@@ -34,6 +34,10 @@ export function renderSynaptixTab() {
                         <input type="range" id="aiLayer" min="0" max="63" step="1" value="0">
                     </div>
                     <div class="control-group" style="display:flex;align-items:center;gap:8px;">
+                        <input type="checkbox" id="dual-avatar-toggle" checked style="width:auto;">
+                        <label for="dual-avatar-toggle" style="margin:0;cursor:pointer;" data-tooltip="Style 4 draws avatar A (left) and the partner (right) as separate cortices. Off: one cortex with the partner as an overlay.">Show Both Cortices (Multi-Brain)</label>
+                    </div>
+                    <div class="control-group" style="display:flex;align-items:center;gap:8px;">
                         <input type="checkbox" id="fusion-particles" checked style="width:auto;">
                         <label for="fusion-particles" style="margin:0;cursor:pointer;">Enable Fusion Particles</label>
                     </div>

@@ -1,3 +1,4 @@
+// @ts-check
 // src/brain-renderer-webgl/resolution.js
 // [Field Resolution] Runtime resolution switching for the WebGL2 fallback.
 //
@@ -17,8 +18,9 @@ import {
     voxelCountFor,
 } from '../voxel-dim.js';
 
+/** @param {import('./types.js').WebGLRendererClass} Klass */
 export function applyResolutionMethods(Klass) {
-    Object.assign(Klass.prototype, {
+    Object.assign(Klass.prototype, /** @satisfies {import('./types.js').WebGLMixin} */ ({
         /**
          * Changes the neural field's grid resolution at runtime. Mirrors
          * `BrainRenderer#setVoxelDim` (see src/renderer-contract.js).
@@ -71,5 +73,5 @@ export function applyResolutionMethods(Klass) {
             this.tensorVao = null;
             this.buildTensorDebugGrid();
         },
-    });
+    }));
 }

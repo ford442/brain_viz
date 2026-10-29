@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // main-live-input-integration.js — [Neuro-Weaver] Wires the Live Input Bus
 // (src/live-input-bus.js) to the fragments it routes: AudioReactor features,
 // BCI band power, and Training Mode metrics. None of those modules are

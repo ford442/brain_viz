@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // ui-live-input-panel.js — wires the Live tab's mapping matrix to a
 // LiveInputBus instance. Mirrors ui-training-panel.js / ui-bci-panel.js:
 // static markup lives in src/ui/templates/tab-live.js, this file queries it

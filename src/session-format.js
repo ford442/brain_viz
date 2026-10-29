@@ -156,6 +156,16 @@ export function serializeSession(manifest, chunks) {
     return new Blob([output], { type: 'application/x-neuro-weaver-session' });
 }
 
+/**
+ * One decoded NWS1 chunk. `type` is a SESSION_CHUNK_TYPES value; `timestamp`
+ * is ms from session start.
+ * @typedef {{type: number, timestamp: number, payload: Uint8Array}} SessionChunk
+ */
+
+/**
+ * @param {Blob|ArrayBuffer} input
+ * @returns {Promise<{manifest: any, chunks: SessionChunk[], voxelDim: number}>}
+ */
 export async function parseSession(input) {
     const size = input instanceof Blob ? input.size : input?.byteLength;
     if (!Number.isFinite(size) || size > MAX_SESSION_BYTES) throw new Error('Session exceeds the 512 MB limit');
@@ -180,6 +190,7 @@ export async function parseSession(input) {
     if (!Number.isFinite(manifest.durationMs) || manifest.durationMs < 0 || manifest.durationMs > 5 * 60 * 1000) {
         throw new Error('Invalid session duration');
     }
+    /** @type {SessionChunk[]} */
     const chunks = [];
     let offset = HEADER_BYTES + manifestLength;
     while (offset < bytes.byteLength) {
@@ -187,7 +198,7 @@ export async function parseSession(input) {
         const type = view.getUint8(offset);
         const timestamp = view.getFloat64(offset + 1, true);
         const payloadLength = view.getUint32(offset + 9, true);
-        if (!Object.values(SESSION_CHUNK_TYPES).includes(type)) throw new Error('Unknown session chunk type');
+        if (!/** @type {number[]} */ (Object.values(SESSION_CHUNK_TYPES)).includes(type)) throw new Error('Unknown session chunk type');
         if (!Number.isFinite(timestamp) || timestamp < 0) throw new Error('Invalid session timestamp');
         if (timestamp > manifest.durationMs + 0.01) throw new Error('Session timestamp exceeds duration');
         if (payloadLength > MAX_CHUNK_BYTES) throw new Error('Session chunk is too large');

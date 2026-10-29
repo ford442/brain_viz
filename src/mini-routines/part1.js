@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // [Neuro-Weaver] Mini routines data, part 1 of 2 (split from mini-routines.js for file-size limits)
 export const MINI_ROUTINES_PART1 = {
     ',': [ // Pupillary Dilation Simulation
@@ -108,6 +109,7 @@ export const MINI_ROUTINES_PART1 = {
         { time: 4.9, type: 'camera', target: 'close-up', duration: 1.8 },
         { time: 5.4, type: 'text', message: 'Human and synthetic activations converge.', duration: 2.2 }
     ],
+    // eslint-disable-next-line no-dupe-keys -- KNOWN BUG: overwrites 'X' Neurotransmitter Depletion above, which is unreachable. Needs a new hotkey.
     'X': [ // Marker Event Showcase
         { time: 0.0, type: 'text', message: 'Marker Event Test', duration: 2.0 },
         { time: 0.5, type: 'marker', label: 'Marker Alpha' },
@@ -130,6 +132,7 @@ export const MINI_ROUTINES_PART1 = {
         { time: 4.5, type: 'calm' }
     ],
 
+    // eslint-disable-next-line no-dupe-keys -- KNOWN BUG: overwrites 'E' Visual Cortex Edge Detection above, which is unreachable. Needs a new hotkey.
     'E': [ // Electrical Exposure (High voltage, rapid chaotic firing, harsh audio)
         { time: 0.0, type: 'text', message: 'HAZARD: ELECTRICAL EXPOSURE', duration: 2.5 },
         { time: 0.0, type: 'style', value: 1 }, // Cyber/Wireframe style
@@ -160,10 +163,12 @@ export const MINI_ROUTINES_PART1 = {
 
 
 
+    // eslint-disable-next-line no-dupe-keys -- KNOWN BUG: overwrites 'K' Memory Formation Sequence above, which is unreachable. Needs a new hotkey.
     'K': [ // ATP Energy Depletion
         { time: 0.0, type: 'text', message: 'ATP Energy Depletion', duration: 3.0 },
         { time: 0.0, type: 'atp_depletion', intensity: 1.0, duration: 6.0 }
     ],
+    // eslint-disable-next-line no-dupe-keys -- KNOWN BUG: overwrites 'W' Dynamic Weather Simulation above, which is unreachable. Needs a new hotkey.
     'W': [ // Sensory Overload
         { time: 0.0, type: 'text', message: 'Sensory Overload Detected...', duration: 2.0 },
         { time: 0.0, type: 'style', value: 1 }, // Cyber

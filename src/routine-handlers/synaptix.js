@@ -1,5 +1,5 @@
-import { handleCamera } from '../routine-camera.js';
 import { DEFAULT_VOXEL_DIM, normalizeVoxelDim, voxelCountFor } from '../voxel-dim.js';
+import { BRAIN_RANGE } from '../physics/tensor-field.js';
 
 export function registerSynaptixHandlers(handlers, player) {
     handlers.set('synaptiXLoad', (evt) => {
@@ -41,15 +41,18 @@ export function registerSynaptixHandlers(handlers, player) {
         } else if (Array.isArray(evt.target)) {
             coords = evt.target;
         }
-        const intensity = evt.intensity || 1.0;
+        const intensity = evt.intensity ?? 1.0;
         // Write directly to AI tensor via a temporary Gaussian blob
         if (renderer.synaptixEngine) {
             // [Field Resolution] Built at the renderer's live grid, not 32³.
             const dim = normalizeVoxelDim(renderer.voxelDim);
             const blob = new Float32Array(voxelCountFor(dim));
-            const cx = Math.floor((coords[0] / 1.6 + 0.5) * dim);
-            const cy = Math.floor((coords[1] / 1.6 + 0.5) * dim);
-            const cz = Math.floor((coords[2] / 1.6 + 0.5) * dim);
+            // World -> voxel is the inverse of docs/tensor-physics.md §4.1: the
+            // grid spans ±BRAIN_RANGE. (Dividing by BRAIN_RANGE alone put every
+            // lobe target outside the grid, so only 'deep' ever drew.)
+            const cx = Math.floor((coords[0] / (2 * BRAIN_RANGE) + 0.5) * dim);
+            const cy = Math.floor((coords[1] / (2 * BRAIN_RANGE) + 0.5) * dim);
+            const cz = Math.floor((coords[2] / (2 * BRAIN_RANGE) + 0.5) * dim);
             // `radius` is authored in voxels at 32³, so scale it with the grid
             // to keep the blob the same physical size at any resolution.
             const radius = (evt.radius || 4) * (dim / DEFAULT_VOXEL_DIM);
@@ -65,6 +68,20 @@ export function registerSynaptixHandlers(handlers, player) {
             }
             renderer.synaptixEngine.setTensorData(blob);
         }
+    });
+
+    // [Multi-Brain] { type: 'multi_brain', enabled: true, partnerInfluence?: 0.7 }
+    // Shows (or hides) the second cortex. Enabling it switches to SynaptiX
+    // (style 4), the only style with a partner tensor to draw.
+    handlers.set('multi_brain', (evt) => {
+        const renderer = player.renderer;
+        if (!renderer) return;
+        const enabled = evt.enabled ?? true;
+        /** @type {Record<string, any>} */
+        const patch = { dualAvatarEnabled: enabled };
+        if (enabled && (renderer.params.style || 0) < 4.0) patch.style = 4.0;
+        if (typeof evt.partnerInfluence === 'number') patch.partnerInfluence = evt.partnerInfluence;
+        renderer.setParams(patch);
     });
 
     // Temporary resonance boost effect

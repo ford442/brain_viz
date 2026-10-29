@@ -24,7 +24,8 @@ an exhaustive listing — use `Glob`/`Grep` or an Explore agent for that.
 - **`src/main.js`** and **`src/main-*.js`** (`main-dom.js`, `main-renderer-setup.js`,
   `main-update-loop.js`, `main-routine-engine.js`, `main-reactivity-integration.js`,
   `main-synaptix-integration.js`, `main-training-integration.js`,
-  `main-sonification-integration.js`, `main-paint-integration.js`) — application
+  `main-sonification-integration.js`, `main-paint-integration.js`,
+  `main-live-input-integration.js`) — application
   bootstrap, split by concern: DOM/control wiring, renderer construction and device-loss
   recovery, the `requestAnimationFrame` update loop, and per-feature integration glue.
 
@@ -34,11 +35,14 @@ an exhaustive listing — use `Glob`/`Grep` or an Explore agent for that.
   surface from `src/brain-renderer/*.js` mixins (`core-methods.js` device/lifecycle,
   `gpu-context.js` adapter/device/canvas setup, `pipelines.js` render/compute pipeline
   creation, `geometry.js`, `stimulus.js`, `uniforms.js`, `render-loop.js`,
-  `synaptix-bridges.js`, `constants.js`).
+  `synaptix-bridges.js`, `constants.js`, `resolution.js` runtime `setVoxelDim()`,
+  `clipmap.js` fine brick + cortical patch GPU side).
 - **`src/brain-renderer-webgl.js`** — WebGL2 fallback/debug renderer
   (`BrainRendererWebGL`), assembled the same way from `src/brain-renderer-webgl/*.js`
   (`geometry.js`, `immune.js`, `state.js`, `tensor-sim.js`, `dynamic-buffers.js`,
-  `draw.js`, `lifecycle.js`).
+  `draw.js`, `lifecycle.js`, `resolution.js`, `clipmap.js` — the facade's clipmap
+  methods, reporting the brick unsupported). `types.js` is JSDoc-only: the `this`
+  type every one of those mixin literals is checked against.
 - **`src/brain-renderer-factory.js`** — backend selection (`?renderer=webgpu|webgl`)
   and automatic fallback bootstrap.
 - **`src/renderer-contract.js`** — JSDoc-only `BrainRendererFacade` typedef: the
@@ -54,6 +58,11 @@ an exhaustive listing — use `Glob`/`Grep` or an Explore agent for that.
   **`src/shaders/uniform-layout.js`**, the generator described in
   [CLAUDE.md](../CLAUDE.md) §3 that is the single source of truth for uniform struct
   layout, offsets, and buffer sizes (never hand-edit those in shader files).
+- **`src/voxel-dim.js`** — the field's grid resolution: `DEFAULT_VOXEL_DIM`,
+  `SUPPORTED_VOXEL_DIMS`, size helpers and `resampleField()`. Never write a bare `32`
+  for a grid size (see [`field-resolution.md`](field-resolution.md)).
+- **`src/clipmap/`** — pure-JS clipmap policy (brick placement, affinity chunks, frame
+  budget governor, cortical patch); the GPU half is `src/brain-renderer/clipmap.js`.
 - **`src/math-utils.js`** — `Mat4` (column-major; see the hotspot note in
   `DEVELOPER_CONTEXT.md`), easing curves, spline evaluation.
 
@@ -65,7 +74,8 @@ an exhaustive listing — use `Glob`/`Grep` or an Explore agent for that.
   (`npm run test:golden`).
 - **`src/shaders/volumetric-compute.js`** — the WGSL compute-shader implementation
   (WebGPU's authoritative path).
-- **`wasm/brain_tensor_engine.{h,cpp}`** + **`src/wasm-engine.js`** — optional C++/WASM
+- **`wasm/src/`** (split by spec section; `wasm/brain_tensor_engine.h` is the C ABI)
+  + **`src/wasm-engine.js`** — optional C++/WASM
   hybrid engine and its JS loader/bridge (`npm run build:wasm`).
 
 ### Routines, BCI, XR, reactivity
@@ -74,10 +84,18 @@ an exhaustive listing — use `Glob`/`Grep` or an Explore agent for that.
   **`src/routine-csv.js`**, **`src/routine-procedural.js`**, **`src/nwroutine-format.js`**,
   **`src/mini-routines/`** — the timed-event sequencer, its per-type handlers, camera
   director, CSV/fMRI import, procedural generation, and keyboard-triggered mini-routines.
+- **`src/nwroutine-gallery.js`** + **`src/ui-nwroutine-gallery.js`** — the Neuro-Script
+  Exchange: built-in routine catalog, sandboxed file import, fork, `.nwroutine` export
+  ([`nwroutine.md`](nwroutine.md)).
+- **`src/multi-brain-layout.js`** — the two-cortex SynaptiX layout and bridge geometry,
+  shared by both renderer backends ([`synaptix.md`](synaptix.md) → Multi-Brain).
 - **`src/tensor-player.js`**, **`src/bci/`** — synthetic pattern generation and
   live/pre-recorded BCI tensor playback (Muse/OpenBCI adapters, DSP, recording/replay).
 - **`src/webxr-manager.js`** — WebGL2-only stereo VR/AR session, navigation, controller
   stimulus injection (see the WebXR-only note in `src/renderer-contract.js`).
+- **`src/live-input-bus.js`** + **`src/main-live-input-integration.js`** — one mapping
+  table routing live features (mic, BCI band power, training metrics) to renderer
+  param sinks ([`live-input-bus.md`](live-input-bus.md)).
 - **`src/audio-reactor.js`**, **`src/reactivity-router.js`** — mic input and the
   bass/energy/brightness/onset reactivity bus.
 - **`src/neuromodulators.js`**, **`src/paint-controller.js`**, **`src/raycast-utils.js`**
@@ -114,16 +132,20 @@ an exhaustive listing — use `Glob`/`Grep` or an Explore agent for that.
 ### Tests, scripts, verification
 
 - **`tests/`** — headless Node assertions (`npm test`): uniform-layout drift, shader
-  contract, tensor-physics fixture, and the renderer facade check.
+  contract, naga WGSL validation, tensor-physics fixtures, voxel-dim, Live Input Bus,
+  clipmap, WASM loader, and the renderer facade check. CONTRIBUTING.md has the full
+  table of checks.
 - **`scripts/`** — build/deploy/test helpers, including `check-renderer-facade.mjs`
   (`npm run check:facade`), `gen_wasm_params.mjs`, `gen_tensor_fixture.mjs`, and the
   WASM build scripts.
 - **`verification/`** — Python/Playwright visual-regression suite against the WebGL2
   fallback (`python3 verification/verify_suite.py`).
-- **`jsconfig.json`** + `// @ts-check` — JSDoc typechecking for the files that opt in
-  (renderer internals, `routine-player.js`, `wasm-engine.js`, `types.js`); run with
-  `npm run typecheck`. See [CLAUDE.md](../CLAUDE.md) for why this project stays on
-  JSDoc instead of adding `.ts` sources.
+- **`jsconfig.json`** — JSDoc typechecking with `checkJs` on for all of `src/`; files
+  not clean yet open with `// @ts-nocheck — checkJs backlog`. Run with `npm run
+  typecheck`. See [CLAUDE.md](../CLAUDE.md) §3b for why this project stays on JSDoc
+  instead of adding `.ts` sources.
+- **`eslint.config.js`** — `npm run lint`: `eslint:recommended` + JSDoc tag validity on
+  `src/`, correctness only (no formatting rules).
 
 ## How It Works
 

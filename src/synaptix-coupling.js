@@ -1,6 +1,6 @@
 // [Field Resolution] Region membership is a function of the grid, so the index
 // lists are built per dimension and memoised rather than baked once at 32³.
-import { DEFAULT_VOXEL_DIM, inferVoxelDim, voxelCountFor } from './voxel-dim.js';
+import { inferVoxelDim, voxelCountFor } from './voxel-dim.js';
 
 export const SYNAPTIX_REGIONS = ['frontal', 'occipital', 'parietal', 'temporal', 'deep'];
 
@@ -9,6 +9,7 @@ function clamp01(value) {
 }
 
 function buildRegionIndices(VOXEL_DIM) {
+    /** @type {Record<string, number[]>} */
     const regions = Object.fromEntries(SYNAPTIX_REGIONS.map((name) => [name, []]));
     for (let z = 0; z < VOXEL_DIM; z++) {
         const wz = (z / (VOXEL_DIM - 1)) * 2 - 1;
@@ -112,6 +113,7 @@ export class SynaptiXCouplingModel {
         };
     }
 
+    /** @param {{enabled?: boolean, strength?: number, windowSeconds?: number}} [options] */
     configure({ enabled, strength, windowSeconds } = {}) {
         if (enabled !== undefined) this.enabled = Boolean(enabled);
         if (strength !== undefined) this.strength = clamp01(Number(strength));

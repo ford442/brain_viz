@@ -1,0 +1,30 @@
+[
+  { "time": 0.0, "type": "reset" },
+  { "time": 0.0, "type": "calm" },
+  { "time": 0.0, "type": "synaptix", "action": "pause-frames" },
+  { "time": 0.0, "type": "multi_brain", "enabled": true, "partnerInfluence": 0.85 },
+  { "time": 0.0, "type": "camera", "target": "overview", "zoom": 5.2, "duration": 1.2 },
+  { "time": 0.0, "type": "injectAIStimulus", "target": "deep", "intensity": 0 },
+  { "time": 0.1, "type": "mirror_coupling", "enabled": true, "strength": 0.9, "windowSeconds": 2.0 },
+  { "time": 0.2, "type": "text", "message": "Multi-Brain: left cortex acts, right cortex watches", "duration": 2.4 },
+
+  { "time": 2.6, "type": "text", "message": "I plan a reach (frontal / premotor)", "duration": 2.0 },
+  { "time": 2.7, "type": "stimulus", "target": "frontal", "intensity": 0.9 },
+  { "time": 3.6, "type": "text", "message": "...and execute it (parietal / sensorimotor)", "duration": 2.0 },
+  { "time": 3.7, "type": "stimulus", "target": "parietal", "intensity": 1.0 },
+
+  { "time": 4.6, "type": "text", "message": "You only watch, yet your matching region fires", "duration": 2.6 },
+  { "time": 4.7, "type": "injectAIStimulus", "target": "parietal", "intensity": 0.8, "radius": 5 },
+  { "time": 4.8, "type": "empathy_pulse", "region": "parietal", "intensity": 1.0, "duration": 1.8 },
+  { "time": 5.6, "type": "injectAIStimulus", "target": "frontal", "intensity": 0.6, "radius": 4 },
+  { "time": 5.7, "type": "empathy_pulse", "region": "frontal", "intensity": 0.8, "duration": 1.5 },
+
+  { "time": 7.6, "type": "text", "message": "A second reach: the echo arrives sooner", "duration": 2.2 },
+  { "time": 7.7, "type": "stimulus", "target": "parietal", "intensity": 1.0 },
+  { "time": 8.0, "type": "injectAIStimulus", "target": "parietal", "intensity": 0.9, "radius": 5 },
+  { "time": 8.0, "type": "empathy_pulse", "region": "parietal", "intensity": 1.0, "duration": 1.6 },
+
+  { "time": 10.2, "type": "text", "message": "Bridges are visual only; neither field is written by the other", "duration": 2.6 },
+  { "time": 12.4, "type": "injectAIStimulus", "target": "deep", "intensity": 0 },
+  { "time": 12.6, "type": "calm" }
+]

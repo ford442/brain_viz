@@ -19,7 +19,6 @@ export function applyDeformationMethods(Target) {
     Target.prototype.sampleCorticalSurface = function(x, y, z, includeFine = true) {
         const hemisphere = x >= 0.0 ? 1.0 : -1.0;
         const absX = Math.abs(x);
-        const absY = Math.abs(y);
         const opts = this.options;
         const growth = Math.max(0.65, opts.growth || 1.0);
 

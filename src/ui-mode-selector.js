@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // ui-mode-selector.js
 // [V3.3] Prominent, always-visible visualization-mode selector (segmented pill control).
 // It reuses the existing #style-mode <select> change pipeline as the single source of

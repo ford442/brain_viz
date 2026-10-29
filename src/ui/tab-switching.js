@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // [Neuro-Weaver] Tab bar and accordion-section interaction, persisted via
 // localStorage/sessionStorage. Must run after mountControlsShell() has inserted
 // the tab/section markup into the DOM.

@@ -298,10 +298,11 @@ export class ClipmapController {
      */
     _focus({ cameraDir, stimulus }, now) {
         const mode = this.options.focus;
-        const hasStimulus = Boolean(stimulus && stimulus.pos && Number.isFinite(stimulus.injectedAt));
-        const recent = hasStimulus && now - /** @type {number} */ (stimulus?.injectedAt) <= STIMULUS_FOCUS_MS;
-        if (hasStimulus && (mode === 'stimulus' || (mode === 'auto' && recent))) {
-            return /** @type {number[]} */ (stimulus?.pos).slice(0, 3);
+        const pos = stimulus?.pos;
+        const injectedAt = stimulus?.injectedAt;
+        if (pos && typeof injectedAt === 'number' && Number.isFinite(injectedAt)) {
+            const recent = now - injectedAt <= STIMULUS_FOCUS_MS;
+            if (mode === 'stimulus' || (mode === 'auto' && recent)) return pos.slice(0, 3);
         }
         const radius = this.geometry
             ? this.geometry.sampleCorticalSurface(cameraDir[0], cameraDir[1], cameraDir[2], true).radius

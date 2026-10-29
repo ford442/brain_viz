@@ -1,6 +1,8 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // ui-routine-transport.js
 // TimelineEditor / setupTimelineEditor are dynamically imported on first use
 // (see btnEditor.onclick below) to keep the editor UI out of the initial bundle.
+import { setupNwroutineGallery } from './ui-nwroutine-gallery.js';
 
 export function setupRoutineTransport(player, controls) {
     // --- UI FOR ROUTINE ---
@@ -150,78 +152,9 @@ export function setupRoutineTransport(player, controls) {
     speedDiv.appendChild(speedSlider);
     routineContainer.appendChild(speedDiv);
 
-    // Load Custom Routine (styled label + hidden input)
-    const fileWrapper = document.createElement('div');
-    fileWrapper.style.marginTop = "8px";
-
-    const fileLabel = document.createElement('label');
-    fileLabel.textContent = "Load Custom Routine (.json / .csv)";
-    fileLabel.dataset.tooltip = "Load a custom routine script (.json or .csv)";
-    fileLabel.style.display = 'inline-block';
-    fileLabel.style.width = '100%';
-    fileLabel.style.padding = '6px 10px';
-    fileLabel.style.background = '#1a1a2e';
-    fileLabel.style.border = '1px solid #445566';
-    fileLabel.style.borderRadius = '6px';
-    fileLabel.style.color = '#aabbcc';
-    fileLabel.style.fontFamily = "'Inter', sans-serif";
-    fileLabel.style.fontWeight = '600';
-    fileLabel.style.fontSize = '11px';
-    fileLabel.style.cursor = 'pointer';
-    fileLabel.style.textAlign = 'center';
-    fileLabel.style.transition = 'all 0.2s ease';
-    fileLabel.style.marginBottom = '6px';
-
-    fileLabel.addEventListener('mouseenter', () => {
-        fileLabel.style.transform = 'translateY(-1px)';
-        fileLabel.style.filter = 'brightness(1.2)';
-    });
-    fileLabel.addEventListener('mouseleave', () => {
-        fileLabel.style.transform = 'translateY(0)';
-        fileLabel.style.filter = 'brightness(1)';
-    });
-
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = '.json, .csv';
-    fileInput.style.display = 'none';
-
-    fileLabel.addEventListener('click', () => fileInput.click());
-
-    fileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-            const text = evt.target.result;
-            if (file.name.toLowerCase().endsWith('.csv')) {
-                try {
-                    player.loadRoutineFromCSV(text, false);
-                    player.play();
-                    console.log(`[Main] Loaded custom CSV routine: ${file.name}`);
-                } catch (err) {
-                    console.error("Invalid CSV:", err);
-                    alert("Failed to parse routine CSV.");
-                }
-            } else {
-                try {
-                    const routineData = JSON.parse(text);
-                    player.loadRoutine(routineData, false);
-                    player.play();
-                    console.log(`[Main] Loaded custom routine: ${file.name}`);
-                } catch (err) {
-                    console.error("Invalid JSON:", err);
-                    alert("Failed to parse routine JSON.");
-                }
-            }
-        };
-        reader.readAsText(file);
-    });
-
-    fileWrapper.appendChild(fileLabel);
-    fileWrapper.appendChild(fileInput);
-    routineContainer.appendChild(fileWrapper);
+    // [Neuro-Script] Gallery + file import (.nwroutine / .json / .csv). Every
+    // file from disk goes through the .nwroutine validator and its sandbox.
+    setupNwroutineGallery(player, routineContainer);
 
     // --- GUI Timeline Editor (lazy-loaded: modules are only fetched on first open) ---
     let timelineEditorReady = null;

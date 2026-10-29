@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // main-update-loop.js — RAF loop syncing UI, SynaptiX, audio reactivity, and routine transport
 export function startMainUpdateLoop(renderer, player, inputs, labels, tensorPlayer, synaptixEngine, inferenceEngine, audioReactor, transport, directorLabels, modeSelector, aiPromptRef, trainingEngine, sessionController, sonificationEngine, reactivityRouter, liveInputBus) {
     let lastAIStep = 0;
@@ -83,6 +84,7 @@ export function startMainUpdateLoop(renderer, player, inputs, labels, tensorPlay
         if (labels.partnerInfluence) labels.partnerInfluence.textContent = renderer.params.partnerInfluence.toFixed(2);
         if (inputs.resonanceThreshold) inputs.resonanceThreshold.value = renderer.params.resonanceThreshold;
         if (labels.resonanceThreshold) labels.resonanceThreshold.textContent = renderer.params.resonanceThreshold.toFixed(2);
+        if (inputs.dualAvatar) inputs.dualAvatar.checked = renderer.params.dualAvatarEnabled ?? true;
         if (inputs.aiLayer) {
             const layerMax = Math.max(1, synaptixEngine.layerCount - 1);
             inputs.aiLayer.max = String(layerMax);

@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // Extracted from main.js — Neurofeedback Training Mode wiring.
 import { TrainingEngine, BUILTIN_COURSES } from './training-engine.js';
 import { setupTrainingPanel } from './ui-training-panel.js';

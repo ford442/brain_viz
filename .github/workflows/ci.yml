@@ -53,13 +53,20 @@ jobs:
         env:
           REQUIRE_NAGA: '1'
 
-      # JSDoc typecheck for the files that opt into `// @ts-check` (renderer
-      # internals, routine player, wasm engine, types.js). Most renderer
-      # methods are attached by mixins tsc can't see across module boundaries
+      # ESLint (eslint.config.js): eslint:recommended + JSDoc tag validity on
+      # src/. Correctness only — undefined names, unused vars, duplicate keys —
+      # no formatting rules.
+      - name: Lint (eslint)
+        run: npm run lint
+
+      # JSDoc typecheck with checkJs on for all of src/, minus the files that
+      # still open with `// @ts-nocheck — checkJs backlog` (see jsconfig.json).
+      # Most renderer methods are attached by mixins tsc can't see on the class
       # (see src/renderer-contract.js) — `npm run check:facade` above is what
-      # actually enforces both backends implement the shared contract; this
-      # step catches signature/type drift within the files that are checked.
-      - name: Typecheck (tsc --noEmit, @ts-check files only)
+      # enforces both backends implement the shared contract; this step
+      # catches signature/type drift, including in the WebGL mixins, which are
+      # typed against the facade via src/brain-renderer-webgl/types.js.
+      - name: Typecheck (tsc --noEmit, checkJs)
         run: npm run typecheck
 
       # The C++ half of the neural-field contract (docs/tensor-physics.md).

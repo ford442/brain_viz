@@ -1,5 +1,7 @@
+// @ts-check
+/** @param {import('./types.js').WebGLRendererClass} Klass */
 export function applyLifecycleMethods(Klass) {
-    Object.assign(Klass.prototype, {
+    Object.assign(Klass.prototype, /** @satisfies {import('./types.js').WebGLMixin} */ ({
         // Decays the pulse started by triggerTMS() and re-injects a shrinking
         // stimulus each frame, same shape as the WebGPU render loop's inline
         // handling in src/brain-renderer/render-loop.js.
@@ -16,7 +18,8 @@ export function applyLifecycleMethods(Klass) {
             this.params.tmsPulse = Math.sin(rawProgress * Math.PI) * this.tms.strength;
             const pulseIntensity = this.params.tmsPulse * 0.1;
             if (pulseIntensity > 0.01) {
-                this.injectStimulus(this.params.tmsCenterX, this.params.tmsCenterY, this.params.tmsCenterZ, pulseIntensity, 0.0);
+                const [x, y, z] = this.tms.center;
+                this.injectStimulus(x, y, z, pulseIntensity, 0.0);
             }
         },
 
@@ -82,7 +85,7 @@ export function applyLifecycleMethods(Klass) {
 
         setPartnerTensorData(float32Array) {
             if (!float32Array || float32Array.length !== this.voxelCount) {
-                return;
+                return false;
             }
             this._lastAITensor.set(float32Array);
             return true;
@@ -108,5 +111,5 @@ export function applyLifecycleMethods(Klass) {
                 this.frameHandle = null;
             }
         },
-    });
+    }));
 }

@@ -435,7 +435,10 @@ export function applyFibersMethods(Target) {
      *
      * @param {number} [dim] - Grid resolution; defaults to the geometry's.
      */
-    Target.prototype.buildFiberAffinityMap = function(dim = this.voxelDim ?? DEFAULT_VOXEL_DIM) {
+    Target.prototype.buildFiberAffinityMap = function(dim) {
+        // Defaulted here rather than in the parameter list: `this` in a default
+        // initializer has no contextual type under checkJs.
+        if (dim === undefined) dim = this.voxelDim ?? DEFAULT_VOXEL_DIM;
         const cache = this.affinityCache;
         const key = cache ? `level:${dim}:full:${this.getFiberGeometryKey()}` : null;
         let data = key ? cache.get(key) : undefined;

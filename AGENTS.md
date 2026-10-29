@@ -143,6 +143,8 @@ brain_viz/
 - **`brain-renderer-webgl.js`** — WebGL2 fallback/debug renderer. Reuses the same CPU geometry generation, tensor inputs, camera contract, and style state, but approximates compute/volumetric behavior on the CPU for easier inspection.
 - **`brain-renderer-factory.js`** — Chooses `webgpu` or `webgl` from URL params / `localStorage`, initializes the requested backend first, and falls back only when needed.
 - **`synaptix-engine.js`** — Owns AI tensor ingestion/projecting, phantom presets, frame-sequence playback, and resonance stats for SynaptiX mode.
+- **`multi-brain-layout.js`** — The two-cortex SynaptiX layout (avatar offsets/scale, bridge anchors and geometry) shared by both backends. Multi-brain rendering goes here, not into `synaptix-engine.js`.
+- **`nwroutine-format.js`** / **`nwroutine-gallery.js`** / **`ui-nwroutine-gallery.js`** — Neuro-Script Exchange: `.nwroutine` validation and fork lineage, the built-in gallery catalog, sandboxed file import (untrusted files cannot run `bci_connect` / `drug_delivery`), and `.nwroutine` export. See `docs/nwroutine.md`.
 - **`brain-geometry.js`** — Generates a deformed UV sphere (gyri/sulci approximation) and an internal Manhattan-style circuit grid. Provides vertex buffers, index buffers, fiber line buffers, and instanced soma positions.
 - **`shaders.js`** — Contains all WGSL code as exported JavaScript template strings. Includes vertex/fragment shaders for the brain surface, instanced soma shaders, compute shader for tensor physics, and post-processing shaders (chromatic aberration, grain, DoF).
 - **`routine-player.js`** — Orchestrates timed events (stimulus, camera, lerp, audio, text, choice/branching). Supports sub-routines, procedural generation, CSV parsing, and an extensible handler registry.
@@ -403,7 +405,8 @@ GOLDEN_WASM=1 npm run test:golden  # + the em++ SIMD build under node (needs ems
 npm run bench:wasm   # bte_update() ms/step at 32³/48³/64³, SIMD vs scalar (needs emsdk)
 npm run test:all     # both
 npm run test:wgsl    # the WGSL compute shader against the CPU reference (Playwright Chromium, SwiftShader)
-npm run typecheck    # tsc --noEmit over the JSDoc-checked files (see §3 and CLAUDE.md)
+npm run typecheck    # tsc --noEmit, checkJs on for src/ minus the @ts-nocheck backlog (see §3 and CLAUDE.md)
+npm run lint         # ESLint: eslint:recommended + JSDoc tag validity, no formatting rules
 npm run check:facade # standalone: both backends implement src/renderer-contract.js
 ```
 
@@ -460,7 +463,7 @@ python verification/verify_live_input_bus.py    # Live tab mapping matrix UI + o
 
 1. `npm ci`
 2. `npm test` (with `REQUIRE_NAGA=1`, after a cached `cargo install naga-cli`) — headless Node assertions: uniform layout, shaders (including a WGSL reserved-word scan and naga validation of every WGSL source), the neural-field golden fixtures, field resolution, the clipmap (`tests/test_clipmap.js`), and `scripts/check-renderer-facade.mjs` (both renderer backends implement `src/renderer-contract.js`)
-3. `npm run typecheck` — `tsc -p jsconfig.json --noEmit` over the files that opt into `// @ts-check`
+3. `npm run lint` — ESLint (`eslint.config.js`), then `npm run typecheck` — `tsc -p jsconfig.json --noEmit` with `checkJs` on for `src/`, minus files marked `// @ts-nocheck — checkJs backlog`
 4. `npm run test:golden` — compiles the C++ engine (`BTE_SRCS` in `scripts/wasm_flags.sh`) with the runner's own C++17 compiler (no Emscripten) and checks it against the same fixtures
 5. `npm run build` — frontend-only vite build; the `prebuild` WASM check is advisory and never fails
 6. `python3 scripts/test_run.py` — dev server smoke test

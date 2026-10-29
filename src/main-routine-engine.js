@@ -1,8 +1,10 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // Extracted from main.js
 import { RoutinePlayer } from './routine-player.js';
 import { AudioReactor } from './audio-reactor.js';
 import { MINI_ROUTINES } from './mini-routines.js';
 import { DOPAMINE_PATHWAY_DEMO } from './pathways.js';
+import { FIT_ZOOM } from './camera-framing.js';
 
 export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo) {
     // Setup Routine Engine integrating main UI with RoutinePlayer.
@@ -38,7 +40,7 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
         'temporal': { rotation: { x: 0, y: -Math.PI / 2 }, zoom: 3.5 }, // Right Side
         'parietal': { rotation: { x: 1.0, y: 0 }, zoom: 3.5 },    // Top-ish
         'deep': { rotation: { x: 0.3, y: 0.3 }, zoom: 2.5 },      // Close up angle
-        'global': { rotation: { x: 0.3, y: 0 }, zoom: 3.5 },      // Standard view
+        'global': { rotation: { x: 0.3, y: 0 }, zoom: FIT_ZOOM },      // Standard view
         'top': { rotation: { x: 1.57, y: 0 }, zoom: 3.5 },        // Direct Top-down
         'bottom': { rotation: { x: -1.57, y: 0 }, zoom: 3.5 },    // Bottom-up
         'iso': { rotation: { x: 0.5, y: 0.5 }, zoom: 3.0 }        // Isometric-like
@@ -247,7 +249,6 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
         // To avoid breaking existing tests (e.g., test using 'a' for Adrenaline)
         // while allowing synth play, we trigger the synth but DO NOT return early
         // if there is a matching routine below.
-        let synthPlayed = false;
         const upperKey = e.key.toUpperCase();
         if (synthKeyMap[upperKey] && !e.ctrlKey && !e.metaKey && !e.altKey) {
             const tag = (e.target && e.target.tagName) || '';
@@ -258,7 +259,6 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
                 } catch (error) {
                     console.warn('[Main] Error playing tone:', error);
                 }
-                synthPlayed = true;
             }
         }
 

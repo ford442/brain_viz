@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // immune-particles.js
 // [Phase 6] Immune cell migration particle pool.
 //

@@ -1,10 +1,11 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // Extracted from main.js
 import { SynaptiXEngine } from './synaptix-engine.js';
 import { TensorPlayer } from './tensor-player.js';
+import { WEBGPU_ONLY_NOTE } from './ui-backend-capabilities.js';
 
 export function setupSynaptiXIntegration(renderer, player, controls, inputs, labels, inferenceEngine, aiPromptRef, rendererInfo) {
     const styleSynaptix = document.getElementById('style-mode-synaptix');
-    const synaptixSourceStatus = document.getElementById('synaptix-source-status');
     const synaptixShowcaseButton = document.getElementById('btn-synaptix-showcase');
 
     const tensorPlayer = new TensorPlayer(renderer);
@@ -24,6 +25,7 @@ export function setupSynaptiXIntegration(renderer, player, controls, inputs, lab
         if (inputs.resonanceThreshold) inputs.resonanceThreshold.value = renderer.params.resonanceThreshold;
         if (labels.resonanceThreshold) labels.resonanceThreshold.textContent = renderer.params.resonanceThreshold.toFixed(2);
         if (inputs.fusionParticles) inputs.fusionParticles.checked = synaptixEngine.fusionParticlesEnabled;
+        if (inputs.dualAvatar) inputs.dualAvatar.checked = renderer.params.dualAvatarEnabled ?? true;
         syncStyleDropdowns(renderer.params.style);
     };
 
@@ -120,11 +122,6 @@ export function setupSynaptiXIntegration(renderer, player, controls, inputs, lab
     player.registerHandler('empathy_pulse', (evt) => synaptixEngine.triggerEmpathyPulse(evt));
     player.registerHandler('divergence_storm', (evt) => synaptixEngine.triggerDivergenceStorm(evt));
 
-    // AI Toggle (preserved)
-    let aiMode = false;
-    let aiEnabled = false;
-    // ... (your existing aiToggle code) ...
-
     // [Phase 1 WASM] Wire WASM simulation engine toggle
     const wasmToggleBtn    = document.getElementById('btn-wasm-toggle');
     const wasmBenchmarkBtn = document.getElementById('btn-wasm-benchmark');
@@ -135,6 +132,11 @@ export function setupSynaptiXIntegration(renderer, player, controls, inputs, lab
             wasmToggleBtn.textContent = '⚙️ WebGL2 Renderer (WASM compute unavailable)';
             wasmToggleBtn.disabled = true;
             wasmToggleBtn.style.opacity = '0.6';
+            wasmToggleBtn.title = WEBGPU_ONLY_NOTE;
+            const wasmLabel = wasmToggleBtn.closest('.control-group')?.querySelector('label');
+            if (wasmLabel && !wasmLabel.querySelector('.webgpu-only-badge')) {
+                wasmLabel.insertAdjacentHTML('beforeend', ' <span class="webgpu-only-badge">WebGPU only</span>');
+            }
             if (wasmStatusDiv) wasmStatusDiv.textContent = 'WASM simulation is only wired into the WebGPU renderer path.';
         }
         wasmToggleBtn.addEventListener('click', async () => {
@@ -217,6 +219,10 @@ export function setupSynaptiXIntegration(renderer, player, controls, inputs, lab
     audioBtn.style.color = '#ff9';
     audioBtn.style.marginTop = "5px";
     audioBtn.onclick = async () => {
+        // Created in main-routine-engine.js (Brain DJ mode) and published on the
+        // player; this module never had it in scope after the file split.
+        const audioReactor = player.audioReactor;
+        if (!audioReactor) return;
         if (!audioReactor.isActive) {
             await audioReactor.start();
             audioBtn.textContent = 'Disable Audio Reactivity 🔇';
@@ -301,6 +307,15 @@ export function setupSynaptiXIntegration(renderer, player, controls, inputs, lab
             synaptixEngine.fusionParticlesEnabled = evt.target.checked;
             // Mirror to renderer params for shader visibility if needed
             renderer.setSynaptiXParams({ fusionParticles: evt.target.checked ? 1.0 : 0.0 });
+        });
+    }
+
+    // [Multi-Brain] Two cortices vs. one cortex with the partner overlaid
+    // (src/multi-brain-layout.js). The `multi_brain` routine event drives the
+    // same param.
+    if (inputs.dualAvatar) {
+        inputs.dualAvatar.addEventListener('change', (evt) => {
+            renderer.setParams({ dualAvatarEnabled: evt.target.checked });
         });
     }
 

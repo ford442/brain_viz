@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 import { EEGProcessor } from './eeg-dsp.js';
 import { BCIRecorder, CHUNK_TYPES } from './bci-recording.js';
 import { TensorResampler, MUSE_CHANNEL_MAP, OPENBCI_PRESETS } from './tensor-resampler.js';

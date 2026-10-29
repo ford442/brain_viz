@@ -1,8 +1,12 @@
+// @ts-check
 import { Mat4 } from '../math-utils.js';
+import { avatarLocalMatrices, isMultiBrainActive } from '../multi-brain-layout.js';
 
+/** @param {import('./types.js').WebGLRendererClass} Klass */
 export function applyDrawMethods(Klass) {
-    Object.assign(Klass.prototype, {
+    Object.assign(Klass.prototype, /** @satisfies {import('./types.js').WebGLMixin} */ ({
         updateCameraState() {
+            this.syncAutoFrame();
             this.rotation.x += (this.targetRotation.x - this.rotation.x) * 0.1;
             this.rotation.y += (this.targetRotation.y - this.rotation.y) * 0.1;
             this.zoom += (this.targetZoom - this.zoom) * 0.1;
@@ -75,9 +79,10 @@ export function applyDrawMethods(Klass) {
             const shouldDrawFibers = isolate === 'all' || isolate === 'fibers';
             const shouldDrawTensor = isolate === 'all' || isolate === 'tensor';
 
-            if (style >= 4.0 && (this.params.dualAvatarEnabled ?? true)) {
-                const avatarA = Mat4.multiply(Mat4.composeTranslationScale(-1.05, 0, 0, 0.62), mvp);
-                const partner = Mat4.multiply(Mat4.composeTranslationScale(1.05, 0, 0, 0.62), mvp);
+            if (isMultiBrainActive(this.params)) {
+                const local = avatarLocalMatrices();
+                const avatarA = Mat4.multiply(local.avatarA, mvp);
+                const partner = Mat4.multiply(local.partner, mvp);
                 const interiorCount = Math.floor((this.baseSomaInstances.length / 9) * 0.45);
                 if (shouldDrawFibers) {
                     this.drawFibers(avatarA);
@@ -140,5 +145,5 @@ export function applyDrawMethods(Klass) {
             this.synaptixPerformance = { ...this.synaptixPerformance, ...result };
             return result;
         },
-    });
+    }));
 }

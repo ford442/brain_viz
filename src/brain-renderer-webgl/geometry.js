@@ -1,8 +1,10 @@
+// @ts-check
 import { BrainGeometry } from '../brain-geometry.js';
 import { BRAIN_RANGE } from './constants.js';
 
+/** @param {import('./types.js').WebGLRendererClass} Klass */
 export function applyGeometryMethods(Klass) {
-    Object.assign(Klass.prototype, {
+    Object.assign(Klass.prototype, /** @satisfies {import('./types.js').WebGLMixin} */ ({
         buildGeometry() {
             const geometry = new BrainGeometry({
                 baseRadius: 1.5,
@@ -17,6 +19,9 @@ export function applyGeometryMethods(Klass) {
                 // [Field Resolution] Bakes the fiber affinity map at the field's dim.
                 voxelDim: this.voxelDim
             });
+            // @ts-expect-error generate() is attached to BrainGeometry.prototype by
+            // applyMeshMethods() in brain-geometry.js — not visible to TS across
+            // the mixin boundary (same as src/brain-renderer/geometry.js).
             geometry.generate(this.geometryRows, this.geometryCols);
             return geometry;
         },
@@ -229,5 +234,5 @@ export function applyGeometryMethods(Klass) {
             }
             gl.viewport(0, 0, this.canvas.width, this.canvas.height);
         },
-    });
+    }));
 }

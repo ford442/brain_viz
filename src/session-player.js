@@ -1,6 +1,10 @@
 import { SESSION_CHUNK_TYPES, decodeAudioPayload, decodeNotePayload, decodeTensorPayload, parseSession } from './session-format.js';
 import { DEFAULT_VOXEL_DIM, normalizeVoxelDim, resampleField } from './voxel-dim.js';
 
+/**
+ * @param {{timestamp: number}[]} items - Sorted by timestamp.
+ * @param {number} timestamp
+ */
 function latestIndexAtOrBefore(items, timestamp) {
     let low = 0, high = items.length - 1, result = -1;
     while (low <= high) {
@@ -12,6 +16,13 @@ function latestIndexAtOrBefore(items, timestamp) {
 }
 
 export class SessionPlayer {
+    /**
+     * @param {any} renderer - A BrainRendererFacade (typed loosely: setVoxelData is the only call).
+     * @param {any} tensorPlayer
+     * @param {any} bciSession
+     * @param {any} routinePlayer
+     * @param {{onFrame?: ((frame: Object) => void)|null, synaptixEngine?: any}} [options]
+     */
     constructor(renderer, tensorPlayer, bciSession, routinePlayer, { onFrame = null, synaptixEngine = null } = {}) {
         this.renderer = renderer;
         this.tensorPlayer = tensorPlayer;
@@ -20,13 +31,18 @@ export class SessionPlayer {
         this.synaptixEngine = synaptixEngine;
         this.onFrame = onFrame;
         this.manifest = null;
+        /** @type {number|undefined} */
+        this.voxelDim = undefined;
+        /** @type {import('./session-format.js').SessionChunk[]} */
         this.chunks = [];
+        /** @type {Record<'tensor'|'visual'|'audio'|'note', import('./session-format.js').SessionChunk[]>} */
         this.streams = { tensor: [], visual: [], audio: [], note: [] };
         this.playheadMs = 0;
         this.isPlaying = false;
         this.active = false;
         this.wallOrigin = 0;
         this.noteCursor = 0;
+        /** @type {{tensorIndex?: number, visualIndex?: number, audioIndex?: number, noteIndex?: number}} */
         this.lastResolved = {};
         this.routinePlayer?.registerHandler('session_note', () => {});
     }
@@ -54,7 +70,7 @@ export class SessionPlayer {
         this.lastResolved = {};
         this.active = true;
         this.renderer.tensorPlaybackMode = true;
-        this.resolve(false);
+        this.resolve();
         return parsed;
     }
 
@@ -63,7 +79,7 @@ export class SessionPlayer {
         if (this.playheadMs >= this.durationMs) this.seek(0);
         this.active = true;
         this.renderer.tensorPlaybackMode = true;
-        this.resolve(false);
+        this.resolve();
         this.wallOrigin = timestamp - this.playheadMs;
         this.isPlaying = true;
     }
@@ -77,7 +93,7 @@ export class SessionPlayer {
         this.playheadMs = Math.max(0, Math.min(this.durationMs, Number(ms) || 0));
         this.noteCursor = this.streams.note.findIndex((chunk) => chunk.timestamp > this.playheadMs);
         if (this.noteCursor < 0) this.noteCursor = this.streams.note.length;
-        if (this.active) this.resolve(false);
+        if (this.active) this.resolve();
         if (this.isPlaying) this.wallOrigin = performance.now() - this.playheadMs;
     }
 
@@ -95,7 +111,7 @@ export class SessionPlayer {
         const previous = this.playheadMs;
         if (this.isPlaying) this.playheadMs = Math.min(this.durationMs, Math.max(0, timestamp - this.wallOrigin));
         this.dispatchForwardNotes(previous, this.playheadMs);
-        this.resolve(true);
+        this.resolve();
         if (this.isPlaying && this.playheadMs >= this.durationMs) this.pause();
     }
 

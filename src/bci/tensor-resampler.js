@@ -63,7 +63,6 @@ export class TensorResampler {
     }
 
     project(features) {
-        const VOXEL_DIM = this.voxelDim;
         const VOXEL_COUNT = this.voxelCount;
         const output = new Float32Array(VOXEL_COUNT);
         const quality = Math.max(0.1, features.quality || 0);
@@ -105,7 +104,6 @@ export class TensorResampler {
     }
 
     _combineMasks(regions) {
-        const VOXEL_DIM = this.voxelDim;
         const VOXEL_COUNT = this.voxelCount;
         const result = new Float32Array(VOXEL_COUNT);
         for (const region of regions) {

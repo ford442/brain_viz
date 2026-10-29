@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 const SERVICE_UUID = 0xfe8d;
 const UUID_BASE = (id) => `273e${id}-4c4d-454d-96be-f03bac821358`;
 const CONTROL_UUID = UUID_BASE('0001');

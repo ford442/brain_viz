@@ -1,6 +1,5 @@
 // @ts-check
-import { BrainGeometry } from '../brain-geometry.js';
-import { vertexShader, fragmentShader, computeShader, somaVertexShader, somaFragmentShader, sparkVertexShader, sparkFragmentShader, postVertexShader, postFragmentShader, pointCloudVertexShader, pointCloudFragmentShader } from '../shaders.js';
+import { vertexShader, fragmentShader } from '../shaders.js';
 import { fiberVertexShader, fiberFragmentShader } from '../shaders/fiber.js';
 import { createGPUContext, configureCanvas, destroyGPUResources, GPUTimer } from './gpu-context.js';
 
@@ -335,7 +334,7 @@ export function applyCoreMethods(Target) {
     Target.prototype.setPartnerTensorData = function(float32Array) {
         if (!float32Array || float32Array.length !== this.voxelCount) {
     console.warn(`[BrainRenderer] Ignored partner tensor update with invalid size: ${float32Array?.length ?? 'null'}`);
-    return;
+    return false;
         }
         this._lastAITensor.set(float32Array);
         this.device.queue.writeBuffer(this.aiTensorBuffer, 0, float32Array);

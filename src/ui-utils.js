@@ -1,3 +1,4 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 export class FilterUIOverlay {
     constructor(canvas) {
         this.canvas = canvas;
@@ -76,7 +77,6 @@ export function initUIControls(renderer, uiInputs, uiLabels, paintController) {
             renderer.updateAltitudeState();
 
             // Update UI labels
-            const val = uiInputs.altitude;
             if (uiLabels.altitude) uiLabels.altitude.textContent = altVal.toFixed(0);
             if (uiLabels.oxygen) uiLabels.oxygen.textContent = renderer.params.oxygenLevel.toFixed(2);
             if (uiLabels.metabolicRate) uiLabels.metabolicRate.textContent = renderer.params.metabolicRate.toFixed(2);

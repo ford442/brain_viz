@@ -2,6 +2,7 @@
 import { meshVertexSource, meshFragmentSource, pointVertexSource, pointFragmentSource } from './webgl-shaders.js';
 import { createDefaultParams, createProgram } from './webgl-gl-utils.js';
 import { applyPathwayMethods, createPathwayState } from './pathway-renderer.js';
+import { applyCameraFramingMethods } from './camera-framing.js';
 import { createImmunePool } from './immune-particles.js';
 import { applyGeometryMethods } from './brain-renderer-webgl/geometry.js';
 import { applyImmuneMethods } from './brain-renderer-webgl/immune.js';
@@ -13,6 +14,7 @@ import { applyLifecycleMethods } from './brain-renderer-webgl/lifecycle.js';
 import { applyResolutionMethods } from './brain-renderer-webgl/resolution.js';
 import { applyClipmapMethods } from './brain-renderer-webgl/clipmap.js';
 import { DEFAULT_VOXEL_DIM, voxelCountFor } from './voxel-dim.js';
+import { BRIDGE_MAX_VERTICES } from './multi-brain-layout.js';
 
 /**
  * WebGL2 fallback/debug renderer. Implements the shared `BrainRendererFacade`
@@ -36,6 +38,9 @@ export class BrainRendererWebGL {
         this.targetRotation = { x: 0.3, y: 0 };
         this.zoom = 3.5;
         this.targetZoom = 3.5;
+        // [Camera] Fit-to-brain framing; the first syncAutoFrame() (render loop) replaces 3.5.
+        this.autoFrame = true;
+        this.autoFrameZoom = NaN;
         this.fov = Math.PI / 4;
         this.targetFov = Math.PI / 4;
         this.camera = { zoom: this.zoom };
@@ -129,9 +134,24 @@ export class BrainRendererWebGL {
         this.frameHandle = null;
         this.bridgeVao = null;
         this.bridgeVertexCount = 0;
-        this.bridgePositions = new Float32Array(5 * 16 * 2 * 3);
-        this.bridgeColors = new Float32Array(5 * 16 * 2 * 3);
+        this.bridgePositions = new Float32Array(BRIDGE_MAX_VERTICES * 3);
+        this.bridgeColors = new Float32Array(BRIDGE_MAX_VERTICES * 3);
         this.synaptixPerformance = { singleWorkUnits: 0, dualWorkUnits: 0, workRatio: 1, frameTimes: [] };
+        this.wireIndexCount = 0;
+        // [Phase 17] Pulse started by triggerTMS(), decayed by _updateTms().
+        /** @type {{center: number[], strength: number, radius: number, duration: number, startTime: number}|null} */
+        this.tms = null;
+        this._immuneSurgeSeed = 0;
+        // [Clipmap] Read by getFrameTimings(); written by render() and
+        // updateTensorSimulation(). Null until the first frame measures them.
+        /** @type {number|null} */
+        this._lastRenderAt = null;
+        /** @type {number|null} */
+        this._lastIntervalMs = null;
+        /** @type {number|null} */
+        this._lastFieldStepMs = null;
+        /** @type {import('./clipmap/clipmap-controller.js').ClipmapOptions|null} */
+        this._clipmapOptions = null;
 
         this.setupInputHandlers();
     }
@@ -216,3 +236,4 @@ applyLifecycleMethods(BrainRendererWebGL);
 applyPathwayMethods(BrainRendererWebGL);
 applyResolutionMethods(BrainRendererWebGL);
 applyClipmapMethods(BrainRendererWebGL);
+applyCameraFramingMethods(BrainRendererWebGL);

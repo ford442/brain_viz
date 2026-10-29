@@ -1,4 +1,4 @@
-import { handleCamera } from '../routine-camera.js';
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 
 export function registerBiosyncHandlers(handlers, player) {
     // Neural Network Pruning (simulates decay of connections due to lack of use)

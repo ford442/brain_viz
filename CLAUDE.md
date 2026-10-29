@@ -13,7 +13,8 @@ npm run bench:wasm             # WASM bte_update() ms/step at 32³/48³/64³ (ne
 npm run gen:compile-commands   # clangd graph for wasm/ (host flags; :wasm for the Emscripten graph)
 npm run test:all               # npm test + npm run test:golden
 npm run test:wgsl              # WGSL compute shader vs the JS reference on SwiftShader WebGPU (needs a Playwright Chromium)
-npm run typecheck              # tsc --noEmit over the JSDoc-checked files (see §3b)
+npm run typecheck              # tsc --noEmit, checkJs on for src/ minus the @ts-nocheck backlog (see §3b)
+npm run lint                   # ESLint: eslint:recommended + JSDoc tag validity, no formatting rules
 npm run check:facade           # Both renderer backends implement src/renderer-contract.js
 npm run dev                    # Start dev server (http://localhost:5173)
 npm run build                  # Build production bundle to dist/
@@ -43,6 +44,8 @@ python3 verification/verify_clipmap_webgpu.py  # Optional WebGPU-only clipmap ch
 - **`inference-engine.js`** — ONNX Runtime integration for SqueezeNet inference (AI dreaming mode).
 - **`audio-reactor.js`** — Web Audio API microphone input for real-time audio reactivity.
 - **`synaptix-engine.js`** — AI tensor projection, phantom generation, frame playback, and resonance metrics for comparative mode.
+- **`src/multi-brain-layout.js`** — The two-cortex SynaptiX layout and bridge geometry, shared by both backends (multi-brain rendering goes here, not into `synaptix-engine.js`).
+- **`src/nwroutine-format.js`** / **`src/nwroutine-gallery.js`** / **`src/ui-nwroutine-gallery.js`** — Neuro-Script Exchange: `.nwroutine` validation, fork lineage, the built-in gallery, and sandboxed import (untrusted files cannot run `bci_connect` / `drug_delivery`). See `docs/nwroutine.md`.
 
 ### Data Flow
 ```
@@ -171,10 +174,17 @@ class-level comments in `brain-renderer.js` / `brain-renderer-webgl.js`).
    helpers) does not belong in the facade — document it in the "Extensions"
    block at the bottom of `renderer-contract.js` instead, and have callers
    guard it (`renderer.method?.(...)`, a `backendType` check).
-3. Individual files can opt into `// @ts-check` (see `jsconfig.json`); `npm
-   run typecheck` runs `tsc -p jsconfig.json --noEmit` over whichever files
-   do. This project has no `.ts` files and no TypeScript syntax — checking is
-   JSDoc-only, same as `RendererParams` in `src/types.js`.
+3. `checkJs` is on for all of `src/` (`jsconfig.json`); `npm run typecheck`
+   runs `tsc -p jsconfig.json --noEmit`. Files not clean yet open with
+   `// @ts-nocheck — checkJs backlog` — never add that line to a file that
+   passes. The WebGL mixins type their method literals with `@satisfies
+   {WebGLMixin}` (`src/brain-renderer-webgl/types.js`), so `this` is the whole
+   renderer and facade methods get the contract's signature; a new WebGL-only
+   method must be listed in `WebGLRendererInternals` there. This project has
+   no `.ts` files and no TypeScript syntax — checking is JSDoc-only, same as
+   `RendererParams` in `src/types.js`.
+4. `npm run lint` (ESLint, `eslint.config.js`) is a CI step: correctness
+   rules only, no formatter.
 
 ### 3c. One Field Resolution, Nine Consumers
 **The Issue:** the grid size was the literal `32`, retyped independently in both
@@ -313,4 +323,5 @@ npm run dev
 - **docs/tensor-physics.md** — The neural-field specification (normative; read before changing any field code)
 - **docs/field-resolution.md** — How the field's grid resolution is carried and changed (`voxelDim`), the clipmap fine brick (Phase B) and recursive-zoom cortical patch (Phase C)
 - **docs/webgl-fallback.md** / **docs/wasm-engine.md** — WebGL2 fallback and WASM hybrid engine details
+- **docs/nwroutine.md** — `.nwroutine` packages, the built-in gallery, the import sandbox and fork lineage
 - **.github/copilot-instructions.md** — Comprehensive guide for AI agents

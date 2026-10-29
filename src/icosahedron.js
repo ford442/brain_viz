@@ -1,6 +1,6 @@
 // Icosahedron constants
-const X = 0.525731112119133606;
-const Z = 0.850650808352039932;
+const X = 0.5257311121191336;
+const Z = 0.8506508083520399;
 const N = 0.0;
 
 export const icosahedronVertices = [

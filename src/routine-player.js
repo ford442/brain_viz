@@ -1,7 +1,7 @@
 // @ts-check
 // Neuro-Script Implementation Cycle: timeline-based sequencer implemented.
 /**
- * @fileoverview Orchestrates timed sequences of brain activity.
+ * @file Orchestrates timed sequences of brain activity.
  *
  * Architectural Features:
  * - Sequencer: Uses performance.now() and delta-time compensation to ensure drift-free sequencing.
@@ -12,7 +12,6 @@
  */
 
 import { Easing, evaluateSpline } from './math-utils.js';
-import { CAMERA_PRESETS, handleCamera } from './routine-camera.js';
 import { createDefaultHandlers } from './routine-handlers.js';
 import { parseRoutineCSV } from './routine-csv.js';
 import { buildProceduralRoutine } from './routine-procedural.js';
@@ -45,6 +44,13 @@ export class RoutinePlayer {
         this.eventSubscribers = new Set();
         this.lastPauseTime = 0;
         this.subRoutines = {}; // Sub-Routine System
+        /**
+         * [Neuro-Script] The .nwroutine package the loaded routine came from,
+         * or null. loadRoutine() clears it; loadPackage() sets it. Exports
+         * read it to record fork lineage (src/nwroutine-format.js).
+         * @type {any}
+         */
+        this.activePackage = null;
         this.customPresets = {}; // Custom Camera Presets
         this.cameraRegions = new Map(); // Dynamic Camera Coordinate Region Mapping
         this.state = {
@@ -161,7 +167,7 @@ export class RoutinePlayer {
     /**
      * Register a custom event handler
      * @param {string} type - Event type (e.g., 'sound', 'custom')
-     * @param {function} callback - Function receiving the event object
+     * @param {Function} callback - Function receiving the event object
      */
     registerHandler(type, callback) {
         if (typeof callback !== 'function') {
@@ -288,8 +294,25 @@ export class RoutinePlayer {
         const expanded = this.expandRoutine(deepCopy);
         this.routine = expanded.sort((a, b) => a.time - b.time);
         this.loop = loop;
+        this.activePackage = null;
         this.stop();
         console.log(`[Routine] Loaded ${this.routine.length} events (Expanded).`);
+    }
+
+    /**
+     * [Neuro-Script] Load a .nwroutine package: register its sub-routines,
+     * load its routine, and remember the package for lineage. Validation
+     * (including the sandbox check for untrusted files) is the caller's job —
+     * see importRoutineFile() in src/nwroutine-gallery.js.
+     * @param {any} pkg
+     * @param {boolean} [loop]
+     */
+    loadPackage(pkg, loop = false) {
+        if (pkg.subRoutines && Object.keys(pkg.subRoutines).length > 0) {
+            this.registerSubRoutines(JSON.parse(JSON.stringify(pkg.subRoutines)));
+        }
+        this.loadRoutine(pkg.routine, loop);
+        this.activePackage = pkg;
     }
 
     async loadRoutineFromFile(url, loop = false) {
@@ -316,6 +339,7 @@ export class RoutinePlayer {
         if (routine.length > 0) {
             this.routine = routine;
             this.loop = loop;
+            this.activePackage = null;
             this.stop();
             console.log(`[Routine] Loaded ${this.routine.length} events from CSV.`);
         } else {
@@ -326,6 +350,7 @@ export class RoutinePlayer {
     // Procedural Generation
     generateProceduralRoutine(duration = 30.0, intensity = 1.0) {
         this.routine = buildProceduralRoutine(this.regions, duration, intensity);
+        this.activePackage = null;
         this.loop = false; // Don't loop procedural routines by default
         this.stop(); // Reset player state
         console.log(`[Routine] Procedural Routine Generated (${this.routine.length} events)`);

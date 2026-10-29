@@ -1,3 +1,6 @@
+// @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
+import { exportEditedRoutine } from './ui-nwroutine-gallery.js';
+
 export class TimelineEditor {
     constructor(player) {
         this.player = player;
@@ -9,6 +12,9 @@ export class TimelineEditor {
         this.animationFrameId = null;
         this.isDragging = false;
         this.dragEventIndex = -1;
+        // [Neuro-Script] The package the editor was opened on; an export of
+        // the edited routine forks it (src/ui-nwroutine-gallery.js).
+        this.sourcePackage = null;
 
         this.initDOM();
     }
@@ -96,6 +102,12 @@ export class TimelineEditor {
         btnExport.onclick = () => this.exportJSON();
         controls.appendChild(btnExport);
 
+        const btnExportPackage = document.createElement('button');
+        btnExportPackage.textContent = '📦 Export .nwroutine';
+        btnExportPackage.title = 'Export as a shareable .nwroutine package (forks the routine you opened)';
+        btnExportPackage.onclick = () => this.exportPackage();
+        controls.appendChild(btnExportPackage);
+
         const btnClose = document.createElement('button');
         btnClose.textContent = 'Close';
         btnClose.style.marginLeft = 'auto';
@@ -134,6 +146,7 @@ export class TimelineEditor {
 
     open() {
         this.editingRoutine = JSON.parse(JSON.stringify(this.player.routine.length > 0 ? this.player.routine : []));
+        this.sourcePackage = this.player.activePackage || null;
         this.render();
         this.modal.style.display = 'flex';
         this.updatePlayhead();
@@ -154,6 +167,17 @@ export class TimelineEditor {
 
     playRoutine() {
         this.player.playNow(JSON.parse(JSON.stringify(this.editingRoutine)));
+        // playNow() -> loadRoutine() clears activePackage; the edit is still
+        // derived from the package, so keep lineage pointing at it.
+        this.player.activePackage = this.sourcePackage;
+    }
+
+    exportPackage() {
+        const pkg = exportEditedRoutine(this.editingRoutine, this.sourcePackage);
+        if (pkg) {
+            this.sourcePackage = pkg;
+            this.player.activePackage = pkg;
+        }
     }
 
     exportJSON() {
