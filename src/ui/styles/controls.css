@@ -390,3 +390,8 @@ hr { border: 0; border-top: 1px solid rgba(100, 150, 200, 0.1); margin: 12px 0; 
 .gpu-budget-fill { height: 100%; width: 0%; background: var(--color-cyan); transition: width 0.25s linear, background-color 0.25s linear; }
 .gpu-budget-fill.over { background: #ff9a3c; }
 .gpu-hud { margin: 6px 0 0; color: #7fa8bb; font: 10px/1.5 var(--font-mono); white-space: pre-wrap; }
+
+/* [Neuro-Weaver] Controls the WebGL2 fallback ignores (src/ui-backend-capabilities.js) */
+.webgpu-only-badge { display:inline-block; margin-left:6px; padding:0 5px; font-size:9px; line-height:14px; letter-spacing:.03em;
+    text-transform:uppercase; color:#ffcc66; border:1px solid rgba(255,204,102,0.45); border-radius:3px; vertical-align:middle; }
+.webgpu-only-disabled { opacity:0.4; cursor:not-allowed; }

@@ -1,6 +1,7 @@
 // @ts-nocheck — checkJs backlog; see the comment in jsconfig.json before removing.
 // main-renderer-setup.js — WebGPU/WebGL renderer bootstrap and debug controls
 import { createBrainRenderer, buildRendererUrl, persistRendererPreference } from './brain-renderer-factory.js';
+import { annotateWebGPUOnlyControls } from './ui-backend-capabilities.js';
 
 export async function setupRendererBackend(canvas) {
     const rendererInfo = await createBrainRenderer(canvas);
@@ -32,6 +33,9 @@ export async function setupRendererBackend(canvas) {
             ? 'WebGL2 debug renderer active. Switch back to WebGPU for the full WGSL pipeline.'
             : 'WebGPU renderer active. Switch to WebGL2 when you need easier automated inspection.';
     }
+
+    // Explicit fallback: disable + badge the controls this backend ignores.
+    annotateWebGPUOnlyControls(rendererInfo);
 
     const isWebGLRenderer = rendererInfo.rendererType === 'webgl';
     if (webglDebugPanel) {
