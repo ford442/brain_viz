@@ -10,7 +10,7 @@
  */
 
 import { FilterUIOverlay, initUIControls, initDirectorTools, initTooltips, initRangeTooltips } from './ui-utils.js';
-import { mountControlsShell, initTabSwitching, setupLegendPanel, setupOverlays, setupRoutineTransport, setupBciPanel, setupXrPanel, setupNeuromodulatorPanel, setupSessionPanel, setupPathwayPanel, setupLiveInputPanel, setupClipmapPanel } from './ui-panels.js';
+import { mountControlsShell, initTabSwitching, setupLegendPanel, setupOverlays, setupRoutineTransport, setupBciPanel, setupXrPanel, setupNeuromodulatorPanel, setupSessionPanel, setupPathwayPanel, setupLiveInputPanel, setupClipmapPanel, setupExchangePanel } from './ui-panels.js';
 import { setupModeSelector } from './ui-mode-selector.js';
 import { collectInputsAndLabels } from './main-dom.js';
 import { setupRendererBackend } from './main-renderer-setup.js';
@@ -201,6 +201,7 @@ if (player) {
         setupNeuromodulatorPanel(renderer, controls);
         setupPathwayPanel(renderer, player, modeSelector);
         setupClipmapPanel(renderer);
+        setupExchangePanel(player);
         const trainingEngine = setupTrainingIntegration(renderer, player, audioReactor, synaptixEngine, bciSession);
         const liveInputBus = setupLiveInputIntegration(renderer, player, audioReactor, bciSession, trainingEngine, synaptixEngine);
         setupLiveInputPanel(liveInputBus);
