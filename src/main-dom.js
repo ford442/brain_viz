@@ -40,6 +40,7 @@ export function collectInputsAndLabels() {
     resonanceThreshold: document.getElementById('resonanceThreshold'),
     aiLayer: document.getElementById('aiLayer'),
     fusionParticles: document.getElementById('fusion-particles'),
+    dualAvatar: document.getElementById('dual-avatar-toggle'),
     frameScrubber: document.getElementById('frame-scrubber'),
     frameRate: document.getElementById('frame-rate'),
     liveSourceEnable: document.getElementById('live-source-enable')

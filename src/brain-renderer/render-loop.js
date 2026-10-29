@@ -1,4 +1,6 @@
 // @ts-check
+import { isMultiBrainActive } from '../multi-brain-layout.js';
+
 export function applyRenderLoopMethods(Target) {
     Target.prototype.render = function() {
         // [V2.3] Main Render Loop
@@ -106,7 +108,6 @@ export function applyRenderLoopMethods(Target) {
         
         renderPass.setBindGroup(0, this.bindGroup);
         
-        const isSynaptiX = this.params.style >= 4.0;
         const isConnectome = this.params.style >= 2.0 && this.params.style < 3.0;
         const pointDensity = Math.max(0.0, this.params.pointCloudDensity ?? 1.0);
         const pointCloudDrawCount = Math.floor(this.pointCloudInstanceCount * Math.min(1.0, pointDensity));
@@ -163,7 +164,7 @@ export function applyRenderLoopMethods(Target) {
     }
         }
 
-        if (isSynaptiX && (this.params.dualAvatarEnabled ?? true)) {
+        if (isMultiBrainActive(this.params)) {
     renderPass.setPipeline(this.pipeline);
     renderPass.setVertexBuffer(0, this.vertexBuffer);
     renderPass.setVertexBuffer(1, this.normalBuffer);

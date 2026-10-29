@@ -84,6 +84,7 @@ export function startMainUpdateLoop(renderer, player, inputs, labels, tensorPlay
         if (labels.partnerInfluence) labels.partnerInfluence.textContent = renderer.params.partnerInfluence.toFixed(2);
         if (inputs.resonanceThreshold) inputs.resonanceThreshold.value = renderer.params.resonanceThreshold;
         if (labels.resonanceThreshold) labels.resonanceThreshold.textContent = renderer.params.resonanceThreshold.toFixed(2);
+        if (inputs.dualAvatar) inputs.dualAvatar.checked = renderer.params.dualAvatarEnabled ?? true;
         if (inputs.aiLayer) {
             const layerMax = Math.max(1, synaptixEngine.layerCount - 1);
             inputs.aiLayer.max = String(layerMax);

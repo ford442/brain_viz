@@ -27,6 +27,7 @@ SCRIPTS = [
     "verify_webxr.py",
     "verify_session.py",
     "verify_live_input_bus.py",
+    "verify_nwroutine.py",
 ]
 
 

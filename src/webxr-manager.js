@@ -2,11 +2,12 @@
 // [Neuro-Weaver] WebGL-first WebXR companion. WebGPU remains the authoritative
 // desktop renderer until a broadly available WebGPU XR layer exists.
 import { raySphere } from './math-utils.js';
+import { FIT_ZOOM } from './camera-framing.js';
 
 const LOBE_PRESETS = ['global', 'frontal', 'occipital', 'temporal', 'parietal', 'deep'];
 
 const PRESET_CAMERA = {
-    global: { rotation: { x: 0.3, y: 0 }, zoom: 3.5 },
+    global: { rotation: { x: 0.3, y: 0 }, zoom: FIT_ZOOM },
     frontal: { rotation: { x: 0.1, y: 0 }, zoom: 3.0 },
     occipital: { rotation: { x: 0.2, y: Math.PI }, zoom: 3.0 },
     temporal: { rotation: { x: 0, y: -Math.PI / 2 }, zoom: 3.2 },
@@ -136,7 +137,9 @@ export class WebXRManager {
         if (!preset) return false;
         this.presetIndex = Math.max(0, LOBE_PRESETS.indexOf(name));
         this.rig.preset = name;
-        this.renderer.setCameraParams(preset);
+        this.renderer.setCameraParams(preset.zoom === FIT_ZOOM
+            ? { ...preset, zoom: this.renderer.getFitZoom() }
+            : preset);
         this.status = `XR viewpoint: ${name}`;
         this._emitStatus();
         return true;
