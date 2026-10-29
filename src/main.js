@@ -10,7 +10,7 @@
  */
 
 import { FilterUIOverlay, initUIControls, initDirectorTools, initTooltips, initRangeTooltips } from './ui-utils.js';
-import { mountControlsShell, initTabSwitching, setupLegendPanel, setupOverlays, setupRoutineTransport, setupBciPanel, setupXrPanel, setupNeuromodulatorPanel, setupSessionPanel, setupPathwayPanel, setupLiveInputPanel, setupClipmapPanel } from './ui-panels.js';
+import { mountControlsShell, initTabSwitching, setupLegendPanel, setupOverlays, setupRoutineTransport, setupBciPanel, setupXrPanel, setupNeuromodulatorPanel, setupSessionPanel, setupPathwayPanel, setupLiveInputPanel, setupClipmapPanel, setupExchangePanel } from './ui-panels.js';
 import { setupModeSelector } from './ui-mode-selector.js';
 import { collectInputsAndLabels } from './main-dom.js';
 import { setupRendererBackend } from './main-renderer-setup.js';
@@ -201,6 +201,7 @@ if (player) {
         setupNeuromodulatorPanel(renderer, controls);
         setupPathwayPanel(renderer, player, modeSelector);
         setupClipmapPanel(renderer);
+        setupExchangePanel(player);
         const trainingEngine = setupTrainingIntegration(renderer, player, audioReactor, synaptixEngine, bciSession);
         const liveInputBus = setupLiveInputIntegration(renderer, player, audioReactor, bciSession, trainingEngine, synaptixEngine);
         setupLiveInputPanel(liveInputBus);
@@ -370,6 +371,22 @@ const cogLegendPanelReward = document.getElementById('legend-panel');
         });
 
 
+        player.registerHandler('eureka_moment', (evt) => {
+            const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+            const duration = evt.duration || 5.0;
+            const ease = evt.ease || 'sineInOut';
+
+            // Brainwave synchronization to gamma state
+            player.executeEvent({ type: 'brainwave_resonance', band: 'gamma', intensity: intensity * 1.5, duration: duration });
+
+            // Spike sparkle and synaptic density for structural 'aha' visualization
+            player.startLerp({ key: 'sparkle', value: 2.5 * intensity, duration: duration, ease: ease });
+            player.startLerp({ key: 'synapticDensity', value: 2.0 * intensity, duration: duration, ease: ease });
+
+            if (evt.message) {
+                player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+            }
+        });
 
         player.registerHandler('cellular_memory', (evt) => {
             const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
@@ -456,6 +473,9 @@ window.addEventListener('keydown', (e) => {
 init();
 
 import { MINI_ROUTINES } from './mini-routines.js';
+import { generateNarrativeRoutine } from './narrative-generator.js';
+
+MINI_ROUTINES['A'] = generateNarrativeRoutine('Anxiety Spike', false);
 
 MINI_ROUTINES['e'] = [{ time: 0, type: 'endorphin_rush', duration: 4.0 }];
 MINI_ROUTINES['4'] = [{ time: 0, type: 'text', message: 'Serotonin Surge', duration: 2.0 }, { time: 0, type: 'serotonin', intensity: 1.5, duration: 5.0 }];

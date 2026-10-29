@@ -258,15 +258,25 @@ The mix factor is still derived from `fiberCoupling` (that is why `smoothing`
 is unread, §6.14); `diffusionRate` only stretches it, through §3.4's `spread`.
 
 ### 6.4 Highway bias
-With `fiberCoupling > 0`, each tract slot adds sustained transport from the two
-samples §6.3 already read:
+With `fiberCoupling > 0`, each tract slot pulls `val` toward the brighter of the
+two samples §6.3 already read:
 
 ```
-val += max(up, down) * weight * fiberCoupling * 0.34
-val += max(val, max(up, down)) * weight * fiberCoupling * 0.12
+lead = max(up, down)
+val += max(0, lead - val) * weight * fiberCoupling * 0.46
 ```
 
-plus, under SynaptiX, `max(aiUp, aiDown) * weight * aiInfluence * fiberCoupling * 0.18`.
+The pull is *relaxation*, not injection: each slot closes a fraction of the gap
+to the lead sample and does nothing when `val` is already ahead of it, so a tract
+carries a signal along without creating any. The earlier form added `max(up, down) * 0.34` and
+`max(val, up, down) * 0.12` unconditionally — a per-step gain above the §3.1
+decay, so a field with tracts and no stimulus at all climbed to a mean of ~0.55
+(44% of voxels above 0.9) and stayed there. That pinned the whole brain at full
+brightness in every style; with `fiberCoupling = 0` the same field idled near
+zero. `0.46` is the old `0.34 + 0.12`, so the strength of a tract pulling toward
+an active neighbour is unchanged.
+
+Under SynaptiX, the term below is added as before: `max(aiUp, aiDown) * weight * aiInfluence * fiberCoupling * 0.18`.
 
 ### 6.5 Criticality cascade
 
@@ -513,8 +523,8 @@ npm run test:golden                   # C++ engine must match both within epsilo
 
 `GOLDEN_EPSILON` is `2e-3` per voxel. The two implementations differ only in
 intermediate precision and libm's last ulp, so the measured figures sit far
-inside it — at the time of writing, `baseline-v1` mean `1.3e-7` and max
-`7.7e-5`, `neuromod-v1` mean `1.0e-7` and max `5.0e-4`, stable across `-O0`,
+inside it — at the time of writing, `baseline-v1` mean `2.0e-7` and max
+`4.9e-4`, `neuromod-v1` mean `2.1e-7` and max `5.6e-4`, stable across `-O0`,
 `-O2` and `-O3`. A sudden jump toward the tolerance means an algorithm changed,
 not that rounding got worse.
 

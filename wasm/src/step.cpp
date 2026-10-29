@@ -116,9 +116,9 @@ static void step_z_range(BrainTensorEngine& eng, uint32_t z0, uint32_t z1,
                 const float dx = wx + fx * voxelStep, dy = wy + fy * voxelStep, dz = wz + fz * voxelStep;
                 const float upVal = eng.sample(eng.tensor, ux, uy, uz);
                 const float downVal = eng.sample(eng.tensor, dx, dy, dz);
-                const float centerDrive = std::max(val, std::max(upVal, downVal));
-                val += std::max(upVal, downVal) * weight * p.fiberCoupling * 0.34f;
-                val += centerDrive * weight * p.fiberCoupling * 0.12f;
+                // Relaxation toward the lead sample, never injection: see §6.4.
+                const float lead = std::max(upVal, downVal);
+                val += std::max(0.0f, lead - val) * weight * p.fiberCoupling * 0.46f;
                 if (synaptiX) {
                     const float aiUp = eng.sample(eng.aiTensor, ux, uy, uz);
                     const float aiDown = eng.sample(eng.aiTensor, dx, dy, dz);

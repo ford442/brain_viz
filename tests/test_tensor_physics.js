@@ -278,6 +278,53 @@ const eraseParams = resolveFieldParams({ ...stim, voxelDim: dim, stimulusErase: 
 stepTensorField(erased, erasedNext, { params: eraseParams, frame: 0 });
 assert.ok(erasedNext[centre] < 0.2, `erase mode did not damp the brush centre (${erasedNext[centre]})`);
 
+// §6.4 highway bias relaxes toward its lead sample; it must not inject signal.
+// Regression: it used to add max(up, down) * 0.34 unconditionally, a per-step
+// gain above the §3.1 decay, so an idle field with real (coherent, high-weight)
+// tracts climbed to a mean of ~0.55 and washed the whole brain out in every
+// style. makeReferenceFiberAffinities() keeps its weights low on purpose and
+// never showed it, so the tracts here are a lattice of full-weight bundles.
+{
+    const hwDim = 32;
+    const hwCount = hwDim ** 3;
+    const raw = new Float32Array(hwCount * FIBER_STRIDE);
+    for (let i = 0; i < hwCount; i++) {
+        const x = i % hwDim, y = ((i / hwDim) | 0) % hwDim;
+        const b = i * FIBER_STRIDE;
+        if (y % 4 < 2) { raw[b + 0] = 1; raw[b + 3] = 0.9; }   // +x bundle
+        if (x % 4 < 2) { raw[b + 5] = 1; raw[b + 7] = 0.5; }   // +y crossing
+    }
+    const tracts = normalizeFiberAffinities(raw, hwDim);
+    const settle = (overrides, steps, stimulusFrames = 0) => {
+        let a = new Float32Array(hwCount);
+        let b = new Float32Array(hwCount);
+        for (let f = 0; f < steps; f++) {
+            const params = resolveFieldParams({
+                voxelDim: hwDim, time: (f + 1) * 0.016, frequency: 2, amplitude: 0.5, spikeThreshold: 0.8,
+                ...(f < stimulusFrames ? { stimulusActive: 1, stimulusRadius: 0.5 } : {}),
+                ...overrides,
+            });
+            stepTensorField(a, b, { params, fiberAffinity: tracts, frame: f });
+            [a, b] = [b, a];
+        }
+        let sum = 0, hot = 0;
+        for (const v of a) { sum += v; if (v > 0.9) hot++; }
+        return { mean: sum / hwCount, hotFraction: hot / hwCount };
+    };
+    const idle = settle({}, 400);
+    assert.ok(idle.mean < 0.2 && idle.hotFraction === 0,
+        `idle field with tracts saturated: mean ${idle.mean.toFixed(3)}, ${(idle.hotFraction * 100).toFixed(1)}% above 0.9`);
+    const demo = settle({ frequency: 8, amplitude: 1.12, style: 2 }, 400);
+    assert.ok(demo.mean < 0.2 && demo.hotFraction === 0,
+        `Named Pathways demo parameters saturated the idle field: mean ${demo.mean.toFixed(3)}`);
+    // Tracts still carry a stimulus: the same brush must land at least as strongly
+    // with coupling on as with it off.
+    const withTracts = settle({}, 60, 30);
+    const withoutTracts = settle({ fiberCoupling: 0 }, 60, 30);
+    assert.ok(withTracts.mean >= withoutTracts.mean * 0.95,
+        `fiber coupling dampened the stimulus response (${withTracts.mean.toFixed(3)} vs ${withoutTracts.mean.toFixed(3)})`);
+}
+
 assert.ok(BRAIN_RANGE === Math.fround(1.6), 'BRAIN_RANGE must be the float32 value of 1.6');
 
 console.log(`test_tensor_physics passed (fixtures: ${fixtureHashes.join(", ")})`);
