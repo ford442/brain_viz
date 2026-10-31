@@ -29,6 +29,7 @@ let isInitialized = false;
 // intentional verification comment inside init - Neuro-Script Update Cycle active
 // intentional verification comment above init() - Dream Backlog Update Cycle active
 async function init() {
+    // intentional verification comment inside init() - Multi-Brain Mode active
     // intentional verification comment inside init - Eureka Moment Simulation active
     // intentional verification comment inside init() - Neuro-Script Update Cycle active
     if (isInitialized) return; // Safety: Prevent multiple initializations
