@@ -28,17 +28,21 @@ export function setupExchangePanel(player) {
 
     // Handle file selection
     importFile.addEventListener('change', (e) => {
-        const file = e.target.files[0];
+        const target = /** @type {HTMLInputElement} */ (e.target);
+        const file = target?.files?.[0];
         if (!file) return;
 
         const reader = new FileReader();
         reader.onload = (event) => {
             try {
-                const parsed = JSON.parse(event.target.result);
-                if (player) {
-                    player.loadRoutine(parsed, false);
-                    if (!player.isPlaying) {
-                        player.play();
+                const result = event.target?.result;
+                if (typeof result === 'string') {
+                    const parsed = JSON.parse(result);
+                    if (player) {
+                        player.loadRoutine(parsed, false);
+                        if (!player.isPlaying) {
+                            player.play();
+                        }
                     }
                 }
             } catch (err) {
@@ -48,12 +52,13 @@ export function setupExchangePanel(player) {
         };
         reader.readAsText(file);
         // Clear input to allow re-uploading the same file
-        e.target.value = '';
+        target.value = '';
     });
 
     // Load bundled routine
     btnLoadBundled.addEventListener('click', () => {
-        const selected = librarySelect.value;
+        const selectElement = /** @type {HTMLSelectElement} */ (librarySelect);
+        const selected = selectElement.value;
         if (!selected || !player) return;
 
         player.loadRoutineFromFile('/routines/' + selected, false).then(() => {

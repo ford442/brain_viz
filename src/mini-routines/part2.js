@@ -740,6 +740,11 @@ MINI_ROUTINES_PART2['E'] = [ // Adaptive Emotion Branching (Live Input Bus)
     { time: 8.0, type: 'camera', target: 'overview', duration: 2.0 }
 ];
 
+MINI_ROUTINES_PART2['q'] = [ // Pulse Saturation Surge
+    { time: 0.0, type: 'text', message: 'Pulse Saturation Surge', duration: 2.0 },
+    { time: 0.0, type: 'pulse_saturation_surge', intensity: 2.5, duration: 4.0 }
+];
+
 MINI_ROUTINES_PART2['.'] = [ // External Data Sonification
     { time: 0.0, type: 'style', value: 2.0 }, // Connectome view
     { time: 0.0, type: 'text', message: 'Connecting to External Data Feed...', duration: 2.0 },
