@@ -3,7 +3,6 @@ export function registerNeuromodulatorsHandlers(handlers, player) {
     handlers.set('pulse_saturation_surge', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 2.5;
         const duration = evt.duration || 4.0;
-        const ease = evt.ease || 'sineInOut';
 
         // Surge pulseSaturation up to a peak and then return to baseline (1.0)
         player.startLerp({ key: 'pulseSaturation', value: intensity, duration: duration * 0.4, ease: 'quadOut' });
