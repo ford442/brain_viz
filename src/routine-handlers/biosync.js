@@ -202,6 +202,22 @@ export function registerBiosyncHandlers(handlers, player) {
     });
 
     // Cortical Thickness Modulation (Simulates atrophy or swelling)
+
+    // Cognitive Load Simulation
+    handlers.set('cognitive_load', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const duration = evt.duration || 5.0;
+        const ease = evt.ease || 'sineInOut';
+
+        // dynamic variations in global flow speed and fiber thickness
+        player.startLerp({ key: 'flowSpeed', value: 4.0 + (6.0 * intensity), duration: duration, ease: ease });
+        player.startLerp({ key: 'corticalThickness', value: 0.11 + (0.05 * intensity), duration: duration, ease: ease });
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
+
     handlers.set('cortical_thickness', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
         const duration = evt.duration || 5.0;
