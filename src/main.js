@@ -499,4 +499,5 @@ MINI_ROUTINES['m'] = [{ time: 0, type: 'text', message: 'Cellular Memory Simulat
 MINI_ROUTINES['X'] = [{ time: 0, type: 'text', message: 'Reward Interaction Triggered', duration: 2.0 }, { time: 0, type: 'reward_interaction', intensity: 1.5, duration: 5.0 }];
 MINI_ROUTINES['U'] = [{ time: 0, type: 'text', message: 'Eureka Moment Triggered', duration: 2.0 }, { time: 0, type: 'eureka_moment', intensity: 1.5, duration: 5.0 }];
 
+MINI_ROUTINES['L'] = [{ time: 0, type: 'text', message: 'Cognitive Load Active', duration: 2.0 }, { time: 0, type: 'cognitive_load', intensity: 1.5, duration: 5.0 }];
 export { MINI_ROUTINES };

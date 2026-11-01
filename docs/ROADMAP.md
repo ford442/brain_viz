@@ -72,6 +72,7 @@ Deduplicated from the historical "Dream Log" entries across the archived plans �
 - **AI Narrative Generation** — use an LLM to generate routine scripts from themes (e.g. "Anxiety Spike", "Eureka Moment"); related to the multimodal ideas in [`docs/DOUBLE_MIRROR_VISION.md`](DOUBLE_MIRROR_VISION.md).
 - **Fractal Recursive Zoom** — procedurally generate infinite detail when zooming into a soma or fiber. *Phases A (runtime `voxelDim`), B (clipmap field: a 64³ fine brick nested in the coarse field) and C (cortical patch with laminar somas below the zoom threshold) are done on WebGPU — see [`docs/field-resolution.md`](field-resolution.md) §7–§8. Phase D (WASM SIMD kernels, a 128³ brick, dual SynaptiX clipmaps, a fine NWS1 chunk) is next.*
 - **Collaborative Brain Storming** — multi-user session injecting stimuli into a shared visualization via WebSockets. *Specified as Collaborative rooms under Open Items.*
+- **Cognitive Load Simulation** — completed: dynamic variations in global flow speed and fiber thickness.
 - **Adaptive Routines** — *`if: "live.…"` condition sugar (Phase 31) covers gating a single event on a live feature; routines that branch on real-time webcam emotion detection specifically are still open.*
 - **Neuromodulation External API** — *Phase 31's `LiveInputBus.registerSource()` is the extension point (see [`docs/live-input-bus.md`](live-input-bus.md)); an actual external WebSocket/OSC ingest source is not yet implemented.*
 - **Multi-Brain Mode** — visualize two brains interacting (mirror-neuron storytelling).
