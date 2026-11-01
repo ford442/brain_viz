@@ -177,10 +177,14 @@ fn main_soma(input: VertexInput) -> VertexOutput {
         color += vec3<f32>(1.0, 0.95, 0.8) * (peakActivity - 0.68) * 3.8;
     }
 
+    // Apply pulseSaturation to emissive activity intensity
+    let saturationBoost = uniforms.pulseSaturation;
+    color = color * mix(1.0, saturationBoost, smoothstep(0.3, 1.0, peakActivity));
+
     if (uniforms.sparkle > 0.0 && activity > 0.1) {
          let noise = fract(sin(dot(input.instancePos.zx, vec2(34.123, 19.33))) * 12345.67);
          let flash = step(0.95 - (uniforms.sparkle * 0.2), sin(uniforms.time * 40.0 + noise * 10.0));
-         color += vec3<f32>(0.8, 0.9, 1.0) * flash * uniforms.sparkle;
+         color += vec3<f32>(0.8, 0.9, 1.0) * flash * uniforms.sparkle * mix(1.0, saturationBoost, 0.5);
     }
 
     output.color = color;

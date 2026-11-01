@@ -1,5 +1,19 @@
 
 export function registerNeuromodulatorsHandlers(handlers, player) {
+    handlers.set('pulse_saturation_surge', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 2.5;
+        const duration = evt.duration || 4.0;
+        const ease = evt.ease || 'sineInOut';
+
+        // Surge pulseSaturation up to a peak and then return to baseline (1.0)
+        player.startLerp({ key: 'pulseSaturation', value: intensity, duration: duration * 0.4, ease: 'quadOut' });
+        player.startLerp({ key: 'pulseSaturation', value: 1.0, duration: duration * 0.6, delay: duration * 0.4, ease: 'quadIn' });
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
+
     handlers.set('melatonin', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
         const duration = evt.duration || 3.0;

@@ -48,18 +48,17 @@ export function setupNeuromodulatorPanel(renderer, controls) {
     // them did anything; see docs/tensor-physics.md §3.4 and §6.14.
     //   field   — read by the neural field on WebGPU, WASM and WebGL
     //   visual  — read by a render shader only
-    //   unwired — read by nothing yet; kept so saved profiles round-trip
     const SCOPE_BADGES = {
         field: { text: 'field', color: '#00ffaa', tooltip: 'Changes the simulated neural field on every renderer (WebGPU, WASM, WebGL).' },
         visual: { text: 'visual only', color: '#ffcc66', tooltip: 'Changes rendering only — the simulated field is unaffected.' },
-        unwired: { text: 'not wired', color: '#888888', tooltip: 'Stored in the profile but read by nothing yet. Moving it has no effect.' },
     };
     const sliders = [
         { id: 'neuro-diffusion', label: 'Diffusion Rate', min: 0.0, max: 0.5, step: 0.01, prop: 'diffusionRate', scope: 'field',
           tooltip: 'How far activity spreads per step. 0.1 = unchanged; 0 = no spread.' },
         { id: 'neuro-decay', label: 'Decay Rate', min: 0.8, max: 1.0, step: 0.001, prop: 'decayRate', scope: 'field',
           tooltip: 'Per-step retention. Higher keeps activity longer; 0.96 = unchanged.' },
-        { id: 'neuro-pulse', label: 'Pulse Saturation', min: 0.0, max: 3.0, step: 0.1, prop: 'pulseSaturation', scope: 'unwired' },
+        { id: 'neuro-pulse', label: 'Pulse Saturation', min: 0.0, max: 3.0, step: 0.1, prop: 'pulseSaturation', scope: 'visual',
+          tooltip: 'Amplifies soma emissive core and sparkle intensity.' },
         { id: 'neuro-trail', label: 'Trail Length', min: 0.0, max: 5.0, step: 0.1, prop: 'trailLength', scope: 'visual',
           tooltip: 'Connectome fiber pulse trails. Values below 1 have no effect.' },
         { id: 'neuro-ret-front', label: 'Retention: Frontal', min: -1.0, max: 2.0, step: 0.1, prop: 'retentionBias', subprop: 'frontal', scope: 'field',
@@ -95,7 +94,6 @@ export function setupNeuromodulatorPanel(renderer, controls) {
         scopeTag.style.opacity = '0.85';
         label.appendChild(scopeTag);
         label.dataset.tooltip = s.tooltip ? `${s.tooltip} ${badge.tooltip}` : badge.tooltip;
-        if (s.scope === 'unwired') label.style.opacity = '0.6';
 
         const valLabel = document.createElement('span');
         valLabel.style.width = '30px';
