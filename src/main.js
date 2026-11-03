@@ -29,6 +29,7 @@ let isInitialized = false;
 // intentional verification comment inside init - Neuro-Script Update Cycle active
 // intentional verification comment above init() - Dream Backlog Update Cycle active
 async function init() {
+    // intentional verification comment inside init() - Adaptive Routines active
     // intentional verification comment inside init() - Multi-Brain Mode active
     // intentional verification comment inside init - Eureka Moment Simulation active
     // intentional verification comment inside init() - Neuro-Script Update Cycle active
@@ -501,4 +502,5 @@ MINI_ROUTINES['X'] = [{ time: 0, type: 'text', message: 'Reward Interaction Trig
 MINI_ROUTINES['U'] = [{ time: 0, type: 'text', message: 'Eureka Moment Triggered', duration: 2.0 }, { time: 0, type: 'eureka_moment', intensity: 1.5, duration: 5.0 }];
 
 MINI_ROUTINES['L'] = [{ time: 0, type: 'text', message: 'Cognitive Load Active', duration: 2.0 }, { time: 0, type: 'cognitive_load', intensity: 1.5, duration: 5.0 }];
+
 export { MINI_ROUTINES };

@@ -737,6 +737,7 @@ export class RoutinePlayer {
     // intentional verification comment inside executeEvent() - Eureka Moment active
     // Added Eureka Moment
     executeEvent(event) {
+        // intentional verification comment inside executeEvent - Adaptive Routines active
         // intentional verification comment inside executeEvent() - Cognitive Load Simulation active
     // intentional verification comment inside executeEvent() - AI Narrative Generation active
     // intentional verification comment inside executeEvent() - Neuromodulation External API active

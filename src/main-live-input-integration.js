@@ -57,10 +57,17 @@ export function setupLiveInputIntegration(renderer, player, audioReactor, bciSes
 
     // Source: Webcam emotion (mock). Provides real-time emotion features like 'stress' and 'calm'
     // to allow for adaptive routines branching on these signals.
+
+    // Source: Webcam emotion. Provides real-time emotion features like 'stress' and 'calm'
+    // to allow for adaptive routines branching on these signals.
     bus.registerSource('webcam', {
         hz: 10,
         features: ['stress', 'calm'],
         sample: () => {
+            // Read from a real external feed if available, otherwise mock it
+            if (window.latestWebcamEmotion) {
+                return window.latestWebcamEmotion;
+            }
             const time = performance.now() / 1000;
             const stress = (Math.sin(time * 0.5) + 1.0) / 2.0;
             return {
@@ -69,7 +76,6 @@ export function setupLiveInputIntegration(renderer, player, audioReactor, bciSes
             };
         }
     });
-
     // Neuromodulation External API
     // Connects to a generic WebSocket bridge only if requested via URL parameter
     // Expects JSON messages: { channels: { alpha: 0.4, stress: 0.8, ... } }

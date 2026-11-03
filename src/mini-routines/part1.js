@@ -50,7 +50,7 @@ export const MINI_ROUTINES_PART1 = {
         { time: 8.0, type: 'text', message: 'Flow State Concluded', duration: 3.0 }
     ],
 
-    'E': [ // Visual Cortex Edge Detection Filter
+    'V': [ // Visual Cortex Edge Detection Filter
         { time: 0.0, type: 'text', message: 'Visual Cortex Processing', duration: 3.0 },
         { time: 0.0, type: 'neuromodulator', profile: 'acetylcholine' },
         { time: 0.0, type: 'visual_cortex_filter', intensity: 1.0, duration: 1.5, ease: 'cubicOut' },
@@ -133,7 +133,7 @@ export const MINI_ROUTINES_PART1 = {
     ],
 
     // eslint-disable-next-line no-dupe-keys -- KNOWN BUG: overwrites 'E' Visual Cortex Edge Detection above, which is unreachable. Needs a new hotkey.
-    'E': [ // Electrical Exposure (High voltage, rapid chaotic firing, harsh audio)
+    '!': [ // Electrical Exposure (High voltage, rapid chaotic firing, harsh audio)
         { time: 0.0, type: 'text', message: 'HAZARD: ELECTRICAL EXPOSURE', duration: 2.5 },
         { time: 0.0, type: 'style', value: 1 }, // Cyber/Wireframe style
         { time: 0.0, type: 'shake', intensity: 0.3, duration: 2.0 }, // Intense shaking
