@@ -35,7 +35,7 @@ export function setupLegendPanel() {
                 <div class="legend-item"><span class="legend-key">W</span><span>Weather</span></div>
                 <div class="legend-item"><span class="legend-key">P</span><span>Panic</span></div>
                 <div class="legend-item"><span class="legend-key">6</span><span>Cortisol</span></div>
-                <div class="legend-item"><span class="legend-key">E</span><span>Adaptive Emotion Routine</span></div>
+                <div class="legend-item"><span class="legend-key">E</span><span>Adaptive Emotion (Webcam)</span></div>
             </div>
         </div>
         <div class="legend-section">
@@ -63,7 +63,7 @@ export function setupLegendPanel() {
                 <div class="legend-item"><span class="legend-key">,</span><span>Pupillary Dilation</span></div>
                 <div class="legend-item"><span class="legend-key">H</span><span>Heartbeat</span></div>
                 <div class="legend-item"><span class="legend-key">R</span><span>Respiration</span></div>
-                <div class="legend-item"><span class="legend-key">E</span><span>Electrical</span></div>
+                <div class="legend-item"><span class="legend-key">!</span><span>Electrical</span></div>
                 <div class="legend-item"><span class="legend-key">M</span><span>Mercury Vapor</span></div>
                 <div class="legend-item"><span class="legend-key">T</span><span>TMS Pulse</span></div>
                 <div class="legend-item"><span class="legend-key">I</span><span>Inflammation & Immune</span></div>
@@ -82,7 +82,7 @@ export function setupLegendPanel() {
                 <div class="legend-item"><span class="legend-key">*</span><span>Sync Burst</span></div>
                 <div class="legend-item"><span class="legend-key">D</span><span>Dynamic Topology</span></div>
                 <div class="legend-item"><span class="legend-key">+</span><span>Dendritic Growth</span></div>
-                <div class="legend-item"><span class="legend-key">E</span><span>Visual Cortex Processing</span></div>
+                <div class="legend-item"><span class="legend-key">V</span><span>Visual Cortex Processing</span></div>
                 <div class="legend-item"><span class="legend-key">?</span><span>Cognitive Dissonance</span></div>
                 <div class="legend-item"><span class="legend-key">%</span><span>Particle Speed Mod</span></div>
                 <div class="legend-item"><span class="legend-key">^</span><span>Signal Trails</span></div>
