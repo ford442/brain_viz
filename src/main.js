@@ -502,11 +502,5 @@ MINI_ROUTINES['X'] = [{ time: 0, type: 'text', message: 'Reward Interaction Trig
 MINI_ROUTINES['U'] = [{ time: 0, type: 'text', message: 'Eureka Moment Triggered', duration: 2.0 }, { time: 0, type: 'eureka_moment', intensity: 1.5, duration: 5.0 }];
 
 MINI_ROUTINES['L'] = [{ time: 0, type: 'text', message: 'Cognitive Load Active', duration: 2.0 }, { time: 0, type: 'cognitive_load', intensity: 1.5, duration: 5.0 }];
-MINI_ROUTINES['E'] = [
-    { time: 0.0, type: 'text', message: 'Analyzing Webcam Emotion...', duration: 2.0 },
-    { time: 2.0, if: "live.webcam.stress > 0.5", type: 'text', message: 'High Stress Detected: Activating Calming Protocol', duration: 3.0 },
-    { time: 2.0, if: "live.webcam.stress > 0.5", type: 'gaba', intensity: 1.5, duration: 5.0 },
-    { time: 2.0, if: "live.webcam.stress <= 0.5", type: 'text', message: 'Calm State Detected: Enhancing Focus', duration: 3.0 },
-    { time: 2.0, if: "live.webcam.stress <= 0.5", type: 'acetylcholine', intensity: 1.2, duration: 5.0 }
-];
+
 export { MINI_ROUTINES };
