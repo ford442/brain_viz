@@ -7,22 +7,34 @@ const options = Object.fromEntries(process.argv.slice(2).map((arg) => {
 
 const wsHost = options['ws-host'] || '127.0.0.1';
 const wsPort = Number(options['ws-port'] || 8766);
+const voxelDim = Number(options['voxel-dim'] || 32);
 
 const webSockets = new WebSocketServer({ host: wsHost, port: wsPort });
 let sequence = 0;
 
+console.log(`[NW Room Bridge] Hosting Collaborative Room on WS ${wsHost}:${wsPort} (voxelDim=${voxelDim})`);
+
 webSockets.on('connection', (socket) => {
-    socket.send(JSON.stringify({ type: 'hello', version: 1, role: 'host' }));
+    socket.send(JSON.stringify({ type: 'hello', version: 1, role: 'host', voxelDim }));
 
     socket.on('message', (message) => {
         try {
-            const data = JSON.parse(message);
-            // Expected protocol: { type: 'stimulus'|'tensor'|'note', voxelDim, payload }
-            if (!['stimulus', 'tensor', 'note'].includes(data.type)) {
+            const msgStr = message.toString('utf8');
+            const data = JSON.parse(msgStr);
+
+            if (!['stimulus', 'tensor', 'note'].includes(data.type)) return;
+
+            // Reject mismatched voxelDim
+            if (data.voxelDim !== undefined && data.voxelDim !== voxelDim) {
+                socket.send(JSON.stringify({
+                    type: 'error',
+                    version: 1,
+                    message: `Mismatched voxelDim: expected ${voxelDim}, got ${data.voxelDim}`
+                }));
                 return;
             }
 
-            // Broadcast to all other connected clients
+            // Broadcast to all other connected clients (with sequence + timestamp)
             const broadcastMessage = JSON.stringify({
                 ...data,
                 sequence: sequence++,
@@ -36,6 +48,7 @@ webSockets.on('connection', (socket) => {
             }
         } catch (error) {
             console.error(`[NW Room Bridge] Error parsing message: ${error.message}`);
+            socket.send(JSON.stringify({ type: 'error', version: 1, message: error.message }));
         }
     });
 });
@@ -46,6 +59,7 @@ webSockets.on('listening', () => {
 
 const shutdown = () => {
     webSockets.close();
+    process.exit(0);
 };
 
 process.on('SIGINT', shutdown);

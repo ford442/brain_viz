@@ -162,6 +162,42 @@ export function setupLiveInputIntegration(renderer, player, audioReactor, bciSes
         sample: () => latestExternalData
     });
 
+
+    // Collaborative Rooms
+    const roomUrl = params.get('room');
+    let latestRoomData = {};
+
+    if (roomUrl) {
+        try {
+            const ws = new WebSocket(roomUrl);
+            ws.onerror = (e) => {
+                if (e && e.preventDefault) e.preventDefault();
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'stimulus' && data.payload) {
+                        renderer.injectStimulus(data.payload.x, data.payload.y, data.payload.z, data.payload.intensity);
+                    }
+                    if (data.type === 'tensor' && data.payload) {
+                        latestRoomData = data.payload;
+                    }
+                } catch (err) {
+                    // Ignore parse errors on room socket
+                }
+            };
+        } catch (e) {
+            // Graceful fallback
+        }
+    }
+
+    bus.registerSource('room', {
+        hz: 30,
+        features: [], // Room features depend on what is sent by clients, leaving empty array to allow fail-open
+        sample: () => latestRoomData
+    });
+
     if (!bus.loadFromLocalStorage()) {
         bus.enabled = true;
     }

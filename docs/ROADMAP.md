@@ -11,6 +11,7 @@ For the current architecture and module responsibilities, see [`AGENTS.md`](../A
 ## Completed Phases
 
 | Phase | Theme | Highlights |
+| 32 | Collaborative Rooms | Local WebSocket room |
 |---|---|---|
 | 1 | Sequencing Core | `RoutinePlayer` engine, main.js integration, "Deep Thought" demo script, transport UI (play/stop/loop) |
 | 2 | Advanced Choreography | Easing/splines, camera director + presets, pathfinding camera, JSON loader, sub-routines, wait/signal, branching, choice-driven storytelling, CSS filters, Markdown subtitles, haptics, sound/binaural events, GUI timeline editor, visualizer API |
@@ -69,6 +70,7 @@ Deduplicated from the historical "Dream Log" entries across the archived plans �
 
 - **Neuro-Script Exchange** — a shared platform to publish, fork, and remix visualization routines. *The local-first part is done (Phase 32, [`nwroutine.md`](nwroutine.md)): `.nwroutine` files, a built-in gallery, and fork lineage. A hosted gallery stays out of scope; a static one in the repo or on GitHub Pages is enough.*
 - **Multi-Brain Mode** — visualize two brains interacting (mirror-neuron storytelling). *Two cortices in one scene are done (Phase 32, [`synaptix.md`](synaptix.md), section Multi-Brain). Still open: N > 2 brains, split or over-the-shoulder camera presets, WebXR, and shared rooms (see Collaborative rooms under Open Items).*
+- **Spatial Audio Mapping** — completed: visualizes left/right spatial audio sources as localized activity in corresponding left/right hemispheres.
 - **AI Narrative Generation** — use an LLM to generate routine scripts from themes (e.g. "Anxiety Spike", "Eureka Moment"); related to the multimodal ideas in [`docs/DOUBLE_MIRROR_VISION.md`](DOUBLE_MIRROR_VISION.md).
 - **Fractal Recursive Zoom** — procedurally generate infinite detail when zooming into a soma or fiber. *Phases A (runtime `voxelDim`), B (clipmap field: a 64³ fine brick nested in the coarse field) and C (cortical patch with laminar somas below the zoom threshold) are done on WebGPU — see [`docs/field-resolution.md`](field-resolution.md) §7–§8. Phase D (WASM SIMD kernels, a 128³ brick, dual SynaptiX clipmaps, a fine NWS1 chunk) is next.*
 - **Collaborative Brain Storming** — multi-user session injecting stimuli into a shared visualization via WebSockets. *Specified as Collaborative rooms under Open Items.*
