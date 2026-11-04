@@ -88,3 +88,5 @@
 
 *Idea:* "What if we visualize specific audio frequency bands dynamically adjusting particle turbulence and flow paths globally?"
 * [2026-11-03] - Completed Phase 31/32 Extension (Adaptive Routines). Verified the implementation of real-time webcam emotion branching in routines via LiveInputBus and updated ROADMAP.md.
+- [x] **Collaborative Rooms (Phase 32 follow-up):** Implemented local WebSocket host bridge (`scripts/nw_room_bridge.mjs`) and stimulus relay via `LiveInputBus`.
+*Idea:* "What if we visualized the Default Mode Network as a background hum that fades during cognitive focus?"

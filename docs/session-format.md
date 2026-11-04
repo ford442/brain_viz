@@ -46,3 +46,11 @@ Audio samples pair with the nearest tensor sample only when the absolute timesta
 CSV contains one row per matched audio sample: `time_ms`, five audio features, `occipital_activation`, active note, mood, visual-frame index, and alignment error. Unmatched samples are omitted and text fields use standard doubled-quote CSV escaping.
 
 These correlations are descriptive, not causal, diagnostic, or clinical. They can be shifted or distorted by the 10 Hz sampling grid, camera encoding delay, device audio processing, BCI preprocessing, browser scheduling, and sensor latency. A correlation is not evidence that a mood, sound, image, or note caused neural activity. Session files can contain sensitive biometric imagery, derived microphone measurements, brain activity, and personal writing; users should control access to downloaded files and delete them when no longer needed.
+
+
+## Collaborative Rooms Privacy Boundary
+
+Collaborative Rooms are strictly local-first and opt-in. When connecting to a local WebSocket room:
+- **Shared:** Human tensor data, active stimuli, and session notes are relayed to room participants.
+- **Not Shared:** Webcam thumbnails, microphone audio PCM, and derived audio features remain purely local.
+- Double Mirror Multimodal Sessions explicitly remain a local-only recording mechanism and are never broadcast over the network.

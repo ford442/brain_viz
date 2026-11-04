@@ -6,6 +6,7 @@
 // closure that reads its already-updated public state, so the bus adds one
 // shared mapping table on top instead of a fifth one.
 import { LiveInputBus } from './live-input-bus.js';
+import { resampleField } from './voxel-dim.js';
 import { METRICS as TRAINING_METRICS } from './training-engine.js';
 
 /**
@@ -104,6 +105,56 @@ export function setupLiveInputIntegration(renderer, player, audioReactor, bciSes
             // Graceful fallback if WebSocket is blocked or fails to init
         }
     }
+
+
+    // Collaborative Rooms
+    const roomUrl = params.get('room');
+    let latestRoomData = {};
+
+    if (roomUrl) {
+        try {
+            const ws = new WebSocket(roomUrl);
+            ws.onerror = (e) => {
+                if (e && e.preventDefault) e.preventDefault();
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+
+                    if (data.type === 'stimulus' && data.payload) {
+                        // Check if voxelDim matches
+                        if (data.voxelDim === renderer.voxelDim) {
+                             if (typeof renderer.injectStimulus === 'function') {
+                                 renderer.injectStimulus(data.payload.x, data.payload.y, data.payload.z, data.payload.intensity);
+                             }
+                        }
+                    } else if (data.type === 'tensor' || data.type === 'note') {
+                        let payload = data.payload;
+                        if (data.type === 'tensor' && data.voxelDim !== renderer.voxelDim) {
+                             if (params.get('resample') === 'true') {
+                                 payload = resampleField(payload, data.voxelDim, renderer.voxelDim);
+                             } else {
+                                 return; // reject mismatched dim
+                             }
+                        }
+                        latestRoomData[data.type] = payload;
+                    }
+
+                } catch (err) {
+                    // Ignore parse errors on room socket
+                }
+            };
+        } catch (e) {
+             // Graceful fallback if WebSocket fails to init
+        }
+    }
+
+    bus.registerSource('room', {
+        hz: 30,
+        features: ['stimulus', 'tensor', 'note'],
+        sample: () => latestRoomData
+    });
 
     bus.registerSource('external', {
         hz: 30,
