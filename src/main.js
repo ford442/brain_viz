@@ -29,6 +29,7 @@ let isInitialized = false;
 // intentional verification comment inside init - Neuro-Script Update Cycle active
 // intentional verification comment above init() - Dream Backlog Update Cycle active
 async function init() {
+    // intentional verification comment inside init() - Adaptive Routines active
     // intentional verification comment inside init() - Multi-Brain Mode active
     // intentional verification comment inside init - Eureka Moment Simulation active
     // intentional verification comment inside init() - Neuro-Script Update Cycle active
@@ -509,4 +510,5 @@ MINI_ROUTINES['/'] = [
     { time: 4, type: 'text', message: 'Spatial Audio Mapping (Center)', duration: 2.0 },
     { time: 4, type: 'spatial_audio_mapping', pan: 0.0, intensity: 1.5, duration: 2.0 }
 ];
+
 export { MINI_ROUTINES };
