@@ -86,3 +86,5 @@
 *Idea:* "What if we visualized visual cortex processing as edge-detection post-filters dynamically responding to external camera inputs?"
 *Idea:* "What if we added a visual timeline editor for building routines directly in the Exchange tab?"
 * [2026-11-03] - Completed Phase 31/32 Extension (Adaptive Routines). Verified the implementation of real-time webcam emotion branching in routines via LiveInputBus and updated ROADMAP.md.
+- [x] **Collaborative Rooms (Phase 32 follow-up):** Implemented local WebSocket host bridge (`scripts/nw_room_bridge.mjs`) and stimulus relay via `LiveInputBus`.
+*Idea:* "What if we visualized the Default Mode Network as a background hum that fades during cognitive focus?"
