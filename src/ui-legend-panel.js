@@ -142,6 +142,7 @@ export function setupLegendPanel() {
                 <div class="legend-item"><span class="legend-key">#</span><span>Psychedelic Trip</span></div>
                 <div class="legend-item"><span class="legend-key">B</span><span>Biofeedback Audio</span></div>
                 <div class="legend-item"><span class="legend-key">.</span><span>External Data Sonification</span></div>
+                <div class="legend-item"><span class="legend-key">/</span><span>Spatial Audio Mapping</span></div>
             </div>
         </div>
     `;
