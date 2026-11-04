@@ -11,6 +11,7 @@ For the current architecture and module responsibilities, see [`AGENTS.md`](../A
 ## Completed Phases
 
 | Phase | Theme | Highlights |
+| 32 | Collaborative Rooms | Local WebSocket room |
 |---|---|---|
 | 1 | Sequencing Core | `RoutinePlayer` engine, main.js integration, "Deep Thought" demo script, transport UI (play/stop/loop) |
 | 2 | Advanced Choreography | Easing/splines, camera director + presets, pathfinding camera, JSON loader, sub-routines, wait/signal, branching, choice-driven storytelling, CSS filters, Markdown subtitles, haptics, sound/binaural events, GUI timeline editor, visualizer API |
@@ -55,13 +56,6 @@ For the current architecture and module responsibilities, see [`AGENTS.md`](../A
 - **GPU tract normalisation** — the WGSL step re-normalises tract directions every step instead of once at upload (`docs/tensor-physics.md` §8.6). Closing it needs the WebGPU upload and the clipmap affinity bake to emit unit directions.
 - ~~**`pulseSaturation`**~~ — done: wired `pulseSaturation` to scale soma emissive core and sparkle intensity in `soma-render.js`, completing the Neuro-Script Implementation Cycle item.
 - **WASM pthreads** (Phase 30 follow-up) — off until the production host is confirmed to send COOP/COEP (`crossOriginIsolated === true` on the deployed page); `WASM_PTHREADS=1` opts in, and the loader refuses a pthreads build on a non-isolated page. The step is single-threaded either way: threads only pay once `bte_update()` tiles z-slabs, which with SIMD fiber gathers is what a 64³ hybrid frame needs (measured ~85–98 ms today, `docs/wasm-engine.md` → *Performance*).
-
-- **Collaborative rooms** (Phase 32 follow-up, [#405](https://github.com/ford442/brain_viz/issues/405)). A local WebSocket room: one host sim, clients send stimulus and paint, plus an optional partner tensor. No cloud and no accounts.
-  - Host: `scripts/nw_room_bridge.mjs`, following the `openbci_ws_bridge.mjs` pattern with the existing `ws` dependency.
-  - Protocol: `{ type: 'stimulus'|'tensor'|'note', voxelDim, payload }`. A mismatched `voxelDim` is rejected. Resampling happens only when the client sets an explicit flag, and then only through the existing `resampleField`.
-  - Clients: `LiveInputBus.registerSource('room', …)` for remote features, and `renderer.injectStimulus` for remote paint. On stimulus, the last writer wins; no CRDTs.
-  - Privacy: opt-in. Rooms share tensors and stimuli only: no webcam thumbnails, no mic PCM, and Double Mirror stays local-only. Document this next to Double Mirror's boundary in [`session-format.md`](session-format.md).
-  - Rooms at 64³ want the clipmap's camera-local fine brick, and dual SynaptiX clipmaps are its Phase D. At 32³ they don't need it.
 
 ## Dream Backlog (Not Yet Implemented)
 
