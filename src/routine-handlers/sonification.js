@@ -88,4 +88,26 @@ export function registerSonificationHandlers(handlers, player) {
             });
         }
     });
+
+    handlers.set('spatial_audio_mapping', (evt) => {
+        const pan = evt.pan !== undefined ? evt.pan : 0.0;
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const duration = evt.duration || 1.0;
+
+        if (pan < -0.2) {
+            // Left hemisphere
+            player.executeEvent({ type: 'stimulus', target: [-0.8, 0, 0], intensity: intensity * Math.abs(pan), duration: duration });
+        } else if (pan > 0.2) {
+            // Right hemisphere
+            player.executeEvent({ type: 'stimulus', target: [0.8, 0, 0], intensity: intensity * Math.abs(pan), duration: duration });
+        } else {
+            // Center (both)
+            player.executeEvent({ type: 'stimulus', target: [-0.8, 0, 0], intensity: intensity * 0.5, duration: duration });
+            player.executeEvent({ type: 'stimulus', target: [0.8, 0, 0], intensity: intensity * 0.5, duration: duration });
+        }
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
 }
