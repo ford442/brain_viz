@@ -77,6 +77,7 @@ Deduplicated from the historical "Dream Log" entries across the archived plans �
 - **Cognitive Load Simulation** — completed: dynamic variations in global flow speed and fiber thickness.
 - **Adaptive Routines** — *completed: real-time webcam emotion branching implemented via LiveInputBus mapping and `if: "live.…"` sugar.*
 - **Neuromodulation External API** — completed: added `scripts/external_ws_bridge.mjs` backend to supply the `external` source in `LiveInputBus`.
+- **Neuromodulation External API** — *Completed: Implemented server-side WebSocket ingest bridge `scripts/external_ws_bridge.mjs` running alongside `LiveInputBus` via the `?external=` parameter (`npm run external:bridge`).*
 - **Multi-Brain Mode** — visualize two brains interacting (mirror-neuron storytelling).
 - **Fractal Recursive Zoom** — procedurally generate infinite detail when zooming into a soma or fiber. *Phases A (runtime `voxelDim`), B (clipmap field: a 64³ fine brick nested in the coarse field) and C (cortical patch with laminar somas below the zoom threshold) are done on WebGPU — see [`docs/field-resolution.md`](field-resolution.md) §7–§8. Phase D (WASM SIMD kernels, a 128³ brick, dual SynaptiX clipmaps, a fine NWS1 chunk) is next.*
 - **Custom Audio-Feature Mapping Matrix** — *done, generalized past audio — see Phase 31 and [`docs/live-input-bus.md`](live-input-bus.md). The audio-only `ReactivityRouter` "Brain DJ" panel (Phase 3) remains as its own preset-driven panel.*

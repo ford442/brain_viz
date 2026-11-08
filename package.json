@@ -27,6 +27,7 @@
     "build:wasm:debug": "bash scripts/build_wasm.sh --debug",
     "bench:wasm": "bash scripts/bench_wasm.sh",
     "bci:bridge": "node scripts/openbci_ws_bridge.mjs",
+    "external:bridge": "node scripts/external_ws_bridge.mjs",
     "deploy": "python deploy.py"
   },
   "devDependencies": {

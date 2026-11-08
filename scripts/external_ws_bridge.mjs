@@ -17,26 +17,26 @@ webSockets.on('connection', (socket) => {
     socket.send(JSON.stringify({ type: 'hello', version: 1, role: 'external-bridge' }));
 });
 
+const broadcast = (message) => {
+    for (const client of webSockets.clients) {
+        if (client.readyState === 1) client.send(message);
+    }
+};
+
 const udp = dgram.createSocket('udp4');
 udp.on('message', (packet) => {
     try {
         const input = JSON.parse(packet.toString('utf8'));
         if (input.type !== 'external') return;
-
-        const message = JSON.stringify({
+        broadcast(JSON.stringify({
             type: 'external',
             version: 1,
             sequence: sequence++,
             timestamp: performance.now(),
             channels: input.channels || {}
-        });
-
-        for (const client of webSockets.clients) {
-            if (client.readyState === 1) client.send(message);
-        }
+        }));
     } catch (error) {
-        const message = JSON.stringify({ type: 'error', version: 1, message: error.message });
-        for (const client of webSockets.clients) if (client.readyState === 1) client.send(message);
+        broadcast(JSON.stringify({ type: 'error', version: 1, message: error.message }));
     }
 });
 
@@ -47,6 +47,7 @@ udp.bind(udpPort, udpHost, () => {
 const shutdown = () => {
     udp.close();
     webSockets.close();
+    process.exit(0);
 };
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
