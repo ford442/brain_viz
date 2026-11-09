@@ -481,7 +481,7 @@ import { generateNarrativeRoutine } from './narrative-generator.js';
 
 MINI_ROUTINES['A'] = generateNarrativeRoutine('Anxiety Spike', false);
 
-MINI_ROUTINES['e'] = [{ time: 0, type: 'endorphin_rush', duration: 4.0 }];
+MINI_ROUTINES['e'] = [{ time: 0, type: 'endorphin', intensity: 1.5, duration: 4.0, message: 'Endorphin Release: Stress Suppressed, Harmonic Sync Increased' }];
 MINI_ROUTINES['4'] = [{ time: 0, type: 'text', message: 'Serotonin Surge', duration: 2.0 }, { time: 0, type: 'serotonin', intensity: 1.5, duration: 5.0 }];
 MINI_ROUTINES['c'] = [{ time: 0, type: 'text', message: 'Cellular Senescence', duration: 2.0 }, { time: 0, type: 'cellular_senescence', intensity: 1.5, duration: 5.0 }];
 MINI_ROUTINES['p'] = [{ time: 0, type: 'parameter_interpolation', targetParam: 'sparkle', targetValue: 1.0, duration: 2.0, ease: 'sineInOut' }];

@@ -163,18 +163,28 @@ export function registerNeuromodulatorsHandlers(handlers, player) {
     // [Phase 2] Endorphin Rush
     handlers.set('endorphin', (evt) => {
         const duration = evt.duration || 3.0;
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
 
         // Instantly suppress stress and shake
         player.renderer.setParams({
             stress: 0.0,
             shake: 0.0,
-            colorShift: 0.2 // Slight soothing shift
+            colorShift: 0.2 * intensity // Slight soothing shift
         });
 
         // Smoothly restore or keep low over duration
         if (duration > 0) {
             const ease = evt.ease || 'quadInOut';
             player.startLerp({ key: 'colorShift', value: 0.0, duration: duration, ease: ease });
+            // Increase harmonic wave synchronization
+            player.startLerp({ key: 'amplitude', value: 1.5 * intensity, duration: duration / 2, ease: 'sineOut' });
+            player.startLerp({ key: 'amplitude', value: 1.0, duration: duration / 2, ease: 'sineIn', delay: duration / 2 });
+            player.startLerp({ key: 'flowSpeed', value: 2.0 * intensity, duration: duration / 2, ease: 'sineOut' });
+            player.startLerp({ key: 'flowSpeed', value: 1.0, duration: duration / 2, ease: 'sineIn', delay: duration / 2 });
+        }
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
         }
     });
 
