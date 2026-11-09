@@ -284,4 +284,44 @@ export function registerBiosyncHandlers(handlers, player) {
             player.executeEvent({ type: 'text', message: evt.message, duration: duration });
         }
     });
+
+    // Neuro-Inflammation Simulation
+    handlers.set('neuro_inflammation', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const duration = evt.duration || 6.0;
+        const ease = evt.ease || 'sineInOut';
+
+        // Localized redness (colorShift) and swelling (corticalThickness)
+        player.startLerp({ key: 'colorShift', value: 0.8 * intensity, duration: duration * 0.3, ease: 'quadOut' });
+        player.startLerp({ key: 'corticalThickness', value: 0.11 + (0.08 * intensity), duration: duration * 0.4, ease: 'quadOut' });
+
+        // Slightly dim the ambient light to highlight the inflammation
+        player.startLerp({ key: 'ambientLight', value: 0.15, duration: duration * 0.3, ease: 'sineOut' });
+
+        if (duration > 0) {
+             const revertTime = player.elapsedTime + duration;
+             const revertDuration = 3.0;
+             const eventsToInsert = [
+                { time: revertTime, type: 'lerp', key: 'colorShift', value: 0.0, duration: revertDuration, ease: ease },
+                { time: revertTime, type: 'lerp', key: 'corticalThickness', value: 0.11, duration: revertDuration, ease: ease },
+                { time: revertTime, type: 'lerp', key: 'ambientLight', value: 0.2, duration: revertDuration, ease: ease }
+             ];
+
+             if (player.routine) {
+                 let insertIdx = player.currentEventIndex ?? player.cursor;
+                 for (const ev of eventsToInsert) {
+                     while (insertIdx < player.routine.length && player.routine[insertIdx].time < ev.time) {
+                         insertIdx++;
+                     }
+                     player.routine.splice(insertIdx, 0, ev);
+                     insertIdx++;
+                 }
+             }
+        }
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
+
 }

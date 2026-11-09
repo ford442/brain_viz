@@ -46,7 +46,7 @@ For the current architecture and module responsibilities, see [`AGENTS.md`](../A
 | 30 | Neural Field Physics Contract | `docs/tensor-physics.md` as the normative spec; `src/physics/tensor-field.js` CPU reference driving the WebGL2 fallback; C++ engine ported to the full model behind a generated `BrainTensorParams` ABI; golden 32³ fixture + `npm run test:golden`; SIMD/LTO/ESM WASM build |
 | 31 | Live Input Bus | `LiveInputBus`: one shared, user-editable mapping table (source/feature -> renderer-param sink, with scale + attack/release smoothing) driving mic, BCI band-power, and Training Mode metrics without a new per-source integration file; "Live" tab mapping matrix UI with JSON import/export; `if: "live.…"` routine condition sugar |
 | 32 | Neuro-Script Exchange & Multi-Brain | `.nwroutine` import/export with the untrusted-file sandbox (`bci_connect` / `drug_delivery` need "I trust this file"), a Routine-tab gallery of the built-in routines as packages, fork lineage via `manifest.id` / `parentId` ([`nwroutine.md`](nwroutine.md)); the two-cortex SynaptiX layout centralised in `src/multi-brain-layout.js` for both backends, a `multi_brain` routine event and toggle, and the mirror-neuron "I reach, you move" demo ([`synaptix.md`](synaptix.md) → *Multi-Brain*) |
-| 33 | Dream Implementations | **Reward Interaction**: Implement dopamine reward visualization. **AI Narrative Generation**: Implement a template-based and LLM-ready generator for dynamic routine scripts from themes. **Neuro-Script Exchange**: Implement local-first MVP. |
+| 33 | Dream Implementations | **Reward Interaction**: Implement dopamine reward visualization. **AI Narrative Generation**: Implement a template-based and LLM-ready generator for dynamic routine scripts from themes. **Neuro-Script Exchange**: Implement local-first MVP. **Neuro-Inflammation**: Implement neuro-inflammation visualization. |
 
 ## Open Items
 
@@ -67,6 +67,7 @@ For the current architecture and module responsibilities, see [`AGENTS.md`](../A
 ## Dream Backlog (Not Yet Implemented)
 
 Deduplicated from the historical "Dream Log" entries across the archived plans — ideas confirmed already shipped (see phases above) have been dropped.
+- **Phantom Sensations** — What if we visualized visual cortex phantom sensations as localized fractal anomalies?
 
 - **Neuro-Script Exchange** — a shared platform to publish, fork, and remix visualization routines. *The local-first part is done (Phase 32, [`nwroutine.md`](nwroutine.md)): `.nwroutine` files, a built-in gallery, and fork lineage. A hosted gallery stays out of scope; a static one in the repo or on GitHub Pages is enough.*
 - **Multi-Brain Mode** — visualize two brains interacting (mirror-neuron storytelling). *Two cortices in one scene are done (Phase 32, [`synaptix.md`](synaptix.md), section Multi-Brain). Still open: N > 2 brains, split or over-the-shoulder camera presets, WebXR, and shared rooms (see Collaborative rooms under Open Items).*
@@ -98,4 +99,3 @@ Deduplicated from the historical "Dream Log" entries across the archived plans �
 - [`docs/session-format.md`](session-format.md) — shipped Double Mirror capture, NWS1 format, replay, analysis, privacy, and scientific limits
 - [`docs/DOUBLE_MIRROR_VISION.md`](DOUBLE_MIRROR_VISION.md) — shipped V1 boundary and longer-term multimodal ideas
 - ~~**Neuro-Visual Endorphin Release Simulation**~~ — completed: temporary suppression of stress parameters and an increase in harmonic wave synchronization.
-- **Neuro-Inflammation Simulation** — What if we visualize neuro-inflammation as localized redness and swelling?

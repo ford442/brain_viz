@@ -67,6 +67,7 @@
 *Idea:* "What if we visualized dopamine pathways lighting up during reward-based interactions?"
 
 ### Phase 33: Dream Backlog Implementations
+- [x] **Neuro-Inflammation Simulation:** Implement neuro-inflammation visualization.
 - [x] **Cognitive Load Simulation:** Implement cognitive load event handler for dynamic variations in flow speed and thickness.
 - [x] **Eureka Moment Simulation:** Visualizes a sudden synchronization of all brain waves into a coherent gamma state.
 
@@ -90,3 +91,5 @@
 * [2026-11-03] - Completed Phase 31/32 Extension (Adaptive Routines). Verified the implementation of real-time webcam emotion branching in routines via LiveInputBus and updated ROADMAP.md.
 - [x] **Collaborative Rooms (Phase 32 follow-up):** Implemented local WebSocket host bridge (`scripts/nw_room_bridge.mjs`) and stimulus relay via `LiveInputBus`.
 *Idea:* "What if we visualized the Default Mode Network as a background hum that fades during cognitive focus?"
+
+*Idea:* "What if we visualized visual cortex phantom sensations as localized fractal anomalies?"
