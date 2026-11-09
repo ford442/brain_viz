@@ -611,6 +611,12 @@ MINI_ROUTINES_PART2['"'] = [ // [Phase 2.5] Spatial Memory Retrieval
     { time: 4.0, type: 'text', message: 'Memory Consolidated', duration: 2.0 }
 ];
 
+MINI_ROUTINES_PART2['I'] = [ // Neuro-Inflammation Simulation
+    { time: 0.0, type: 'text', message: 'Neuro-Inflammation Triggered', duration: 2.0 },
+    { time: 0.0, type: 'neuro_inflammation', intensity: 1.5, duration: 6.0 }
+];
+
+
 MINI_ROUTINES_PART2['('] = [ // Cortical Thickness Visualization
     { time: 0.0, type: 'text', message: 'Simulating Cortical Atrophy...', duration: 4.0 },
     { time: 0.0, type: 'camera', target: 'overview', duration: 3.0 },
