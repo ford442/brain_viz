@@ -82,6 +82,8 @@ Deduplicated from the historical "Dream Log" entries across the archived plans �
 - **Fractal Recursive Zoom** — procedurally generate infinite detail when zooming into a soma or fiber. *Phases A (runtime `voxelDim`), B (clipmap field: a 64³ fine brick nested in the coarse field) and C (cortical patch with laminar somas below the zoom threshold) are done on WebGPU — see [`docs/field-resolution.md`](field-resolution.md) §7–§8. Phase D (WASM SIMD kernels, a 128³ brick, dual SynaptiX clipmaps, a fine NWS1 chunk) is next.*
 - **Custom Audio-Feature Mapping Matrix** — *done, generalized past audio — see Phase 31 and [`docs/live-input-bus.md`](live-input-bus.md). The audio-only `ReactivityRouter` "Brain DJ" panel (Phase 3) remains as its own preset-driven panel.*
 
+- **Sleep Spindles Simulation** — What if we visualized sleep spindles during non-REM sleep as rapid, localized bursts of high-frequency oscillatory activity in the thalamocortical networks?
+
 ## Related Specs & Vision Docs
 
 - [`docs/live-input-bus.md`](live-input-bus.md) — Live Input Bus: source/sink mapping table, built-in sources, routine `if:` condition sugar
