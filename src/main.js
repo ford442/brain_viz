@@ -503,6 +503,7 @@ MINI_ROUTINES['X'] = [{ time: 0, type: 'text', message: 'Reward Interaction Trig
 MINI_ROUTINES['U'] = [{ time: 0, type: 'text', message: 'Eureka Moment Triggered', duration: 2.0 }, { time: 0, type: 'eureka_moment', intensity: 1.5, duration: 5.0 }];
 
 MINI_ROUTINES['L'] = [{ time: 0, type: 'text', message: 'Cognitive Load Active', duration: 2.0 }, { time: 0, type: 'cognitive_load', intensity: 1.5, duration: 5.0 }];
+MINI_ROUTINES[':'] = [{ time: 0, type: 'text', message: 'Sleep Spindles Burst', duration: 2.0 }, { time: 0, type: 'sleep_spindles', intensity: 1.5, duration: 4.0 }];
 MINI_ROUTINES['/'] = [
     { time: 0, type: 'text', message: 'Spatial Audio Mapping (Left)', duration: 2.0 },
     { time: 0, type: 'spatial_audio_mapping', pan: -1.0, intensity: 2.0, duration: 2.0 },
