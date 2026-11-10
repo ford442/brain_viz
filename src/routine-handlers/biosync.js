@@ -286,6 +286,43 @@ export function registerBiosyncHandlers(handlers, player) {
     });
 
     // Neuro-Inflammation Simulation
+    // Sleep Spindles Simulation
+    handlers.set('sleep_spindles', (evt) => {
+        const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
+        const duration = evt.duration || 4.0;
+        const ease = evt.ease || 'sineInOut';
+
+        // Rapid, localized bursts of high-frequency oscillatory activity
+        player.startLerp({ key: 'frequency', value: 5.0 * intensity, duration: duration * 0.2, ease: 'quadOut' });
+        player.startLerp({ key: 'amplitude', value: 2.0 * intensity, duration: duration * 0.2, ease: 'quadOut' });
+        player.startLerp({ key: 'sparkle', value: 3.0 * intensity, duration: duration * 0.2, ease: 'quadOut' });
+
+        if (duration > 0) {
+             const revertTime = player.elapsedTime + duration * 0.2;
+             const revertDuration = duration * 0.8;
+             const eventsToInsert = [
+                { time: revertTime, type: 'lerp', key: 'frequency', value: 1.0, duration: revertDuration, ease: ease },
+                { time: revertTime, type: 'lerp', key: 'amplitude', value: 0.1, duration: revertDuration, ease: ease },
+                { time: revertTime, type: 'lerp', key: 'sparkle', value: 0.0, duration: revertDuration, ease: ease }
+             ];
+
+             if (player.routine) {
+                 let insertIdx = player.currentEventIndex ?? player.cursor;
+                 for (const ev of eventsToInsert) {
+                     while (insertIdx < player.routine.length && player.routine[insertIdx].time < ev.time) {
+                         insertIdx++;
+                     }
+                     player.routine.splice(insertIdx, 0, ev);
+                     insertIdx++;
+                 }
+             }
+        }
+
+        if (evt.message) {
+            player.executeEvent({ type: 'text', message: evt.message, duration: duration });
+        }
+    });
+
     handlers.set('neuro_inflammation', (evt) => {
         const intensity = evt.intensity !== undefined ? evt.intensity : 1.0;
         const duration = evt.duration || 6.0;

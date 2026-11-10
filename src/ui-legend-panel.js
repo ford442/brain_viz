@@ -55,6 +55,7 @@ export function setupLegendPanel() {
                 <div class="legend-item"><span class="legend-key">K</span><span>ATP Depletion</span></div>
                 <div class="legend-item"><span class="legend-key">U</span><span>Sleep Deprivation</span></div>
                 <div class="legend-item"><span class="legend-key">{</span><span>Pulse Saturation Surge</span></div>
+                <div class="legend-item"><span class="legend-key">:</span><span>Sleep Spindles</span></div>
             </div>
         </div>
         <div class="legend-section">
