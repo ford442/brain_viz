@@ -156,14 +156,18 @@ export class BrainRendererWebGL {
         this.setupInputHandlers();
     }
 
+    /** Canvas orbit/zoom input; see the WebGPU twin in brain-renderer/core-methods.js. */
     setupInputHandlers() {
+        if (this._inputAbort) this._inputAbort.abort();
+        this._inputAbort = new AbortController();
+        const { signal } = this._inputAbort;
         let isDragging = false;
         let lastX = 0;
         let lastY = 0;
         this.canvas.addEventListener('mousedown', (e) => {
             if (this.paintModeActive) return;
             isDragging = true; lastX = e.clientX; lastY = e.clientY;
-        });
+        }, { signal });
         this.canvas.addEventListener('mousemove', (e) => {
             if (this.paintModeActive) return;
             if (isDragging) {
@@ -173,12 +177,26 @@ export class BrainRendererWebGL {
                 lastX = e.clientX;
                 lastY = e.clientY;
             }
-        });
-        this.canvas.addEventListener('mouseup', () => { isDragging = false; });
+        }, { signal });
+        this.canvas.addEventListener('mouseup', () => { isDragging = false; }, { signal });
         this.canvas.addEventListener('wheel', (e) => {
             e.preventDefault();
             this.targetZoom = Math.max(2, Math.min(10, this.targetZoom + e.deltaY * 0.01));
-        });
+        }, { signal, passive: false });
+    }
+
+    /**
+     * Permanently tear the renderer down: stop the loop and remove its canvas
+     * listeners. Idempotent. The WebGL2 context belongs to the canvas and is
+     * left for the browser to reclaim.
+     * @type {import('./renderer-contract.js').BrainRendererFacade['destroy']}
+     */
+    destroy() {
+        if (this.isDestroyed) return;
+        this.isDestroyed = true;
+        // @ts-expect-error stop is attached by applyLifecycleMethods() (brain-renderer-webgl/lifecycle.js).
+        this.stop();
+        if (this._inputAbort) { this._inputAbort.abort(); this._inputAbort = null; }
     }
 
     /** @type {import('./renderer-contract.js').BrainRendererFacade['setCameraParams']} */

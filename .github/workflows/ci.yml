@@ -48,26 +48,16 @@ jobs:
       # These catch uniform-struct drift that the visual suite cannot see
       # (a clip plane read four floats off still renders an image).
       # REQUIRE_NAGA=1: on this runner a missing naga is a failure, not a skip.
-      - name: Node unit tests (uniform layout, shaders, naga, tensor physics, renderer facade)
+      # `npm test` also runs, in order: `npm run lint` (ESLint, eslint.config.js —
+      # correctness only: duplicate keys, unused vars, bare 32 grid sizes,
+      # wall-clock timers in routine handlers), `npm run typecheck` (tsc,
+      # checkJs on for src/ minus the `@ts-nocheck` backlog; strict, so e.g. a
+      # Promise like `device.lost` in a condition is TS2801) and `npm run knip`
+      # (no orphan modules — knip.json lists the script entry points).
+      - name: Node unit tests (uniform layout, shaders, naga, tensor physics, renderer facade, lint, typecheck, knip)
         run: npm test
         env:
           REQUIRE_NAGA: '1'
-
-      # ESLint (eslint.config.js): eslint:recommended + JSDoc tag validity on
-      # src/. Correctness only — undefined names, unused vars, duplicate keys —
-      # no formatting rules.
-      - name: Lint (eslint)
-        run: npm run lint
-
-      # JSDoc typecheck with checkJs on for all of src/, minus the files that
-      # still open with `// @ts-nocheck — checkJs backlog` (see jsconfig.json).
-      # Most renderer methods are attached by mixins tsc can't see on the class
-      # (see src/renderer-contract.js) — `npm run check:facade` above is what
-      # enforces both backends implement the shared contract; this step
-      # catches signature/type drift, including in the WebGL mixins, which are
-      # typed against the facade via src/brain-renderer-webgl/types.js.
-      - name: Typecheck (tsc --noEmit, checkJs)
-        run: npm run typecheck
 
       # The C++ half of the neural-field contract (docs/tensor-physics.md).
       # It compiles the C++ engine (BTE_SRCS in scripts/wasm_flags.sh) with the runner's own C++17
@@ -80,6 +70,12 @@ jobs:
 
       - name: Build frontend (vite, no WASM)
         run: npm run build
+
+      # Fails if any dist/assets/*.js chunk, or the total, grew >10% over
+      # scripts/bundle-budget.json. Intended growth: `node
+      # scripts/check-bundle-size.mjs --update` and commit the budget.
+      - name: Bundle-size budget
+        run: npm run check:bundle
 
       - name: Python smoke test
         run: python3 scripts/test_run.py
@@ -119,7 +115,29 @@ jobs:
         continue-on-error: true
         run: npm run test:wgsl
 
-      # Every script in verification/ forces ?renderer=webgl and launches its
+      # The WebGPU app itself on SwiftShader. Reported, not gating, like the
+      # oracle: routine playback must keep running on WebGPU (the path every
+      # other verification script skips), and each render style is compared
+      # pixel-wise with verification/goldens/ (pixelmatch). Both SKIP without
+      # an adapter.
+      - name: WebGPU routine playback (SwiftShader)
+        continue-on-error: true
+        run: npm run verify:webgpu-routine
+
+      - name: WebGPU style screenshots vs goldens (SwiftShader)
+        continue-on-error: true
+        run: npm run verify:webgpu-styles
+
+      - name: Upload style diffs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: style-diffs
+          path: verification/diffs/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      # Every other script in verification/ forces ?renderer=webgl and launches its
       # own dev server (see AGENTS.md #7) — WebGPU + SwiftShader is too flaky
       # for headless CI, so the WebGL2 fallback path is the CI-supported one.
       - name: Run verification suite (WebGL fallback)
@@ -130,6 +148,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: verification-screenshots
-          path: verification/*.png
+          path: verification/**/*.png
           retention-days: 7
           if-no-files-found: ignore

@@ -4,11 +4,20 @@ import { fiberVertexShader, fiberFragmentShader } from '../shaders/fiber.js';
 import { createGPUContext, configureCanvas, destroyGPUResources, GPUTimer } from './gpu-context.js';
 
 export function applyCoreMethods(Target) {
+    /**
+     * Canvas orbit/zoom input. Every listener carries one AbortController's
+     * signal, aborted by destroy() (and by a repeat call here), so a renderer
+     * that is discarded — e.g. a failed WebGPU init the factory falls back
+     * from — stops handling input on the shared canvas.
+     */
     Target.prototype.setupInputHandlers = function() {
+        if (this._inputAbort) this._inputAbort.abort();
+        this._inputAbort = new AbortController();
+        const { signal } = this._inputAbort;
         let isDragging = false;
         let lastX = 0;
         let lastY = 0;
-        this.canvas.addEventListener('mousedown', (e) => { isDragging = true; lastX = e.clientX; lastY = e.clientY; });
+        this.canvas.addEventListener('mousedown', (e) => { isDragging = true; lastX = e.clientX; lastY = e.clientY; }, { signal });
         this.canvas.addEventListener('mousemove', (e) => {
     if (isDragging) {
         this.targetRotation.y += (e.clientX - lastX) * 0.01;
@@ -16,12 +25,26 @@ export function applyCoreMethods(Target) {
         this.targetRotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.targetRotation.x));
         lastX = e.clientX; lastY = e.clientY;
     }
-        });
-        this.canvas.addEventListener('mouseup', () => { isDragging = false; });
+        }, { signal });
+        this.canvas.addEventListener('mouseup', () => { isDragging = false; }, { signal });
         this.canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
     this.targetZoom = Math.max(2, Math.min(10, this.targetZoom + e.deltaY * 0.01));
-        });
+        }, { signal, passive: false });
+    };
+
+    /**
+     * Permanently tear the renderer down: stop the loop, remove its canvas
+     * listeners and free every GPU object. Idempotent. Not reinitialize()'s
+     * path — that keeps the listeners and calls dispose() only.
+     * @type {import('../renderer-contract.js').BrainRendererFacade['destroy']}
+     */
+    Target.prototype.destroy = function() {
+        if (this.isDestroyed) return;
+        this.isDestroyed = true;
+        this.isRunning = false;
+        if (this._inputAbort) { this._inputAbort.abort(); this._inputAbort = null; }
+        this.dispose();
     };
 
     // Camera contract (must stay behaviourally identical to the WebGL2 fallback in

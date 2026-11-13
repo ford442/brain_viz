@@ -162,7 +162,7 @@ export function registerCoreHandlers(handlers, player) {
         const blocked = evt.blocked !== undefined ? Boolean(evt.blocked) : true;
         if (!player.renderer.setPathwayBlocked(evt.pathway, blocked)) return;
         if (blocked && Number.isFinite(evt.duration) && evt.duration > 0) {
-            setTimeout(() => player.renderer.setPathwayBlocked(evt.pathway, false), evt.duration * 1000);
+            player.after(evt.duration, () => player.renderer.setPathwayBlocked(evt.pathway, false), { cleanup: true });
         }
     });
 

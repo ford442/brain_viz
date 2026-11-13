@@ -130,6 +130,10 @@ export function setupRoutineEngine(renderer, canvas, modeSelector, rendererInfo)
 
     window.playerState = player.state;
     window.visualizerAPI = player.getAPI();
+    // [Verification] verification/verify_routine_webgpu.mjs and
+    // verify_styles_webgpu.mjs read playback state through this, like
+    // window.__clipmapDebug. Read-only by convention.
+    window.__routineDebug = { player, renderer };
 
 
     player.registerHandler('style', () => {});

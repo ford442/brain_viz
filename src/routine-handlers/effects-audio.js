@@ -49,9 +49,9 @@ export function registerEffectsAudioHandlers(handlers, player) {
 
         // Restore after short random duration if autoRestore is true
         if (evt.autoRestore) {
-            setTimeout(() => {
+            player.after(0.1 + Math.random() * 0.3, () => {
                 player.renderer.setParams({ aberration: 0.0, grain: 0.0, shake: 0.0, style: 0.0 });
-            }, 100 + Math.random() * 300);
+            }, { cleanup: true });
         }
     });
 
@@ -137,6 +137,7 @@ export function registerEffectsAudioHandlers(handlers, player) {
 
             // Update the stop schedule
             if (state.stopTimeout) clearTimeout(state.stopTimeout);
+            // eslint-disable-next-line no-restricted-globals -- Web Audio oscillators run on wall-clock time, not the routine clock.
             state.stopTimeout = setTimeout(() => {
                 state.oscL.stop();
                 state.oscR.stop();
@@ -174,6 +175,7 @@ export function registerEffectsAudioHandlers(handlers, player) {
             oscL.start(now);
             oscR.start(now);
 
+            // eslint-disable-next-line no-restricted-globals -- Web Audio oscillators run on wall-clock time, not the routine clock.
             const stopTimeout = setTimeout(() => {
                 oscL.stop();
                 oscR.stop();
