@@ -68,7 +68,7 @@ backend is active:
 - `selectPathway()` / `setPathwayBlocked()` / `pulsePathway()` / `getPathwayState()` / `getPathwayRenderState()`
 - `spawnImmuneParticles()` / `clearImmuneParticles()`
 - `calmState()` / `resetActivity()` / `updateAltitudeState()`
-- `start()` / `stop()` / `render()` / `initialize()`
+- `start()` / `stop()` / `render()` / `initialize()` / `destroy()` (removes canvas listeners via one `AbortController`; WebGPU also frees GPU objects)
 - `setVoxelDim()` / `getVoxelDim()`
 - `setClipmapOptions()` / `getClipmapState()` / `getFrameTimings()` — present on
   both so the HUD needs no capability check; on WebGL2 they report the fine

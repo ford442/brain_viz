@@ -45,6 +45,7 @@
  * @property {() => Promise<void>} initialize - Acquire the backend context (GPU device / WebGL2 context) and build initial GPU-side resources.
  * @property {() => void} start - Begin the render loop (sets `isRunning = true`).
  * @property {() => void} stop - Stop the render loop (sets `isRunning = false`).
+ * @property {() => void} destroy - Permanently tear down: stop the loop, remove the canvas input listeners (one AbortController per renderer), set `isDestroyed`, and (WebGPU) free GPU resources. Idempotent. The factory calls it on a backend whose `initialize()` failed before falling back, so input is never handled twice.
  * @property {() => void} render - Advance and draw one frame. Normally driven by `start()`'s internal `requestAnimationFrame` loop, not called directly by app code.
  *
  * @property {(newParams: Partial<import('./types.js').RendererParams>) => void} setParams - Merge params; flags `geometryDirty` when a geometry-affecting key changes.
@@ -108,6 +109,28 @@
  *
  * See docs/webgl-fallback.md for the full feature by backend capability matrix.
  * @typedef {never} BrainRendererBackendExtensions
+ */
+
+/**
+ * Runtime state app code may read off either backend without a capability
+ * check, but which is backend-specific or optional. Typing these is what
+ * makes misuse a type error: e.g. `GPUDevice.lost` is a *Promise* (always
+ * truthy), so `if (renderer.device.lost)` is flagged by tsc — device loss is
+ * `isContextLost`, set by the WebGPU backend's handleDeviceLost().
+ *
+ * @typedef {Object} BrainRendererRuntimeState
+ * @property {'webgpu'|'webgl'} [backendType] - Which backend this is.
+ * @property {GPUDevice|null} [device] - WebGPU only; null after dispose().
+ * @property {boolean} [isContextLost] - WebGPU only: true once the device was lost, until reinitialize().
+ * @property {boolean} [isDestroyed] - Set once destroy() has run.
+ * @property {Object|null} [xrSession] - WebGL2 only (WebXR).
+ * @property {boolean} [xrPresenting] - WebGL2 only (WebXR).
+ * @property {(params: Object) => void} [setCameraParams]
+ */
+
+/**
+ * What RoutinePlayer and other app code should type a renderer reference as.
+ * @typedef {BrainRendererFacade & BrainRendererRuntimeState} AppRenderer
  */
 
 export {};

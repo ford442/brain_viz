@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "test": "node tests/test_uniform_layout.js && node tests/test_shader.js && node tests/test_wgsl_naga.js && node tests/test_tensor_physics.js && node tests/test_voxel_dim.js && node tests/test_live_input_bus.js && node tests/test_clipmap.js && node tests/test_wasm_engine.js && node tests/test_nwroutine.js && node tests/test_multi_brain.js && node tests/test_camera_framing.js && node tests/test_backend_capabilities.js && npm run check:facade",
+    "test": "node tests/test_uniform_layout.js && node tests/test_shader.js && node tests/test_wgsl_naga.js && node tests/test_tensor_physics.js && node tests/test_voxel_dim.js && node tests/test_live_input_bus.js && node tests/test_clipmap.js && node tests/test_wasm_engine.js && node tests/test_nwroutine.js && node tests/test_multi_brain.js && node tests/test_camera_framing.js && node tests/test_backend_capabilities.js && node tests/test_routine_clock.js && npm run check:facade && npm run lint && npm run typecheck && npm run knip",
     "test:golden": "bash scripts/test_golden.sh",
     "test:all": "npm test && npm run test:golden",
     "test:wgsl": "node scripts/wgsl_oracle.mjs",
@@ -28,7 +28,11 @@
     "bench:wasm": "bash scripts/bench_wasm.sh",
     "bci:bridge": "node scripts/openbci_ws_bridge.mjs",
     "external:bridge": "node scripts/external_ws_bridge.mjs",
-    "deploy": "python deploy.py"
+    "deploy": "python deploy.py",
+    "knip": "knip --include files --no-progress",
+    "check:bundle": "node scripts/check-bundle-size.mjs",
+    "verify:webgpu-routine": "node verification/verify_routine_webgpu.mjs",
+    "verify:webgpu-styles": "node verification/verify_styles_webgpu.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
@@ -36,6 +40,9 @@
     "eslint": "^9.39.5",
     "eslint-plugin-jsdoc": "^63.3.3",
     "globals": "^17.13.0",
+    "knip": "^6.45.1",
+    "pixelmatch": "^7.2.0",
+    "pngjs": "^7.0.0",
     "typescript": "^7.0.2",
     "vite": "^5.4.21"
   },

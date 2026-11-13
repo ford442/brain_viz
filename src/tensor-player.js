@@ -223,7 +223,7 @@ export class TensorPlayer {
     // ─── Data Loaders ──────────────────────────────────────────────────────────
 
     // Load raw binary: sequence of Float32Arrays packed contiguously
-    // Format: [frame0: 32768 floats][frame1: 32768 floats]...
+    // Format: [frame0: voxelDim³ floats][frame1: voxelDim³ floats]... (32768 at the default 32³)
     async loadBinary(file) {
         const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
         const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);
@@ -237,7 +237,7 @@ export class TensorPlayer {
         return frames;
     }
 
-    // Load NumPy .npy file (float32, shape [N, 32, 32, 32] or [N, 32768])
+    // Load NumPy .npy file (float32, shape [N, D, D, D] or [N, D³], D = this.voxelDim)
     async loadNPY(file) {
         const VOXEL_DIM = this.voxelDim; // [Field Resolution] was a module const 32
         const VOXEL_COUNT = voxelCountFor(VOXEL_DIM);

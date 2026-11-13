@@ -11,7 +11,6 @@ For the current architecture and module responsibilities, see [`AGENTS.md`](../A
 ## Completed Phases
 
 | Phase | Theme | Highlights |
-| 32 | Collaborative Rooms | Local WebSocket room |
 |---|---|---|
 | 1 | Sequencing Core | `RoutinePlayer` engine, main.js integration, "Deep Thought" demo script, transport UI (play/stop/loop) |
 | 2 | Advanced Choreography | Easing/splines, camera director + presets, pathfinding camera, JSON loader, sub-routines, wait/signal, branching, choice-driven storytelling, CSS filters, Markdown subtitles, haptics, sound/binaural events, GUI timeline editor, visualizer API |
@@ -45,13 +44,13 @@ For the current architecture and module responsibilities, see [`AGENTS.md`](../A
 | 29 | Cortical Dynamics | Cortical thickness atrophy and swelling visualization |
 | 30 | Neural Field Physics Contract | `docs/tensor-physics.md` as the normative spec; `src/physics/tensor-field.js` CPU reference driving the WebGL2 fallback; C++ engine ported to the full model behind a generated `BrainTensorParams` ABI; golden 32³ fixture + `npm run test:golden`; SIMD/LTO/ESM WASM build |
 | 31 | Live Input Bus | `LiveInputBus`: one shared, user-editable mapping table (source/feature -> renderer-param sink, with scale + attack/release smoothing) driving mic, BCI band-power, and Training Mode metrics without a new per-source integration file; "Live" tab mapping matrix UI with JSON import/export; `if: "live.…"` routine condition sugar |
-| 32 | Neuro-Script Exchange & Multi-Brain | `.nwroutine` import/export with the untrusted-file sandbox (`bci_connect` / `drug_delivery` need "I trust this file"), a Routine-tab gallery of the built-in routines as packages, fork lineage via `manifest.id` / `parentId` ([`nwroutine.md`](nwroutine.md)); the two-cortex SynaptiX layout centralised in `src/multi-brain-layout.js` for both backends, a `multi_brain` routine event and toggle, and the mirror-neuron "I reach, you move" demo ([`synaptix.md`](synaptix.md) → *Multi-Brain*) |
-| 33 | Dream Implementations | **Reward Interaction**: Implement dopamine reward visualization. **AI Narrative Generation**: Implement a template-based and LLM-ready generator for dynamic routine scripts from themes. **Neuro-Script Exchange**: Implement local-first MVP. **Neuro-Inflammation**: Implement neuro-inflammation visualization. |
+| 32 | Neuro-Script Exchange & Multi-Brain | `.nwroutine` import/export with the untrusted-file sandbox (`bci_connect` / `drug_delivery` need "I trust this file"), a Routine-tab gallery of the built-in routines as packages, fork lineage via `manifest.id` / `parentId` ([`nwroutine.md`](nwroutine.md)); the two-cortex SynaptiX layout centralised in `src/multi-brain-layout.js` for both backends, a `multi_brain` routine event and toggle, and the mirror-neuron "I reach, you move" demo ([`synaptix.md`](synaptix.md) → *Multi-Brain*); collaborative rooms (local WebSocket host `scripts/nw_room_bridge.mjs`, stimulus relay via `LiveInputBus`) |
+| 33 | Dream Implementations | Dopamine reward interaction; template-based, LLM-ready AI narrative routine generator; neuro-inflammation; cognitive load; Eureka gamma synchronisation; adaptive routines (webcam-emotion branching via `if: "live.…"`); Neuromodulation External API (`scripts/external_ws_bridge.mjs`, `?external=`); spatial-audio hemisphere mapping; web-traffic activity; cellular memory resonance; long-term potentiation; neurogenesis; environmental turbulence; memory fragmentation; endorphin, oxytocin, cortisol, melatonin, cellular senescence; procedural binaural generation with easing; sleep spindles |
 
 ## Open Items
 
-- **Advanced Trigger System** (Phase 3) — allow complex multi-key combinations to trigger routines, instead of single-key bindings only. Implemented.
-- **WGSL-vs-CPU field comparison** (Phase 30 follow-up) — the golden fixture pins the JS and C++ implementations to each other; comparing the compute shader itself needs a software WGSL runner. `docs/tensor-physics.md` §8 records the intentional divergences in the meantime.
+- ~~**Advanced Trigger System**~~ (Phase 3) — done: multi-key combinations trigger routines.
+- ~~**WGSL-vs-CPU field comparison**~~ (Phase 30 follow-up) — done: `npm run test:wgsl` runs the production compute shader on SwiftShader against the CPU reference (`docs/tensor-physics.md` §9.2); §8 records the intentional divergences.
 - ~~**Reserved field parameters**~~ — done: `decayRate`, `diffusionRate` and `retentionBias` are specified (`docs/tensor-physics.md` §3.4) and read by all three steppers; `cognitiveDissonance` was removed from the layout (§6.14). The WGSL path is now validated by naga in `npm test` and compared with the CPU reference by `npm run test:wgsl` (§9).
 - **GPU tract normalisation** — the WGSL step re-normalises tract directions every step instead of once at upload (`docs/tensor-physics.md` §8.6). Closing it needs the WebGPU upload and the clipmap affinity bake to emit unit directions.
 - ~~**`pulseSaturation`**~~ — done: wired `pulseSaturation` to scale soma emissive core and sparkle intensity in `soma-render.js`, completing the Neuro-Script Implementation Cycle item.
@@ -66,25 +65,18 @@ For the current architecture and module responsibilities, see [`AGENTS.md`](../A
 
 ## Dream Backlog (Not Yet Implemented)
 
-Deduplicated from the historical "Dream Log" entries across the archived plans — ideas confirmed already shipped (see phases above) have been dropped.
-- **Phantom Sensations** — What if we visualized visual cortex phantom sensations as localized fractal anomalies?
+Open ideas only, each once. When one ships, move it into the phase table above
+and delete it here (and from the root `agent_plan.md` inbox).
 
-- **Neuro-Script Exchange** — a shared platform to publish, fork, and remix visualization routines. *The local-first part is done (Phase 32, [`nwroutine.md`](nwroutine.md)): `.nwroutine` files, a built-in gallery, and fork lineage. A hosted gallery stays out of scope; a static one in the repo or on GitHub Pages is enough.*
-- **Multi-Brain Mode** — visualize two brains interacting (mirror-neuron storytelling). *Two cortices in one scene are done (Phase 32, [`synaptix.md`](synaptix.md), section Multi-Brain). Still open: N > 2 brains, split or over-the-shoulder camera presets, WebXR, and shared rooms (see Collaborative rooms under Open Items).*
-- **Spatial Audio Mapping** — completed: visualizes left/right spatial audio sources as localized activity in corresponding left/right hemispheres.
-- **AI Narrative Generation** — use an LLM to generate routine scripts from themes (e.g. "Anxiety Spike", "Eureka Moment"); related to the multimodal ideas in [`docs/DOUBLE_MIRROR_VISION.md`](DOUBLE_MIRROR_VISION.md).
-- **Fractal Recursive Zoom** — procedurally generate infinite detail when zooming into a soma or fiber. *Phases A (runtime `voxelDim`), B (clipmap field: a 64³ fine brick nested in the coarse field) and C (cortical patch with laminar somas below the zoom threshold) are done on WebGPU — see [`docs/field-resolution.md`](field-resolution.md) §7–§8. Phase D (WASM SIMD kernels, a 128³ brick, dual SynaptiX clipmaps, a fine NWS1 chunk) is next.*
-- **Collaborative Brain Storming** — multi-user session injecting stimuli into a shared visualization via WebSockets. *Specified as Collaborative rooms under Open Items.*
-- **Cognitive Load Simulation** — completed: dynamic variations in global flow speed and fiber thickness.
-- **Adaptive Routines** — *completed: real-time webcam emotion branching implemented via LiveInputBus mapping and `if: "live.…"` sugar.*
-- **Neuromodulation External API** — completed: added `scripts/external_ws_bridge.mjs` backend to supply the `external` source in `LiveInputBus`.
-- **Neuromodulation External API** — *Completed: Implemented server-side WebSocket ingest bridge `scripts/external_ws_bridge.mjs` running alongside `LiveInputBus` via the `?external=` parameter (`npm run external:bridge`).*
-- **Multi-Brain Mode** — visualize two brains interacting (mirror-neuron storytelling).
-- **Fractal Recursive Zoom** — procedurally generate infinite detail when zooming into a soma or fiber. *Phases A (runtime `voxelDim`), B (clipmap field: a 64³ fine brick nested in the coarse field) and C (cortical patch with laminar somas below the zoom threshold) are done on WebGPU — see [`docs/field-resolution.md`](field-resolution.md) §7–§8. Phase D (WASM SIMD kernels, a 128³ brick, dual SynaptiX clipmaps, a fine NWS1 chunk) is next.*
-- **Custom Audio-Feature Mapping Matrix** — *done, generalized past audio — see Phase 31 and [`docs/live-input-bus.md`](live-input-bus.md). The audio-only `ReactivityRouter` "Brain DJ" panel (Phase 3) remains as its own preset-driven panel.*
-
-- ~~**Sleep Spindles Simulation**~~ — completed: visualized sleep spindles during non-REM sleep as rapid, localized bursts of high-frequency oscillatory activity in the thalamocortical networks.
-- **SSRI Reuptake Inhibition Simulation** — What if we visualized neurotransmitter reuptake inhibition (like SSRIs) as lingering, extended color-shifts and slower particle decay?
+- **Phantom Sensations** — visual-cortex phantom sensations as localized fractal anomalies.
+- **SSRI Reuptake Inhibition** — reuptake inhibition as lingering, extended colour shifts and slower particle decay.
+- **Eye-Tracking Focus Mapping** — map eye-tracking data to specific pathway activation for focus analysis.
+- **Procedural Poetry** — an LLM writes poetry from live brain activity in real time.
+- **LLM-backed Narrative Generation** — the Phase 33 generator is template-based and LLM-ready; wiring a model to it is open. Related: [`docs/DOUBLE_MIRROR_VISION.md`](DOUBLE_MIRROR_VISION.md).
+- **Exchange-tab Timeline Editor** — build routines with the timeline editor directly in the Exchange tab.
+- **Neuro-Script Exchange, hosted gallery** — the local-first part is done (Phase 32, [`nwroutine.md`](nwroutine.md)). A hosted gallery stays out of scope; a static one in the repo or on GitHub Pages is enough.
+- **Multi-Brain, beyond two** — two cortices are done (Phase 32, [`synaptix.md`](synaptix.md) → *Multi-Brain*). Open: N > 2 brains, split or over-the-shoulder camera presets, WebXR.
+- **Fractal Recursive Zoom, Phase D** — Phases A–C are done on WebGPU ([`docs/field-resolution.md`](field-resolution.md) §7–§8). Next: WASM SIMD kernels, a 128³ brick, dual SynaptiX clipmaps, a fine NWS1 chunk.
 
 ## Related Specs & Vision Docs
 

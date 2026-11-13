@@ -35,7 +35,7 @@ Key capabilities:
 | **ML Runtime** | ONNX Runtime Web (`onnxruntime-web`) |
 | **[Phase 1] WASM** | Emscripten (C++ → WASM); `BrainTensorEngine` in `wasm/`; JS bridge in `src/wasm-engine.js` |
 | **Test/Verify** | Playwright (in deps), Python scripts for smoke tests and visual verification |
-| **Deployment** | Manual SFTP via `scripts/deploy.py` |
+| **Deployment** | Manual: `npm run build && npm run deploy` (root `deploy.py`, bundle upload to the storage service; token from `DEPLOY_TOKEN`) |
 
 **Dependencies (`package.json`):**
 - `marked` — Markdown rendering (used in narrative overlays)
@@ -78,7 +78,6 @@ brain_viz/
 │   ├── session-recorder.js     # 10 Hz local multimodal capture + IndexedDB spill
 │   ├── session-player.js       # Synchronized human-tensor replay and scrubbing
 │   ├── session-analysis.js     # Occipital/audio pairing, heatmap, Pearson, CSV
-│   └── icosahedron.js          # Icosahedron vertex/index constants (used for instanced somas)
 ├── vite.config.js          # Vite config (COOP/COEP headers, ONNX exclude, WASM assets)
 ├── package.json            # npm manifest (includes build:wasm script)
 ├── CONTRIBUTING.md         # "Where to look" map across all docs
@@ -91,9 +90,7 @@ brain_viz/
 │   ├── build_wasm.sh       # [Phase 1] Emscripten build script (npm run build:wasm)
 │   ├── build_wasm_colab.sh # Colab-flavored WASM build variant
 │   ├── check_wasm.sh       # Advisory prebuild check (npm run prebuild)
-│   ├── deploy.py           # SFTP deployment script (canonical — see §8)
-│   ├── fix_main.py         # One-off main.js repair script
-│   ├── test_compile.py     # Stub for build verification
+│   ├── deploy.py           # Deprecated shim → root deploy.py (see §8)
 │   └── test_run.py         # Dev-server smoke test (see §4, §7)
 ├── tests/                  # Headless Node assertions run by `npm test` (see §7)
 │   ├── test_uniform_layout.js  # Uniform-struct alignment/drift against src/shaders/uniform-layout.js
@@ -114,6 +111,9 @@ brain_viz/
 ├── verification/           # Canonical verification tree: Python/Playwright scripts + generated screenshots
 │   ├── verify_suite.py            # Runs all checks below and reports pass/fail
 │   ├── verify_clipmap_webgpu.py   # [Clipmap] Optional, WebGPU-only (not in the suite): fine brick + cortical patch
+│   ├── verify_routine_webgpu.mjs  # WebGPU (SwiftShader) routine playback — CI, reported not gating
+│   ├── verify_styles_webgpu.mjs   # WebGPU (SwiftShader) per-style pixel regression vs goldens/ — CI, reported not gating
+│   ├── goldens/                   # Committed style-*.png goldens for verify_styles_webgpu.mjs
 │   ├── verify_brain.py            # Style cycling + WebGL debug controls
 │   ├── verify_stimulus.py         # Region stimulus injection
 │   ├── verify_camera.py           # Camera preset + spline moves
@@ -154,7 +154,6 @@ brain_viz/
 - **`webxr-manager.js`** — Owns immersive VR/AR session lifecycle, per-eye WebGL matrices, controller/hand input, lobe viewpoints, and routine-driven XR rig state.
 - **`wasm-engine.js`** — [Phase 1] JavaScript loader and bridge for the C++ `BrainTensorEngine` WASM module. Provides `WasmTensorEngine` class with `init()`, `update()`, `injectStimulus()`, `getTensorData()`, `benchmark()`, and `dispose()`. Gracefully falls back when WASM build is absent.
 - **`main.js`** — Wires the DOM UI to the renderer, sets up keyboard shortcuts, initializes `RoutinePlayer`, `AudioReactor`, `TensorPlayer`, and `InferenceEngine`, and runs the main update loop. Also wires the WASM engine toggle UI.
-- **`icosahedron.js`** — Static icosahedron vertex and index arrays exported as constants. Used by `brain-renderer.js` for instanced soma geometry.
 - **`training-engine.js`** — Neurofeedback Training Mode: `TrainingEngine` class, simulated 0..1 metric samplers (`calm`, `occipitalAlpha`, `flowResonance`), the `BUILTIN_COURSES` catalog (Calm Focus / Panic Recovery / Flow Sustain), streak/drift-penalty/star scoring, and `localStorage` session history. See `docs/training-mode.md`.
 - **`live-input-bus.js`** — `LiveInputBus`: registers live sources (mic, BCI band power, training metrics, ...) and a user-editable source/feature -> renderer-param mapping table with per-mapping scale + attack/release smoothing, applied once per frame via `tick(dt)`. `src/main-live-input-integration.js` / `src/ui-live-input-panel.js` wire it to the "Live" tab. See `docs/live-input-bus.md`.
 - **`session-recorder.js` / `session-player.js`** — Double Mirror capture and replay ownership. Recording samples the current human tensor without mutating it; playback exclusively owns the human tensor until stopped and never modifies the SynaptiX partner tensor. See `docs/session-format.md`.
@@ -399,14 +398,18 @@ Automated coverage is deliberately narrow and headless — no Jest/Vitest, no
 browser:
 
 ```bash
-npm test             # uniform layout, shaders, neural-field fixture, renderer facade check
+npm test             # uniform layout, shaders, neural-field fixture, routine clock, renderer facade check, then lint + typecheck + knip
 npm run test:golden  # the C++ engine against the same fixtures (host C++ compiler)
 GOLDEN_WASM=1 npm run test:golden  # + the em++ SIMD build under node (needs emsdk)
 npm run bench:wasm   # bte_update() ms/step at 32³/48³/64³, SIMD vs scalar (needs emsdk)
 npm run test:all     # both
 npm run test:wgsl    # the WGSL compute shader against the CPU reference (Playwright Chromium, SwiftShader)
 npm run typecheck    # tsc --noEmit, checkJs on for src/ minus the @ts-nocheck backlog (see §3 and CLAUDE.md)
-npm run lint         # ESLint: eslint:recommended + JSDoc tag validity, no formatting rules
+npm run lint         # ESLint: eslint:recommended + JSDoc tag validity + bare-32 / routine-clock rules, no formatting rules
+npm run knip         # no orphan modules (knip.json lists script entry points)
+npm run check:bundle # after `npm run build`: dist/assets/*.js within 10% of scripts/bundle-budget.json
+npm run verify:webgpu-routine  # WebGPU (SwiftShader) routine playback keeps running and advancing
+npm run verify:webgpu-styles   # WebGPU (SwiftShader) per-style screenshots vs verification/goldens/ (--update to rewrite)
 npm run check:facade # standalone: both backends implement src/renderer-contract.js
 ```
 
@@ -430,7 +433,7 @@ python test_run.py
 **Automated verification via WebGL fallback (recommended for CI):**
 All Playwright-based verification scripts force `?renderer=webgl` for reliable headless execution. The WebGL path provides deterministic screenshots and stable console behavior.
 
-Headless WebGPU *is* usable, with the right flags: `--enable-unsafe-webgpu --use-webgpu-adapter=swiftshader` alone loses the device seconds after the first frame (Chrome cannot allocate the canvas swap-chain image without a Vulkan back end — the log says `Could not find SharedImageBackingFactory … WebgpuSwapChainTexture`), and adding `--enable-features=Vulkan --use-vulkan=swiftshader` fixes it. `verification/verify_clipmap_webgpu.py` uses exactly that and is the one WebGPU-only check; it is optional and not part of `verify_suite.py`. SwiftShader runs at roughly one frame per second, so use small viewports and wait on simulation time, not wall-clock time.
+Headless WebGPU *is* usable, with the right flags: `--enable-unsafe-webgpu --use-webgpu-adapter=swiftshader` alone loses the device seconds after the first frame (Chrome cannot allocate the canvas swap-chain image without a Vulkan back end — the log says `Could not find SharedImageBackingFactory … WebgpuSwapChainTexture`), and adding `--enable-features=Vulkan --use-vulkan=swiftshader` fixes it. `scripts/lib/chromium.mjs` (shared by `test:wgsl` and the two `verification/verify_*_webgpu.mjs` checks) and `verification/verify_clipmap_webgpu.py` use exactly that; none of them is part of `verify_suite.py`. SwiftShader runs at roughly one frame per second, so use small viewports and wait on simulation time, not wall-clock time.
 
 ```bash
 # Run the full suite
@@ -463,13 +466,14 @@ python verification/verify_live_input_bus.py    # Live tab mapping matrix UI + o
 
 1. `npm ci`
 2. `npm test` (with `REQUIRE_NAGA=1`, after a cached `cargo install naga-cli`) — headless Node assertions: uniform layout, shaders (including a WGSL reserved-word scan and naga validation of every WGSL source), the neural-field golden fixtures, field resolution, the clipmap (`tests/test_clipmap.js`), and `scripts/check-renderer-facade.mjs` (both renderer backends implement `src/renderer-contract.js`)
-3. `npm run lint` — ESLint (`eslint.config.js`), then `npm run typecheck` — `tsc -p jsconfig.json --noEmit` with `checkJs` on for `src/`, minus files marked `// @ts-nocheck — checkJs backlog`
+3. (inside `npm test`) `npm run lint` — ESLint (`eslint.config.js`), `npm run typecheck` — `tsc -p jsconfig.json --noEmit` with `checkJs` on for `src/`, minus files marked `// @ts-nocheck — checkJs backlog` — and `npm run knip` (no orphan modules)
 4. `npm run test:golden` — compiles the C++ engine (`BTE_SRCS` in `scripts/wasm_flags.sh`) with the runner's own C++17 compiler (no Emscripten) and checks it against the same fixtures
-5. `npm run build` — frontend-only vite build; the `prebuild` WASM check is advisory and never fails
+5. `npm run build` — frontend-only vite build; the `prebuild` WASM check is advisory and never fails — then `npm run check:bundle` (JS bundle-size budget, gating)
 6. `python3 scripts/test_run.py` — dev server smoke test
 7. `pip install playwright && playwright install chromium`
 8. `npm run test:wgsl` — the WGSL oracle (`docs/tensor-physics.md` §9.2); **reported, not gating** (`continue-on-error`), because headless SwiftShader WebGPU is not reliable enough to block on
-9. `python3 verification/verify_suite.py` — the WebGL-fallback (`?renderer=webgl`) Playwright suite described above
+9. `npm run verify:webgpu-routine` and `npm run verify:webgpu-styles` — routine playback and per-style pixel regression (pixelmatch vs `verification/goldens/`) on SwiftShader WebGPU; **reported, not gating**, like the oracle. Style diffs are uploaded as the `style-diffs` artifact
+10. `python3 verification/verify_suite.py` — the WebGL-fallback (`?renderer=webgl`) Playwright suite described above
 
 `node_modules` and the Playwright browser cache are cached across runs. Verification screenshots are uploaded as a build artifact when the job fails. The WASM build (`npm run build:wasm`) stays a local/manual step and is **not** a CI gate unless an Emscripten toolchain is added to the workflow later.
 
@@ -483,9 +487,10 @@ python verification/verify_live_input_bus.py    # Live tab mapping matrix UI + o
    ```
 2. Run the deployment script:
    ```bash
-   python scripts/deploy.py
+   DEPLOY_TOKEN=... npm run deploy   # = python deploy.py
    ```
-   This recursively uploads the `dist/` directory via SFTP to a remote server. The server credentials are hardcoded in `scripts/deploy.py` (username, host, remote path). An unused, alternate Contabo-storage-based deploy template is preserved for reference in `docs/archive/deploy-contabo-template.py` — it is not the active deploy path.
+   The root `deploy.py` zips `dist/` (skipping files whose remote size already matches) and uploads the bundle to the storage service's API, which publishes it under `TARGET_FOLDER` (default `brain-viz`). **No credentials are stored in the repo** — the upload token comes from the `DEPLOY_TOKEN` environment variable. `scripts/deploy.py` is a deprecated shim that runs the root script. The old SFTP path is gone; `docs/archive/deploy-contabo-template.py` is historical reference only.
+3. Response headers (COOP/COEP) and redirects (`deploy/nginx-redirects.conf`) are serving-host configuration that the script cannot ship — see the docstring at the top of `deploy.py`.
 
 **Do not edit files in `dist/` directly.** Always edit source files and re-run `npm run build`.
 
@@ -493,7 +498,7 @@ python verification/verify_live_input_bus.py    # Live tab mapping matrix UI + o
 
 ## 9. Security Considerations
 
-- **Hardcoded credentials:** `scripts/deploy.py` contains a plaintext password. Do not commit modified versions with real secrets if the repo is public.
+- **Deploy credentials:** none are in the tree — `deploy.py` reads `DEPLOY_TOKEN` from the environment. Never hardcode a token or password in a script. (Earlier SFTP versions of the deploy script in git history contained a plaintext password; treat that credential as compromised.)
 - **Cross-Origin Isolation:** `vite.config.js` sets `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp` on both the dev server and `vite preview`; the production host must set them too (see `deploy.py`). This is required for `SharedArrayBuffer` and multi-threaded ONNX WASM, but it blocks certain cross-origin resources (e.g., external images/audio) unless they send appropriate CORS headers.
 - **Microphone access:** `audio-reactor.js` requests `getUserMedia({ audio: true })`. This triggers a browser permission prompt.
 - **External audio URLs:** Some routines fetch audio from external URLs (`cdn.freesound.org`). Ensure these URLs are HTTPS and CORS-enabled.

@@ -64,11 +64,11 @@ export function registerNarrativeFlowHandlers(handlers, player) {
         }
 
         // Restore after short duration
-        setTimeout(() => {
+        player.after(0.5, () => {
             player.executeEvent({ type: 'style', value: 0 }); // Restore default style
             player.executeEvent({ type: 'cinematic', aberration: 0.0, grain: 0.0 });
             player.executeEvent({ type: 'shake', intensity: 0.0 });
-        }, 500);
+        }, { cleanup: true });
     });
 
     // [Phase 2] Default Mode Network (DMN)

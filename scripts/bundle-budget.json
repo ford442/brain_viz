@@ -1,0 +1,9 @@
+{
+  "total": 1149748,
+  "chunks": {
+    "index.js": 727441,
+    "inference-engine.js": 407327,
+    "timeline-editor.js": 7730,
+    "ui-timeline-editor.js": 7250
+  }
+}
