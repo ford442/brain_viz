@@ -34,8 +34,12 @@ npm test
 # tsc --noEmit, checkJs on for src/ minus the @ts-nocheck backlog (see §5 below)
 npm run typecheck
 
-# ESLint: eslint:recommended + JSDoc tag validity, no formatting rules
+# ESLint: eslint:recommended + JSDoc tag validity + bare-32 / routine-clock rules (also run by npm test)
 npm run lint
+
+# WebGPU on SwiftShader: routine playback, per-style pixel regression vs verification/goldens/
+npm run verify:webgpu-routine
+npm run verify:webgpu-styles
 
 # Standalone: both renderer backends implement src/renderer-contract.js
 npm run check:facade
@@ -153,7 +157,7 @@ Uniform structs require strict memory alignment (16-byte for `vec4`/`mat4`), so 
 
 - **WebGPU is the primary/authoritative renderer.** Chrome 113+, Edge 113+. A WebGL2 fallback renderer (`?renderer=webgl`) exists for debugging, automation, and headless CI — see `docs/webgl-fallback.md`.
 - **COOP/COEP headers:** Configured in `vite.config.js` for `crossOriginIsolated` (required for multi-threaded WASM).
-- **Deployment:** Manual SFTP via `scripts/deploy.py` (credentials hardcoded; do not commit with real secrets).
+- **Deployment:** Manual `npm run deploy` (root `deploy.py`, bundle upload; token from `DEPLOY_TOKEN`, never hardcoded).
 - **Repository size:** Large binaries (WASM, ONNX models) stored directly. Use `git clone --depth 1` for faster clones.
 
 ## Common Tasks

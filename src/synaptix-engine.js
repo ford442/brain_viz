@@ -2,7 +2,7 @@ import { SynaptiXCouplingModel, SYNAPTIX_REGIONS } from './synaptix-coupling.js'
 import { DEFAULT_VOXEL_DIM, normalizeVoxelDim, voxelCountFor } from './voxel-dim.js';
 
 /**
- * [SynaptiX] AITensorProjector — Maps transformer/ViT activation tensors into the 32³ brain volume.
+ * [SynaptiX] AITensorProjector — Maps transformer/ViT activation tensors into the voxelDim³ brain volume.
  *
  * Default anatomical mapping (layer depth → brain region):
  *   Early layers  (0–25%)   → Occipital  (Z < -0.3)   — visual/feature extraction
@@ -206,7 +206,7 @@ export class SynaptiXEngine {
         this.setPartnerTensorData(payload.tensor, 'file');
         this.layerCount = payload.layerCount || 1;
         this.lastSourceInfo = payload.projected
-            ? `Projected activations: ${file.name} (${payload.sourceLength} values → 32^3)`
+            ? `Projected activations: ${file.name} (${payload.sourceLength} values → ${this.voxelDim}^3)`
             : `Tensor loaded: ${file.name}`;
         console.log('[SynaptiX] Partner tensor loaded from file');
     }
@@ -237,7 +237,7 @@ export class SynaptiXEngine {
         return this._parseTensorPayload(new Float32Array(values));
     }
 
-    // [SynaptiX] Project an external activation tensor into the 32³ volume
+    // [SynaptiX] Project an external activation tensor into the voxelDim³ volume
     projectActivation(activation, layerIndex = 0, totalLayers = 1) {
         const projected = this.projector.project(activation, layerIndex, totalLayers);
         this.layerCount = Math.max(1, totalLayers);
@@ -612,7 +612,7 @@ export class SynaptiXEngine {
         }
 
         const projected = this.projector.project(floatArray, 0, 1);
-        console.warn(`[SynaptiX] Projected non-32^3 tensor payload of size ${floatArray.length} into 32^3 brain volume`);
+        console.warn(`[SynaptiX] Projected non-${this.voxelDim}^3 tensor payload of size ${floatArray.length} into ${this.voxelDim}^3 brain volume`);
         return {
             tensor: projected,
             layerCount: 1,

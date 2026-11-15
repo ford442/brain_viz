@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 npm install                    # Install dependencies
-npm test                       # Headless Node assertions (uniform layout, shaders, naga WGSL validation, tensor physics, renderer facade)
+npm test                       # Headless Node assertions (uniform layout, shaders, naga WGSL validation, tensor physics, routine clock, renderer facade) + lint + typecheck + knip
 npm run test:golden            # C++ neural field vs the JS reference (needs a host C++ compiler)
 GOLDEN_WASM=1 npm run test:golden  # + the em++ -msimd128 build under node (needs emsdk)
 npm run bench:wasm             # WASM bte_update() ms/step at 32³/48³/64³ (needs emsdk)
@@ -14,7 +14,10 @@ npm run gen:compile-commands   # clangd graph for wasm/ (host flags; :wasm for t
 npm run test:all               # npm test + npm run test:golden
 npm run test:wgsl              # WGSL compute shader vs the JS reference on SwiftShader WebGPU (needs a Playwright Chromium)
 npm run typecheck              # tsc --noEmit, checkJs on for src/ minus the @ts-nocheck backlog (see §3b)
-npm run lint                   # ESLint: eslint:recommended + JSDoc tag validity, no formatting rules
+npm run lint                   # ESLint: eslint:recommended + JSDoc tag validity + bare-32 / routine-clock rules, no formatting rules
+npm run check:bundle           # After build: dist/assets/*.js within 10% of scripts/bundle-budget.json
+npm run verify:webgpu-routine  # WebGPU (SwiftShader) routine playback check
+npm run verify:webgpu-styles   # WebGPU (SwiftShader) per-style screenshots vs verification/goldens/ (-- --update)
 npm run check:facade           # Both renderer backends implement src/renderer-contract.js
 npm run dev                    # Start dev server (http://localhost:5173)
 npm run build                  # Build production bundle to dist/

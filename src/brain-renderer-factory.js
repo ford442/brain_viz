@@ -43,8 +43,10 @@ export async function createBrainRenderer(canvas) {
     let lastError = null;
 
     for (const rendererType of attempts) {
+        /** @type {BrainRenderer|BrainRendererWebGL|null} */
+        let renderer = null;
         try {
-            const renderer = rendererType === 'webgl'
+            renderer = rendererType === 'webgl'
                 ? new BrainRendererWebGL(canvas)
                 : new BrainRenderer(canvas);
             await renderer.initialize();
@@ -62,6 +64,13 @@ export async function createBrainRenderer(canvas) {
             };
         } catch (error) {
             lastError = error;
+            // Release the failed backend's canvas listeners (and GPU objects)
+            // before the next one attaches its own to the same canvas.
+            try {
+                renderer?.destroy();
+            } catch (destroyError) {
+                console.warn(`[Renderer] Failed to tear down the ${rendererType} renderer:`, destroyError);
+            }
             if (rendererType === requestedRenderer) {
                 fallbackReason = `${rendererType.toUpperCase()} initialization failed: ${error.message}`;
             }

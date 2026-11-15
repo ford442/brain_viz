@@ -37,7 +37,7 @@ npm run build                     # web-only production build
 python3 scripts/test_run.py       # smoke test
 python3 verification/verify_suite.py   # full visual verification suite (WebGL fallback)
 python3 verification/verify_clipmap_webgpu.py   # optional WebGPU-only clipmap check
-python3 scripts/deploy.py         # deploy dist/ via SFTP
+DEPLOY_TOKEN=... npm run deploy   # upload dist/ (root deploy.py; no credentials in the repo)
 ```
 
 ## Code style
@@ -52,10 +52,14 @@ Run these before opening a PR; CI (`.github/workflows/ci.yml`) runs all of them.
 |---|---|
 | `npm test` | Headless Node, no browser: uniform-layout drift, WGSL reserved words, naga validation of every WGSL source, the neural-field contract against committed fixtures (`tests/test_tensor_physics.js`), every supported `voxelDim`, the Live Input Bus, clipmap policy/lattice math, the WASM loader, and `npm run check:facade` |
 | `npm run check:facade` | Both renderer backends implement every method in `src/renderer-contract.js` (a cross-file grep — tsc cannot see mixin methods) |
-| `npm run lint` | ESLint (`eslint.config.js`): `eslint:recommended` + JSDoc tag validity. Undefined names, unused variables, duplicate keys. No formatting rules |
-| `npm run typecheck` | `tsc --noEmit` with `checkJs` on for all of `src/`, minus files still marked `// @ts-nocheck — checkJs backlog` (see `jsconfig.json`). JSDoc only — no `.ts` files |
+| `npm run lint` | ESLint (`eslint.config.js`): `eslint:recommended` + JSDoc tag validity, bare `32` grid sizes, and no `setTimeout` in `src/routine-handlers/` (use `player.after()`). No formatting rules. Part of `npm test` |
+| `npm run knip` | No orphan modules (`knip.json`). Part of `npm test` |
+| `npm run typecheck` | `tsc --noEmit` with `checkJs` on for all of `src/`, minus files still marked `// @ts-nocheck — checkJs backlog` (see `jsconfig.json`). JSDoc only — no `.ts` files. Part of `npm test` |
 | `npm run test:golden` | The C++ engine against the same fixtures as the JS reference (needs a host C++ compiler) |
 | `npm run test:wgsl` | The WGSL compute shader against the CPU reference on SwiftShader (reported in CI, not gating) |
+| `npm run check:bundle` | After `npm run build`: every `dist/assets/*.js` chunk and the total within 10% of `scripts/bundle-budget.json` (`--update` to accept) |
+| `npm run verify:webgpu-routine` | WebGPU on SwiftShader: a routine keeps playing and its clock advances (reported in CI, not gating) |
+| `npm run verify:webgpu-styles` | WebGPU on SwiftShader: each style vs `verification/goldens/` with pixelmatch; `-- --update` rewrites goldens (reported in CI, not gating) |
 | `python3 verification/verify_suite.py` | Playwright visual suite against the WebGL2 fallback |
 
 Rendering changes still need a manual look in a WebGPU browser (`npm run dev`) — nothing above can tell you a frame looks right. See `AGENTS.md` §7.

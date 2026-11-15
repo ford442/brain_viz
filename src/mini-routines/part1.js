@@ -132,7 +132,6 @@ export const MINI_ROUTINES_PART1 = {
         { time: 4.5, type: 'calm' }
     ],
 
-    // eslint-disable-next-line no-dupe-keys -- KNOWN BUG: overwrites 'E' Visual Cortex Edge Detection above, which is unreachable. Needs a new hotkey.
     '!': [ // Electrical Exposure (High voltage, rapid chaotic firing, harsh audio)
         { time: 0.0, type: 'text', message: 'HAZARD: ELECTRICAL EXPOSURE', duration: 2.5 },
         { time: 0.0, type: 'style', value: 1 }, // Cyber/Wireframe style

@@ -20,6 +20,8 @@
 // relies on GPU-convenient constructs that cannot be reproduced bit-stably on
 // two CPUs: the `fract(sin(...))` hash and the hard `step()` cascade gate.
 
+import { DEFAULT_VOXEL_DIM } from '../voxel-dim.js';
+
 /**
  * World-space half-extent of the voxel grid. Mirrors CONSTANTS.BRAIN_RANGE.
  *
@@ -345,7 +347,7 @@ export function normalizeFiberAffinities(raw, dim) {
  */
 export const DEFAULT_FIELD_PARAMS = Object.freeze({
     time: 0.0,
-    voxelDim: 32,
+    voxelDim: DEFAULT_VOXEL_DIM,
     frequency: 2.0,
     amplitude: 0.5,
     spikeThreshold: 0.6,

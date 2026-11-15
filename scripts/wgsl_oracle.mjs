@@ -26,9 +26,7 @@
 //   CHROME_PATH=…            a Chromium/Chrome binary (default: Playwright's)
 //   WGSL_ORACLE_GPU=hardware use the machine's adapter instead of SwiftShader
 //   REQUIRE_WGSL_ORACLE=1    a skip is a failure
-import { existsSync, readdirSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { launchBrowser as launchChromium } from './lib/chromium.mjs';
 
 import { computeShader } from '../src/shaders/volumetric-compute.js';
 import { COMPUTE_UNIFORM_LAYOUT, COMPUTE_UNIFORM_OFFSETS, COMPUTE_UNIFORM_BYTE_SIZE } from '../src/shaders/uniform-layout.js';
@@ -118,56 +116,7 @@ function packTensorParams(p) {
     return [...new Uint8Array(bytes)];
 }
 
-/**
- * $CHROME_PATH alone if set. Otherwise Playwright's pinned build (undefined =
- * its default), then any build in its cache, newest first: the npm package and
- * the browsers installed on a machine drift independently.
- */
-function chromiumCandidates() {
-    if (process.env.CHROME_PATH) return [process.env.CHROME_PATH];
-    return [undefined, ...cachedChromiumBuilds()];
-}
-
-function cachedChromiumBuilds() {
-    const cache = join(homedir(), '.cache', 'ms-playwright');
-    if (!existsSync(cache)) return [];
-    return readdirSync(cache)
-        .filter((d) => /^chromium-\d+$/.test(d))
-        .sort((a, b) => Number(b.split('-')[1]) - Number(a.split('-')[1]))
-        .flatMap((d) => ['chrome-linux64', 'chrome-linux', 'chrome-mac', 'chrome-win']
-            .map((sub) => join(cache, d, sub, sub.startsWith('chrome-win') ? 'chrome.exe' : 'chrome')))
-        .filter(existsSync);
-}
-
-const SOFTWARE_WEBGPU_ARGS = [
-    '--enable-unsafe-webgpu',
-    '--enable-features=Vulkan',
-    '--use-vulkan=swiftshader',
-    '--use-webgpu-adapter=swiftshader',
-    '--use-angle=swiftshader',
-    '--enable-unsafe-swiftshader',
-    '--disable-gpu-watchdog',
-];
-const HARDWARE_WEBGPU_ARGS = ['--enable-unsafe-webgpu', '--enable-features=Vulkan'];
-
-async function launchBrowser() {
-    let chromium;
-    try {
-        ({ chromium } = await import('playwright'));
-    } catch {
-        skip('the playwright package is not installed (npm install).');
-    }
-    const args = process.env.WGSL_ORACLE_GPU === 'hardware' ? HARDWARE_WEBGPU_ARGS : SOFTWARE_WEBGPU_ARGS;
-    const errors = [];
-    for (const executablePath of chromiumCandidates()) {
-        try {
-            return await chromium.launch({ headless: true, executablePath, args });
-        } catch (err) {
-            errors.push(`${executablePath ?? "playwright's default"}: ${String(err.message).split('\n')[0]}`);
-        }
-    }
-    skip(`no Chromium build could be launched (npx playwright install chromium, or set CHROME_PATH).\n    ${errors.join('\n    ')}`);
-}
+const launchBrowser = () => launchChromium(skip);
 
 /** Runs in the page. Steps the production shader `steps` times; returns the field. */
 async function gpuRun({ shader, voxelDim, steps, dt, paramImages, fibers }) {

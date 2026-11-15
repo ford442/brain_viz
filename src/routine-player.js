@@ -24,8 +24,13 @@ export class RoutinePlayer {
      * - Extensibility: executeEvent() resolves variables dynamically and dispatches to a Map of registered handlers, with a switch fallback.
      * - Safety: Tick loop degrades gracefully and halts execution if WebGPU context is lost or renderer is destroyed.
      */
+    /**
+     * @param {import('./renderer-contract.js').AppRenderer} renderer - Either backend.
+     * @param {Object} [regionMap]
+     * @param {Object} [cameraMap]
+     */
     constructor(renderer, regionMap, cameraMap) {
-        // Expects BrainRenderer instance.
+        /** @type {import('./renderer-contract.js').AppRenderer} */
         this.renderer = renderer;
         this.regions = regionMap || {}; // Maps names like 'frontal' to [x,y,z]
         this.cameraMap = cameraMap || {}; // Maps camera target names to {rotation, zoom}
@@ -371,7 +376,7 @@ export class RoutinePlayer {
         this.lastFrameTime = performance.now();
         this.cursor = 0;
         this.activeLerps = [];
-        this.activeTasks = [];
+        this.cancelTasks();
         this.waitingForSignal = null;
         this.tick();
         console.log("[Routine] Playback started");
@@ -409,7 +414,7 @@ export class RoutinePlayer {
         this.cancelScheduledTick();
         this.cursor = 0;
         this.activeLerps = [];
-        this.activeTasks = [];
+        this.cancelTasks();
         this.waitingForSignal = null;
         this.emitEvent({ type: 'stop' });
     }
@@ -430,19 +435,12 @@ export class RoutinePlayer {
         const isWebGPUBackend = this.renderer.backendType !== 'webgl';
         if (!isWebGPUBackend) return false;
 
-        const isDeviceLost = this._deviceLost;
-        const isDeviceLostNow = isWebGPUBackend && this.renderer.isContextLost === true;
-        const rendererMissing = (isWebGPUBackend && (!this.renderer.device || this.renderer.device.lost)) || isDeviceLostNow;
-
-        if (isWebGPUBackend && this.renderer.device && (this.renderer.isContextLost || this.renderer.device.lost)) {
-            console.warn('[Routine Engine] WebGPU Context lost detected dynamically. Degrading gracefully by stopping tick.');
+        // Device loss is the isContextLost flag set by handleDeviceLost();
+        // `device.lost` is a Promise and is always truthy — never test it.
+        if (!this.renderer.device || this.renderer.isContextLost === true || this._deviceLost) {
+            console.warn("[Routine Engine] WebGPU device is missing or lost. Halting execution gracefully.");
+            this._deviceLost = true;
             return true;
-        }
-
-        if (rendererMissing || isDeviceLost) {
-             console.warn("[Routine Engine] WebGPU Context is permanently invalid or lost. Halting execution gracefully.");
-             if (rendererMissing) this._deviceLost = true;
-             return true;
         }
 
         if (typeof this.renderer.isRunning !== 'undefined' && !this.renderer.isRunning && !this.renderer.xrPresenting) {
@@ -497,26 +495,6 @@ export class RoutinePlayer {
         // intentional verification comment inside tick() - Dream Backlog Update Cycle active
         if (!this.isPlaying || this.routine.length === 0) return;
         if (!this.renderer || this.renderer.isDestroyed) {
-            this.stop();
-            return;
-        }
-
-        const isWebGPU = this.renderer.backendType !== 'webgl';
-        if (isWebGPU && (
-            !this.renderer.device ||
-            this.renderer.device.lost ||
-            this.renderer.isContextLost === true ||
-            this._deviceLost
-        )) {
-            this._deviceLost = true;
-            this.stop();
-            return;
-        }
-
-        const isWebGPUBackend = this.renderer?.backendType !== 'webgl';
-
-        if (!this.renderer || (isWebGPUBackend && (!this.renderer.device || this.renderer.device.lost))) {
-            console.warn("[Routine Engine] WebGPU Context lost or invalid. Halting execution gracefully.");
             this.stop();
             return;
         }
@@ -628,7 +606,7 @@ export class RoutinePlayer {
                 this.elapsedTime = 0;
                 this.cursor = 0;
                 this.activeLerps = [];
-                this.activeTasks = [];
+                this.cancelTasks();
             } else {
                 console.log("[Routine Engine] Routine execution completed.");
                 this.stop();
@@ -656,6 +634,35 @@ export class RoutinePlayer {
         else cancelAnimationFrame(this.timerId);
         this.timerId = null;
         this.timerSource = null;
+    }
+
+    /**
+     * Run `fn` after `delaySec` seconds of *routine* time: it pauses with the
+     * routine and scales with playbackSpeed. Routine handlers use this instead
+     * of setTimeout (lint-enforced in src/routine-handlers/**).
+     * @param {number} delaySec
+     * @param {() => void} fn
+     * @param {{cleanup?: boolean}} [opts] - cleanup: also run `fn` immediately
+     *   if the task is cancelled (stop, loop restart, clearLerps), so a
+     *   "restore after N s" effect can never leave renderer state stuck.
+     */
+    after(delaySec, fn, { cleanup = false } = {}) {
+        if (!this.activeTasks) this.activeTasks = [];
+        this.activeTasks.push({ delay: Math.max(0, Number(delaySec) || 0), execute: fn, cleanup });
+    }
+
+    /** Drop pending tasks, running the ones registered with `{ cleanup: true }`. */
+    cancelTasks() {
+        const pending = this.activeTasks || [];
+        this.activeTasks = [];
+        for (const task of pending) {
+            if (!task.cleanup) continue;
+            try {
+                task.execute();
+            } catch (e) {
+                console.error('[Routine Engine] Cleanup task failed:', e);
+            }
+        }
     }
 
     processTasks(dt) {
@@ -880,7 +887,7 @@ export class RoutinePlayer {
 
     clearLerps() {
         this.activeLerps = [];
-        this.activeTasks = [];
+        this.cancelTasks();
         console.log("[Routine Engine] All active lerps cancelled.");
     }
 
@@ -898,6 +905,7 @@ export class RoutinePlayer {
         }
 
         let currentVal;
+        /** @type {Object} Lerp target: renderer params, this player, or sonification overrides. */
         let targetObj = this.renderer.params;
         if (event.key === 'playbackSpeed') {
             currentVal = this.playbackSpeed;

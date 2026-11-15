@@ -211,11 +211,11 @@ export function registerNeuromodulatorsHandlers(handlers, player) {
 
         // [Phase 6] Cleanup completes: phagocytosed debris and the immune
         // particles that carried it are released, leaving the repaired tissue.
-        setTimeout(() => {
+        player.after(Math.max(0, duration), () => {
             if (typeof player.renderer.clearImmuneParticles === 'function') {
                 player.renderer.clearImmuneParticles();
             }
-        }, Math.max(0, duration) * 1000);
+        }, { cleanup: true });
     });
 
     // [Phase 5] GABA Deceleration
@@ -416,11 +416,11 @@ export function registerNeuromodulatorsHandlers(handlers, player) {
         if (duration > 0) {
             player.startLerp({ key: 'immuneActivity', value: 0.0, duration: duration, ease: evt.ease || 'quadOut' });
             player.startLerp({ key: 'colorShift', value: 0.0, duration: duration, ease: evt.ease || 'quadOut' });
-            setTimeout(() => {
+            player.after(duration, () => {
                 if (typeof player.renderer.clearImmuneParticles === 'function') {
                     player.renderer.clearImmuneParticles();
                 }
-            }, duration * 1000);
+            }, { cleanup: true });
         } else if (typeof player.renderer.clearImmuneParticles === 'function') {
             player.renderer.clearImmuneParticles();
         }
@@ -531,8 +531,7 @@ export function registerNeuromodulatorsHandlers(handlers, player) {
         });
 
         // Dub (Second pulse) - slightly delayed
-        setTimeout(() => {
-            if (!player.isPlaying) return;
+        player.after(duration * 0.25, () => { // dub starts at 25% of the total duration
             player.renderer.setParams({
                 amplitude: 1.8 * intensity,
                 flowSpeed: 10.0 * intensity
@@ -545,7 +544,7 @@ export function registerNeuromodulatorsHandlers(handlers, player) {
                 player.startLerp({ key: 'amplitude', value: 0.5, duration: fadeDuration, ease: ease });
                 player.startLerp({ key: 'flowSpeed', value: 4.0, duration: fadeDuration, ease: ease });
             }
-        }, (duration * 1000) * 0.25); // dub starts at 25% of the total duration
+        });
 
         // Fade back for lub (before dub hits)
         if (duration > 0) {
