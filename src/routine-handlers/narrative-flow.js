@@ -211,6 +211,8 @@ export function registerNarrativeFlowHandlers(handlers, player) {
         } else if (typeof evt.condition === 'string' && evt.condition.startsWith('state.')) {
             const key = evt.condition.substring(6);
             result = !!player.state[key];
+        } else if (typeof evt.condition === 'string' && evt.condition.trim().startsWith('live.') && player.liveInputBus) {
+            result = player.liveInputBus.evaluateCondition(evt.condition);
         } else {
             result = !!evt.condition;
         }

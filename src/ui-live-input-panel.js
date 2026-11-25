@@ -119,6 +119,30 @@ export function setupLiveInputPanel(bus) {
         bus.mappings.forEach((mapping) => grid.appendChild(buildRow(bus, mapping, renderRows)));
     }
 
+    window.addEventListener('live-input-features-changed', renderRows);
+    for (const [id, source] of Object.entries(bus.deviceSources || {})) {
+        const connectBtn = document.getElementById(`btn-live-${id}-connect`);
+        const disconnectBtn = document.getElementById(`btn-live-${id}-disconnect`);
+        const status = document.getElementById(`live-${id}-status`);
+        const showStatus = (message) => { if (status) status.textContent = message; };
+        source.onStatus = showStatus;
+        showStatus(source.status);
+        connectBtn?.addEventListener('click', async () => {
+            connectBtn.disabled = true;
+            try {
+                await source.connect();
+                if (!source.access && !source.device) return;
+                bus.registerSource(id, { hz: source.hz, features: source.features, sample: () => source.sample() });
+                renderRows();
+            } catch {
+                // The source reports permission, availability and connection errors.
+            } finally {
+                connectBtn.disabled = false;
+            }
+        });
+        disconnectBtn?.addEventListener('click', () => source.disconnect());
+    }
+
     if (enabledToggle) {
         enabledToggle.checked = bus.enabled;
         enabledToggle.addEventListener('change', () => {
