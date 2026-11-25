@@ -17,6 +17,8 @@ globalThis.localStorage = {
 };
 
 const { LiveInputBus, LIVE_INPUT_SINKS, createMapping } = await import('../src/live-input-bus.js');
+const { LiveMidiSource } = await import('../src/live-midi-source.js');
+const { LiveHrSource } = await import('../src/live-hr-source.js');
 
 function makeRenderer() {
     return {
@@ -157,6 +159,135 @@ function makeRenderer() {
     assert.equal(bus.evaluateCondition('live.nope > 0.1'), true, 'unresolvable feature fails open');
     assert.equal(bus.evaluateCondition('not an expression'), true, 'unparsable expression fails open');
     assert.equal(bus.evaluateCondition(42), true, 'non-string input fails open');
+}
+
+// --- 7. MIDI: permissions, channels, note-off, hotplug and cleanup --------
+{
+    class Input extends EventTarget {
+        constructor() { super(); this.state = 'connected'; }
+        send(...bytes) {
+            const event = new Event('midimessage');
+            event.data = Uint8Array.from(bytes);
+            this.dispatchEvent(event);
+        }
+    }
+    const first = new Input();
+    const second = new Input();
+    const access = { inputs: new Map([['first', first]]), onstatechange: null };
+    const source = new LiveMidiSource(async () => access);
+    await source.connect();
+    first.send(0xb2, 0, 127);
+    first.send(0xbf, 127, 64);
+    first.send(0x92, 60, 127);
+    first.send(0x92, 61, 64);
+    assert.equal(source.sample().cc0, 1);
+    assert.equal(source.sample().cc127, 64 / 127);
+    assert.equal(source.sample().note, 64 / 127);
+    first.send(0x82, 61, 0);
+    assert.equal(source.sample().note, 1);
+    first.send(0x92, 60, 0);
+    assert.equal(source.sample().note, 0);
+    first.send(0xb0, 4); // truncated packet ignored
+    access.inputs.set('second', second);
+    access.onstatechange();
+    second.send(0xb0, 0, 32);
+    assert.equal(source.sample().cc0, 32 / 127);
+    second.state = 'disconnected';
+    access.onstatechange();
+    assert.equal(source.sample().cc0, 1);
+    source.disconnect();
+    first.send(0xb0, 0, 127);
+    assert.equal(source.sample().cc0, 0);
+    assert.equal(access.onstatechange, null);
+    const denied = new LiveMidiSource(async () => { throw new Error('denied'); });
+    await assert.rejects(denied.connect(), /denied/);
+    assert.match(denied.status, /denied/);
+}
+
+// --- 8. BLE heart rate formats, bus mapping, errors and disconnect -------
+{
+    class Characteristic extends EventTarget {
+        async startNotifications() { return this; }
+        async stopNotifications() { return this; }
+        send(bytes) {
+            this.value = new DataView(Uint8Array.from(bytes).buffer);
+            this.dispatchEvent(new Event('characteristicvaluechanged'));
+        }
+    }
+    const characteristic = new Characteristic();
+    const device = new EventTarget();
+    device.name = 'Mock strap';
+    device.gatt = {
+        connected: false,
+        async connect() { this.connected = true; return this; },
+        async getPrimaryService(name) {
+            assert.equal(name, 'heart_rate');
+            return { async getCharacteristic(id) {
+                assert.equal(id, 'heart_rate_measurement');
+                return characteristic;
+            } };
+        },
+        disconnect() { this.connected = false; },
+    };
+    let requested;
+    const source = new LiveHrSource({ requestDevice: async (options) => { requested = options; return device; } });
+    await source.connect();
+    assert.deepEqual(requested.filters, [{ services: ['heart_rate'] }]);
+    characteristic.send([0, 110]);
+    assert.deepEqual(source.sample(), { bpm: 110, hr: 0.5 });
+    characteristic.send([1, 0x2c, 0x01]);
+    assert.deepEqual(source.sample(), { bpm: 300, hr: 1 });
+    characteristic.send([1, 0]);
+    assert.equal(source.sample().bpm, 300, 'truncated measurement ignored');
+    characteristic.send([0, 110]);
+    const renderer = makeRenderer();
+    const bus = new LiveInputBus(renderer);
+    bus.registerSource('hr', { hz: source.hz, features: source.features, sample: () => source.sample() });
+    bus.addMapping({ source: 'hr', feature: 'hr', sink: 'flowSpeed', scale: 2 });
+    bus.tick(1, 0);
+    assert.equal(renderer.params.flowSpeed, 5);
+    assert.equal(bus.evaluateCondition('live.hr.bpm > 90'), true);
+    device.dispatchEvent(new Event('gattserverdisconnected'));
+    assert.deepEqual(source.sample(), { bpm: 0, hr: 0 });
+    characteristic.send([0, 150]);
+    assert.equal(source.sample().bpm, 0);
+    const denied = new LiveHrSource({ requestDevice: async () => { throw new Error('denied'); } });
+    await assert.rejects(denied.connect(), /denied/);
+    assert.match(denied.status, /denied/);
+}
+
+// --- 9. External packets expose only valid numeric channels --------------
+{
+    const { setupLiveInputIntegration } = await import('../src/main-live-input-integration.js');
+    const windowMock = new EventTarget();
+    windowMock.location = { search: '?external=wss%3A%2F%2Fexample.test%2Flive' };
+    globalThis.window = windowMock;
+    let socket;
+    globalThis.WebSocket = class {
+        constructor(url) { assert.equal(url, 'wss://example.test/live'); socket = this; }
+    };
+    const bus = setupLiveInputIntegration(makeRenderer(), {}, { getFeatures: () => ({}) }, null, null, null);
+    let changes = 0;
+    windowMock.addEventListener('live-input-features-changed', () => changes++);
+    socket.onmessage({ data: JSON.stringify({ channels: {
+        cc74: 0.4, bpm: 105, bad: '1', 'invalid.name': 0.5, constructor: 1,
+    } }) });
+    const source = bus.sources.get('external');
+    assert.ok(source.features.includes('cc74'));
+    assert.ok(source.features.includes('bpm'));
+    assert.ok(!source.features.includes('bad'));
+    assert.ok(!source.features.includes('invalid.name'));
+    assert.ok(!source.features.includes('constructor'));
+    assert.equal(source.sample().bpm, 105);
+    assert.equal(changes, 1);
+    socket.onmessage({ data: '{' });
+    socket.onmessage({ data: JSON.stringify({ channels: [] }) });
+    assert.equal(source.sample().bpm, 105);
+    socket.onmessage({ data: JSON.stringify({ channels: { cc74: 0.2 } }) });
+    assert.equal(source.sample().cc74, 0.2);
+    assert.equal(changes, 1, 'known channels do not repeatedly rebuild the UI');
+    delete globalThis.window;
+    delete globalThis.WebSocket;
 }
 
 console.log('Live Input Bus tests passed.');

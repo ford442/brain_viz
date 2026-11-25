@@ -1,7 +1,7 @@
 # Live Input Bus
 
 One shared mapping table that routes a named feature from any registered live
-source (mic, BCI band power, training metrics, and future MIDI/HR/OSC
+source (mic, BCI band power, training metrics, MIDI, heart rate and external
 sources) to a renderer param, instead of each live-data panel growing its own
 one-off mapping table. This is the practical version of the roadmap items
 "Neuromodulation External API", "Custom Audio-Feature Mapping Matrix",
@@ -64,19 +64,15 @@ already-updated public state.
 | `audio` | `bass`, `energy`, `brightness`, `onset` | `AudioReactor.getFeatures()` |
 | `bci` | `alpha`, `beta`, `gamma` | `BCISession.latestFeatures.bands` |
 | `training` | `calm`, `occipitalAlpha`, `flowResonance` | `training-engine.js`'s `METRICS` samplers, independent of whether a course is running |
+| `midi` | `cc0`–`cc127`, `note` | MIDI control changes and note velocity, normalized to 0–1 |
+| `hr` | `hr`, `bpm` | Bluetooth Heart Rate Measurement; `hr` maps 40–180 BPM to 0–1 and clamps, `bpm` is the raw measurement |
+| `external` | packet channel names | Most recent valid WebSocket JSON packet |
 
-Add a source anywhere else in the app with:
-
-```js
-liveInputBus.registerSource('midi', {
-    hz: 60,
-    features: ['cc1', 'cc74'],
-    sample: () => ({ cc1: latestCC1 / 127, cc74: latestCC74 / 127 }),
-});
-```
-
-— that's the whole integration surface; no new `main-*-integration.js` file
-and no separate mapping table.
+Use the Live tab's MIDI and heart-rate buttons to request device access with a
+user gesture. These browser APIs require a supported browser and secure context;
+Bluetooth additionally requires a compatible Heart Rate Profile device. After
+connecting, select the source and feature in the same mapping matrix as audio.
+No device permission is requested automatically.
 
 ## Mapping table shape
 
@@ -109,39 +105,75 @@ against the bus's most recently sampled features:
 { "time": 4.0, "type": "text", "message": "Alpha rising", "if": "live.bci.alpha > 0.6" }
 ```
 
-`live.<feature>` (no source segment) resolves against the first registered
-source that exposes that feature name. An unparsable expression, or one
-naming a feature no source currently exposes, **fails open** — the event
-still runs — so a typo or a not-yet-connected source never silently breaks a
-routine. See `RoutinePlayer.executeEvent()` in `src/routine-player.js` and
-`LiveInputBus.evaluateCondition()`.
+`live.<feature>` (no source segment) resolves against the first sampled
+source that exposes that feature name. An unparsable expression or an
+unresolved bare feature **fails open**. A qualified feature that has not been
+sampled reads as zero. See `RoutinePlayer.executeEvent()` in
+`src/routine-player.js` and `LiveInputBus.evaluateCondition()`.
 
-This is condition *sugar* only — it gates a single event inline, it does not
-pause the timeline the way `wait`/`signal` do.
+It gates a single event inline; it does not pause the timeline. A `branch`
+event can instead select an entire registered sub-routine from the same
+latest sampled value. For example, the following is a `.nwroutine` package
+fragment (see [the package format](nwroutine.md)):
+
+```json
+{
+  "routine": [
+    { "time": 5, "type": "branch", "condition": "live.hr.bpm > 90",
+      "trueBranch": "higher", "falseBranch": "lower" }
+  ],
+  "subRoutines": {
+    "higher": [{ "time": 0, "type": "text", "message": "Higher pulse", "duration": 3 }],
+    "lower": [{ "time": 0, "type": "text", "message": "Lower pulse", "duration": 3 }]
+  }
+}
+```
+
+Connect the device and allow a measurement before the branch executes. This
+is a visualization example, not an interpretation of the pulse or a medical
+threshold.
 
 ## External ingest
 
-Not yet implemented in this pass. The existing `npm run bci:bridge`
-(`scripts/openbci_ws_bridge.mjs`) WebSocket bridge is the pattern a future
-`{ t, channels: { alpha: 0.4, ... } }` live-input WebSocket source should
-follow — register it as one more `liveInputBus.registerSource(...)` call, not
-a new integration file.
+Run `npm run external:bridge` to forward JSON UDP datagrams on
+`127.0.0.1:12347` to WebSocket clients on `127.0.0.1:8767`. For example:
+
+```sh
+printf '%s' '{"t":1,"channels":{"alpha":0.4,"hr":72,"cc74":0.2}}' | nc -u -w1 127.0.0.1 12347
+```
+
+Open the app with `?renderer=webgl&external=ws%3A%2F%2F127.0.0.1%3A8767`
+(or omit the renderer parameter for WebGPU). Incoming channel names become
+features of the `external` source. Names start with a letter and contain only
+letters, digits and underscores (up to 64 characters); `constructor` and
+`prototype` are reserved. The bridge accepts up to 64 finite numeric channels
+per packet, with values between -1,000,000 and 1,000,000, and packets up to
+16 KiB. It also accepts the existing `type: "external"` envelope. It is
+separate from the EEG-specific `npm run bci:bridge`. OSC parsing is
+**deferred**: translate OSC to the JSON UDP protocol externally before using
+this bridge.
+
+The bridge has no authentication and defaults to loopback. Do not expose it
+to an untrusted network; its data can drive visualization parameters.
 
 ## Safety / science
 
 Every bus feature is a **derived visualization signal**, not a diagnostic or
 therapeutic reading — the same posture as Double Mirror and Training Mode
 (see `docs/SCIENTIFIC_ACCURACY_REPORT.md`). The Live tab states this
-explicitly. `LIVE_INPUT_SINKS` intentionally excludes geometry-rebuild keys
-other than `foldStrength` (already exposed by `ReactivityRouter`) to avoid
-driving a per-frame geometry rebuild from a live feature.
+explicitly. `LIVE_INPUT_SINKS` excludes geometry-rebuild keys, including
+`foldStrength` and `growth`, to avoid driving a per-frame geometry rebuild
+from a live feature. Sink values are clamped to their control ranges; raw
+features such as BPM remain available to conditions.
 
 ## Testing
 
 - `tests/test_live_input_bus.js` (`npm test`) — source registration/sampling,
   `hz` throttling, attack/release smoothing, multi-mapping sink accumulation,
   the `'zoom'` special case, localStorage round-trip, and
-  `evaluateCondition()`'s fail-open parsing — no DOM/renderer required.
+  `evaluateCondition()` plus mocked MIDI and HR — no hardware required.
+- `tests/test_live_input_safety.js` — sink bounds, invalid mappings and live
+  branch conditions.
 - `verification/verify_live_input_bus.py` (`python3
   verification/verify_suite.py`) — under the WebGL2 fallback: the Live tab
   renders and becomes active, adding a mapping through the UI produces a row,

@@ -8,6 +8,8 @@
 import { LiveInputBus } from './live-input-bus.js';
 import { resampleField } from './voxel-dim.js';
 import { METRICS as TRAINING_METRICS } from './training-engine.js';
+import { LiveMidiSource } from './live-midi-source.js';
+import { LiveHrSource } from './live-hr-source.js';
 
 /**
  * @param {import('./brain-renderer.js').BrainRenderer} renderer
@@ -19,6 +21,7 @@ import { METRICS as TRAINING_METRICS } from './training-engine.js';
  */
 export function setupLiveInputIntegration(renderer, player, audioReactor, bciSession, trainingEngine, synaptixEngine) {
     const bus = new LiveInputBus(renderer);
+    bus.deviceSources = { midi: new LiveMidiSource(), hr: new LiveHrSource() };
 
     // Source: mic features. AudioReactor.update() is still called from
     // main-update-loop.js (it also drives the legacy ReactivityRouter and the
@@ -80,7 +83,13 @@ export function setupLiveInputIntegration(renderer, player, audioReactor, bciSes
     // Neuromodulation External API
     // Connects to a generic WebSocket bridge only if requested via URL parameter
     // Expects JSON messages: { channels: { alpha: 0.4, stress: 0.8, ... } }
-    let latestExternalData = {};
+    let latestExternalData = Object.create(null);
+    const externalFeatures = new Set(['alpha', 'beta', 'stress', 'focus']);
+    bus.registerSource('external', {
+        hz: 30,
+        features: [...externalFeatures],
+        sample: () => latestExternalData,
+    });
     const params = new URLSearchParams(window.location.search);
     const externalUrl = params.get('external');
 
@@ -94,8 +103,25 @@ export function setupLiveInputIntegration(renderer, player, audioReactor, bciSes
             ws.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
-                    if (data && data.channels) {
-                        latestExternalData = data.channels;
+                    if (data && data.channels && typeof data.channels === 'object' && !Array.isArray(data.channels)) {
+                        const channels = Object.create(null);
+                        let added = false;
+                        for (const [name, value] of Object.entries(data.channels)) {
+                            if (!/^[a-zA-Z][a-zA-Z0-9_]{0,63}$/.test(name) ||
+                                name === 'constructor' || name === 'prototype' ||
+                                typeof value !== 'number' || !Number.isFinite(value)) continue;
+                            if (!externalFeatures.has(name)) {
+                                if (externalFeatures.size >= 256) continue;
+                                externalFeatures.add(name);
+                                added = true;
+                            }
+                            channels[name] = value;
+                        }
+                        latestExternalData = channels;
+                        if (added) {
+                            bus.sources.get('external').features = [...externalFeatures];
+                            window.dispatchEvent(new Event('live-input-features-changed'));
+                        }
                     }
                 } catch (err) {
                     // Ignore parse errors on external socket
@@ -155,13 +181,6 @@ export function setupLiveInputIntegration(renderer, player, audioReactor, bciSes
         features: ['stimulus', 'tensor', 'note'],
         sample: () => latestRoomData
     });
-
-    bus.registerSource('external', {
-        hz: 30,
-        features: ['alpha', 'beta', 'stress', 'focus'],
-        sample: () => latestExternalData
-    });
-
 
     if (!bus.loadFromLocalStorage()) {
         bus.enabled = true;

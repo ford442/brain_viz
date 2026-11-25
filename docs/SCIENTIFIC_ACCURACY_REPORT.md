@@ -241,6 +241,16 @@ The channel positions and posterior/frontal/temporal biases are anatomically mot
 
 ---
 
+## 10. Heart Rate as a Visualization Input ⚠️ VISUALIZATION HEURISTIC
+
+The Live Input Bus reads the BPM reported by a Bluetooth Heart Rate Profile
+device. Its 40–180 BPM normalization and any mapping or routine threshold are
+arbitrary artistic controls, not validated physiological models. Device errors,
+motion and signal quality can affect readings; the visualization does not
+infer brain activity, fitness, health or a diagnosis from heart rate.
+
+---
+
 ## References
 
 1. **Stroke (2011)** - Regional Ischemic Vulnerability of the Brain to Hypoperfusion. DOI: 10.1161/STROKEAHA.110.600940

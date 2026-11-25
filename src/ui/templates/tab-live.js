@@ -6,8 +6,19 @@ export function renderLiveTab() {
                 <div class="section-header expanded" data-section="live-input-bus">Live Input Bus</div>
                 <div class="section-content">
                     <div style="font-size:9px;color:#556677;margin-bottom:6px;line-height:1.35;">
-                        Routes a live feature (mic, BCI band power, or a training metric) to a renderer
+                        Routes a live feature (mic, BCI, training, MIDI or heart rate) to a renderer
                         parameter. Derived signal for visualization, not a diagnostic reading.
+                    </div>
+                    <div class="control-group" style="font-size:10px;">
+                        <button id="btn-live-midi-connect" type="button">Connect MIDI</button>
+                        <button id="btn-live-midi-disconnect" type="button">Disconnect</button>
+                        <span id="live-midi-status" role="status">Disconnected</span>
+                    </div>
+                    <div class="control-group" style="font-size:10px;">
+                        <button id="btn-live-hr-connect" type="button">Connect heart rate</button>
+                        <button id="btn-live-hr-disconnect" type="button">Disconnect</button>
+                        <span id="live-hr-status" role="status">Disconnected</span>
+                        <div>Heart rate: hr maps 40–180 bpm to 0–1 (clamped); bpm is raw.</div>
                     </div>
                     <div class="control-group" style="display:flex;align-items:center;gap:8px;">
                         <label style="display:flex;align-items:center;gap:4px;font-size:11px;">
